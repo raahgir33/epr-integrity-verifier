@@ -62,7 +62,12 @@ class GeminiClient:
                         temperature=0,
                     ),
                 )
-                self._record_call(purpose, (time.monotonic() - start) * 1000, success=True)
+                self._record_call(
+                    purpose,
+                    (time.monotonic() - start) * 1000,
+                    success=True,
+                    usage=response.usage_metadata,
+                )
                 return schema.model_validate_json(response.text)
             except errors.APIError as exc:
                 self._record_call(purpose, (time.monotonic() - start) * 1000, success=False)
@@ -79,13 +84,17 @@ class GeminiClient:
                 time.sleep(backoff)
         raise last_exc  # unreachable, satisfies type checkers
 
-    def _record_call(self, purpose: str, latency_ms: float, success: bool) -> None:
+    def _record_call(self, purpose: str, latency_ms: float, success: bool, usage=None) -> None:
         record = {
             "purpose": purpose,
             "model": settings.gemini_model,
             "latency_ms": latency_ms,
             "success": success,
             "called_at": datetime.now(UTC).isoformat(),
+            "input_tokens": getattr(usage, "prompt_token_count", None),
+            "output_tokens": getattr(usage, "candidates_token_count", None),
+            "thinking_tokens": getattr(usage, "thoughts_token_count", None),
+            "total_tokens": getattr(usage, "total_token_count", None),
         }
         with self._lock:
             self._call_log.append(record)

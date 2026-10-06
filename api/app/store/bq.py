@@ -97,6 +97,13 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("latency_ms", "FLOAT"),
         bigquery.SchemaField("success", "BOOLEAN"),
         bigquery.SchemaField("called_at", "TIMESTAMP"),
+        # Token usage, from the response's usage_metadata. Nullable: calls
+        # made before this column existed, and failed calls, have no usage
+        # data. thinking_tokens is billed as output (see scripts/cost_report.py).
+        bigquery.SchemaField("input_tokens", "INTEGER"),
+        bigquery.SchemaField("output_tokens", "INTEGER"),
+        bigquery.SchemaField("thinking_tokens", "INTEGER"),
+        bigquery.SchemaField("total_tokens", "INTEGER"),
     ],
 }
 

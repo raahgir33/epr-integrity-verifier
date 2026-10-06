@@ -16,5 +16,12 @@ class Settings(BaseSettings):
     pubsub_topic: str = "certificate-batches"
     push_token: str | None = None
 
+    # Gemini pricing, USD per million tokens — developer-provided rate,
+    # 2026-10-07, for scripts/cost_report.py. Not a regulatory threshold;
+    # update if Vertex AI pricing changes. Thinking tokens are billed as
+    # output tokens.
+    gemini_input_price_per_million: float = 1.50
+    gemini_output_price_per_million: float = 9.00
+
 
 settings = Settings()
