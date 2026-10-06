@@ -6,6 +6,7 @@ April 2025 - March 2026, 12 months.
 """
 
 import datetime
+import math
 import random
 
 from scripts.dossier_gen.world import Processor, Supplier
@@ -134,6 +135,15 @@ def build_dossier(
 ) -> Dossier:
     dossier = Dossier(processor.processor_id)
     is_recycler = processor.type == "recycler"
+    # F1/F2/F3 are specifically seeded to create a certified-vs-verified
+    # mismatch, so their certified tonnage (and, below, their electricity
+    # use) stays on the old independent smooth-capacity-ratio basis. Every
+    # other processor certifies on — and now also draws its electricity
+    # use from — the month's actual verified weighbridge net, so the two
+    # stay consistent with each other even though the generator spreads
+    # real shipments unevenly across months (see docs/PROGRESS.md).
+    _CERTIFIED_MISMATCH_ISSUES = {"F1", "F2", "F3"}
+    honest_basis = not (_CERTIFIED_MISMATCH_ISSUES & set(processor.issue_types))
 
     # --- CTO and EPR registration certificates (facts already in `processor`) ---
     dossier.add_document(
@@ -287,7 +297,11 @@ def build_dossier(
             elif i == h3_index:
                 net_t = round(qty_t * 0.985, 2)
             else:
-                net_t = round(qty_t * rng.uniform(0.995, 1.005), 2)
+                # Strictly inside QTY_TOL_WEIGHBRIDGE (2%), with margin —
+                # a clean shipment must never trip C4 by chance. Only F3
+                # (-25%) and H3 (-1.5%, deliberately near the limit) exceed
+                # this band, via their own branches above.
+                net_t = round(qty_t * rng.uniform(0.988, 1.012), 2)
             gross_kg = round((net_t + rng.uniform(8, 15)) * 1000, 0)
             tare_kg = round(gross_kg - net_t * 1000, 0)
             ticket_no = f"{processor.processor_id}-WB-{i + 1:04d}"
@@ -385,16 +399,27 @@ def build_dossier(
             dossier.outputs.append({"doc_id": doc_id, "month": month, "quantity_t": qty})
 
     # --- electricity bills, monthly ---
-    # Based on the smooth monthly-certified basis, not that month's raw inbound
-    # shipment count — with only 8-14 shipments spread over 12 months, several
-    # months land on zero shipments by chance, which must not look like an
-    # unintended F7-style energy anomaly on processors that aren't seeded for it.
+    # honest_basis processors: tied to that month's actual verified
+    # weighbridge net, the same figure now driving their certificates —
+    # kwh and certified move together, so a month with few/no shipments
+    # (there are only 8-14 spread over 12 months) is skipped by
+    # checks/energy.py's zero-certified guard rather than mismatching
+    # against a kwh figure drawn from an unrelated smooth target.
+    # F1/F2/F3 processors keep the old independent smooth-capacity-ratio
+    # basis (unchanged), consistent with their certified tonnage.
     connected_load_kw = round(processor.capacity_t_per_year / 10, 1)
     for month in FY_MONTHS:
-        ratio = _monthly_certified_ratio(processor, FY_MONTHS.index(month))
-        if "F1" in processor.issue_types:
-            ratio = 1.3
-        monthly_basis_t = processor.capacity_t_per_year / 12 * ratio
+        if honest_basis:
+            monthly_basis_t = sum(
+                s["weighbridge_net_t"]
+                for s in dossier.shipments
+                if s["month"] == month and s["verified"]
+            )
+        else:
+            ratio = _monthly_certified_ratio(processor, FY_MONTHS.index(month))
+            if "F1" in processor.issue_types:
+                ratio = 1.3
+            monthly_basis_t = processor.capacity_t_per_year / 12 * ratio
         if month == h4_month:
             kwh = round(rng.uniform(10, 40), 1)
         elif month == f7_target_month:
@@ -414,24 +439,50 @@ def build_dossier(
         dossier.energy_monthly.append({"doc_id": doc_id, "month": month, "kwh": kwh})
 
     # --- certificates: one per month, category from permitted set (F6: one breach) ---
-    f6_done = False
+    # honest_basis processors certify on the month's actual verified
+    # weighbridge net, rounded down — honest practice, and (together with
+    # the matching electricity-use basis above) it removes the
+    # noise-driven false C2a/C7 failures an independently-drawn target
+    # could otherwise produce purely by chance (docs/PROGRESS.md has the
+    # before/after sweep). F1/F2/F3 processors keep the old independent
+    # smooth-capacity-ratio basis, since their whole premise is a
+    # certified-vs-verified mismatch (F1 against capacity; F2/F3 against
+    # verified inbound).
+    monthly_certified_t: dict[str, float] = {}
     for month in FY_MONTHS:
-        ratio = _monthly_certified_ratio(processor, FY_MONTHS.index(month))
-        if "F1" in processor.issue_types:
-            ratio = 1.3
-        if month == h4_month:
-            ratio = 0.0
-        monthly_capacity = processor.capacity_t_per_year / 12
-        certified_t = round(monthly_capacity * ratio, 2)
+        if honest_basis:
+            verified_month_t = sum(
+                s["weighbridge_net_t"]
+                for s in dossier.shipments
+                if s["month"] == month and s["verified"]
+            )
+            monthly_certified_t[month] = math.floor(verified_month_t * 100) / 100
+        else:
+            ratio = _monthly_certified_ratio(processor, FY_MONTHS.index(month))
+            if "F1" in processor.issue_types:
+                ratio = 1.3
+            if month == h4_month:
+                ratio = 0.0
+            monthly_capacity = processor.capacity_t_per_year / 12
+            monthly_certified_t[month] = round(monthly_capacity * ratio, 2)
+
+    # F6's category breach must land on a month with real tonnage, or the
+    # breach is a no-op — under honest_basis, an early FY month can
+    # legitimately have zero shipments by chance (unlike the old smooth
+    # formula, which gave every month the same non-zero share).
+    f6_month = None
+    if "F6" in processor.issue_types:
+        f6_month = next((m for m in FY_MONTHS if monthly_certified_t[m] > 0), FY_MONTHS[0])
+
+    for month in FY_MONTHS:
         category = processor.permitted_categories[0]
-        if "F6" in processor.issue_types and not f6_done:
+        if month == f6_month:
             category = "I" if "I" not in processor.permitted_categories else "III"
-            f6_done = True
         dossier.certificates.append(
             {
                 "certificate_id": f"CERT-{processor.processor_id}-{month}",
                 "category": category,
-                "quantity_t": certified_t,
+                "quantity_t": monthly_certified_t[month],
                 "generation_date": fmt_date(month_bounds(month)[1]),
                 "period_month": month,
             }

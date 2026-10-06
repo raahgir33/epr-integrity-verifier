@@ -1,3 +1,5 @@
+import pytest
+
 from app.checks import params
 from app.checks.mass_balance import check_c2a, check_c2b, verified_inbound_tonnes
 
@@ -68,6 +70,34 @@ def test_c2a_fails_when_certified_exceeds_verified_inbound():
     result = check_c2a("PWP-02", certified_t=120.0, verified_inbound_t=80.0)
     assert result.status == "fail"
     assert result.affected_tonnes == 40.0
+
+
+def test_c2a_passes_at_exactly_the_tolerance_boundary():
+    certified_t = 1000.0
+    shortfall = certified_t * params.C2A_SHORTFALL_TOL
+    result = check_c2a(
+        "PWP-08", certified_t=certified_t, verified_inbound_t=certified_t - shortfall
+    )
+    assert result.status == "pass"
+    assert result.affected_tonnes == shortfall
+    assert result.measured == certified_t
+
+
+def test_c2a_fails_just_above_the_tolerance_boundary():
+    certified_t = 1000.0
+    shortfall = certified_t * params.C2A_SHORTFALL_TOL + 0.01
+    result = check_c2a(
+        "PWP-08", certified_t=certified_t, verified_inbound_t=certified_t - shortfall
+    )
+    assert result.status == "fail"
+
+
+def test_c2a_small_noise_shortfall_passes():
+    # PWP-08-style: ~0.53% shortfall from independent per-shipment
+    # weighbridge noise, not a seeded issue.
+    result = check_c2a("PWP-08", certified_t=3750.0, verified_inbound_t=3729.98)
+    assert result.status == "pass"
+    assert result.affected_tonnes == pytest.approx(20.02)
 
 
 def test_c2b_passes_within_yield_ceiling():

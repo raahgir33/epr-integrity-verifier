@@ -62,7 +62,7 @@ All capacity and mass-balance checks are **cumulative over the financial year to
 | ID | Check | Rule | Parameters | Label |
 |---|---|---|---|---|
 | C1 | Capacity | FY-to-date certified tonnes ≤ CTO capacity (t/yr) × months elapsed / 12 | none | Rule-derived |
-| C2a | Input balance | FY-to-date certified tonnes ≤ FY-to-date verified inbound waste tonnes (weighbridge net of shipments that pass C3–C5) | none | Rule-derived |
+| C2a | Input balance | FY-to-date certified tonnes within tolerance of FY-to-date verified inbound waste tonnes (weighbridge net of shipments that pass C3–C5): (certified − verified inbound) / certified ≤ tolerance | `C2A_SHORTFALL_TOL = 0.02` | ASSUMPTION |
 | C2b | Output plausibility | FY-to-date recycled output sold ≤ FY-to-date processed tonnes × max yield. Excess output suggests material not from waste | `MAX_YIELD_RECYCLER = 0.95` | ASSUMPTION, soft signal |
 | C3a | Transit speed | Distance ÷ (weighbridge in-time − e-way bill generation time) ≤ max speed. Distance = declared e-way bill distance; if missing, straight-line × road factor using supplier and site coordinates | `ROAD_FACTOR = 1.3`, `MAX_AVG_SPEED_KMPH = 55` | ASSUMPTION |
 | C3b | E-way bill validity | Weighbridge in-time ≤ valid-until (1 day per 200 km or part, ending 23:59:59 IST) | `EWB_KM_PER_DAY = 200` | Rule-derived |
@@ -138,6 +138,8 @@ Fixed assignment:
 | PWP-10 | End-of-life | F4 |
 
 **F4 mechanics:** PWP-10's dossier contains a copy of one of PWP-01's real inbound invoice + e-way-bill records (same invoice no., supplier GSTIN, EWB number) but with no matching weighbridge slip on PWP-10's side — so C5 (and the fact that it's unmatched) attributes the duplicate to PWP-10, while PWP-01's original, properly matched shipment stays clean. (An earlier draft also seeded "one weighbridge ticket reused within a dossier" on PWP-10; dropped — that would require truth-mode normalisation to encode a match that `normalize.py`'s real extracted-mode matching rules, operating on vehicle number and time window, could never independently derive from the copied e-way bill, which would make truth and extracted modes permanently disagree on this shipment.)
+
+**Certified-tonnage basis:** for every processor *without* F1, F2 or F3 (clean, H1–H4, F4–F8), certificates are derived per month from that month's actual verified weighbridge net, rounded down — honest practice, certify on what was weighed. Electricity use for these processors is likewise drawn from the same month's actual weighbridge net, so the two stay consistent even though real shipments land unevenly across months. F1/F2/F3 processors keep certificates (and, for F1, electricity) on an independent capacity-ratio formula, since their entire premise is a certified-vs-verified mismatch (F1 against capacity; F2/F3 against verified inbound) — deriving their certified figure from the same weighed total it is supposed to diverge from would erase the issue. An earlier version computed every processor's certified tonnage independently of its actual shipments; purely by chance (±10% per-shipment invoice-quantity draws, summed over only 8–14 shipments) this could leave a clean processor's certified tonnage several percent short of its weighed total, intermittently and falsely failing C2a — see `docs/PROGRESS.md`'s diagnosis and the generator-level robustness test (`tests/test_c2a_noise_robustness.py`) that now guards against a regression.
 
 ## 6. Ground truth file (`data/synthetic/ground_truth.json`)
 

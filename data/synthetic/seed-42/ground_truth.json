@@ -175,16 +175,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 522217.0,
-          "printed": "5,22,217"
+          "canonical": 520667.0,
+          "printed": "5,20,667"
         },
         "in_time": {
           "canonical": "2026-01-14T15:30:26.350460",
           "printed": "14-01-2026 15:30"
         },
         "net_kg": {
-          "canonical": 509570.0,
-          "printed": "5,09,570"
+          "canonical": 508020.0,
+          "printed": "5,08,020"
         },
         "out_time": {
           "canonical": "2026-01-14T16:04:26.350460",
@@ -319,16 +319,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 545809.0,
-          "printed": "5,45,809"
+          "canonical": 546639.0,
+          "printed": "5,46,639"
         },
         "in_time": {
           "canonical": "2026-01-11T15:27:45.021607",
           "printed": "11-01-2026 15:27"
         },
         "net_kg": {
-          "canonical": 532430.0,
-          "printed": "5,32,430"
+          "canonical": 533260.0,
+          "printed": "5,33,260"
         },
         "out_time": {
           "canonical": "2026-01-11T15:56:45.021607",
@@ -463,16 +463,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 519769.0,
-          "printed": "5,19,769"
+          "canonical": 517779.0,
+          "printed": "5,17,779"
         },
         "in_time": {
           "canonical": "2025-08-14T13:26:31.305106",
           "printed": "14-08-2025 13:26"
         },
         "net_kg": {
-          "canonical": 506140.0,
-          "printed": "5,06,140"
+          "canonical": 504150.0,
+          "printed": "5,04,150"
         },
         "out_time": {
           "canonical": "2025-08-14T14:03:31.305106",
@@ -607,16 +607,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 468565.0,
-          "printed": "4,68,565"
+          "canonical": 469285.0,
+          "printed": "4,69,285"
         },
         "in_time": {
           "canonical": "2025-10-17T18:31:08.679080",
           "printed": "17-10-2025 18:31"
         },
         "net_kg": {
-          "canonical": 455530.0,
-          "printed": "4,55,530"
+          "canonical": 456250.0,
+          "printed": "4,56,250"
         },
         "out_time": {
           "canonical": "2025-10-17T19:02:08.679080",
@@ -751,16 +751,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 504379.0,
-          "printed": "5,04,379"
+          "canonical": 502569.0,
+          "printed": "5,02,569"
         },
         "in_time": {
           "canonical": "2025-12-14T16:48:44.059829",
           "printed": "14-12-2025 16:48"
         },
         "net_kg": {
-          "canonical": 493300.0,
-          "printed": "4,93,300"
+          "canonical": 491490.0,
+          "printed": "4,91,490"
         },
         "out_time": {
           "canonical": "2025-12-14T17:25:44.059829",
@@ -895,16 +895,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 488528.0,
-          "printed": "4,88,528"
+          "canonical": 487908.0,
+          "printed": "4,87,908"
         },
         "in_time": {
           "canonical": "2025-04-10T14:57:08.468646",
           "printed": "10-04-2025 14:57"
         },
         "net_kg": {
-          "canonical": 476730.0,
-          "printed": "4,76,730"
+          "canonical": 476110.0,
+          "printed": "4,76,110"
         },
         "out_time": {
           "canonical": "2025-04-10T15:25:08.468646",
@@ -1039,16 +1039,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 545740.0,
-          "printed": "5,45,740"
+          "canonical": 549050.0,
+          "printed": "5,49,050"
         },
         "in_time": {
           "canonical": "2025-08-02T14:00:19.252310",
           "printed": "02-08-2025 14:00"
         },
         "net_kg": {
-          "canonical": 535650.0,
-          "printed": "5,35,650"
+          "canonical": 538960.0,
+          "printed": "5,38,960"
         },
         "out_time": {
           "canonical": "2025-08-02T14:27:19.252310",
@@ -1183,16 +1183,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 539227.0,
-          "printed": "5,39,227"
+          "canonical": 540467.0,
+          "printed": "5,40,467"
         },
         "in_time": {
           "canonical": "2025-08-14T15:04:36.235794",
           "printed": "14-08-2025 15:04"
         },
         "net_kg": {
-          "canonical": 525640.0,
-          "printed": "5,25,640"
+          "canonical": 526880.0,
+          "printed": "5,26,880"
         },
         "out_time": {
           "canonical": "2025-08-14T15:42:36.235794",
@@ -1327,16 +1327,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 550051.0,
-          "printed": "5,50,051"
+          "canonical": 547631.0,
+          "printed": "5,47,631"
         },
         "in_time": {
           "canonical": "2025-07-06T11:56:42.728534",
           "printed": "06-07-2025 11:56"
         },
         "net_kg": {
-          "canonical": 540230.0,
-          "printed": "5,40,230"
+          "canonical": 537810.0,
+          "printed": "5,37,810"
         },
         "out_time": {
           "canonical": "2025-07-06T12:21:42.728534",
@@ -1387,8 +1387,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 696.35,
-          "printed": "696.35"
+          "canonical": 696.0,
+          "printed": "696.00"
         }
       },
       "lang": "en",
@@ -1419,8 +1419,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 787.38,
-          "printed": "787.38"
+          "canonical": 786.99,
+          "printed": "786.99"
         }
       },
       "lang": "en",
@@ -1451,8 +1451,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 805.59,
-          "printed": "805.59"
+          "canonical": 805.18,
+          "printed": "805.18"
         }
       },
       "lang": "en",
@@ -1483,8 +1483,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 786.72,
-          "printed": "786.72"
+          "canonical": 786.33,
+          "printed": "786.33"
         }
       },
       "lang": "en",
@@ -1515,8 +1515,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 671.47,
-          "printed": "671.47"
+          "canonical": 671.14,
+          "printed": "671.14"
         }
       },
       "lang": "en",
@@ -1535,8 +1535,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 135109.8,
-          "printed": "1,35,109.80"
+          "canonical": 171539.0,
+          "printed": "1,71,539.00"
         }
       },
       "lang": "en",
@@ -1555,8 +1555,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 185097.3,
-          "printed": "1,85,097.30"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1575,8 +1575,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 133514.5,
-          "printed": "1,33,514.50"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1595,8 +1595,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 132995.4,
-          "printed": "1,32,995.40"
+          "canonical": 190736.7,
+          "printed": "1,90,736.70"
         }
       },
       "lang": "en",
@@ -1615,8 +1615,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 145159.7,
-          "printed": "1,45,159.70"
+          "canonical": 607731.3,
+          "printed": "6,07,731.30"
         }
       },
       "lang": "en",
@@ -1635,8 +1635,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 178456.6,
-          "printed": "1,78,456.60"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1655,8 +1655,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 166200.1,
-          "printed": "1,66,200.10"
+          "canonical": 202210.2,
+          "printed": "2,02,210.20"
         }
       },
       "lang": "en",
@@ -1675,8 +1675,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 144668.2,
-          "printed": "1,44,668.20"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1695,8 +1695,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 157887.8,
-          "printed": "1,57,887.80"
+          "canonical": 206934.1,
+          "printed": "2,06,934.10"
         }
       },
       "lang": "en",
@@ -1715,8 +1715,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 137684.4,
-          "printed": "1,37,684.40"
+          "canonical": 382314.7,
+          "printed": "3,82,314.70"
         }
       },
       "lang": "en",
@@ -1735,8 +1735,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 184561.3,
-          "printed": "1,84,561.30"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1755,8 +1755,8 @@
           "printed": "600.00"
         },
         "units_consumed_kwh": {
-          "canonical": 157408.2,
-          "printed": "1,57,408.20"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -1937,16 +1937,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 600573.0,
-          "printed": "6,00,573"
+          "canonical": 603453.0,
+          "printed": "6,03,453"
         },
         "in_time": {
           "canonical": "2025-09-19T16:34:42.464846",
           "printed": "19-09-2025 16:34"
         },
         "net_kg": {
-          "canonical": 588370.0,
-          "printed": "5,88,370"
+          "canonical": 591250.0,
+          "printed": "5,91,250"
         },
         "out_time": {
           "canonical": "2025-09-19T16:52:42.464846",
@@ -2081,16 +2081,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 538359.0,
-          "printed": "5,38,359"
+          "canonical": 541739.0,
+          "printed": "5,41,739"
         },
         "in_time": {
           "canonical": "2025-06-19T13:29:07.019932",
           "printed": "19-06-2025 13:29"
         },
         "net_kg": {
-          "canonical": 525910.0,
-          "printed": "5,25,910"
+          "canonical": 529290.0,
+          "printed": "5,29,290"
         },
         "out_time": {
           "canonical": "2025-06-19T14:10:07.019932",
@@ -2225,16 +2225,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 512566.0,
-          "printed": "5,12,566"
+          "canonical": 511006.0,
+          "printed": "5,11,006"
         },
         "in_time": {
           "canonical": "2026-01-15T15:41:45.351003",
           "printed": "15-01-2026 15:41"
         },
         "net_kg": {
-          "canonical": 501410.0,
-          "printed": "5,01,410"
+          "canonical": 499850.0,
+          "printed": "4,99,850"
         },
         "out_time": {
           "canonical": "2026-01-15T16:20:45.351003",
@@ -2369,16 +2369,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 566928.0,
-          "printed": "5,66,928"
+          "canonical": 569868.0,
+          "printed": "5,69,868"
         },
         "in_time": {
           "canonical": "2026-01-15T10:33:53.405786",
           "printed": "15-01-2026 10:33"
         },
         "net_kg": {
-          "canonical": 554020.0,
-          "printed": "5,54,020"
+          "canonical": 556960.0,
+          "printed": "5,56,960"
         },
         "out_time": {
           "canonical": "2026-01-15T10:56:53.405786",
@@ -2513,16 +2513,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 551521.0,
-          "printed": "5,51,521"
+          "canonical": 549951.0,
+          "printed": "5,49,951"
         },
         "in_time": {
           "canonical": "2026-03-18T12:29:17.539751",
           "printed": "18-03-2026 12:29"
         },
         "net_kg": {
-          "canonical": 540690.0,
-          "printed": "5,40,690"
+          "canonical": 539120.0,
+          "printed": "5,39,120"
         },
         "out_time": {
           "canonical": "2026-03-18T12:51:17.539751",
@@ -2657,16 +2657,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 560379.0,
-          "printed": "5,60,379"
+          "canonical": 558309.0,
+          "printed": "5,58,309"
         },
         "in_time": {
           "canonical": "2026-03-10T15:05:35.821775",
           "printed": "10-03-2026 15:05"
         },
         "net_kg": {
-          "canonical": 547330.0,
-          "printed": "5,47,330"
+          "canonical": 545260.0,
+          "printed": "5,45,260"
         },
         "out_time": {
           "canonical": "2026-03-10T15:30:35.821775",
@@ -2801,16 +2801,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 560308.0,
-          "printed": "5,60,308"
+          "canonical": 563968.0,
+          "printed": "5,63,968"
         },
         "in_time": {
           "canonical": "2025-05-04T13:52:57.153434",
           "printed": "04-05-2025 13:52"
         },
         "net_kg": {
-          "canonical": 546480.0,
-          "printed": "5,46,480"
+          "canonical": 550140.0,
+          "printed": "5,50,140"
         },
         "out_time": {
           "canonical": "2025-05-04T14:16:57.153434",
@@ -2945,16 +2945,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 511456.0,
-          "printed": "5,11,456"
+          "canonical": 508646.0,
+          "printed": "5,08,646"
         },
         "in_time": {
           "canonical": "2025-06-08T13:42:14.006012",
           "printed": "08-06-2025 13:42"
         },
         "net_kg": {
-          "canonical": 503370.0,
-          "printed": "5,03,370"
+          "canonical": 500560.0,
+          "printed": "5,00,560"
         },
         "out_time": {
           "canonical": "2025-06-08T14:06:14.006012",
@@ -3089,16 +3089,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 546785.0,
-          "printed": "5,46,785"
+          "canonical": 547365.0,
+          "printed": "5,47,365"
         },
         "in_time": {
           "canonical": "2025-08-16T12:15:15.515610",
           "printed": "16-08-2025 12:15"
         },
         "net_kg": {
-          "canonical": 533980.0,
-          "printed": "5,33,980"
+          "canonical": 534560.0,
+          "printed": "5,34,560"
         },
         "out_time": {
           "canonical": "2025-08-16T12:34:15.515610",
@@ -3233,16 +3233,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 602170.0,
-          "printed": "6,02,170"
+          "canonical": 601180.0,
+          "printed": "6,01,180"
         },
         "in_time": {
           "canonical": "2025-05-05T14:14:34.357456",
           "printed": "05-05-2025 14:14"
         },
         "net_kg": {
-          "canonical": 587810.0,
-          "printed": "5,87,810"
+          "canonical": 586820.0,
+          "printed": "5,86,820"
         },
         "out_time": {
           "canonical": "2025-05-05T14:38:34.357456",
@@ -3293,8 +3293,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 554.12,
-          "printed": "554.12"
+          "canonical": 554.57,
+          "printed": "554.57"
         }
       },
       "lang": "en",
@@ -3325,8 +3325,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 617.88,
-          "printed": "617.88"
+          "canonical": 618.39,
+          "printed": "618.39"
         }
       },
       "lang": "en",
@@ -3357,8 +3357,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 495.34,
-          "printed": "495.34"
+          "canonical": 495.75,
+          "printed": "495.75"
         }
       },
       "lang": "en",
@@ -3389,8 +3389,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 569.07,
-          "printed": "569.07"
+          "canonical": 569.53,
+          "printed": "569.53"
         }
       },
       "lang": "en",
@@ -3421,8 +3421,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 489.81,
-          "printed": "489.81"
+          "canonical": 490.21,
+          "printed": "490.21"
         }
       },
       "lang": "en",
@@ -3453,8 +3453,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 461.93,
-          "printed": "461.93"
+          "canonical": 462.31,
+          "printed": "462.31"
         }
       },
       "lang": "en",
@@ -3485,8 +3485,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 558.22,
-          "printed": "558.22"
+          "canonical": 558.67,
+          "printed": "558.67"
         }
       },
       "lang": "en",
@@ -3517,8 +3517,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 499.2,
-          "printed": "499.20"
+          "canonical": 499.61,
+          "printed": "499.61"
         }
       },
       "lang": "en",
@@ -3537,8 +3537,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 205219.5,
-          "printed": "2,05,219.50"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3557,8 +3557,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 204951.7,
-          "printed": "2,04,951.70"
+          "canonical": 517826.3,
+          "printed": "5,17,826.30"
         }
       },
       "lang": "en",
@@ -3577,8 +3577,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 188147.1,
-          "printed": "1,88,147.10"
+          "canonical": 430585.1,
+          "printed": "4,30,585.10"
         }
       },
       "lang": "en",
@@ -3597,8 +3597,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 203898.5,
-          "printed": "2,03,898.50"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3617,8 +3617,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 219864.0,
-          "printed": "2,19,864.00"
+          "canonical": 261178.9,
+          "printed": "2,61,178.90"
         }
       },
       "lang": "en",
@@ -3637,8 +3637,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 210678.4,
-          "printed": "2,10,678.40"
+          "canonical": 276808.0,
+          "printed": "2,76,808.00"
         }
       },
       "lang": "en",
@@ -3657,8 +3657,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 199691.4,
-          "printed": "1,99,691.40"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3677,8 +3677,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 202129.9,
-          "printed": "2,02,129.90"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3697,8 +3697,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 220522.6,
-          "printed": "2,20,522.60"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3717,8 +3717,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 186196.9,
-          "printed": "1,86,196.90"
+          "canonical": 437277.2,
+          "printed": "4,37,277.20"
         }
       },
       "lang": "en",
@@ -3737,8 +3737,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 194258.0,
-          "printed": "1,94,258.00"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -3757,8 +3757,8 @@
           "printed": "720.00"
         },
         "units_consumed_kwh": {
-          "canonical": 201215.3,
-          "printed": "2,01,215.30"
+          "canonical": 484875.3,
+          "printed": "4,84,875.30"
         }
       },
       "lang": "en",
@@ -3939,16 +3939,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 545836.0,
-          "printed": "5,45,836"
+          "canonical": 547586.0,
+          "printed": "5,47,586"
         },
         "in_time": {
           "canonical": "2025-06-05T06:37:42.884346",
           "printed": "05-06-2025 06:37"
         },
         "net_kg": {
-          "canonical": 533610.0,
-          "printed": "5,33,610"
+          "canonical": 535360.0,
+          "printed": "5,35,360"
         },
         "out_time": {
           "canonical": "2025-06-05T06:52:42.884346",
@@ -4083,16 +4083,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 575653.0,
-          "printed": "5,75,653"
+          "canonical": 576843.0,
+          "printed": "5,76,843"
         },
         "in_time": {
           "canonical": "2025-05-03T14:37:27.366461",
           "printed": "03-05-2025 14:37"
         },
         "net_kg": {
-          "canonical": 561240.0,
-          "printed": "5,61,240"
+          "canonical": 562430.0,
+          "printed": "5,62,430"
         },
         "out_time": {
           "canonical": "2025-05-03T14:57:27.366461",
@@ -4227,16 +4227,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 537868.0,
-          "printed": "5,37,868"
+          "canonical": 539298.0,
+          "printed": "5,39,298"
         },
         "in_time": {
           "canonical": "2025-04-19T12:05:23.748976",
           "printed": "19-04-2025 12:05"
         },
         "net_kg": {
-          "canonical": 527850.0,
-          "printed": "5,27,850"
+          "canonical": 529280.0,
+          "printed": "5,29,280"
         },
         "out_time": {
           "canonical": "2025-04-19T12:50:23.748976",
@@ -4371,16 +4371,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 527459.0,
-          "printed": "5,27,459"
+          "canonical": 524229.0,
+          "printed": "5,24,229"
         },
         "in_time": {
           "canonical": "2025-06-13T15:19:01.572336",
           "printed": "13-06-2025 15:19"
         },
         "net_kg": {
-          "canonical": 515830.00000000006,
-          "printed": "5,15,830"
+          "canonical": 512600.0,
+          "printed": "5,12,600"
         },
         "out_time": {
           "canonical": "2025-06-13T15:53:01.572336",
@@ -4515,16 +4515,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 540408.0,
-          "printed": "5,40,408"
+          "canonical": 542618.0,
+          "printed": "5,42,618"
         },
         "in_time": {
           "canonical": "2025-08-25T12:47:44.906731",
           "printed": "25-08-2025 12:47"
         },
         "net_kg": {
-          "canonical": 527440.0,
-          "printed": "5,27,440"
+          "canonical": 529650.0,
+          "printed": "5,29,650"
         },
         "out_time": {
           "canonical": "2025-08-25T13:11:44.906731",
@@ -4659,16 +4659,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 530328.0,
-          "printed": "5,30,328"
+          "canonical": 531828.0,
+          "printed": "5,31,828"
         },
         "in_time": {
           "canonical": "2026-01-18T17:32:04.388208",
           "printed": "18-01-2026 17:32"
         },
         "net_kg": {
-          "canonical": 519419.99999999994,
-          "printed": "5,19,420"
+          "canonical": 520919.99999999994,
+          "printed": "5,20,920"
         },
         "out_time": {
           "canonical": "2026-01-18T18:02:04.388208",
@@ -4803,16 +4803,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 515408.0,
-          "printed": "5,15,408"
+          "canonical": 513748.0,
+          "printed": "5,13,748"
         },
         "in_time": {
           "canonical": "2026-03-16T12:06:48.053816",
           "printed": "16-03-2026 12:06"
         },
         "net_kg": {
-          "canonical": 507390.0,
-          "printed": "5,07,390"
+          "canonical": 505730.0,
+          "printed": "5,05,730"
         },
         "out_time": {
           "canonical": "2026-03-16T12:44:48.053816",
@@ -4947,16 +4947,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 537547.0,
-          "printed": "5,37,547"
+          "canonical": 540697.0,
+          "printed": "5,40,697"
         },
         "in_time": {
           "canonical": "2026-01-10T18:20:00.279850",
           "printed": "10-01-2026 18:20"
         },
         "net_kg": {
-          "canonical": 523460.00000000006,
-          "printed": "5,23,460"
+          "canonical": 526610.0,
+          "printed": "5,26,610"
         },
         "out_time": {
           "canonical": "2026-01-10T18:57:00.279850",
@@ -5091,16 +5091,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 512204.0,
-          "printed": "5,12,204"
+          "canonical": 515464.0,
+          "printed": "5,15,464"
         },
         "in_time": {
           "canonical": "2025-08-08T15:51:32.101990",
           "printed": "08-08-2025 15:51"
         },
         "net_kg": {
-          "canonical": 503320.0,
-          "printed": "5,03,320"
+          "canonical": 506580.0,
+          "printed": "5,06,580"
         },
         "out_time": {
           "canonical": "2025-08-08T16:36:32.101990",
@@ -5235,16 +5235,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 562044.0,
-          "printed": "5,62,044"
+          "canonical": 565664.0,
+          "printed": "5,65,664"
         },
         "in_time": {
           "canonical": "2025-11-19T14:54:52.743686",
           "printed": "19-11-2025 14:54"
         },
         "net_kg": {
-          "canonical": 553520.0,
-          "printed": "5,53,520"
+          "canonical": 557140.0,
+          "printed": "5,57,140"
         },
         "out_time": {
           "canonical": "2025-11-19T15:34:52.743686",
@@ -5295,8 +5295,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 743.72,
-          "printed": "743.72"
+          "canonical": 745.59,
+          "printed": "745.59"
         }
       },
       "lang": "en",
@@ -5327,8 +5327,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 777.27,
-          "printed": "777.27"
+          "canonical": 779.22,
+          "printed": "779.22"
         }
       },
       "lang": "en",
@@ -5359,8 +5359,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 677.77,
-          "printed": "677.77"
+          "canonical": 679.47,
+          "printed": "679.47"
         }
       },
       "lang": "en",
@@ -5391,8 +5391,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 749.21,
-          "printed": "749.21"
+          "canonical": 751.09,
+          "printed": "751.09"
         }
       },
       "lang": "en",
@@ -5423,8 +5423,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 605.19,
-          "printed": "605.19"
+          "canonical": 606.7,
+          "printed": "606.70"
         }
       },
       "lang": "en",
@@ -5455,8 +5455,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 730.74,
-          "printed": "730.74"
+          "canonical": 732.57,
+          "printed": "732.57"
         }
       },
       "lang": "en",
@@ -5475,8 +5475,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 208679.6,
-          "printed": "2,08,679.60"
+          "canonical": 258362.4,
+          "printed": "2,58,362.40"
         }
       },
       "lang": "en",
@@ -5495,8 +5495,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 213584.9,
-          "printed": "2,13,584.90"
+          "canonical": 280997.8,
+          "printed": "2,80,997.80"
         }
       },
       "lang": "en",
@@ -5515,8 +5515,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 197511.4,
-          "printed": "1,97,511.40"
+          "canonical": 484173.2,
+          "printed": "4,84,173.20"
         }
       },
       "lang": "en",
@@ -5535,8 +5535,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 177453.4,
-          "printed": "1,77,453.40"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -5555,8 +5555,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 155937.7,
-          "printed": "1,55,937.70"
+          "canonical": 377982.0,
+          "printed": "3,77,982.00"
         }
       },
       "lang": "en",
@@ -5575,8 +5575,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 190264.1,
-          "printed": "1,90,264.10"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -5595,8 +5595,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 205579.1,
-          "printed": "2,05,579.10"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -5615,8 +5615,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 178075.9,
-          "printed": "1,78,075.90"
+          "canonical": 232077.7,
+          "printed": "2,32,077.70"
         }
       },
       "lang": "en",
@@ -5635,8 +5635,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 194127.8,
-          "printed": "1,94,127.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -5655,8 +5655,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 207557.1,
-          "printed": "2,07,557.10"
+          "canonical": 508590.1,
+          "printed": "5,08,590.10"
         }
       },
       "lang": "en",
@@ -5675,8 +5675,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 152574.2,
-          "printed": "1,52,574.20"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -5695,8 +5695,8 @@
           "printed": "540.00"
         },
         "units_consumed_kwh": {
-          "canonical": 200677.7,
-          "printed": "2,00,677.70"
+          "canonical": 237400.5,
+          "printed": "2,37,400.50"
         }
       },
       "lang": "en",
@@ -6021,16 +6021,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 707773.0,
-          "printed": "7,07,773"
+          "canonical": 712593.0,
+          "printed": "7,12,593"
         },
         "in_time": {
           "canonical": "2025-09-15T14:56:25.897611",
           "printed": "15-09-2025 14:56"
         },
         "net_kg": {
-          "canonical": 693800.0,
-          "printed": "6,93,800"
+          "canonical": 698620.0,
+          "printed": "6,98,620"
         },
         "out_time": {
           "canonical": "2025-09-15T15:14:25.897611",
@@ -6165,16 +6165,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 691750.0,
-          "printed": "6,91,750"
+          "canonical": 694070.0,
+          "printed": "6,94,070"
         },
         "in_time": {
           "canonical": "2025-10-08T19:43:28.948665",
           "printed": "08-10-2025 19:43"
         },
         "net_kg": {
-          "canonical": 677920.0,
-          "printed": "6,77,920"
+          "canonical": 680240.0,
+          "printed": "6,80,240"
         },
         "out_time": {
           "canonical": "2025-10-08T20:26:28.948665",
@@ -6309,16 +6309,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 721884.0,
-          "printed": "7,21,884"
+          "canonical": 725874.0,
+          "printed": "7,25,874"
         },
         "in_time": {
           "canonical": "2025-06-10T13:53:27.159558",
           "printed": "10-06-2025 13:53"
         },
         "net_kg": {
-          "canonical": 709360.0,
-          "printed": "7,09,360"
+          "canonical": 713350.0,
+          "printed": "7,13,350"
         },
         "out_time": {
           "canonical": "2025-06-10T14:17:27.159558",
@@ -6453,16 +6453,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 687198.0,
-          "printed": "6,87,198"
+          "canonical": 687218.0,
+          "printed": "6,87,218"
         },
         "in_time": {
           "canonical": "2025-07-15T12:58:43.527320",
           "printed": "15-07-2025 12:58"
         },
         "net_kg": {
-          "canonical": 677290.0,
-          "printed": "6,77,290"
+          "canonical": 677310.0,
+          "printed": "6,77,310"
         },
         "out_time": {
           "canonical": "2025-07-15T13:18:43.527320",
@@ -6597,16 +6597,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 746022.0,
-          "printed": "7,46,022"
+          "canonical": 750792.0,
+          "printed": "7,50,792"
         },
         "in_time": {
           "canonical": "2025-10-09T17:03:14.905957",
           "printed": "09-10-2025 17:03"
         },
         "net_kg": {
-          "canonical": 732390.0,
-          "printed": "7,32,390"
+          "canonical": 737160.0,
+          "printed": "7,37,160"
         },
         "out_time": {
           "canonical": "2025-10-09T17:29:14.905957",
@@ -6741,16 +6741,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 613190.0,
-          "printed": "6,13,190"
+          "canonical": 609190.0,
+          "printed": "6,09,190"
         },
         "in_time": {
           "canonical": "2026-01-03T14:22:24.285944",
           "printed": "03-01-2026 14:22"
         },
         "net_kg": {
-          "canonical": 599000.0,
-          "printed": "5,99,000"
+          "canonical": 595000.0,
+          "printed": "5,95,000"
         },
         "out_time": {
           "canonical": "2026-01-03T14:54:24.285944",
@@ -6885,16 +6885,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 641453.0,
-          "printed": "6,41,453"
+          "canonical": 645823.0,
+          "printed": "6,45,823"
         },
         "in_time": {
           "canonical": "2026-02-11T16:09:55.608795",
           "printed": "11-02-2026 16:09"
         },
         "net_kg": {
-          "canonical": 632640.0,
-          "printed": "6,32,640"
+          "canonical": 637010.0,
+          "printed": "6,37,010"
         },
         "out_time": {
           "canonical": "2026-02-11T16:31:55.608795",
@@ -7029,16 +7029,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 666666.0,
-          "printed": "6,66,666"
+          "canonical": 668076.0,
+          "printed": "6,68,076"
         },
         "in_time": {
           "canonical": "2025-06-18T18:21:32.680118",
           "printed": "18-06-2025 18:21"
         },
         "net_kg": {
-          "canonical": 652830.0,
-          "printed": "6,52,830"
+          "canonical": 654240.0,
+          "printed": "6,54,240"
         },
         "out_time": {
           "canonical": "2025-06-18T18:55:32.680118",
@@ -7089,8 +7089,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 722.03,
-          "printed": "722.03"
+          "canonical": 724.17,
+          "printed": "724.17"
         }
       },
       "lang": "en",
@@ -7121,8 +7121,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 671.71,
-          "printed": "671.71"
+          "canonical": 673.7,
+          "printed": "673.70"
         }
       },
       "lang": "en",
@@ -7153,8 +7153,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 600.94,
-          "printed": "600.94"
+          "canonical": 602.72,
+          "printed": "602.72"
         }
       },
       "lang": "en",
@@ -7185,8 +7185,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 692.15,
-          "printed": "692.15"
+          "canonical": 694.2,
+          "printed": "694.20"
         }
       },
       "lang": "en",
@@ -7217,8 +7217,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 592.99,
-          "printed": "592.99"
+          "canonical": 594.75,
+          "printed": "594.75"
         }
       },
       "lang": "en",
@@ -7249,8 +7249,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 778.98,
-          "printed": "778.98"
+          "canonical": 781.29,
+          "printed": "781.29"
         }
       },
       "lang": "en",
@@ -7281,8 +7281,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 716.39,
-          "printed": "716.39"
+          "canonical": 718.51,
+          "printed": "718.51"
         }
       },
       "lang": "en",
@@ -7301,8 +7301,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 223127.8,
-          "printed": "2,23,127.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -7321,8 +7321,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 219785.9,
-          "printed": "2,19,785.90"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -7341,8 +7341,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 176601.8,
-          "printed": "1,76,601.80"
+          "canonical": 483037.7,
+          "printed": "4,83,037.70"
         }
       },
       "lang": "en",
@@ -7361,8 +7361,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 234009.6,
-          "printed": "2,34,009.60"
+          "canonical": 316994.1,
+          "printed": "3,16,994.10"
         }
       },
       "lang": "en",
@@ -7381,8 +7381,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 193267.7,
-          "printed": "1,93,267.70"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -7401,8 +7401,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 184444.3,
-          "printed": "1,84,444.30"
+          "canonical": 479551.5,
+          "printed": "4,79,551.50"
         }
       },
       "lang": "en",
@@ -7421,8 +7421,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 217343.3,
-          "printed": "2,17,343.30"
+          "canonical": 616124.9,
+          "printed": "6,16,124.90"
         }
       },
       "lang": "en",
@@ -7441,8 +7441,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 180145.8,
-          "printed": "1,80,145.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -7481,8 +7481,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 190536.8,
-          "printed": "1,90,536.80"
+          "canonical": 226738.8,
+          "printed": "2,26,738.80"
         }
       },
       "lang": "en",
@@ -7501,8 +7501,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 191196.4,
-          "printed": "1,91,196.40"
+          "canonical": 243588.0,
+          "printed": "2,43,588.00"
         }
       },
       "lang": "en",
@@ -7521,8 +7521,8 @@
           "printed": "800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 240227.2,
-          "printed": "2,40,227.20"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -7703,16 +7703,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 346800.0,
-          "printed": "3,46,800"
+          "canonical": 346920.0,
+          "printed": "3,46,920"
         },
         "in_time": {
           "canonical": "2025-06-22T14:13:04.484347",
           "printed": "22-06-2025 14:13"
         },
         "net_kg": {
-          "canonical": 333580.0,
-          "printed": "3,33,580"
+          "canonical": 333700.0,
+          "printed": "3,33,700"
         },
         "out_time": {
           "canonical": "2025-06-22T14:43:04.484347",
@@ -7847,16 +7847,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 358788.0,
-          "printed": "3,58,788"
+          "canonical": 359488.0,
+          "printed": "3,59,488"
         },
         "in_time": {
           "canonical": "2026-01-15T13:24:02.409715",
           "printed": "15-01-2026 13:24"
         },
         "net_kg": {
-          "canonical": 350570.0,
-          "printed": "3,50,570"
+          "canonical": 351270.0,
+          "printed": "3,51,270"
         },
         "out_time": {
           "canonical": "2026-01-15T13:54:02.409715",
@@ -7991,16 +7991,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 385958.0,
-          "printed": "3,85,958"
+          "canonical": 386608.0,
+          "printed": "3,86,608"
         },
         "in_time": {
           "canonical": "2025-04-13T17:09:38.734819",
           "printed": "13-04-2025 17:09"
         },
         "net_kg": {
-          "canonical": 373860.0,
-          "printed": "3,73,860"
+          "canonical": 374510.0,
+          "printed": "3,74,510"
         },
         "out_time": {
           "canonical": "2025-04-13T17:46:38.734819",
@@ -8135,16 +8135,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 408047.0,
-          "printed": "4,08,047"
+          "canonical": 410187.0,
+          "printed": "4,10,187"
         },
         "in_time": {
           "canonical": "2025-08-11T12:41:47.878607",
           "printed": "11-08-2025 12:41"
         },
         "net_kg": {
-          "canonical": 397150.0,
-          "printed": "3,97,150"
+          "canonical": 399290.0,
+          "printed": "3,99,290"
         },
         "out_time": {
           "canonical": "2025-08-11T13:22:47.878607",
@@ -8279,16 +8279,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 366922.0,
-          "printed": "3,66,922"
+          "canonical": 366582.0,
+          "printed": "3,66,582"
         },
         "in_time": {
           "canonical": "2025-06-15T13:44:51.509511",
           "printed": "15-06-2025 13:44"
         },
         "net_kg": {
-          "canonical": 353710.0,
-          "printed": "3,53,710"
+          "canonical": 353370.0,
+          "printed": "3,53,370"
         },
         "out_time": {
           "canonical": "2025-06-15T14:10:51.509511",
@@ -8423,16 +8423,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 342063.0,
-          "printed": "3,42,063"
+          "canonical": 344213.0,
+          "printed": "3,44,213"
         },
         "in_time": {
           "canonical": "2025-06-05T15:47:20.023748",
           "printed": "05-06-2025 15:47"
         },
         "net_kg": {
-          "canonical": 329860.0,
-          "printed": "3,29,860"
+          "canonical": 332010.0,
+          "printed": "3,32,010"
         },
         "out_time": {
           "canonical": "2025-06-05T16:13:20.023748",
@@ -8567,16 +8567,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 374451.0,
-          "printed": "3,74,451"
+          "canonical": 374821.0,
+          "printed": "3,74,821"
         },
         "in_time": {
           "canonical": "2025-12-04T14:33:18.619564",
           "printed": "04-12-2025 14:33"
         },
         "net_kg": {
-          "canonical": 360800.0,
-          "printed": "3,60,800"
+          "canonical": 361170.0,
+          "printed": "3,61,170"
         },
         "out_time": {
           "canonical": "2025-12-04T15:15:18.619564",
@@ -8711,16 +8711,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 391630.0,
-          "printed": "3,91,630"
+          "canonical": 390830.0,
+          "printed": "3,90,830"
         },
         "in_time": {
           "canonical": "2025-08-18T16:48:46.594885",
           "printed": "18-08-2025 16:48"
         },
         "net_kg": {
-          "canonical": 382360.0,
-          "printed": "3,82,360"
+          "canonical": 381560.0,
+          "printed": "3,81,560"
         },
         "out_time": {
           "canonical": "2025-08-18T17:07:46.594885",
@@ -8855,16 +8855,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 362471.0,
-          "printed": "3,62,471"
+          "canonical": 361531.0,
+          "printed": "3,61,531"
         },
         "in_time": {
           "canonical": "2025-06-19T16:05:48.541247",
           "printed": "19-06-2025 16:05"
         },
         "net_kg": {
-          "canonical": 352200.0,
-          "printed": "3,52,200"
+          "canonical": 351260.0,
+          "printed": "3,51,260"
         },
         "out_time": {
           "canonical": "2025-06-19T16:50:48.541247",
@@ -8999,16 +8999,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 339842.0,
-          "printed": "3,39,842"
+          "canonical": 339572.0,
+          "printed": "3,39,572"
         },
         "in_time": {
           "canonical": "2025-05-19T10:15:02.497553",
           "printed": "19-05-2025 10:15"
         },
         "net_kg": {
-          "canonical": 329930.0,
-          "printed": "3,29,930"
+          "canonical": 329660.0,
+          "printed": "3,29,660"
         },
         "out_time": {
           "canonical": "2025-05-19T10:54:02.497553",
@@ -9059,8 +9059,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 348.91,
-          "printed": "348.91"
+          "canonical": 349.28,
+          "printed": "349.28"
         }
       },
       "lang": "en",
@@ -9091,8 +9091,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 375.49,
-          "printed": "375.49"
+          "canonical": 375.88,
+          "printed": "375.88"
         }
       },
       "lang": "en",
@@ -9123,8 +9123,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 374.27,
-          "printed": "374.27"
+          "canonical": 374.67,
+          "printed": "374.67"
         }
       },
       "lang": "en",
@@ -9155,8 +9155,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 345.2,
-          "printed": "345.20"
+          "canonical": 345.57,
+          "printed": "345.57"
         }
       },
       "lang": "en",
@@ -9187,8 +9187,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 303.76,
-          "printed": "303.76"
+          "canonical": 304.09,
+          "printed": "304.09"
         }
       },
       "lang": "en",
@@ -9219,8 +9219,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 384.99,
-          "printed": "384.99"
+          "canonical": 385.4,
+          "printed": "385.40"
         }
       },
       "lang": "en",
@@ -9251,8 +9251,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 338.02,
-          "printed": "338.02"
+          "canonical": 338.38,
+          "printed": "338.38"
         }
       },
       "lang": "en",
@@ -9283,8 +9283,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 382.81,
-          "printed": "382.81"
+          "canonical": 383.22,
+          "printed": "383.22"
         }
       },
       "lang": "en",
@@ -9849,16 +9849,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 324794.0,
-          "printed": "3,24,794"
+          "canonical": 326184.0,
+          "printed": "3,26,184"
         },
         "in_time": {
           "canonical": "2026-01-11T15:20:16.939312",
           "printed": "11-01-2026 15:20"
         },
         "net_kg": {
-          "canonical": 315140.0,
-          "printed": "3,15,140"
+          "canonical": 316530.0,
+          "printed": "3,16,530"
         },
         "out_time": {
           "canonical": "2026-01-11T15:39:16.939312",
@@ -9993,16 +9993,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 319116.0,
-          "printed": "3,19,116"
+          "canonical": 319726.0,
+          "printed": "3,19,726"
         },
         "in_time": {
           "canonical": "2025-10-09T19:03:15.715565",
           "printed": "09-10-2025 19:03"
         },
         "net_kg": {
-          "canonical": 304210.0,
-          "printed": "3,04,210"
+          "canonical": 304820.0,
+          "printed": "3,04,820"
         },
         "out_time": {
           "canonical": "2025-10-09T19:28:15.715565",
@@ -10137,16 +10137,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 310453.0,
-          "printed": "3,10,453"
+          "canonical": 310293.0,
+          "printed": "3,10,293"
         },
         "in_time": {
           "canonical": "2026-03-21T14:59:20.138624",
           "printed": "21-03-2026 14:59"
         },
         "net_kg": {
-          "canonical": 302190.0,
-          "printed": "3,02,190"
+          "canonical": 302030.0,
+          "printed": "3,02,030"
         },
         "out_time": {
           "canonical": "2026-03-21T15:25:20.138624",
@@ -10281,16 +10281,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 345161.0,
-          "printed": "3,45,161"
+          "canonical": 345871.0,
+          "printed": "3,45,871"
         },
         "in_time": {
           "canonical": "2026-02-10T13:02:37.613511",
           "printed": "10-02-2026 13:02"
         },
         "net_kg": {
-          "canonical": 334910.0,
-          "printed": "3,34,910"
+          "canonical": 335620.0,
+          "printed": "3,35,620"
         },
         "out_time": {
           "canonical": "2026-02-10T13:32:37.613511",
@@ -10425,16 +10425,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 363941.0,
-          "printed": "3,63,941"
+          "canonical": 364051.0,
+          "printed": "3,64,051"
         },
         "in_time": {
           "canonical": "2025-10-17T14:05:59.585210",
           "printed": "17-10-2025 14:05"
         },
         "net_kg": {
-          "canonical": 354830.0,
-          "printed": "3,54,830"
+          "canonical": 354940.0,
+          "printed": "3,54,940"
         },
         "out_time": {
           "canonical": "2025-10-17T14:31:59.585210",
@@ -10569,16 +10569,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 332376.0,
-          "printed": "3,32,376"
+          "canonical": 333376.0,
+          "printed": "3,33,376"
         },
         "in_time": {
           "canonical": "2025-08-10T14:29:20.885183",
           "printed": "10-08-2025 14:29"
         },
         "net_kg": {
-          "canonical": 319780.0,
-          "printed": "3,19,780"
+          "canonical": 320780.0,
+          "printed": "3,20,780"
         },
         "out_time": {
           "canonical": "2025-08-10T15:13:20.885183",
@@ -10713,16 +10713,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 327322.0,
-          "printed": "3,27,322"
+          "canonical": 326782.0,
+          "printed": "3,26,782"
         },
         "in_time": {
           "canonical": "2025-05-20T13:14:57.205834",
           "printed": "20-05-2025 13:14"
         },
         "net_kg": {
-          "canonical": 313780.0,
-          "printed": "3,13,780"
+          "canonical": 313240.0,
+          "printed": "3,13,240"
         },
         "out_time": {
           "canonical": "2025-05-20T13:55:57.205834",
@@ -10857,16 +10857,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 346982.0,
-          "printed": "3,46,982"
+          "canonical": 346322.0,
+          "printed": "3,46,322"
         },
         "in_time": {
           "canonical": "2025-10-05T15:07:49.514920",
           "printed": "05-10-2025 15:07"
         },
         "net_kg": {
-          "canonical": 337720.0,
-          "printed": "3,37,720"
+          "canonical": 337060.0,
+          "printed": "3,37,060"
         },
         "out_time": {
           "canonical": "2025-10-05T15:28:49.514920",
@@ -11001,16 +11001,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 333547.0,
-          "printed": "3,33,547"
+          "canonical": 331877.0,
+          "printed": "3,31,877"
         },
         "in_time": {
           "canonical": "2025-04-11T10:56:53.499239",
           "printed": "11-04-2025 10:56"
         },
         "net_kg": {
-          "canonical": 322910.0,
-          "printed": "3,22,910"
+          "canonical": 321240.0,
+          "printed": "3,21,240"
         },
         "out_time": {
           "canonical": "2025-04-11T11:16:53.499239",
@@ -11145,16 +11145,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 356267.0,
-          "printed": "3,56,267"
+          "canonical": 356797.0,
+          "printed": "3,56,797"
         },
         "in_time": {
           "canonical": "2025-09-06T13:34:28.458820",
           "printed": "06-09-2025 13:34"
         },
         "net_kg": {
-          "canonical": 343000.0,
-          "printed": "3,43,000"
+          "canonical": 343530.0,
+          "printed": "3,43,530"
         },
         "out_time": {
           "canonical": "2025-09-06T14:14:28.458820",
@@ -11289,16 +11289,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 342064.0,
-          "printed": "3,42,064"
+          "canonical": 342194.0,
+          "printed": "3,42,194"
         },
         "in_time": {
           "canonical": "2025-06-15T15:53:30.451553",
           "printed": "15-06-2025 15:53"
         },
         "net_kg": {
-          "canonical": 327300.0,
-          "printed": "3,27,300"
+          "canonical": 327430.0,
+          "printed": "3,27,430"
         },
         "out_time": {
           "canonical": "2025-06-15T16:34:30.451553",
@@ -11349,8 +11349,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 682.39,
-          "printed": "682.39"
+          "canonical": 682.65,
+          "printed": "682.65"
         }
       },
       "lang": "en",
@@ -11381,8 +11381,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 610.14,
-          "printed": "610.14"
+          "canonical": 610.37,
+          "printed": "610.37"
         }
       },
       "lang": "en",
@@ -11413,8 +11413,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 693.67,
-          "printed": "693.67"
+          "canonical": 693.94,
+          "printed": "693.94"
         }
       },
       "lang": "en",
@@ -11445,8 +11445,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 678.37,
-          "printed": "678.37"
+          "canonical": 678.62,
+          "printed": "678.62"
         }
       },
       "lang": "en",
@@ -11477,8 +11477,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 662.16,
-          "printed": "662.16"
+          "canonical": 662.41,
+          "printed": "662.41"
         }
       },
       "lang": "en",
@@ -12107,16 +12107,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 620171.0,
-          "printed": "6,20,171"
+          "canonical": 618381.0,
+          "printed": "6,18,381"
         },
         "in_time": {
           "canonical": "2025-04-21T15:25:26.173504",
           "printed": "21-04-2025 15:25"
         },
         "net_kg": {
-          "canonical": 612160.0,
-          "printed": "6,12,160"
+          "canonical": 610370.0,
+          "printed": "6,10,370"
         },
         "out_time": {
           "canonical": "2025-04-21T15:51:26.173504",
@@ -12251,16 +12251,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 619051.0,
-          "printed": "6,19,051"
+          "canonical": 618121.0,
+          "printed": "6,18,121"
         },
         "in_time": {
           "canonical": "2025-09-08T09:51:37.336233",
           "printed": "08-09-2025 09:51"
         },
         "net_kg": {
-          "canonical": 607760.0,
-          "printed": "6,07,760"
+          "canonical": 606830.0,
+          "printed": "6,06,830"
         },
         "out_time": {
           "canonical": "2025-09-08T10:26:37.336233",
@@ -12395,16 +12395,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 597760.0,
-          "printed": "5,97,760"
+          "canonical": 596540.0,
+          "printed": "5,96,540"
         },
         "in_time": {
           "canonical": "2025-05-13T15:35:00.303891",
           "printed": "13-05-2025 15:35"
         },
         "net_kg": {
-          "canonical": 587390.0,
-          "printed": "5,87,390"
+          "canonical": 586170.0,
+          "printed": "5,86,170"
         },
         "out_time": {
           "canonical": "2025-05-13T16:10:00.303891",
@@ -12539,16 +12539,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 653228.0,
-          "printed": "6,53,228"
+          "canonical": 650538.0,
+          "printed": "6,50,538"
         },
         "in_time": {
           "canonical": "2026-03-06T14:00:23.117376",
           "printed": "06-03-2026 14:00"
         },
         "net_kg": {
-          "canonical": 639690.0,
-          "printed": "6,39,690"
+          "canonical": 637000.0,
+          "printed": "6,37,000"
         },
         "out_time": {
           "canonical": "2026-03-06T14:43:23.117376",
@@ -12683,16 +12683,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 683145.0,
-          "printed": "6,83,145"
+          "canonical": 686555.0,
+          "printed": "6,86,555"
         },
         "in_time": {
           "canonical": "2026-02-02T17:30:19.611214",
           "printed": "02-02-2026 17:30"
         },
         "net_kg": {
-          "canonical": 674810.0,
-          "printed": "6,74,810"
+          "canonical": 678220.0,
+          "printed": "6,78,220"
         },
         "out_time": {
           "canonical": "2026-02-02T18:05:19.611214",
@@ -12827,16 +12827,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 579518.0,
-          "printed": "5,79,518"
+          "canonical": 577658.0,
+          "printed": "5,77,658"
         },
         "in_time": {
           "canonical": "2025-09-11T17:36:14.762242",
           "printed": "11-09-2025 17:36"
         },
         "net_kg": {
-          "canonical": 570940.0,
-          "printed": "5,70,940"
+          "canonical": 569080.0,
+          "printed": "5,69,080"
         },
         "out_time": {
           "canonical": "2025-09-11T18:04:14.762242",
@@ -12887,8 +12887,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 848.25,
-          "printed": "848.25"
+          "canonical": 847.08,
+          "printed": "847.08"
         }
       },
       "lang": "en",
@@ -12919,8 +12919,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 692.86,
-          "printed": "692.86"
+          "canonical": 691.9,
+          "printed": "691.90"
         }
       },
       "lang": "en",
@@ -12951,8 +12951,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 700.42,
-          "printed": "700.42"
+          "canonical": 699.46,
+          "printed": "699.46"
         }
       },
       "lang": "en",
@@ -12983,8 +12983,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 726.57,
-          "printed": "726.57"
+          "canonical": 725.57,
+          "printed": "725.57"
         }
       },
       "lang": "en",
@@ -13405,16 +13405,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 335842.0,
-          "printed": "3,35,842"
+          "canonical": 335262.0,
+          "printed": "3,35,262"
         },
         "in_time": {
           "canonical": "2025-09-05T11:28:59.414186",
           "printed": "05-09-2025 11:28"
         },
         "net_kg": {
-          "canonical": 322500.0,
-          "printed": "3,22,500"
+          "canonical": 321920.0,
+          "printed": "3,21,920"
         },
         "out_time": {
           "canonical": "2025-09-05T12:01:59.414186",
@@ -13549,16 +13549,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 340872.0,
-          "printed": "3,40,872"
+          "canonical": 339762.0,
+          "printed": "3,39,762"
         },
         "in_time": {
           "canonical": "2025-12-05T11:09:44.294208",
           "printed": "05-12-2025 11:09"
         },
         "net_kg": {
-          "canonical": 331050.0,
-          "printed": "3,31,050"
+          "canonical": 329940.0,
+          "printed": "3,29,940"
         },
         "out_time": {
           "canonical": "2025-12-05T11:38:44.294208",
@@ -13693,16 +13693,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 342073.0,
-          "printed": "3,42,073"
+          "canonical": 343493.0,
+          "printed": "3,43,493"
         },
         "in_time": {
           "canonical": "2026-03-07T13:40:24.717689",
           "printed": "07-03-2026 13:40"
         },
         "net_kg": {
-          "canonical": 327300.0,
-          "printed": "3,27,300"
+          "canonical": 328720.0,
+          "printed": "3,28,720"
         },
         "out_time": {
           "canonical": "2026-03-07T14:05:24.717689",
@@ -13837,16 +13837,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 364080.0,
-          "printed": "3,64,080"
+          "canonical": 364120.0,
+          "printed": "3,64,120"
         },
         "in_time": {
           "canonical": "2026-02-22T13:00:46.021453",
           "printed": "22-02-2026 13:00"
         },
         "net_kg": {
-          "canonical": 355230.0,
-          "printed": "3,55,230"
+          "canonical": 355270.0,
+          "printed": "3,55,270"
         },
         "out_time": {
           "canonical": "2026-02-22T13:21:46.021453",
@@ -13981,16 +13981,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 371256.0,
-          "printed": "3,71,256"
+          "canonical": 370806.0,
+          "printed": "3,70,806"
         },
         "in_time": {
           "canonical": "2025-06-05T14:40:18.404775",
           "printed": "05-06-2025 14:40"
         },
         "net_kg": {
-          "canonical": 360390.0,
-          "printed": "3,60,390"
+          "canonical": 359940.0,
+          "printed": "3,59,940"
         },
         "out_time": {
           "canonical": "2025-06-05T15:13:18.404775",
@@ -14125,16 +14125,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 387207.0,
-          "printed": "3,87,207"
+          "canonical": 387227.0,
+          "printed": "3,87,227"
         },
         "in_time": {
           "canonical": "2025-04-03T13:51:00.060383",
           "printed": "03-04-2025 13:51"
         },
         "net_kg": {
-          "canonical": 373130.0,
-          "printed": "3,73,130"
+          "canonical": 373150.0,
+          "printed": "3,73,150"
         },
         "out_time": {
           "canonical": "2025-04-03T14:32:00.060383",
@@ -14269,16 +14269,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 328621.0,
-          "printed": "3,28,621"
+          "canonical": 330641.0,
+          "printed": "3,30,641"
         },
         "in_time": {
           "canonical": "2025-06-04T13:26:49.298200",
           "printed": "04-06-2025 13:26"
         },
         "net_kg": {
-          "canonical": 318700.0,
-          "printed": "3,18,700"
+          "canonical": 320720.0,
+          "printed": "3,20,720"
         },
         "out_time": {
           "canonical": "2025-06-04T14:01:49.298200",
@@ -14413,16 +14413,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 352509.0,
-          "printed": "3,52,509"
+          "canonical": 354069.0,
+          "printed": "3,54,069"
         },
         "in_time": {
           "canonical": "2026-01-10T10:57:05.706126",
           "printed": "10-01-2026 10:57"
         },
         "net_kg": {
-          "canonical": 344310.0,
-          "printed": "3,44,310"
+          "canonical": 345870.0,
+          "printed": "3,45,870"
         },
         "out_time": {
           "canonical": "2026-01-10T11:13:05.706126",
@@ -14557,16 +14557,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 358911.0,
-          "printed": "3,58,911"
+          "canonical": 357671.0,
+          "printed": "3,57,671"
         },
         "in_time": {
           "canonical": "2026-02-21T14:54:03.281267",
           "printed": "21-02-2026 14:54"
         },
         "net_kg": {
-          "canonical": 345260.0,
-          "printed": "3,45,260"
+          "canonical": 344020.0,
+          "printed": "3,44,020"
         },
         "out_time": {
           "canonical": "2026-02-21T15:21:03.281267",
@@ -14701,16 +14701,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 324205.0,
-          "printed": "3,24,205"
+          "canonical": 325345.0,
+          "printed": "3,25,345"
         },
         "in_time": {
           "canonical": "2025-11-10T13:20:07.363738",
           "printed": "10-11-2025 13:20"
         },
         "net_kg": {
-          "canonical": 312600.0,
-          "printed": "3,12,600"
+          "canonical": 313740.0,
+          "printed": "3,13,740"
         },
         "out_time": {
           "canonical": "2025-11-10T13:38:07.363738",
@@ -14845,16 +14845,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 350998.0,
-          "printed": "3,50,998"
+          "canonical": 352248.0,
+          "printed": "3,52,248"
         },
         "in_time": {
           "canonical": "2025-04-11T13:41:31.577517",
           "printed": "11-04-2025 13:41"
         },
         "net_kg": {
-          "canonical": 339510.0,
-          "printed": "3,39,510"
+          "canonical": 340760.0,
+          "printed": "3,40,760"
         },
         "out_time": {
           "canonical": "2025-04-11T14:12:31.577517",
@@ -14905,8 +14905,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 425.95,
-          "printed": "425.95"
+          "canonical": 426.41,
+          "printed": "426.41"
         }
       },
       "lang": "en",
@@ -14937,8 +14937,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 426.98,
-          "printed": "426.98"
+          "canonical": 427.45,
+          "printed": "427.45"
         }
       },
       "lang": "en",
@@ -14969,8 +14969,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 436.94,
-          "printed": "436.94"
+          "canonical": 437.42,
+          "printed": "437.42"
         }
       },
       "lang": "en",
@@ -15001,8 +15001,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 398.32,
-          "printed": "398.32"
+          "canonical": 398.76,
+          "printed": "398.76"
         }
       },
       "lang": "en",
@@ -15033,8 +15033,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 448.35,
-          "printed": "448.35"
+          "canonical": 448.84,
+          "printed": "448.84"
         }
       },
       "lang": "en",
@@ -15065,8 +15065,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 363.39,
-          "printed": "363.39"
+          "canonical": 363.78,
+          "printed": "363.78"
         }
       },
       "lang": "en",
@@ -15097,8 +15097,8 @@
           "printed": "Recycled PE/PP granules"
         },
         "quantity_t": {
-          "canonical": 379.47,
-          "printed": "379.47"
+          "canonical": 379.88,
+          "printed": "379.88"
         }
       },
       "lang": "en",
@@ -15117,8 +15117,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 121772.2,
-          "printed": "1,21,772.20"
+          "canonical": 278190.0,
+          "printed": "2,78,190.00"
         }
       },
       "lang": "en",
@@ -15137,8 +15137,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 126520.8,
-          "printed": "1,26,520.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -15157,8 +15157,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 128277.5,
-          "printed": "1,28,277.50"
+          "canonical": 279402.8,
+          "printed": "2,79,402.80"
         }
       },
       "lang": "en",
@@ -15177,8 +15177,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 111495.7,
-          "printed": "1,11,495.70"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -15197,8 +15197,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 111773.0,
-          "printed": "1,11,773.00"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -15217,8 +15217,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 135710.2,
-          "printed": "1,35,710.20"
+          "canonical": 139801.0,
+          "printed": "1,39,801.00"
         }
       },
       "lang": "en",
@@ -15237,8 +15237,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 126368.3,
-          "printed": "1,26,368.30"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -15257,8 +15257,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 122903.2,
-          "printed": "1,22,903.20"
+          "canonical": 123390.9,
+          "printed": "1,23,390.90"
         }
       },
       "lang": "en",
@@ -15277,8 +15277,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 127485.1,
-          "printed": "1,27,485.10"
+          "canonical": 134599.8,
+          "printed": "1,34,599.80"
         }
       },
       "lang": "en",
@@ -15297,8 +15297,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 130485.4,
-          "printed": "1,30,485.40"
+          "canonical": 144419.1,
+          "printed": "1,44,419.10"
         }
       },
       "lang": "en",
@@ -15317,8 +15317,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 135149.6,
-          "printed": "1,35,149.60"
+          "canonical": 302427.9,
+          "printed": "3,02,427.90"
         }
       },
       "lang": "en",
@@ -15337,8 +15337,8 @@
           "printed": "500.00"
         },
         "units_consumed_kwh": {
-          "canonical": 148061.5,
-          "printed": "1,48,061.50"
+          "canonical": 155746.5,
+          "printed": "1,55,746.50"
         }
       },
       "lang": "en",
@@ -15519,16 +15519,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1240870.0,
-          "printed": "12,40,870"
+          "canonical": 1248270.0,
+          "printed": "12,48,270"
         },
         "in_time": {
           "canonical": "2026-02-20T12:43:09.626789",
           "printed": "20-02-2026 12:43"
         },
         "net_kg": {
-          "canonical": 1230640.0,
-          "printed": "12,30,640"
+          "canonical": 1238040.0,
+          "printed": "12,38,040"
         },
         "out_time": {
           "canonical": "2026-02-20T13:10:09.626789",
@@ -15663,16 +15663,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1346607.0,
-          "printed": "13,46,607"
+          "canonical": 1344147.0,
+          "printed": "13,44,147"
         },
         "in_time": {
           "canonical": "2026-01-20T16:08:16.868138",
           "printed": "20-01-2026 16:08"
         },
         "net_kg": {
-          "canonical": 1333890.0,
-          "printed": "13,33,890"
+          "canonical": 1331430.0,
+          "printed": "13,31,430"
         },
         "out_time": {
           "canonical": "2026-01-20T16:36:16.868138",
@@ -15807,16 +15807,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1334494.0,
-          "printed": "13,34,494"
+          "canonical": 1336034.0,
+          "printed": "13,36,034"
         },
         "in_time": {
           "canonical": "2025-05-19T18:26:54.628623",
           "printed": "19-05-2025 18:26"
         },
         "net_kg": {
-          "canonical": 1325300.0,
-          "printed": "13,25,300"
+          "canonical": 1326840.0,
+          "printed": "13,26,840"
         },
         "out_time": {
           "canonical": "2025-05-19T19:01:54.628623",
@@ -15951,16 +15951,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1326927.0,
-          "printed": "13,26,927"
+          "canonical": 1325327.0,
+          "printed": "13,25,327"
         },
         "in_time": {
           "canonical": "2025-06-24T15:34:50.787937",
           "printed": "24-06-2025 15:34"
         },
         "net_kg": {
-          "canonical": 1317500.0,
-          "printed": "13,17,500"
+          "canonical": 1315900.0,
+          "printed": "13,15,900"
         },
         "out_time": {
           "canonical": "2025-06-24T16:05:50.787937",
@@ -16095,16 +16095,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1368157.0,
-          "printed": "13,68,157"
+          "canonical": 1365817.0,
+          "printed": "13,65,817"
         },
         "in_time": {
           "canonical": "2025-05-25T16:58:56.155342",
           "printed": "25-05-2025 16:58"
         },
         "net_kg": {
-          "canonical": 1353460.0,
-          "printed": "13,53,460"
+          "canonical": 1351120.0,
+          "printed": "13,51,120"
         },
         "out_time": {
           "canonical": "2025-05-25T17:27:56.155342",
@@ -16239,16 +16239,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1273620.0,
-          "printed": "12,73,620"
+          "canonical": 1270060.0,
+          "printed": "12,70,060"
         },
         "in_time": {
           "canonical": "2025-10-18T16:56:09.170939",
           "printed": "18-10-2025 16:56"
         },
         "net_kg": {
-          "canonical": 1259030.0,
-          "printed": "12,59,030"
+          "canonical": 1255470.0,
+          "printed": "12,55,470"
         },
         "out_time": {
           "canonical": "2025-10-18T17:20:09.170939",
@@ -16383,16 +16383,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1320052.0,
-          "printed": "13,20,052"
+          "canonical": 1325852.0,
+          "printed": "13,25,852"
         },
         "in_time": {
           "canonical": "2025-09-25T14:37:29.748751",
           "printed": "25-09-2025 14:37"
         },
         "net_kg": {
-          "canonical": 1305370.0,
-          "printed": "13,05,370"
+          "canonical": 1311170.0,
+          "printed": "13,11,170"
         },
         "out_time": {
           "canonical": "2025-09-25T15:17:29.748751",
@@ -16527,16 +16527,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1144854.0,
-          "printed": "11,44,854"
+          "canonical": 1141214.0,
+          "printed": "11,41,214"
         },
         "in_time": {
           "canonical": "2025-09-05T12:04:50.595090",
           "printed": "05-09-2025 12:04"
         },
         "net_kg": {
-          "canonical": 1132920.0,
-          "printed": "11,32,920"
+          "canonical": 1129280.0,
+          "printed": "11,29,280"
         },
         "out_time": {
           "canonical": "2025-09-05T12:27:50.595090",
@@ -16671,16 +16671,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1290404.0,
-          "printed": "12,90,404"
+          "canonical": 1294294.0,
+          "printed": "12,94,294"
         },
         "in_time": {
           "canonical": "2025-12-05T12:06:56.603652",
           "printed": "05-12-2025 12:06"
         },
         "net_kg": {
-          "canonical": 1281700.0,
-          "printed": "12,81,700"
+          "canonical": 1285590.0,
+          "printed": "12,85,590"
         },
         "out_time": {
           "canonical": "2025-12-05T12:45:56.603652",
@@ -16815,16 +16815,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1382476.0,
-          "printed": "13,82,476"
+          "canonical": 1385266.0,
+          "printed": "13,85,266"
         },
         "in_time": {
           "canonical": "2025-09-05T13:26:32.707128",
           "printed": "05-09-2025 13:26"
         },
         "net_kg": {
-          "canonical": 1368120.0,
-          "printed": "13,68,120"
+          "canonical": 1370910.0,
+          "printed": "13,70,910"
         },
         "out_time": {
           "canonical": "2025-09-05T13:43:32.707128",
@@ -16959,16 +16959,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1202965.0,
-          "printed": "12,02,965"
+          "canonical": 1210195.0,
+          "printed": "12,10,195"
         },
         "in_time": {
           "canonical": "2025-06-21T17:56:46.170936",
           "printed": "21-06-2025 17:56"
         },
         "net_kg": {
-          "canonical": 1188230.0,
-          "printed": "11,88,230"
+          "canonical": 1195460.0,
+          "printed": "11,95,460"
         },
         "out_time": {
           "canonical": "2025-06-21T18:40:46.170936",
@@ -17103,16 +17103,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1142556.0,
-          "printed": "11,42,556"
+          "canonical": 1148096.0,
+          "printed": "11,48,096"
         },
         "in_time": {
           "canonical": "2025-07-10T11:54:25.184799",
           "printed": "10-07-2025 11:54"
         },
         "net_kg": {
-          "canonical": 1131280.0,
-          "printed": "11,31,280"
+          "canonical": 1136820.0,
+          "printed": "11,36,820"
         },
         "out_time": {
           "canonical": "2025-07-10T12:15:25.184799",
@@ -17151,8 +17151,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 589152.6,
-          "printed": "5,89,152.60"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -17171,8 +17171,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 499503.3,
-          "printed": "4,99,503.30"
+          "canonical": 1070119.8,
+          "printed": "10,70,119.80"
         }
       },
       "lang": "en",
@@ -17191,8 +17191,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 574584.9,
-          "printed": "5,74,584.90"
+          "canonical": 1154391.5,
+          "printed": "11,54,391.50"
         }
       },
       "lang": "en",
@@ -17211,8 +17211,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 559053.5,
-          "printed": "5,59,053.50"
+          "canonical": 508434.6,
+          "printed": "5,08,434.60"
         }
       },
       "lang": "en",
@@ -17231,8 +17231,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 572237.2,
-          "printed": "5,72,237.20"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -17251,8 +17251,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 440140.8,
-          "printed": "4,40,140.80"
+          "canonical": 1342028.0,
+          "printed": "13,42,028.00"
         }
       },
       "lang": "en",
@@ -17271,8 +17271,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 500708.5,
-          "printed": "5,00,708.50"
+          "canonical": 502899.6,
+          "printed": "5,02,899.60"
         }
       },
       "lang": "en",
@@ -17291,8 +17291,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 492817.0,
-          "printed": "4,92,817.00"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -17311,8 +17311,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 563950.2,
-          "printed": "5,63,950.20"
+          "canonical": 580007.0,
+          "printed": "5,80,007.00"
         }
       },
       "lang": "en",
@@ -17331,8 +17331,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 473717.7,
-          "printed": "4,73,717.70"
+          "canonical": 504577.6,
+          "printed": "5,04,577.60"
         }
       },
       "lang": "en",
@@ -17351,8 +17351,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 552054.0,
-          "printed": "5,52,054.00"
+          "canonical": 546771.9,
+          "printed": "5,46,771.90"
         }
       },
       "lang": "en",
@@ -17371,8 +17371,8 @@
           "printed": "2,000.00"
         },
         "units_consumed_kwh": {
-          "canonical": 557261.1,
-          "printed": "5,57,261.10"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -17553,16 +17553,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1176574.0,
-          "printed": "11,76,574"
+          "canonical": 1174274.0,
+          "printed": "11,74,274"
         },
         "in_time": {
           "canonical": "2025-10-08T15:37:10.444987",
           "printed": "08-10-2025 15:37"
         },
         "net_kg": {
-          "canonical": 1166920.0,
-          "printed": "11,66,920"
+          "canonical": 1164620.0,
+          "printed": "11,64,620"
         },
         "out_time": {
           "canonical": "2025-10-08T16:13:10.444987",
@@ -17697,16 +17697,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1191262.0,
-          "printed": "11,91,262"
+          "canonical": 1186652.0,
+          "printed": "11,86,652"
         },
         "in_time": {
           "canonical": "2025-12-04T14:26:06.645099",
           "printed": "04-12-2025 14:26"
         },
         "net_kg": {
-          "canonical": 1176560.0,
-          "printed": "11,76,560"
+          "canonical": 1171950.0,
+          "printed": "11,71,950"
         },
         "out_time": {
           "canonical": "2025-12-04T14:56:06.645099",
@@ -17841,16 +17841,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1302571.0,
-          "printed": "13,02,571"
+          "canonical": 1305831.0,
+          "printed": "13,05,831"
         },
         "in_time": {
           "canonical": "2025-09-05T15:30:47.022107",
           "printed": "05-09-2025 15:30"
         },
         "net_kg": {
-          "canonical": 1290400.0,
-          "printed": "12,90,400"
+          "canonical": 1293660.0,
+          "printed": "12,93,660"
         },
         "out_time": {
           "canonical": "2025-09-05T16:10:47.022107",
@@ -17985,16 +17985,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1220247.0,
-          "printed": "12,20,247"
+          "canonical": 1214297.0,
+          "printed": "12,14,297"
         },
         "in_time": {
           "canonical": "2025-05-03T10:23:06.046569",
           "printed": "03-05-2025 10:23"
         },
         "net_kg": {
-          "canonical": 1209950.0,
-          "printed": "12,09,950"
+          "canonical": 1204000.0,
+          "printed": "12,04,000"
         },
         "out_time": {
           "canonical": "2025-05-03T10:54:06.046569",
@@ -18129,16 +18129,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1279384.0,
-          "printed": "12,79,384"
+          "canonical": 1278614.0,
+          "printed": "12,78,614"
         },
         "in_time": {
           "canonical": "2025-10-15T15:28:06.416013",
           "printed": "15-10-2025 15:28"
         },
         "net_kg": {
-          "canonical": 1270980.0,
-          "printed": "12,70,980"
+          "canonical": 1270210.0,
+          "printed": "12,70,210"
         },
         "out_time": {
           "canonical": "2025-10-15T15:57:06.416013",
@@ -18273,16 +18273,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1299614.0,
-          "printed": "12,99,614"
+          "canonical": 1308344.0,
+          "printed": "13,08,344"
         },
         "in_time": {
           "canonical": "2026-02-22T13:50:36.312309",
           "printed": "22-02-2026 13:50"
         },
         "net_kg": {
-          "canonical": 1288310.0,
-          "printed": "12,88,310"
+          "canonical": 1297040.0,
+          "printed": "12,97,040"
         },
         "out_time": {
           "canonical": "2026-02-22T14:14:36.312309",
@@ -18417,16 +18417,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1308283.0,
-          "printed": "13,08,283"
+          "canonical": 1311593.0,
+          "printed": "13,11,593"
         },
         "in_time": {
           "canonical": "2025-05-14T18:27:21.098805",
           "printed": "14-05-2025 18:27"
         },
         "net_kg": {
-          "canonical": 1295650.0,
-          "printed": "12,95,650"
+          "canonical": 1298960.0,
+          "printed": "12,98,960"
         },
         "out_time": {
           "canonical": "2025-05-14T18:59:21.098805",
@@ -18561,16 +18561,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1328254.0,
-          "printed": "13,28,254"
+          "canonical": 1327574.0,
+          "printed": "13,27,574"
         },
         "in_time": {
           "canonical": "2025-06-05T17:48:25.607477",
           "printed": "05-06-2025 17:48"
         },
         "net_kg": {
-          "canonical": 1315220.0,
-          "printed": "13,15,220"
+          "canonical": 1314540.0,
+          "printed": "13,14,540"
         },
         "out_time": {
           "canonical": "2025-06-05T18:16:25.607477",
@@ -18705,16 +18705,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1311721.0,
-          "printed": "13,11,721"
+          "canonical": 1306981.0,
+          "printed": "13,06,981"
         },
         "in_time": {
           "canonical": "2025-06-18T11:45:06.078640",
           "printed": "18-06-2025 11:45"
         },
         "net_kg": {
-          "canonical": 1303250.0,
-          "printed": "13,03,250"
+          "canonical": 1298510.0,
+          "printed": "12,98,510"
         },
         "out_time": {
           "canonical": "2025-06-18T12:19:06.078640",
@@ -18849,16 +18849,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1261724.0,
-          "printed": "12,61,724"
+          "canonical": 1255414.0,
+          "printed": "12,55,414"
         },
         "in_time": {
           "canonical": "2025-11-02T12:40:58.516986",
           "printed": "02-11-2025 12:40"
         },
         "net_kg": {
-          "canonical": 1246770.0,
-          "printed": "12,46,770"
+          "canonical": 1240460.0,
+          "printed": "12,40,460"
         },
         "out_time": {
           "canonical": "2025-11-02T13:02:58.516986",
@@ -18993,16 +18993,16 @@
       "doc_type": "weighbridge_slip",
       "fields": {
         "gross_kg": {
-          "canonical": 1188887.0,
-          "printed": "11,88,887"
+          "canonical": 1185587.0,
+          "printed": "11,85,587"
         },
         "in_time": {
           "canonical": "2025-09-24T16:56:26.987697",
           "printed": "24-09-2025 16:56"
         },
         "net_kg": {
-          "canonical": 1180460.0,
-          "printed": "11,80,460"
+          "canonical": 1177160.0,
+          "printed": "11,77,160"
         },
         "out_time": {
           "canonical": "2025-09-24T17:41:26.987697",
@@ -19145,8 +19145,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 493593.8,
-          "printed": "4,93,593.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -19165,8 +19165,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 517817.0,
-          "printed": "5,17,817.00"
+          "canonical": 1152067.0,
+          "printed": "11,52,067.00"
         }
       },
       "lang": "en",
@@ -19185,8 +19185,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 423303.7,
-          "printed": "4,23,303.70"
+          "canonical": 983212.3,
+          "printed": "9,83,212.30"
         }
       },
       "lang": "en",
@@ -19205,8 +19205,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 508289.1,
-          "printed": "5,08,289.10"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -19225,8 +19225,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 487549.8,
-          "printed": "4,87,549.80"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -19245,8 +19245,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 401661.7,
-          "printed": "4,01,661.70"
+          "canonical": 882163.3,
+          "printed": "8,82,163.30"
         }
       },
       "lang": "en",
@@ -19265,8 +19265,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 451870.0,
-          "printed": "4,51,870.00"
+          "canonical": 977979.2,
+          "printed": "9,77,979.20"
         }
       },
       "lang": "en",
@@ -19285,8 +19285,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 502309.6,
-          "printed": "5,02,309.60"
+          "canonical": 553862.2,
+          "printed": "5,53,862.20"
         }
       },
       "lang": "en",
@@ -19305,8 +19305,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 458069.8,
-          "printed": "4,58,069.80"
+          "canonical": 477186.6,
+          "printed": "4,77,186.60"
         }
       },
       "lang": "en",
@@ -19325,8 +19325,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 482253.1,
-          "printed": "4,82,253.10"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -19345,8 +19345,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 511252.0,
-          "printed": "5,11,252.00"
+          "canonical": 589435.0,
+          "printed": "5,89,435.00"
         }
       },
       "lang": "en",
@@ -19365,8 +19365,8 @@
           "printed": "1,800.00"
         },
         "units_consumed_kwh": {
-          "canonical": 462643.7,
-          "printed": "4,62,643.70"
+          "canonical": 0.0,
+          "printed": "0.00"
         }
       },
       "lang": "en",
@@ -19383,146 +19383,146 @@
           "certificate_id": "CERT-PWP-01-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 375.0
+          "quantity_t": 476.11
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 375.0
+          "quantity_t": 537.8
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 375.0
+          "quantity_t": 1569.99
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 375.0
+          "quantity_t": 456.25
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 375.0
+          "quantity_t": 491.49
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 375.0
+          "quantity_t": 1041.28
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-01-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 375.0
+          "quantity_t": 0.0
         }
       ],
-      "certified_t": 4500.0,
+      "certified_t": 4572.92,
       "energy_monthly": [
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-035",
-          "kwh": 135109.8,
+          "kwh": 171539.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-036",
-          "kwh": 185097.3,
+          "kwh": 0.0,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-037",
-          "kwh": 133514.5,
+          "kwh": 0.0,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-038",
-          "kwh": 132995.4,
+          "kwh": 190736.7,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-039",
-          "kwh": 145159.7,
+          "kwh": 607731.3,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-040",
-          "kwh": 178456.6,
+          "kwh": 0.0,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-041",
-          "kwh": 166200.1,
+          "kwh": 202210.2,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-042",
-          "kwh": 144668.2,
+          "kwh": 0.0,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-043",
-          "kwh": 157887.8,
+          "kwh": 206934.1,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-044",
-          "kwh": 137684.4,
+          "kwh": 382314.7,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-045",
-          "kwh": 184561.3,
+          "kwh": 0.0,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-01-ELECTRICITY_BILL-046",
-          "kwh": 157408.2,
+          "kwh": 0.0,
           "month": "2026-03"
         }
       ],
@@ -19533,27 +19533,27 @@
         {
           "doc_id": "PWP-01-OUTBOUND_INVOICE-030",
           "month": "2025-11",
-          "quantity_t": 696.35
+          "quantity_t": 696.0
         },
         {
           "doc_id": "PWP-01-OUTBOUND_INVOICE-031",
           "month": "2025-10",
-          "quantity_t": 787.38
+          "quantity_t": 786.99
         },
         {
           "doc_id": "PWP-01-OUTBOUND_INVOICE-032",
           "month": "2025-10",
-          "quantity_t": 805.59
+          "quantity_t": 805.18
         },
         {
           "doc_id": "PWP-01-OUTBOUND_INVOICE-033",
           "month": "2025-11",
-          "quantity_t": 786.72
+          "quantity_t": 786.33
         },
         {
           "doc_id": "PWP-01-OUTBOUND_INVOICE-034",
           "month": "2025-04",
-          "quantity_t": 671.47
+          "quantity_t": 671.14
         }
       ],
       "processor_id": "PWP-01",
@@ -19573,7 +19573,7 @@
           "vehicle_no": "RJ57AB3780",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 509.57
+          "weighbridge_net_t": 508.02
         },
         {
           "distance_km": 214.9,
@@ -19589,7 +19589,7 @@
           "vehicle_no": "MH12AB5011",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 532.43
+          "weighbridge_net_t": 533.26
         },
         {
           "distance_km": 139.8,
@@ -19605,7 +19605,7 @@
           "vehicle_no": "HR10AB2746",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 506.14
+          "weighbridge_net_t": 504.15
         },
         {
           "distance_km": 260.6,
@@ -19621,7 +19621,7 @@
           "vehicle_no": "MP45AB6198",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 455.53
+          "weighbridge_net_t": 456.25
         },
         {
           "distance_km": 264.0,
@@ -19637,7 +19637,7 @@
           "vehicle_no": "HR27AB9540",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 493.3
+          "weighbridge_net_t": 491.49
         },
         {
           "distance_km": 180.4,
@@ -19653,7 +19653,7 @@
           "vehicle_no": "HR19AB4505",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 476.73
+          "weighbridge_net_t": 476.11
         },
         {
           "distance_km": 240.1,
@@ -19669,7 +19669,7 @@
           "vehicle_no": "RJ46AB7232",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 535.65
+          "weighbridge_net_t": 538.96
         },
         {
           "distance_km": 196.8,
@@ -19685,7 +19685,7 @@
           "vehicle_no": "TG41AB1475",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 525.64
+          "weighbridge_net_t": 526.88
         },
         {
           "distance_km": 178.9,
@@ -19701,7 +19701,7 @@
           "vehicle_no": "HR37AB3223",
           "verified": true,
           "weighbridge_doc_id": "PWP-01-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 540.23
+          "weighbridge_net_t": 537.81
         }
       ],
       "site": {
@@ -19710,10 +19710,10 @@
         "placement_note": "Chakan industrial area, Pune district",
         "site_validated": false
       },
-      "true_verifiable_t": 4500.0,
-      "true_verifiable_t_checks_only": 4500.0,
-      "verified_inbound_t": 4575.22,
-      "verified_inbound_t_full_system": 4575.22
+      "true_verifiable_t": 4572.92,
+      "true_verifiable_t_checks_only": 4572.92,
+      "verified_inbound_t": 4572.93,
+      "verified_inbound_t_full_system": 4572.93
     },
     {
       "affected_certificate_ids": [],
@@ -19724,146 +19724,146 @@
           "certificate_id": "CERT-PWP-02-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 450.0
+          "quantity_t": 1136.96
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 450.0
+          "quantity_t": 1029.84
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 450.0
+          "quantity_t": 534.55
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 450.0
+          "quantity_t": 591.25
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 450.0
+          "quantity_t": 1056.81
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 450.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-02-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 450.0
+          "quantity_t": 1084.38
         }
       ],
-      "certified_t": 5400.0,
+      "certified_t": 5433.79,
       "energy_monthly": [
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-041",
-          "kwh": 205219.5,
+          "kwh": 0.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-042",
-          "kwh": 204951.7,
+          "kwh": 517826.3,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-043",
-          "kwh": 188147.1,
+          "kwh": 430585.1,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-044",
-          "kwh": 203898.5,
+          "kwh": 0.0,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-045",
-          "kwh": 219864.0,
+          "kwh": 261178.9,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-046",
-          "kwh": 210678.4,
+          "kwh": 276808.0,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-047",
-          "kwh": 199691.4,
+          "kwh": 0.0,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-048",
-          "kwh": 202129.9,
+          "kwh": 0.0,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-049",
-          "kwh": 220522.6,
+          "kwh": 0.0,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-050",
-          "kwh": 186196.9,
+          "kwh": 437277.2,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-051",
-          "kwh": 194258.0,
+          "kwh": 0.0,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-02-ELECTRICITY_BILL-052",
-          "kwh": 201215.3,
+          "kwh": 484875.3,
           "month": "2026-03"
         }
       ],
@@ -19874,42 +19874,42 @@
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-033",
           "month": "2025-10",
-          "quantity_t": 554.12
+          "quantity_t": 554.57
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-034",
           "month": "2025-04",
-          "quantity_t": 617.88
+          "quantity_t": 618.39
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-035",
           "month": "2025-05",
-          "quantity_t": 495.34
+          "quantity_t": 495.75
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-036",
           "month": "2025-07",
-          "quantity_t": 569.07
+          "quantity_t": 569.53
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-037",
           "month": "2025-06",
-          "quantity_t": 489.81
+          "quantity_t": 490.21
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-038",
           "month": "2025-05",
-          "quantity_t": 461.93
+          "quantity_t": 462.31
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-039",
           "month": "2025-11",
-          "quantity_t": 558.22
+          "quantity_t": 558.67
         },
         {
           "doc_id": "PWP-02-OUTBOUND_INVOICE-040",
           "month": "2025-08",
-          "quantity_t": 499.2
+          "quantity_t": 499.61
         }
       ],
       "processor_id": "PWP-02",
@@ -19929,7 +19929,7 @@
           "vehicle_no": "MP54AB4978",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 588.37
+          "weighbridge_net_t": 591.25
         },
         {
           "distance_km": 136.3,
@@ -19945,7 +19945,7 @@
           "vehicle_no": "RJ36AB9031",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 525.91
+          "weighbridge_net_t": 529.29
         },
         {
           "distance_km": 175.7,
@@ -19961,7 +19961,7 @@
           "vehicle_no": "TG56AB5397",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 501.41
+          "weighbridge_net_t": 499.85
         },
         {
           "distance_km": 47.5,
@@ -19977,7 +19977,7 @@
           "vehicle_no": "GJ32AB5232",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 554.02
+          "weighbridge_net_t": 556.96
         },
         {
           "distance_km": 102.8,
@@ -19993,7 +19993,7 @@
           "vehicle_no": "TG51AB9041",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 540.69
+          "weighbridge_net_t": 539.12
         },
         {
           "distance_km": 178.0,
@@ -20009,7 +20009,7 @@
           "vehicle_no": "HR39AB5438",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 547.33
+          "weighbridge_net_t": 545.26
         },
         {
           "distance_km": 88.1,
@@ -20025,7 +20025,7 @@
           "vehicle_no": "HR47AB9595",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 546.48
+          "weighbridge_net_t": 550.14
         },
         {
           "distance_km": 178.9,
@@ -20041,7 +20041,7 @@
           "vehicle_no": "TN54AB3068",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 503.37
+          "weighbridge_net_t": 500.56
         },
         {
           "distance_km": 53.4,
@@ -20057,7 +20057,7 @@
           "vehicle_no": "RJ14AB7565",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 533.98
+          "weighbridge_net_t": 534.56
         },
         {
           "distance_km": 104.5,
@@ -20073,7 +20073,7 @@
           "vehicle_no": "MP49AB4697",
           "verified": true,
           "weighbridge_doc_id": "PWP-02-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 587.81
+          "weighbridge_net_t": 586.82
         }
       ],
       "site": {
@@ -20082,10 +20082,10 @@
         "placement_note": "Naroda industrial estate, Ahmedabad",
         "site_validated": false
       },
-      "true_verifiable_t": 5400.0,
-      "true_verifiable_t_checks_only": 5400.0,
-      "verified_inbound_t": 5429.37,
-      "verified_inbound_t_full_system": 5429.37
+      "true_verifiable_t": 5433.79,
+      "true_verifiable_t_checks_only": 5433.79,
+      "verified_inbound_t": 5433.81,
+      "verified_inbound_t_full_system": 5433.81
     },
     {
       "affected_certificate_ids": [],
@@ -20096,146 +20096,146 @@
           "certificate_id": "CERT-PWP-03-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 427.5
+          "quantity_t": 529.28
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 427.5
+          "quantity_t": 562.42
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 427.5
+          "quantity_t": 1047.96
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 427.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 427.5
+          "quantity_t": 1036.23
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 427.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 427.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 427.5
+          "quantity_t": 557.14
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 427.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 427.5
+          "quantity_t": 1047.53
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 427.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-03-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 427.5
+          "quantity_t": 505.73
         }
       ],
-      "certified_t": 5130.0,
+      "certified_t": 5286.29,
       "energy_monthly": [
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-039",
-          "kwh": 208679.6,
+          "kwh": 258362.4,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-040",
-          "kwh": 213584.9,
+          "kwh": 280997.8,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-041",
-          "kwh": 197511.4,
+          "kwh": 484173.2,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-042",
-          "kwh": 177453.4,
+          "kwh": 0.0,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-043",
-          "kwh": 155937.7,
+          "kwh": 377982.0,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-044",
-          "kwh": 190264.1,
+          "kwh": 0.0,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-045",
-          "kwh": 205579.1,
+          "kwh": 0.0,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-046",
-          "kwh": 178075.9,
+          "kwh": 232077.7,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-047",
-          "kwh": 194127.8,
+          "kwh": 0.0,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-048",
-          "kwh": 207557.1,
+          "kwh": 508590.1,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-049",
-          "kwh": 152574.2,
+          "kwh": 0.0,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-03-ELECTRICITY_BILL-050",
-          "kwh": 200677.7,
+          "kwh": 237400.5,
           "month": "2026-03"
         }
       ],
@@ -20249,32 +20249,32 @@
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-033",
           "month": "2025-09",
-          "quantity_t": 743.72
+          "quantity_t": 745.59
         },
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-034",
           "month": "2026-02",
-          "quantity_t": 777.27
+          "quantity_t": 779.22
         },
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-035",
           "month": "2026-02",
-          "quantity_t": 677.77
+          "quantity_t": 679.47
         },
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-036",
           "month": "2025-09",
-          "quantity_t": 749.21
+          "quantity_t": 751.09
         },
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-037",
           "month": "2025-11",
-          "quantity_t": 605.19
+          "quantity_t": 606.7
         },
         {
           "doc_id": "PWP-03-OUTBOUND_INVOICE-038",
           "month": "2025-05",
-          "quantity_t": 730.74
+          "quantity_t": 732.57
         }
       ],
       "processor_id": "PWP-03",
@@ -20294,7 +20294,7 @@
           "vehicle_no": "MH48AB1653",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 533.61
+          "weighbridge_net_t": 535.36
         },
         {
           "distance_km": 189.6,
@@ -20310,7 +20310,7 @@
           "vehicle_no": "MH58AB3870",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 561.24
+          "weighbridge_net_t": 562.43
         },
         {
           "distance_km": 63.7,
@@ -20326,7 +20326,7 @@
           "vehicle_no": "HR16AB3634",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 527.85
+          "weighbridge_net_t": 529.28
         },
         {
           "distance_km": 121.8,
@@ -20342,7 +20342,7 @@
           "vehicle_no": "MP10AB9889",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 515.83
+          "weighbridge_net_t": 512.6
         },
         {
           "distance_km": 92.9,
@@ -20358,7 +20358,7 @@
           "vehicle_no": "HR41AB2989",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 527.44
+          "weighbridge_net_t": 529.65
         },
         {
           "distance_km": 298.0,
@@ -20374,7 +20374,7 @@
           "vehicle_no": "HR19AB9165",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 519.42
+          "weighbridge_net_t": 520.92
         },
         {
           "distance_km": 89.6,
@@ -20390,7 +20390,7 @@
           "vehicle_no": "MH27AB7798",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 507.39
+          "weighbridge_net_t": 505.73
         },
         {
           "distance_km": 265.0,
@@ -20406,7 +20406,7 @@
           "vehicle_no": "TN45AB9903",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 523.46
+          "weighbridge_net_t": 526.61
         },
         {
           "distance_km": 146.8,
@@ -20422,7 +20422,7 @@
           "vehicle_no": "RJ34AB7325",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 503.32
+          "weighbridge_net_t": 506.58
         },
         {
           "distance_km": 154.5,
@@ -20438,7 +20438,7 @@
           "vehicle_no": "HR19AB7717",
           "verified": true,
           "weighbridge_doc_id": "PWP-03-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 553.52
+          "weighbridge_net_t": 557.14
         }
       ],
       "site": {
@@ -20447,10 +20447,10 @@
         "placement_note": "Vadodara GIDC industrial estate",
         "site_validated": false
       },
-      "true_verifiable_t": 5130.0,
-      "true_verifiable_t_checks_only": 5130.0,
-      "verified_inbound_t": 5273.08,
-      "verified_inbound_t_full_system": 5273.08
+      "true_verifiable_t": 5286.29,
+      "true_verifiable_t_checks_only": 5286.29,
+      "verified_inbound_t": 5286.3,
+      "verified_inbound_t_full_system": 5286.3
     },
     {
       "affected_certificate_ids": [],
@@ -20461,56 +20461,56 @@
           "certificate_id": "CERT-PWP-04-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 500.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 500.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 500.0
+          "quantity_t": 1367.59
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 500.0
+          "quantity_t": 677.31
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 500.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 500.0
+          "quantity_t": 1299.99
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 500.0
+          "quantity_t": 1417.4
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 500.0
+          "quantity_t": 0.0
         },
         {
           "category": "I",
@@ -20524,63 +20524,63 @@
           "certificate_id": "CERT-PWP-04-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 500.0
+          "quantity_t": 595.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 500.0
+          "quantity_t": 637.01
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-04-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 500.0
+          "quantity_t": 0.0
         }
       ],
-      "certified_t": 5500.0,
+      "certified_t": 5994.3,
       "energy_monthly": [
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-037",
-          "kwh": 223127.8,
+          "kwh": 0.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-038",
-          "kwh": 219785.9,
+          "kwh": 0.0,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-039",
-          "kwh": 176601.8,
+          "kwh": 483037.7,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-040",
-          "kwh": 234009.6,
+          "kwh": 316994.1,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-041",
-          "kwh": 193267.7,
+          "kwh": 0.0,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-042",
-          "kwh": 184444.3,
+          "kwh": 479551.5,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-043",
-          "kwh": 217343.3,
+          "kwh": 616124.9,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-044",
-          "kwh": 180145.8,
+          "kwh": 0.0,
           "month": "2025-11"
         },
         {
@@ -20590,17 +20590,17 @@
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-046",
-          "kwh": 190536.8,
+          "kwh": 226738.8,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-047",
-          "kwh": 191196.4,
+          "kwh": 243588.0,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-04-ELECTRICITY_BILL-048",
-          "kwh": 240227.2,
+          "kwh": 0.0,
           "month": "2026-03"
         }
       ],
@@ -20614,37 +20614,37 @@
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-030",
           "month": "2025-08",
-          "quantity_t": 722.03
+          "quantity_t": 724.17
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-031",
           "month": "2025-07",
-          "quantity_t": 671.71
+          "quantity_t": 673.7
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-032",
           "month": "2025-07",
-          "quantity_t": 600.94
+          "quantity_t": 602.72
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-033",
           "month": "2026-03",
-          "quantity_t": 692.15
+          "quantity_t": 694.2
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-034",
           "month": "2026-03",
-          "quantity_t": 592.99
+          "quantity_t": 594.75
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-035",
           "month": "2025-08",
-          "quantity_t": 778.98
+          "quantity_t": 781.29
         },
         {
           "doc_id": "PWP-04-OUTBOUND_INVOICE-036",
           "month": "2025-11",
-          "quantity_t": 716.39
+          "quantity_t": 718.51
         }
       ],
       "processor_id": "PWP-04",
@@ -20680,7 +20680,7 @@
           "vehicle_no": "TG54AB5097",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 693.8
+          "weighbridge_net_t": 698.62
         },
         {
           "distance_km": 298.1,
@@ -20696,7 +20696,7 @@
           "vehicle_no": "MH46AB1803",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 677.92
+          "weighbridge_net_t": 680.24
         },
         {
           "distance_km": 131.6,
@@ -20712,7 +20712,7 @@
           "vehicle_no": "RJ56AB3240",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 709.36
+          "weighbridge_net_t": 713.35
         },
         {
           "distance_km": 63.4,
@@ -20728,7 +20728,7 @@
           "vehicle_no": "GJ18AB9837",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 677.29
+          "weighbridge_net_t": 677.31
         },
         {
           "distance_km": 266.3,
@@ -20744,7 +20744,7 @@
           "vehicle_no": "GJ58AB4696",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 732.39
+          "weighbridge_net_t": 737.16
         },
         {
           "distance_km": 158.2,
@@ -20760,7 +20760,7 @@
           "vehicle_no": "TG50AB7086",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 599.0
+          "weighbridge_net_t": 595.0
         },
         {
           "distance_km": 254.2,
@@ -20776,7 +20776,7 @@
           "vehicle_no": "TG17AB3290",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 632.64
+          "weighbridge_net_t": 637.01
         },
         {
           "distance_km": 286.8,
@@ -20792,7 +20792,7 @@
           "vehicle_no": "HR56AB3531",
           "verified": true,
           "weighbridge_doc_id": "PWP-04-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 652.83
+          "weighbridge_net_t": 654.24
         }
       ],
       "site": {
@@ -20801,10 +20801,10 @@
         "placement_note": "Sriperumbudur industrial area, Tamil Nadu",
         "site_validated": false
       },
-      "true_verifiable_t": 5500.0,
-      "true_verifiable_t_checks_only": 5500.0,
-      "verified_inbound_t": 5976.6,
-      "verified_inbound_t_full_system": 5976.6
+      "true_verifiable_t": 5994.3,
+      "true_verifiable_t_checks_only": 5994.3,
+      "verified_inbound_t": 5994.3,
+      "verified_inbound_t_full_system": 5994.3
     },
     {
       "affected_certificate_ids": [
@@ -20975,42 +20975,42 @@
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-033",
           "month": "2025-05",
-          "quantity_t": 348.91
+          "quantity_t": 349.28
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-034",
           "month": "2025-08",
-          "quantity_t": 375.49
+          "quantity_t": 375.88
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-035",
           "month": "2025-11",
-          "quantity_t": 374.27
+          "quantity_t": 374.67
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-036",
           "month": "2025-04",
-          "quantity_t": 345.2
+          "quantity_t": 345.57
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-037",
           "month": "2026-01",
-          "quantity_t": 303.76
+          "quantity_t": 304.09
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-038",
           "month": "2025-08",
-          "quantity_t": 384.99
+          "quantity_t": 385.4
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-039",
           "month": "2025-08",
-          "quantity_t": 338.02
+          "quantity_t": 338.38
         },
         {
           "doc_id": "PWP-05-OUTBOUND_INVOICE-040",
           "month": "2025-04",
-          "quantity_t": 382.81
+          "quantity_t": 383.22
         }
       ],
       "processor_id": "PWP-05",
@@ -21030,7 +21030,7 @@
           "vehicle_no": "TN13AB3076",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 333.58
+          "weighbridge_net_t": 333.7
         },
         {
           "distance_km": 157.5,
@@ -21046,7 +21046,7 @@
           "vehicle_no": "RJ52AB9543",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 350.57
+          "weighbridge_net_t": 351.27
         },
         {
           "distance_km": 276.5,
@@ -21062,7 +21062,7 @@
           "vehicle_no": "MP19AB2076",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 373.86
+          "weighbridge_net_t": 374.51
         },
         {
           "distance_km": 158.0,
@@ -21078,7 +21078,7 @@
           "vehicle_no": "HR17AB4522",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 397.15
+          "weighbridge_net_t": 399.29
         },
         {
           "distance_km": 151.0,
@@ -21094,7 +21094,7 @@
           "vehicle_no": "HR40AB2099",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 353.71
+          "weighbridge_net_t": 353.37
         },
         {
           "distance_km": 186.0,
@@ -21110,7 +21110,7 @@
           "vehicle_no": "RJ52AB7929",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 329.86
+          "weighbridge_net_t": 332.01
         },
         {
           "distance_km": 165.4,
@@ -21126,7 +21126,7 @@
           "vehicle_no": "MP33AB2882",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 360.8
+          "weighbridge_net_t": 361.17
         },
         {
           "distance_km": 207.1,
@@ -21142,7 +21142,7 @@
           "vehicle_no": "GJ27AB6062",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 382.36
+          "weighbridge_net_t": 381.56
         },
         {
           "distance_km": 204.6,
@@ -21158,7 +21158,7 @@
           "vehicle_no": "TG39AB6585",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 352.2
+          "weighbridge_net_t": 351.26
         },
         {
           "distance_km": 80.9,
@@ -21174,7 +21174,7 @@
           "vehicle_no": "TG52AB7947",
           "verified": true,
           "weighbridge_doc_id": "PWP-05-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 329.93
+          "weighbridge_net_t": 329.66
         }
       ],
       "site": {
@@ -21183,10 +21183,10 @@
         "placement_note": "Hosur industrial area, Tamil Nadu",
         "site_validated": false
       },
-      "true_verifiable_t": 3230.44,
-      "true_verifiable_t_checks_only": 3564.02,
-      "verified_inbound_t": 3564.02,
-      "verified_inbound_t_full_system": 3230.44
+      "true_verifiable_t": 3234.1,
+      "true_verifiable_t_checks_only": 3567.8,
+      "verified_inbound_t": 3567.8,
+      "verified_inbound_t_full_system": 3234.1
     },
     {
       "affected_certificate_ids": [
@@ -21357,27 +21357,27 @@
         {
           "doc_id": "PWP-06-OUTBOUND_INVOICE-039",
           "month": "2026-01",
-          "quantity_t": 682.39
+          "quantity_t": 682.65
         },
         {
           "doc_id": "PWP-06-OUTBOUND_INVOICE-040",
           "month": "2025-04",
-          "quantity_t": 610.14
+          "quantity_t": 610.37
         },
         {
           "doc_id": "PWP-06-OUTBOUND_INVOICE-041",
           "month": "2025-09",
-          "quantity_t": 693.67
+          "quantity_t": 693.94
         },
         {
           "doc_id": "PWP-06-OUTBOUND_INVOICE-042",
           "month": "2026-03",
-          "quantity_t": 678.37
+          "quantity_t": 678.62
         },
         {
           "doc_id": "PWP-06-OUTBOUND_INVOICE-043",
           "month": "2025-08",
-          "quantity_t": 662.16
+          "quantity_t": 662.41
         }
       ],
       "processor_id": "PWP-06",
@@ -21413,7 +21413,7 @@
           "vehicle_no": "RJ32AB6752",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 315.14
+          "weighbridge_net_t": 316.53
         },
         {
           "distance_km": 237.4,
@@ -21429,7 +21429,7 @@
           "vehicle_no": "RJ46AB8354",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 304.21
+          "weighbridge_net_t": 304.82
         },
         {
           "distance_km": 155.0,
@@ -21445,7 +21445,7 @@
           "vehicle_no": "MH32AB9312",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 302.19
+          "weighbridge_net_t": 302.03
         },
         {
           "distance_km": 63.5,
@@ -21461,7 +21461,7 @@
           "vehicle_no": "MP45AB1672",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 334.91
+          "weighbridge_net_t": 335.62
         },
         {
           "distance_km": 250.9,
@@ -21477,7 +21477,7 @@
           "vehicle_no": "HR21AB1641",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 354.83
+          "weighbridge_net_t": 354.94
         },
         {
           "distance_km": 195.5,
@@ -21493,7 +21493,7 @@
           "vehicle_no": "TN16AB7333",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 319.78
+          "weighbridge_net_t": 320.78
         },
         {
           "distance_km": 76.8,
@@ -21509,7 +21509,7 @@
           "vehicle_no": "MP55AB2388",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 313.78
+          "weighbridge_net_t": 313.24
         },
         {
           "distance_km": 299.3,
@@ -21525,7 +21525,7 @@
           "vehicle_no": "HR37AB9331",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 337.72
+          "weighbridge_net_t": 337.06
         },
         {
           "distance_km": 75.8,
@@ -21541,7 +21541,7 @@
           "vehicle_no": "RJ44AB9626",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 322.91
+          "weighbridge_net_t": 321.24
         },
         {
           "distance_km": 83.0,
@@ -21557,7 +21557,7 @@
           "vehicle_no": "HR56AB4891",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-035",
-          "weighbridge_net_t": 343.0
+          "weighbridge_net_t": 343.53
         },
         {
           "distance_km": 250.2,
@@ -21573,7 +21573,7 @@
           "vehicle_no": "HR46AB8218",
           "verified": true,
           "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-038",
-          "weighbridge_net_t": 327.3
+          "weighbridge_net_t": 327.43
         }
       ],
       "site": {
@@ -21582,10 +21582,10 @@
         "placement_note": "Patancheru industrial area, Telangana",
         "site_validated": false
       },
-      "true_verifiable_t": 3575.77,
-      "true_verifiable_t_checks_only": 3575.77,
-      "verified_inbound_t": 3575.77,
-      "verified_inbound_t_full_system": 3575.77
+      "true_verifiable_t": 3577.22,
+      "true_verifiable_t_checks_only": 3577.22,
+      "verified_inbound_t": 3577.22,
+      "verified_inbound_t_full_system": 3577.22
     },
     {
       "affected_certificate_ids": [
@@ -21754,22 +21754,22 @@
         {
           "doc_id": "PWP-07-OUTBOUND_INVOICE-025",
           "month": "2025-10",
-          "quantity_t": 848.25
+          "quantity_t": 847.08
         },
         {
           "doc_id": "PWP-07-OUTBOUND_INVOICE-026",
           "month": "2025-06",
-          "quantity_t": 692.86
+          "quantity_t": 691.9
         },
         {
           "doc_id": "PWP-07-OUTBOUND_INVOICE-027",
           "month": "2025-05",
-          "quantity_t": 700.42
+          "quantity_t": 699.46
         },
         {
           "doc_id": "PWP-07-OUTBOUND_INVOICE-028",
           "month": "2025-08",
-          "quantity_t": 726.57
+          "quantity_t": 725.57
         }
       ],
       "processor_id": "PWP-07",
@@ -21821,7 +21821,7 @@
           "vehicle_no": "MP46AB4963",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-009",
-          "weighbridge_net_t": 612.16
+          "weighbridge_net_t": 610.37
         },
         {
           "distance_km": 62.3,
@@ -21837,7 +21837,7 @@
           "vehicle_no": "MP42AB9316",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-012",
-          "weighbridge_net_t": 607.76
+          "weighbridge_net_t": 606.83
         },
         {
           "distance_km": 245.0,
@@ -21853,7 +21853,7 @@
           "vehicle_no": "MP57AB6447",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-015",
-          "weighbridge_net_t": 587.39
+          "weighbridge_net_t": 586.17
         },
         {
           "distance_km": 164.4,
@@ -21869,7 +21869,7 @@
           "vehicle_no": "HR59AB8498",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-018",
-          "weighbridge_net_t": 639.69
+          "weighbridge_net_t": 637.0
         },
         {
           "distance_km": 297.2,
@@ -21885,7 +21885,7 @@
           "vehicle_no": "RJ51AB4131",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-021",
-          "weighbridge_net_t": 674.81
+          "weighbridge_net_t": 678.22
         },
         {
           "distance_km": 271.3,
@@ -21901,7 +21901,7 @@
           "vehicle_no": "GJ41AB9151",
           "verified": true,
           "weighbridge_doc_id": "PWP-07-WEIGHBRIDGE_SLIP-024",
-          "weighbridge_net_t": 570.94
+          "weighbridge_net_t": 569.08
         }
       ],
       "site": {
@@ -21910,15 +21910,14 @@
         "placement_note": "Pithampur industrial area, Madhya Pradesh",
         "site_validated": false
       },
-      "true_verifiable_t": 3692.75,
-      "true_verifiable_t_checks_only": 3692.75,
-      "verified_inbound_t": 3692.75,
-      "verified_inbound_t_full_system": 3692.75
+      "true_verifiable_t": 3687.67,
+      "true_verifiable_t_checks_only": 3687.67,
+      "verified_inbound_t": 3687.67,
+      "verified_inbound_t_full_system": 3687.67
     },
     {
       "affected_certificate_ids": [
-        "CERT-PWP-08-2026-03",
-        "CERT-PWP-08-2026-02"
+        "CERT-PWP-08-2026-03"
       ],
       "capacity_limit_t": 5000.0,
       "certificates": [
@@ -21927,146 +21926,146 @@
           "certificate_id": "CERT-PWP-08-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 312.5
+          "quantity_t": 713.91
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 312.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 312.5
+          "quantity_t": 680.66
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 312.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 312.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 312.5
+          "quantity_t": 321.92
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 312.5
+          "quantity_t": 0.0
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 312.5
+          "quantity_t": 313.74
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 312.5
+          "quantity_t": 329.94
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 312.5
+          "quantity_t": 345.87
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 312.5
+          "quantity_t": 699.29
         },
         {
           "category": "I",
           "certificate_id": "CERT-PWP-08-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 312.5
+          "quantity_t": 328.72
         }
       ],
-      "certified_t": 3750.0,
+      "certified_t": 3734.05,
       "energy_monthly": [
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-043",
-          "kwh": 121772.2,
+          "kwh": 278190.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-044",
-          "kwh": 126520.8,
+          "kwh": 0.0,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-045",
-          "kwh": 128277.5,
+          "kwh": 279402.8,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-046",
-          "kwh": 111495.7,
+          "kwh": 0.0,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-047",
-          "kwh": 111773.0,
+          "kwh": 0.0,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-048",
-          "kwh": 135710.2,
+          "kwh": 139801.0,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-049",
-          "kwh": 126368.3,
+          "kwh": 0.0,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-050",
-          "kwh": 122903.2,
+          "kwh": 123390.9,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-051",
-          "kwh": 127485.1,
+          "kwh": 134599.8,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-052",
-          "kwh": 130485.4,
+          "kwh": 144419.1,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-053",
-          "kwh": 135149.6,
+          "kwh": 302427.9,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-08-ELECTRICITY_BILL-054",
-          "kwh": 148061.5,
+          "kwh": 155746.5,
           "month": "2026-03"
         }
       ],
@@ -22079,37 +22078,37 @@
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-036",
           "month": "2025-11",
-          "quantity_t": 425.95
+          "quantity_t": 426.41
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-037",
           "month": "2025-05",
-          "quantity_t": 426.98
+          "quantity_t": 427.45
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-038",
           "month": "2025-07",
-          "quantity_t": 436.94
+          "quantity_t": 437.42
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-039",
           "month": "2025-04",
-          "quantity_t": 398.32
+          "quantity_t": 398.76
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-040",
           "month": "2026-01",
-          "quantity_t": 448.35
+          "quantity_t": 448.84
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-041",
           "month": "2025-08",
-          "quantity_t": 363.39
+          "quantity_t": 363.78
         },
         {
           "doc_id": "PWP-08-OUTBOUND_INVOICE-042",
           "month": "2025-05",
-          "quantity_t": 379.47
+          "quantity_t": 379.88
         }
       ],
       "processor_id": "PWP-08",
@@ -22129,7 +22128,7 @@
           "vehicle_no": "GJ53AB8371",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 322.5
+          "weighbridge_net_t": 321.92
         },
         {
           "distance_km": 112.5,
@@ -22145,7 +22144,7 @@
           "vehicle_no": "GJ41AB9482",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 331.05
+          "weighbridge_net_t": 329.94
         },
         {
           "distance_km": 167.7,
@@ -22161,7 +22160,7 @@
           "vehicle_no": "GJ55AB8292",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 327.3
+          "weighbridge_net_t": 328.72
         },
         {
           "distance_km": 115.5,
@@ -22177,7 +22176,7 @@
           "vehicle_no": "HR54AB3852",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 355.23
+          "weighbridge_net_t": 355.27
         },
         {
           "distance_km": 184.0,
@@ -22193,7 +22192,7 @@
           "vehicle_no": "MH14AB6067",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 360.39
+          "weighbridge_net_t": 359.94
         },
         {
           "distance_km": 157.0,
@@ -22209,7 +22208,7 @@
           "vehicle_no": "RJ59AB3981",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 373.13
+          "weighbridge_net_t": 373.15
         },
         {
           "distance_km": 123.9,
@@ -22225,7 +22224,7 @@
           "vehicle_no": "TN15AB5105",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 318.7
+          "weighbridge_net_t": 320.72
         },
         {
           "distance_km": 83.8,
@@ -22241,7 +22240,7 @@
           "vehicle_no": "HR49AB6531",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 344.31
+          "weighbridge_net_t": 345.87
         },
         {
           "distance_km": 239.4,
@@ -22257,7 +22256,7 @@
           "vehicle_no": "HR44AB5745",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 345.26
+          "weighbridge_net_t": 344.02
         },
         {
           "distance_km": 154.3,
@@ -22273,7 +22272,7 @@
           "vehicle_no": "MP19AB6121",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 312.6
+          "weighbridge_net_t": 313.74
         },
         {
           "distance_km": 104.5,
@@ -22289,7 +22288,7 @@
           "vehicle_no": "RJ49AB7850",
           "verified": true,
           "weighbridge_doc_id": "PWP-08-WEIGHBRIDGE_SLIP-035",
-          "weighbridge_net_t": 339.51
+          "weighbridge_net_t": 340.76
         }
       ],
       "site": {
@@ -22298,162 +22297,165 @@
         "placement_note": "Faridabad industrial area, Haryana",
         "site_validated": false
       },
-      "true_verifiable_t": 3407.48,
-      "true_verifiable_t_checks_only": 3729.98,
-      "verified_inbound_t": 3729.98,
-      "verified_inbound_t_full_system": 3407.48
+      "true_verifiable_t": 3412.13,
+      "true_verifiable_t_checks_only": 3734.05,
+      "verified_inbound_t": 3734.05,
+      "verified_inbound_t_full_system": 3412.13
     },
     {
       "affected_certificate_ids": [
-        "CERT-PWP-09-2026-03"
+        "CERT-PWP-09-2026-03",
+        "CERT-PWP-09-2026-02",
+        "CERT-PWP-09-2026-01",
+        "CERT-PWP-09-2025-12"
       ],
       "capacity_limit_t": 20000.0,
       "certificates": [
         {
-          "category": "I",
+          "category": "III",
           "certificate_id": "CERT-PWP-09-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 1250.0
+          "quantity_t": 0.0
         },
         {
-          "category": "III",
+          "category": "I",
           "certificate_id": "CERT-PWP-09-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 1250.0
+          "quantity_t": 2677.96
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 1250.0
+          "quantity_t": 2511.36
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 1250.0
+          "quantity_t": 1136.82
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 1250.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 1250.0
+          "quantity_t": 3811.36
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 1250.0
+          "quantity_t": 1255.47
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 1250.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 1250.0
+          "quantity_t": 1285.58
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 1250.0
+          "quantity_t": 1331.43
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 1250.0
+          "quantity_t": 1238.04
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-09-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 1250.0
+          "quantity_t": 0.0
         }
       ],
-      "certified_t": 15000.0,
+      "certified_t": 15248.02,
       "energy_monthly": [
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-039",
-          "kwh": 589152.6,
+          "kwh": 0.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-040",
-          "kwh": 499503.3,
+          "kwh": 1070119.8,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-041",
-          "kwh": 574584.9,
+          "kwh": 1154391.5,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-042",
-          "kwh": 559053.5,
+          "kwh": 508434.6,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-043",
-          "kwh": 572237.2,
+          "kwh": 0.0,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-044",
-          "kwh": 440140.8,
+          "kwh": 1342028.0,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-045",
-          "kwh": 500708.5,
+          "kwh": 502899.6,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-046",
-          "kwh": 492817.0,
+          "kwh": 0.0,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-047",
-          "kwh": 563950.2,
+          "kwh": 580007.0,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-048",
-          "kwh": 473717.7,
+          "kwh": 504577.6,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-049",
-          "kwh": 552054.0,
+          "kwh": 546771.9,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-09-ELECTRICITY_BILL-050",
-          "kwh": 557261.1,
+          "kwh": 0.0,
           "month": "2026-03"
         }
       ],
@@ -22481,7 +22483,7 @@
           "vehicle_no": "TG19AB9446",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 1230.64
+          "weighbridge_net_t": 1238.04
         },
         {
           "distance_km": 171.9,
@@ -22497,7 +22499,7 @@
           "vehicle_no": "MP29AB8780",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 1333.89
+          "weighbridge_net_t": 1331.43
         },
         {
           "distance_km": 218.9,
@@ -22513,7 +22515,7 @@
           "vehicle_no": "HR59AB4728",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 1325.3
+          "weighbridge_net_t": 1326.84
         },
         {
           "distance_km": 253.6,
@@ -22529,7 +22531,7 @@
           "vehicle_no": "MH38AB6139",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 1317.5
+          "weighbridge_net_t": 1315.9
         },
         {
           "distance_km": 231.3,
@@ -22545,7 +22547,7 @@
           "vehicle_no": "GJ45AB6325",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 1353.46
+          "weighbridge_net_t": 1351.12
         },
         {
           "distance_km": 265.6,
@@ -22561,7 +22563,7 @@
           "vehicle_no": "TG22AB5038",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 1259.03
+          "weighbridge_net_t": 1255.47
         },
         {
           "distance_km": 167.1,
@@ -22577,7 +22579,7 @@
           "vehicle_no": "MH46AB9899",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 1305.37
+          "weighbridge_net_t": 1311.17
         },
         {
           "distance_km": 60.5,
@@ -22593,7 +22595,7 @@
           "vehicle_no": "TG23AB4310",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 1132.92
+          "weighbridge_net_t": 1129.28
         },
         {
           "distance_km": 103.0,
@@ -22609,7 +22611,7 @@
           "vehicle_no": "GJ13AB2641",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 1281.7
+          "weighbridge_net_t": 1285.59
         },
         {
           "distance_km": 81.1,
@@ -22625,7 +22627,7 @@
           "vehicle_no": "HR22AB5706",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 1368.12
+          "weighbridge_net_t": 1370.91
         },
         {
           "distance_km": 261.1,
@@ -22641,7 +22643,7 @@
           "vehicle_no": "RJ21AB1595",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-035",
-          "weighbridge_net_t": 1188.23
+          "weighbridge_net_t": 1195.46
         },
         {
           "distance_km": 67.9,
@@ -22657,7 +22659,7 @@
           "vehicle_no": "HR44AB9590",
           "verified": true,
           "weighbridge_doc_id": "PWP-09-WEIGHBRIDGE_SLIP-038",
-          "weighbridge_net_t": 1131.28
+          "weighbridge_net_t": 1136.82
         }
       ],
       "site": {
@@ -22666,10 +22668,10 @@
         "placement_note": "open farmland, no registered structures — F5 ghost site",
         "site_validated": false
       },
-      "true_verifiable_t": 13750.0,
-      "true_verifiable_t_checks_only": 13750.0,
-      "verified_inbound_t": 15227.44,
-      "verified_inbound_t_full_system": 15227.44
+      "true_verifiable_t": 12570.06,
+      "true_verifiable_t_checks_only": 12570.06,
+      "verified_inbound_t": 15248.03,
+      "verified_inbound_t_full_system": 15248.03
     },
     {
       "affected_certificate_ids": [],
@@ -22680,146 +22682,146 @@
           "certificate_id": "CERT-PWP-10-2025-04",
           "generation_date": "30/04/2025",
           "period_month": "2025-04",
-          "quantity_t": 1125.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-05",
           "generation_date": "31/05/2025",
           "period_month": "2025-05",
-          "quantity_t": 1125.0
+          "quantity_t": 2502.96
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-06",
           "generation_date": "30/06/2025",
           "period_month": "2025-06",
-          "quantity_t": 1125.0
+          "quantity_t": 2613.05
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-07",
           "generation_date": "31/07/2025",
           "period_month": "2025-07",
-          "quantity_t": 1125.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-08",
           "generation_date": "31/08/2025",
           "period_month": "2025-08",
-          "quantity_t": 1125.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-09",
           "generation_date": "30/09/2025",
           "period_month": "2025-09",
-          "quantity_t": 1125.0
+          "quantity_t": 2470.82
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-10",
           "generation_date": "31/10/2025",
           "period_month": "2025-10",
-          "quantity_t": 1125.0
+          "quantity_t": 2434.83
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-11",
           "generation_date": "30/11/2025",
           "period_month": "2025-11",
-          "quantity_t": 1125.0
+          "quantity_t": 1240.46
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2025-12",
           "generation_date": "31/12/2025",
           "period_month": "2025-12",
-          "quantity_t": 1125.0
+          "quantity_t": 1171.95
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2026-01",
           "generation_date": "31/01/2026",
           "period_month": "2026-01",
-          "quantity_t": 1125.0
+          "quantity_t": 0.0
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2026-02",
           "generation_date": "28/02/2026",
           "period_month": "2026-02",
-          "quantity_t": 1125.0
+          "quantity_t": 1297.04
         },
         {
           "category": "III",
           "certificate_id": "CERT-PWP-10-2026-03",
           "generation_date": "31/03/2026",
           "period_month": "2026-03",
-          "quantity_t": 1125.0
+          "quantity_t": 0.0
         }
       ],
-      "certified_t": 13500.0,
+      "certified_t": 13731.11,
       "energy_monthly": [
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-038",
-          "kwh": 493593.8,
+          "kwh": 0.0,
           "month": "2025-04"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-039",
-          "kwh": 517817.0,
+          "kwh": 1152067.0,
           "month": "2025-05"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-040",
-          "kwh": 423303.7,
+          "kwh": 983212.3,
           "month": "2025-06"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-041",
-          "kwh": 508289.1,
+          "kwh": 0.0,
           "month": "2025-07"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-042",
-          "kwh": 487549.8,
+          "kwh": 0.0,
           "month": "2025-08"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-043",
-          "kwh": 401661.7,
+          "kwh": 882163.3,
           "month": "2025-09"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-044",
-          "kwh": 451870.0,
+          "kwh": 977979.2,
           "month": "2025-10"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-045",
-          "kwh": 502309.6,
+          "kwh": 553862.2,
           "month": "2025-11"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-046",
-          "kwh": 458069.8,
+          "kwh": 477186.6,
           "month": "2025-12"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-047",
-          "kwh": 482253.1,
+          "kwh": 0.0,
           "month": "2026-01"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-048",
-          "kwh": 511252.0,
+          "kwh": 589435.0,
           "month": "2026-02"
         },
         {
           "doc_id": "PWP-10-ELECTRICITY_BILL-049",
-          "kwh": 462643.7,
+          "kwh": 0.0,
           "month": "2026-03"
         }
       ],
@@ -22846,7 +22848,7 @@
           "vehicle_no": "HR46AB1187",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 1166.92
+          "weighbridge_net_t": 1164.62
         },
         {
           "distance_km": 170.7,
@@ -22862,7 +22864,7 @@
           "vehicle_no": "MH50AB5833",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-008",
-          "weighbridge_net_t": 1176.56
+          "weighbridge_net_t": 1171.95
         },
         {
           "distance_km": 148.1,
@@ -22878,7 +22880,7 @@
           "vehicle_no": "MP52AB4578",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-011",
-          "weighbridge_net_t": 1290.4
+          "weighbridge_net_t": 1293.66
         },
         {
           "distance_km": 60.3,
@@ -22894,7 +22896,7 @@
           "vehicle_no": "MP42AB4312",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-014",
-          "weighbridge_net_t": 1209.95
+          "weighbridge_net_t": 1204.0
         },
         {
           "distance_km": 167.1,
@@ -22910,7 +22912,7 @@
           "vehicle_no": "MH39AB3161",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-017",
-          "weighbridge_net_t": 1270.98
+          "weighbridge_net_t": 1270.21
         },
         {
           "distance_km": 252.3,
@@ -22926,7 +22928,7 @@
           "vehicle_no": "TG32AB2044",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-020",
-          "weighbridge_net_t": 1288.31
+          "weighbridge_net_t": 1297.04
         },
         {
           "distance_km": 294.4,
@@ -22942,7 +22944,7 @@
           "vehicle_no": "TG38AB7184",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-023",
-          "weighbridge_net_t": 1295.65
+          "weighbridge_net_t": 1298.96
         },
         {
           "distance_km": 298.1,
@@ -22958,7 +22960,7 @@
           "vehicle_no": "GJ10AB1372",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-026",
-          "weighbridge_net_t": 1315.22
+          "weighbridge_net_t": 1314.54
         },
         {
           "distance_km": 130.0,
@@ -22974,7 +22976,7 @@
           "vehicle_no": "RJ52AB7868",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-029",
-          "weighbridge_net_t": 1303.25
+          "weighbridge_net_t": 1298.51
         },
         {
           "distance_km": 52.7,
@@ -22990,7 +22992,7 @@
           "vehicle_no": "GJ44AB4559",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-032",
-          "weighbridge_net_t": 1246.77
+          "weighbridge_net_t": 1240.46
         },
         {
           "distance_km": 214.9,
@@ -23006,7 +23008,7 @@
           "vehicle_no": "GJ52AB9540",
           "verified": true,
           "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-035",
-          "weighbridge_net_t": 1180.46
+          "weighbridge_net_t": 1177.16
         },
         {
           "duplicate_of": "PWP-01-SHP-001",
@@ -23030,10 +23032,10 @@
         "placement_note": "Nagpur MIDC industrial belt, Maharashtra",
         "site_validated": false
       },
-      "true_verifiable_t": 13500.0,
-      "true_verifiable_t_checks_only": 13500.0,
-      "verified_inbound_t": 13744.47,
-      "verified_inbound_t_full_system": 13744.47
+      "true_verifiable_t": 13731.11,
+      "true_verifiable_t_checks_only": 13731.11,
+      "verified_inbound_t": 13731.11,
+      "verified_inbound_t_full_system": 13731.11
     }
   ],
   "seed": 42

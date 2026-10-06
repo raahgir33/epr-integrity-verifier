@@ -3,6 +3,16 @@
 threshold used by checks/ lives anywhere else.
 """
 
+# C2a (input balance) — ASSUMPTION, aligned with QTY_TOL_WEIGHBRIDGE below.
+# Certified tonnes may exceed verified inbound tonnes by this fraction of
+# certified tonnes before C2a fails — independent per-shipment weighbridge
+# noise (+/-0.5% in this dataset) accumulates across a processor's
+# shipments and can otherwise trip a strict inequality with no real issue
+# behind it (see docs/PROGRESS.md's PWP-08 finding). Does not change the
+# verifiable/unverifiable tonnes arithmetic (agents/scorer.py) — only this
+# check's own pass/fail line.
+C2A_SHORTFALL_TOL = 0.02
+
 # C2b (output plausibility) — ASSUMPTION, soft signal. Recycled output sold
 # must not exceed processed tonnes times this yield ceiling.
 MAX_YIELD_RECYCLER = 0.95

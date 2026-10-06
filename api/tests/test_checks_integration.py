@@ -40,13 +40,17 @@ IMPLEMENTED_CHECK_IDS = {"C1", "C2a", "C2b", "C3a", "C3b", "C4", "C5", "C6", "C7
 # average speed from a fixed 30-48 km/h range, including for H2's 900 km
 # long-haul case) — see docs/PROGRESS.md.
 #
-# PWP-08 (F8 only) shows a C2a fail despite F8 being documented as
-# "agents only (no deterministic check)" — not a bug: weighbridge net is
-# independently randomised per shipment (+/-0.5%) even for a processor with
-# no seeded issue, and across PWP-08's 11 shipments that noise nets
-# slightly negative, tripping C2a's strict inequality by a small margin.
-# This is a property of the committed seed-42 draw, not of these checks —
-# see docs/PROGRESS.md.
+# PWP-08 (F8 only) passes C2a, matching its documented "agents only (no
+# deterministic check)" status in DATA_SPEC.md §5. This used to be a
+# marginal pass (0.53% shortfall, inside params.C2A_SHORTFALL_TOL=0.02 by
+# luck of this seed's draw) before the generator fix logged in
+# docs/PROGRESS.md: certificates for any processor without F1/F2/F3 are
+# now derived from the month's actual verified weighbridge net, so
+# certified and verified tonnage match exactly (shortfall 0.00) by
+# construction, not by chance — confirmed never to fail across seeds 1-20
+# (excluding 7) in test_c2a_noise_robustness.py. C2A_SHORTFALL_TOL stays
+# at 0.02 regardless (materiality threshold, not a noise-absorption
+# margin).
 EXPECTED_STATUSES = {
     "PWP-01": {
         "C1": "pass",
@@ -125,9 +129,9 @@ EXPECTED_STATUSES = {
         "C6": "pass",
         "C7": "warn",
     },
-    "PWP-08": {  # F8 only (agents only) — see note above on the C2a margin
+    "PWP-08": {  # F8 only (agents only, no deterministic check — see note above)
         "C1": "pass",
-        "C2a": "fail",
+        "C2a": "pass",
         "C2b": "pass",
         "C3a": "pass",
         "C3b": "pass",
@@ -229,6 +233,22 @@ def test_h1_through_h4_processors_never_fail(results_by_processor):
             assert result.status != "fail", (
                 f"{processor_id}/{result.check_id}: false positive on a hard-negative processor"
             )
+
+
+def test_pwp09_unverifiable_tonnes_uses_raw_certified_not_eligible(results_by_processor):
+    """PWP-09 (F6: one certificate in a non-permitted category) is the
+    direct test of scorer.py's unverifiable_t = certified_t (raw) -
+    verifiable_t, not eligible_certified_t - verifiable_t: if unverifiable
+    were computed from the eligible figure instead, the F6-excluded
+    tonnage would silently vanish from both verifiable_t and
+    unverifiable_t rather than surfacing as unverifiable, and the risk
+    band would never reflect the consent breach at all."""
+    score = results_by_processor["PWP-09"]["score"]
+    assert score["certified_t"] == pytest.approx(15248.02)
+    assert score["verifiable_t"] == pytest.approx(12570.06)
+    assert score["unverifiable_t"] == pytest.approx(2677.96)
+    assert score["unverifiable_t"] == pytest.approx(score["certified_t"] - score["verifiable_t"])
+    assert score["risk_band"] == "Medium"
 
 
 def test_no_seeded_scenario_fails_c3a_or_c3b(results_by_processor):

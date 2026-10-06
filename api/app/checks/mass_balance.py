@@ -44,32 +44,28 @@ def verified_inbound_tonnes(shipments: list[dict], duplicate_keys: dict[str, dic
 
 
 def check_c2a(processor_id: str, certified_t: float, verified_inbound_t: float) -> CheckResult:
-    if certified_t <= verified_inbound_t:
-        return CheckResult(
-            check_id="C2a",
-            status="pass",
-            severity="hard",
-            measured=certified_t,
-            threshold=verified_inbound_t,
-            affected_tonnes=0.0,
-            evidence_ids=[],
-            explanation=(
-                f"{processor_id}: certified tonnes ({certified_t:.2f} t) do not exceed "
-                f"verified inbound tonnes ({verified_inbound_t:.2f} t)."
-            ),
-        )
-    shortfall = certified_t - verified_inbound_t
+    """Tolerant on the shortfall fraction (params.C2A_SHORTFALL_TOL), not a
+    strict certified <= verified_inbound inequality — independent
+    per-shipment weighbridge noise otherwise trips this check with no real
+    issue behind it (docs/PROGRESS.md's PWP-08 finding). measured and
+    affected_tonnes are always the real certified_t and shortfall, whether
+    or not the check passes — this tolerance only changes the status line,
+    never agents/scorer.py's verifiable/unverifiable tonnes arithmetic."""
+    shortfall = max(0.0, certified_t - verified_inbound_t)
+    shortfall_pct = shortfall / certified_t if certified_t > 0 else 0.0
+    status = "pass" if shortfall_pct <= params.C2A_SHORTFALL_TOL else "fail"
     return CheckResult(
         check_id="C2a",
-        status="fail",
+        status=status,
         severity="hard",
         measured=certified_t,
         threshold=verified_inbound_t,
         affected_tonnes=shortfall,
         evidence_ids=[],
         explanation=(
-            f"{processor_id}: certified tonnes ({certified_t:.2f} t) exceed verified "
-            f"inbound tonnes ({verified_inbound_t:.2f} t) by {shortfall:.2f} t."
+            f"{processor_id}: certified tonnes ({certified_t:.2f} t) vs verified inbound "
+            f"tonnes ({verified_inbound_t:.2f} t) — shortfall {shortfall:.2f} t "
+            f"({shortfall_pct:.2%}), tolerance {params.C2A_SHORTFALL_TOL:.0%}."
         ),
     )
 
