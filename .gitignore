@@ -88,3 +88,13 @@ web/CLAUDE.md
 
 # machine-local convenience file written by deploy_api.sh, not a secret
 api/scripts/deploy/.epr-api-url
+
+# ----------------------------
+# Synthetic data (T4)
+# ----------------------------
+
+# Generated per-processor documents are reproducible from the seed; commit
+# only one sample processor's documents plus the manifests/ground_truth.json
+# (which are not git-ignored).
+data/synthetic/seed-*/documents/*
+!data/synthetic/seed-42/documents/PWP-01

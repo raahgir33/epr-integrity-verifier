@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1>Consent to Operate</h1>
+<div class="meta">Synthetic sample document — not a real regulatory filing</div>
+<table>
+<tr><th>{{ labels.consent_no }}</th><td>{{ fields.consent_no.printed }}</td></tr>
+<tr><th>{{ labels.processor_name }}</th><td>{{ fields.processor_name.printed }}</td></tr>
+<tr><th>{{ labels.address }}</th><td>{{ fields.address.printed }}</td></tr>
+<tr><th>{{ labels.permitted_categories }}</th><td>{{ fields.permitted_categories.printed }}</td></tr>
+<tr><th>{{ labels.capacity_t_per_year }}</th><td>{{ fields.capacity_t_per_year.printed }}</td></tr>
+<tr><th>{{ labels.valid_from }}</th><td>{{ fields.valid_from.printed }}</td></tr>
+<tr><th>{{ labels.valid_to }}</th><td>{{ fields.valid_to.printed }}</td></tr>
+</table>
+{% endblock %}

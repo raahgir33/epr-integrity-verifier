@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1>EPR Registration Certificate</h1>
+<div class="meta">Synthetic sample document — not a real regulatory filing</div>
+<table>
+<tr><th>{{ labels.registration_no }}</th><td>{{ fields.registration_no.printed }}</td></tr>
+<tr><th>{{ labels.processor_type }}</th><td>{{ fields.processor_type.printed }}</td></tr>
+<tr><th>{{ labels.categories }}</th><td>{{ fields.categories.printed }}</td></tr>
+<tr><th>{{ labels.capacity_t_per_year }}</th><td>{{ fields.capacity_t_per_year.printed }}</td></tr>
+</table>
+{% endblock %}

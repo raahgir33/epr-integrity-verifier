@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'NotoDevanagari';
+    src: url(data:font/ttf;base64,{{ font_base64 }}) format('truetype');
+  }
+  body {
+    font-family: {% if lang == 'hi' %}'NotoDevanagari', {% endif %}'Helvetica', 'Arial', sans-serif;
+    margin: 36px;
+    color: #111;
+    position: relative;
+  }
+  .watermark {
+    position: fixed;
+    top: 38%;
+    left: 8%;
+    font-size: 46px;
+    color: rgba(190, 0, 0, 0.22);
+    transform: rotate(-28deg);
+    font-weight: bold;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+  h1 { font-size: 19px; margin: 0 0 4px 0; }
+  .meta { color: #555; font-size: 12px; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  th, td {
+    border: 1px solid #999;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  th { width: 38%; background: #f3f3f3; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="watermark">SYNTHETIC — DEMO DATA</div>
+  {% block content %}{% endblock %}
+</body>
+</html>

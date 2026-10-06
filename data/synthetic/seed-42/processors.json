@@ -1,0 +1,234 @@
+[
+  {
+    "address": "Plot 8, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 6000.0,
+    "consent_no": "CTO-PWP-01-93810",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "27XIHHE1819N1ZY",
+    "hard_negatives": [],
+    "issue_types": [],
+    "lat": 18.7645,
+    "lon": 73.8623,
+    "name": "Sahyadri Green Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-01",
+    "registration_no": "EPR-REG-PWP-01-2824",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 2, Industrial Area, Gujarat",
+    "capacity_t_per_year": 7200.0,
+    "consent_no": "CTO-PWP-02-22280",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "33QTARG8637S5ZI",
+    "hard_negatives": [],
+    "issue_types": [],
+    "lat": 23.0726,
+    "lon": 72.6626,
+    "name": "Sabarmati Polymer Recovery Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-02",
+    "registration_no": "EPR-REG-PWP-02-4582",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 155, Industrial Area, Gujarat",
+    "capacity_t_per_year": 5400.0,
+    "consent_no": "CTO-PWP-03-30926",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "08IEGYK1161L6ZM",
+    "hard_negatives": [
+      "H1",
+      "H2"
+    ],
+    "issue_types": [],
+    "lat": 22.3511,
+    "lon": 73.1951,
+    "name": "Vishwamitri Plastics Recycling Co.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-03",
+    "registration_no": "EPR-REG-PWP-03-7924",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 12, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 8000.0,
+    "consent_no": "CTO-PWP-04-44671",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "23RDMCR4959G2ZE",
+    "hard_negatives": [
+      "H3",
+      "H4"
+    ],
+    "issue_types": [],
+    "lat": 12.9675,
+    "lon": 79.9385,
+    "name": "Palar Valley Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-04",
+    "registration_no": "EPR-REG-PWP-04-1711",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 172, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 4800.0,
+    "consent_no": "CTO-PWP-05-96673",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "36CHDMI7525L4Z6",
+    "hard_negatives": [],
+    "issue_types": [
+      "F1",
+      "F8"
+    ],
+    "lat": 12.7351,
+    "lon": 77.8256,
+    "name": "Ponnaiyar Polymer Works",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-05",
+    "registration_no": "EPR-REG-PWP-05-4733",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 57, Industrial Area, Telangana",
+    "capacity_t_per_year": 5200.0,
+    "consent_no": "CTO-PWP-06-44993",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "19UFRXH2764U9Z3",
+    "hard_negatives": [],
+    "issue_types": [
+      "F1",
+      "F3"
+    ],
+    "lat": 17.5297,
+    "lon": 78.2694,
+    "name": "Manjira Recycling Industries",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-06",
+    "registration_no": "EPR-REG-PWP-06-2169",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 55, Industrial Area, Madhya Pradesh",
+    "capacity_t_per_year": 6600.0,
+    "consent_no": "CTO-PWP-07-99733",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "27HBZKM4139W6Z6",
+    "hard_negatives": [],
+    "issue_types": [
+      "F2",
+      "F7"
+    ],
+    "lat": 22.6089,
+    "lon": 75.6544,
+    "name": "Narmada Valley Plastics Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-07",
+    "registration_no": "EPR-REG-PWP-07-6313",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 150, Industrial Area, Haryana",
+    "capacity_t_per_year": 5000.0,
+    "consent_no": "CTO-PWP-08-95909",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "06UOEIE3884X7ZQ",
+    "hard_negatives": [],
+    "issue_types": [
+      "F8"
+    ],
+    "lat": 28.4089,
+    "lon": 77.3178,
+    "name": "Yamuna Belt Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-08",
+    "registration_no": "EPR-REG-PWP-08-9179",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 153, Industrial Area, Rajasthan",
+    "capacity_t_per_year": 20000.0,
+    "consent_no": "CTO-PWP-09-62350",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "33EQPCY0122Z7ZA",
+    "hard_negatives": [],
+    "issue_types": [
+      "F5",
+      "F6"
+    ],
+    "lat": 27.55,
+    "lon": 76.6,
+    "name": "Aravalli EcoProcessors Pvt. Ltd.",
+    "permitted_categories": [
+      "III",
+      "IV"
+    ],
+    "processor_id": "PWP-09",
+    "registration_no": "EPR-REG-PWP-09-6930",
+    "site_validated": false,
+    "type": "end_of_life"
+  },
+  {
+    "address": "Plot 29, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 18000.0,
+    "consent_no": "CTO-PWP-10-18326",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "06TOQIR0184Y6ZE",
+    "hard_negatives": [],
+    "issue_types": [
+      "F4"
+    ],
+    "lat": 21.121,
+    "lon": 79.052,
+    "name": "Kanhan River Processors Pvt. Ltd.",
+    "permitted_categories": [
+      "III",
+      "IV"
+    ],
+    "processor_id": "PWP-10",
+    "registration_no": "EPR-REG-PWP-10-7304",
+    "site_validated": false,
+    "type": "end_of_life"
+  }
+]

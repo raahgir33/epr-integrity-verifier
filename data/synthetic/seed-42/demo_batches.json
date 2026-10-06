@@ -1,0 +1,92 @@
+[
+  {
+    "batch_id": "BATCH-PWP-01-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 4500.0,
+    "pre_batch_true_verifiable_t": 4500.0,
+    "processor_id": "PWP-01",
+    "pushes_over_verifiable": false,
+    "quantity_t": 50.0
+  },
+  {
+    "batch_id": "BATCH-PWP-02-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 5400.0,
+    "pre_batch_true_verifiable_t": 5400.0,
+    "processor_id": "PWP-02",
+    "pushes_over_verifiable": false,
+    "quantity_t": 60.0
+  },
+  {
+    "batch_id": "BATCH-PWP-03-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 5130.0,
+    "pre_batch_true_verifiable_t": 5130.0,
+    "processor_id": "PWP-03",
+    "pushes_over_verifiable": false,
+    "quantity_t": 45.0
+  },
+  {
+    "batch_id": "BATCH-PWP-04-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 5500.0,
+    "pre_batch_true_verifiable_t": 5500.0,
+    "processor_id": "PWP-04",
+    "pushes_over_verifiable": false,
+    "quantity_t": 66.67
+  },
+  {
+    "batch_id": "BATCH-PWP-05-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 6240.0,
+    "pre_batch_true_verifiable_t": 3230.44,
+    "processor_id": "PWP-05",
+    "pushes_over_verifiable": true,
+    "quantity_t": 800.0
+  },
+  {
+    "batch_id": "BATCH-PWP-06-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 6759.96,
+    "pre_batch_true_verifiable_t": 3575.77,
+    "processor_id": "PWP-06",
+    "pushes_over_verifiable": false,
+    "quantity_t": 43.33
+  },
+  {
+    "batch_id": "BATCH-PWP-07-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 4950.0,
+    "pre_batch_true_verifiable_t": 3692.75,
+    "processor_id": "PWP-07",
+    "pushes_over_verifiable": false,
+    "quantity_t": 55.0
+  },
+  {
+    "batch_id": "BATCH-PWP-08-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 3750.0,
+    "pre_batch_true_verifiable_t": 3407.48,
+    "processor_id": "PWP-08",
+    "pushes_over_verifiable": false,
+    "quantity_t": 41.67
+  },
+  {
+    "batch_id": "BATCH-PWP-09-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 15000.0,
+    "pre_batch_true_verifiable_t": 13750.0,
+    "processor_id": "PWP-09",
+    "pushes_over_verifiable": false,
+    "quantity_t": 166.67
+  },
+  {
+    "batch_id": "BATCH-PWP-10-001",
+    "period_month": "2026-04",
+    "pre_batch_certified_t": 13500.0,
+    "pre_batch_true_verifiable_t": 13500.0,
+    "processor_id": "PWP-10",
+    "pushes_over_verifiable": false,
+    "quantity_t": 150.0
+  }
+]

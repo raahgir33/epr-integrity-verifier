@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1>Tax Invoice — Inbound Material</h1>
+<div class="meta">Synthetic sample document</div>
+<table>
+<tr><th>{{ labels.invoice_no }}</th><td>{{ fields.invoice_no.printed }}</td></tr>
+<tr><th>{{ labels.date }}</th><td>{{ fields.date.printed }}</td></tr>
+<tr><th>{{ labels.supplier_gstin }}</th><td>{{ fields.supplier_gstin.printed }}</td></tr>
+<tr><th>{{ labels.buyer_gstin }}</th><td>{{ fields.buyer_gstin.printed }}</td></tr>
+<tr><th>{{ labels.item_description }}</th><td>{{ fields.item_description.printed }}</td></tr>
+<tr><th>{{ labels.hsn }}</th><td>{{ fields.hsn.printed }}</td></tr>
+<tr><th>{{ labels.quantity_t }}</th><td>{{ fields.quantity_t.printed }}</td></tr>
+<tr><th>{{ labels.rate }}</th><td>{{ fields.rate.printed }}</td></tr>
+<tr><th>{{ labels.value }}</th><td>{{ fields.value.printed }}</td></tr>
+</table>
+{% endblock %}

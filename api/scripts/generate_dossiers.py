@@ -1,0 +1,105 @@
+"""Generates the full synthetic EPR dossier world for a given seed:
+10 processors' documents (PDFs and weighbridge PNGs), certificates.csv,
+processors/suppliers/brands/demo_batches JSON, and ground_truth.json.
+
+See docs/DATA_SPEC.md §2-§6. Runs only on the developer's machine, never
+on Cloud Run — Playwright/Chromium aren't in the deployed image.
+
+Usage: uv run python scripts/generate_dossiers.py --seed 42
+"""
+
+import argparse
+import json
+import shutil
+from pathlib import Path
+
+from scripts.dossier_gen.ground_truth import build_ground_truth
+from scripts.dossier_gen.manifests import (
+    brands_to_json,
+    build_certificates_csv,
+    build_demo_batches,
+    processors_to_json,
+    suppliers_to_json,
+)
+from scripts.dossier_gen.render import Renderer
+from scripts.dossier_gen.rng import new_rng
+from scripts.dossier_gen.shipments import Dossier, build_dossier
+from scripts.dossier_gen.world import Processor, build_brands, build_processors, build_suppliers
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def build_all_dossiers(processors: list[Processor], suppliers, rng) -> dict[str, Dossier]:
+    """PWP-01 is built first (and forced to carry the Hindi sample) since
+    PWP-10's F4 duplicate copies one of its records."""
+    by_id = {p.processor_id: p for p in processors}
+    dossiers: dict[str, Dossier] = {
+        "PWP-01": build_dossier(by_id["PWP-01"], suppliers, rng, force_hindi=True)
+    }
+    for p in processors:
+        if p.processor_id == "PWP-01":
+            continue
+        f4_source = dossiers["PWP-01"] if "F4" in p.issue_types else None
+        dossiers[p.processor_id] = build_dossier(p, suppliers, rng, f4_source=f4_source)
+    return dossiers
+
+
+def render_all_documents(dossiers: dict[str, Dossier], out_dir: Path, rng) -> None:
+    with Renderer() as renderer:
+        for processor_id, dossier in dossiers.items():
+            proc_dir = out_dir / "documents" / processor_id
+            for doc in dossier.documents:
+                if doc["doc_type"] == "weighbridge_slip":
+                    path = proc_dir / f"{doc['doc_id']}.png"
+                    renderer.render_weighbridge_png(doc["fields"], doc["lang"], path, rng)
+                else:
+                    path = proc_dir / f"{doc['doc_id']}.pdf"
+                    renderer.render_pdf(doc["doc_type"], doc["fields"], doc["lang"], path)
+
+
+def write_json(path: Path, data) -> None:
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True), encoding="utf-8"
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate the synthetic EPR dossier world.")
+    parser.add_argument("--seed", type=int, required=True)
+    args = parser.parse_args()
+
+    out_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{args.seed}"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
+
+    rng = new_rng(args.seed)
+    processors = build_processors(rng)
+    suppliers = build_suppliers(rng)
+    brands = build_brands()
+    dossiers = build_all_dossiers(processors, suppliers, rng)
+
+    ground_truth = build_ground_truth(args.seed, processors, dossiers)
+    gt_by_id = {pe["processor_id"]: pe for pe in ground_truth["processors"]}
+
+    write_json(out_dir / "ground_truth.json", ground_truth)
+    write_json(out_dir / "processors.json", processors_to_json(processors))
+    write_json(out_dir / "suppliers.json", suppliers_to_json(suppliers))
+    write_json(out_dir / "brands.json", brands_to_json(brands))
+    write_json(out_dir / "demo_batches.json", build_demo_batches(processors, gt_by_id))
+    (out_dir / "certificates.csv").write_text(
+        build_certificates_csv(processors, dossiers, brands), encoding="utf-8"
+    )
+
+    # A separately-seeded stream for render-time randomness (Pillow
+    # degradation), so it doesn't entangle with document-content generation.
+    render_rng = new_rng(args.seed)
+    render_all_documents(dossiers, out_dir, render_rng)
+
+    total_docs = sum(len(d.documents) for d in dossiers.values())
+    print(f"Generated seed {args.seed}: {len(processors)} processors, {total_docs} documents")
+    print(f"-> {out_dir}")
+
+
+if __name__ == "__main__":
+    main()

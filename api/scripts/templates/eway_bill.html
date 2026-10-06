@@ -1,0 +1,20 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1>E-Way Bill</h1>
+<div class="meta">Synthetic sample document</div>
+<table>
+<tr><th>{{ labels.ewb_no }}</th><td>{{ fields.ewb_no.printed }}</td></tr>
+<tr><th>{{ labels.generated_at }}</th><td>{{ fields.generated_at.printed }}</td></tr>
+<tr><th>{{ labels.valid_until }}</th><td>{{ fields.valid_until.printed }}</td></tr>
+<tr><th>{{ labels.from_gstin }}</th><td>{{ fields.from_gstin.printed }}</td></tr>
+<tr><th>{{ labels.to_gstin }}</th><td>{{ fields.to_gstin.printed }}</td></tr>
+<tr><th>{{ labels.from_pin }}</th><td>{{ fields.from_pin.printed }}</td></tr>
+<tr><th>{{ labels.to_pin }}</th><td>{{ fields.to_pin.printed }}</td></tr>
+<tr><th>{{ labels.distance_km }}</th><td>{{ fields.distance_km.printed }}</td></tr>
+<tr><th>{{ labels.vehicle_no }}</th><td>{{ fields.vehicle_no.printed }}</td></tr>
+<tr><th>{{ labels.hsn }}</th><td>{{ fields.hsn.printed }}</td></tr>
+<tr><th>{{ labels.quantity_t }}</th><td>{{ fields.quantity_t.printed }}</td></tr>
+<tr><th>{{ labels.value }}</th><td>{{ fields.value.printed }}</td></tr>
+<tr><th>{{ labels.invoice_no }}</th><td>{{ fields.invoice_no.printed }}</td></tr>
+</table>
+{% endblock %}

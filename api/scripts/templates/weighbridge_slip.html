@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1>Weighbridge Ticket</h1>
+<div class="meta">Synthetic sample document</div>
+<table>
+<tr><th>{{ labels.ticket_no }}</th><td>{{ fields.ticket_no.printed }}</td></tr>
+<tr><th>{{ labels.vehicle_no }}</th><td>{{ fields.vehicle_no.printed }}</td></tr>
+<tr><th>{{ labels.gross_kg }}</th><td>{{ fields.gross_kg.printed }}</td></tr>
+<tr><th>{{ labels.tare_kg }}</th><td>{{ fields.tare_kg.printed }}</td></tr>
+<tr><th>{{ labels.net_kg }}</th><td>{{ fields.net_kg.printed }}</td></tr>
+<tr><th>{{ labels.in_time }}</th><td>{{ fields.in_time.printed }}</td></tr>
+<tr><th>{{ labels.out_time }}</th><td>{{ fields.out_time.printed }}</td></tr>
+<tr><th>{{ labels.remarks }}</th><td>{{ fields.remarks.printed }}</td></tr>
+</table>
+{% endblock %}
