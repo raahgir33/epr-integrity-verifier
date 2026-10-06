@@ -6,6 +6,11 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "pydantic-settings>=2.6",
+    "google-genai>=0.8",
+    "google-cloud-bigquery>=3.26",
+    "google-cloud-storage>=2.18",
+    "google-cloud-pubsub>=2.26",
+    "earthengine-api>=1.1",
 ]
 
 [dependency-groups]
