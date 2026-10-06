@@ -34,7 +34,7 @@ class _FakeLLMClient:
         self._outcomes = list(outcomes)
         self.calls = 0
 
-    def extract(self, data, mime_type, prompt, schema, purpose):
+    def extract(self, data, mime_type, prompt, schema, purpose, thinking_level=None):
         self.calls += 1
         outcome = self._outcomes.pop(0)
         if isinstance(outcome, Exception):

@@ -5,7 +5,7 @@ no real network calls.
 from unittest.mock import MagicMock, patch
 
 import pytest
-from google.genai import errors
+from google.genai import errors, types
 from pydantic import BaseModel
 
 from app.llm import GeminiClient
@@ -144,3 +144,67 @@ def test_flush_call_log_clears_buffer(mock_client_cls):
     client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
     assert len(client.flush_call_log()) == 1
     assert client.flush_call_log() == []
+
+
+@patch("app.llm.genai.Client")
+def test_thinking_level_is_passed_through_when_set(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    client.extract(
+        b"data", "application/pdf", "prompt", _DummySchema, purpose="test", thinking_level="low"
+    )
+
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert isinstance(config.thinking_config, types.ThinkingConfig)
+    assert config.thinking_config.thinking_level == types.ThinkingLevel.LOW
+
+
+@patch("app.llm.genai.Client")
+def test_thinking_config_omitted_when_not_set(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
+
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert config.thinking_config is None
+
+
+@patch("app.llm.genai.Client")
+def test_thinking_level_minimal_is_rejected_before_any_call(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    for forbidden in ("minimal", "MINIMAL", " Minimal "):
+        with pytest.raises(ValueError, match="minimal"):
+            client.extract(
+                b"data",
+                "application/pdf",
+                "prompt",
+                _DummySchema,
+                purpose="test",
+                thinking_level=forbidden,
+            )
+    mock_client.models.generate_content.assert_not_called()
+
+
+@patch("app.llm.genai.Client")
+def test_thinking_budget_parameter_no_longer_exists(mock_client_cls):
+    """Never send thinking_budget to Gemini 3.x models — confirmed rejected
+    (and inconsistently) for this model/region on 2026-10-07. The parameter
+    is removed from GeminiClient.extract entirely, not just unused."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(TypeError):
+        client.extract(
+            b"data", "application/pdf", "prompt", _DummySchema, purpose="test", thinking_budget=0
+        )

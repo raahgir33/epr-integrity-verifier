@@ -31,10 +31,23 @@ T = TypeVar("T", bound=BaseModel)
 _RETRYABLE_CODES = {429, 500, 502, 503, 504}
 _MAX_ATTEMPTS = 5
 
+# Never send thinking_budget to Gemini 3.x models — live-verified rejected
+# (and inconsistently) for gemini-3.5-flash/asia-south1 on 2026-10-07; see
+# docs/PROGRESS.md. thinking_level is the only supported knob, and
+# "minimal" is also forbidden (developer instruction) — enforced below,
+# not just documented here.
+_FORBIDDEN_THINKING_LEVELS = {"minimal"}
+
 
 class LLMClient(Protocol):
     def extract(
-        self, data: bytes, mime_type: str, prompt: str, schema: type[T], purpose: str
+        self,
+        data: bytes,
+        mime_type: str,
+        prompt: str,
+        schema: type[T],
+        purpose: str,
+        thinking_level: str | None = None,
     ) -> T: ...
 
 
@@ -47,8 +60,30 @@ class GeminiClient:
         self._lock = threading.Lock()
 
     def extract(
-        self, data: bytes, mime_type: str, prompt: str, schema: type[T], purpose: str = "extract"
+        self,
+        data: bytes,
+        mime_type: str,
+        prompt: str,
+        schema: type[T],
+        purpose: str = "extract",
+        thinking_level: str | None = None,
     ) -> T:
+        config_kwargs = {
+            "response_mime_type": "application/json",
+            "response_schema": schema,
+            "temperature": 0,
+        }
+        if thinking_level is not None:
+            normalized = thinking_level.strip().lower()
+            if normalized in _FORBIDDEN_THINKING_LEVELS:
+                raise ValueError(
+                    f"thinking_level={thinking_level!r} is not allowed — never send "
+                    "'minimal' (or thinking_budget) to Gemini 3.x models."
+                )
+            config_kwargs["thinking_config"] = types.ThinkingConfig(
+                thinking_level=types.ThinkingLevel(normalized.upper())
+            )
+
         last_exc: Exception | None = None
         for attempt in range(_MAX_ATTEMPTS):
             start = time.monotonic()
@@ -56,11 +91,7 @@ class GeminiClient:
                 response = self._client.models.generate_content(
                     model=settings.gemini_model,
                     contents=[types.Part.from_bytes(data=data, mime_type=mime_type), prompt],
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=schema,
-                        temperature=0,
-                    ),
+                    config=types.GenerateContentConfig(**config_kwargs),
                 )
                 self._record_call(
                     purpose,

@@ -23022,19 +23022,6 @@
           "verified": false,
           "weighbridge_doc_id": null,
           "weighbridge_net_t": null
-        },
-        {
-          "eway_doc_id": "PWP-10-EWAY_BILL-037",
-          "invoice_doc_id": "PWP-10-INBOUND_INVOICE-036",
-          "invoice_qty_t": 1168.56,
-          "is_f8": false,
-          "match_status": "duplicate_ticket",
-          "month": "2025-10",
-          "reused_ticket_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-005",
-          "shipment_id": "PWP-10-SHP-REUSE-001",
-          "verified": false,
-          "weighbridge_doc_id": "PWP-10-WEIGHBRIDGE_SLIP-005",
-          "weighbridge_net_t": 1166.92
         }
       ],
       "site": {

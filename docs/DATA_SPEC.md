@@ -108,7 +108,7 @@ Grounded in documented cases (CSE assessment, CPCB audits).
 | F1 | Capacity inflation | Certificates exceed CTO capacity for several months | C1 |
 | F2 | Phantom inbound | Invoices and e-way bills without weighbridge slips; or transit implying > 120 km/h | C2, C3 |
 | F3 | Quantity inflation | Weighbridge net materially below invoice quantity | C4, C2 |
-| F4 | Double use | The same set of inbound invoices and e-way bills appears in two processors' dossiers (only visible with a cross-processor view), plus one weighbridge ticket reused within a dossier | C5 |
+| F4 | Double use | The same set of inbound invoices and e-way bills appears in two processors' dossiers (only visible with a cross-processor view) | C5 |
 | F5 | Ghost site | Registered coordinates on open land; no building footprint | C8 |
 | F6 | Consent breach | Processing after CTO expiry, or certificates in a category the CTO does not permit | C6 |
 | F7 | Energy implausibility | Output months with near-zero electricity use | C7 |
@@ -137,7 +137,7 @@ Fixed assignment:
 | PWP-09 | End-of-life | F5, F6 |
 | PWP-10 | End-of-life | F4 |
 
-**F4 mechanics:** PWP-10's dossier contains a copy of one of PWP-01's real inbound invoice + e-way-bill records (same invoice no., supplier GSTIN, EWB number) but with no matching weighbridge slip on PWP-10's side — so C5 (and the fact that it's unmatched) attributes the duplicate to PWP-10, while PWP-01's original, properly matched shipment stays clean. PWP-10 also carries the "one weighbridge ticket reused within a dossier" sub-case internally.
+**F4 mechanics:** PWP-10's dossier contains a copy of one of PWP-01's real inbound invoice + e-way-bill records (same invoice no., supplier GSTIN, EWB number) but with no matching weighbridge slip on PWP-10's side — so C5 (and the fact that it's unmatched) attributes the duplicate to PWP-10, while PWP-01's original, properly matched shipment stays clean. (An earlier draft also seeded "one weighbridge ticket reused within a dossier" on PWP-10; dropped — that would require truth-mode normalisation to encode a match that `normalize.py`'s real extracted-mode matching rules, operating on vehicle number and time window, could never independently derive from the copied e-way bill, which would make truth and extracted modes permanently disagree on this shipment.)
 
 ## 6. Ground truth file (`data/synthetic/ground_truth.json`)
 

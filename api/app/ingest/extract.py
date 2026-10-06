@@ -26,6 +26,12 @@ MIME_TYPE_BY_DOC_TYPE = {
     for doc_type in SCHEMA_BY_DOC_TYPE
 }
 
+# No thinking config is sent here. thinking_budget is confirmed rejected
+# for gemini-3.5-flash/asia-south1 (and never allowed on Gemini 3.x models
+# per se — see app/llm.py). thinking_level="low" is being probed separately
+# (scripts/probe_thinking_level.py) before this main path adopts it — see
+# docs/PROGRESS.md for the decision once the probe has run.
+
 
 def _load_prompts() -> dict[str, str]:
     return {

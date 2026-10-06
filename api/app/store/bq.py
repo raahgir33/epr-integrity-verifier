@@ -105,6 +105,47 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("thinking_tokens", "INTEGER"),
         bigquery.SchemaField("total_tokens", "INTEGER"),
     ],
+    # T7 (normalise) tables below. Populated from either ground-truth facts
+    # or real extracted_facts (docs/DATA_SPEC.md §4's matching rules) — the
+    # facts_source column distinguishes the two, and idempotent re-runs
+    # delete by (seed, facts_source) via delete_by_seed_and_source, so
+    # loading one mode never wipes the other. No is_f8/verified columns:
+    # those are ground-truth-only evaluation knowledge (stay in
+    # ground_truth.json for T14), not derivable from extracted documents.
+    # match_status/duplicate detection (C5) works by grouping ewb_no /
+    # weighbridge_doc_id across the table itself, not a precomputed flag.
+    "shipments": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("shipment_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING"),
+        bigquery.SchemaField("month", "STRING"),
+        bigquery.SchemaField("invoice_doc_id", "STRING"),
+        bigquery.SchemaField("eway_doc_id", "STRING"),
+        bigquery.SchemaField("weighbridge_doc_id", "STRING"),
+        bigquery.SchemaField("invoice_qty_t", "FLOAT"),
+        bigquery.SchemaField("weighbridge_net_t", "FLOAT"),
+        bigquery.SchemaField("match_status", "STRING"),
+        bigquery.SchemaField("ewb_no", "STRING"),
+        bigquery.SchemaField("vehicle_no", "STRING"),
+        bigquery.SchemaField("distance_km", "FLOAT"),
+    ],
+    "outputs": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING"),
+        bigquery.SchemaField("month", "STRING"),
+        bigquery.SchemaField("quantity_t", "FLOAT"),
+    ],
+    "energy_monthly": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING"),
+        bigquery.SchemaField("month", "STRING"),
+        bigquery.SchemaField("kwh", "FLOAT"),
+    ],
 }
 
 
@@ -126,6 +167,24 @@ def delete_by_seed(client: bigquery.Client, table_name: str, seed: int) -> None:
     query = f"DELETE FROM `{_table_ref(table_name)}` WHERE seed = @seed"
     job_config = bigquery.QueryJobConfig(
         query_parameters=[bigquery.ScalarQueryParameter("seed", "INTEGER", seed)]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_by_seed_and_source(
+    client: bigquery.Client, table_name: str, seed: int, facts_source: str
+) -> None:
+    """For the facts_source-dimensioned tables (shipments, outputs,
+    energy_monthly) — deletes only this seed+mode's rows, so loading truth
+    mode never wipes extracted mode's rows or vice versa."""
+    table_ref = _table_ref(table_name)
+    query = f"DELETE FROM `{table_ref}` WHERE seed = @seed AND facts_source = @facts_source"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+        ]
     )
     job = client.query(query, job_config=job_config, location=settings.vertex_location)
     job.result()

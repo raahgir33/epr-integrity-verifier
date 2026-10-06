@@ -356,25 +356,6 @@ def build_dossier(
                 "verified": False,
             }
         )
-        # Within-dossier reuse: one of this processor's own weighbridge tickets
-        # matched to two different e-way bills.
-        if dossier.shipments and dossier.shipments[0].get("weighbridge_doc_id"):
-            reused_ticket_shipment = dossier.shipments[0]
-            dossier.shipments.append(
-                {
-                    "shipment_id": f"{processor.processor_id}-SHP-REUSE-001",
-                    "month": reused_ticket_shipment["month"],
-                    "invoice_doc_id": dup_invoice_id,
-                    "eway_doc_id": dup_eway_id,
-                    "weighbridge_doc_id": reused_ticket_shipment["weighbridge_doc_id"],
-                    "invoice_qty_t": reused_ticket_shipment["invoice_qty_t"],
-                    "weighbridge_net_t": reused_ticket_shipment["weighbridge_net_t"],
-                    "match_status": "duplicate_ticket",
-                    "is_f8": False,
-                    "reused_ticket_doc_id": reused_ticket_shipment["weighbridge_doc_id"],
-                    "verified": False,
-                }
-            )
 
     # --- outbound sales invoices (recyclers only — no recycled product for end-of-life) ---
     if is_recycler:

@@ -1,20 +1,35 @@
 """Precompute pipeline: extract -> normalize -> checks -> site -> agents.
-Only --stage extract is implemented so far; T7-T10 add the rest.
+--stage extract and --stage normalize are implemented; T8-T10 add the rest.
 
 Run by the developer — never by the agent (hits real Vertex AI, BigQuery,
 Cloud Storage).
 
 Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
        uv run python scripts/run_pipeline.py --seed 42 --stage extract --processor PWP-01
+       uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source truth
+       uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source extracted
 """
 
 import argparse
 import json
 from pathlib import Path
 
+from google.cloud import bigquery
+
 from app.config import settings
 from app.eval.evaluate import extraction_field_accuracy
 from app.ingest.extract import extract_all, facts_to_field_rows
+from app.ingest.normalize import (
+    EXTRACTED,
+    TRUTH,
+    energy_from_extracted,
+    energy_from_truth,
+    facts_by_doc_id,
+    match_shipments_from_extracted,
+    outputs_from_extracted,
+    outputs_from_truth,
+    shipments_from_truth,
+)
 from app.llm import GeminiClient
 from app.store import bq, gcs
 from scripts.load_dossiers import document_gcs_path
@@ -95,15 +110,107 @@ def run_extract(seed: int, processor_filter: str | None) -> None:
     print(f"Gate (>= {ACCURACY_GATE:.0%}): {gate_status}")
 
 
+def _fetch_bq_rows(
+    client, table: str, columns: str, seed: int, processor_filter: str | None
+) -> list[dict]:
+    table_ref = f"{settings.gcp_project}.{settings.bq_dataset}.{table}"
+    query = f"SELECT {columns} FROM `{table_ref}` WHERE seed = @seed"
+    params = [bigquery.ScalarQueryParameter("seed", "INTEGER", seed)]
+    if processor_filter:
+        query += " AND processor_id = @processor_id"
+        params.append(bigquery.ScalarQueryParameter("processor_id", "STRING", processor_filter))
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    return [dict(row) for row in job.result()]
+
+
+def _group_by_processor(rows: list[dict]) -> dict[str, list[dict]]:
+    grouped: dict[str, list[dict]] = {}
+    for row in rows:
+        grouped.setdefault(row["processor_id"], []).append(row)
+    return grouped
+
+
+def run_normalize(seed: int, facts_source: str, processor_filter: str | None) -> None:
+    all_shipments: list[dict] = []
+    all_outputs: list[dict] = []
+    all_energy: list[dict] = []
+    invoice_count = 0
+
+    if facts_source == TRUTH:
+        ground_truth = load_ground_truth(seed)
+        processors = ground_truth["processors"]
+        if processor_filter:
+            processors = [p for p in processors if p["processor_id"] == processor_filter]
+        for p in processors:
+            pid = p["processor_id"]
+            all_shipments.extend(shipments_from_truth(seed, pid, p["shipments"]))
+            all_outputs.extend(outputs_from_truth(seed, pid, p["outputs"]))
+            all_energy.extend(energy_from_truth(seed, pid, p["energy_monthly"]))
+        invoice_count = sum(
+            1
+            for d in ground_truth["documents"]
+            if d["doc_type"] == "inbound_invoice"
+            and (not processor_filter or d["processor_id"] == processor_filter)
+        )
+    else:
+        bq_client = bq.get_client()
+        documents = _fetch_bq_rows(
+            bq_client, "documents", "doc_id, processor_id, doc_type", seed, processor_filter
+        )
+        extracted_rows = _fetch_bq_rows(
+            bq_client,
+            "extracted_facts",
+            "doc_id, processor_id, field_name, printed_value",
+            seed,
+            processor_filter,
+        )
+        docs_by_processor = _group_by_processor(documents)
+        facts_by_processor = _group_by_processor(extracted_rows)
+        invoice_count = sum(1 for d in documents if d["doc_type"] == "inbound_invoice")
+
+        for pid, docs in docs_by_processor.items():
+            facts = facts_by_doc_id(facts_by_processor.get(pid, []))
+            all_shipments.extend(match_shipments_from_extracted(seed, pid, docs, facts))
+            all_outputs.extend(outputs_from_extracted(seed, pid, docs, facts))
+            all_energy.extend(energy_from_extracted(seed, pid, docs, facts))
+
+    bq_client = bq.get_client()
+    bq.delete_by_seed_and_source(bq_client, "shipments", seed, facts_source)
+    bq.load_rows(bq_client, "shipments", all_shipments)
+    bq.delete_by_seed_and_source(bq_client, "outputs", seed, facts_source)
+    bq.load_rows(bq_client, "outputs", all_outputs)
+    bq.delete_by_seed_and_source(bq_client, "energy_monthly", seed, facts_source)
+    bq.load_rows(bq_client, "energy_monthly", all_energy)
+
+    matched = sum(1 for s in all_shipments if s["match_status"] == "matched")
+    unmatched = sum(1 for s in all_shipments if s["match_status"] == "unmatched")
+
+    print(f"Normalise ({facts_source}) done:")
+    print(f"  shipments: {len(all_shipments)} (matched={matched}, unmatched={unmatched})")
+    print(f"  inbound invoice documents: {invoice_count}", end=" ")
+    print("[OK, counts match]" if invoice_count == len(all_shipments) else "[MISMATCH]")
+    print(f"  outputs: {len(all_outputs)}")
+    print(f"  energy_monthly: {len(all_energy)}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run precompute pipeline stages.")
     parser.add_argument("--seed", type=int, required=True)
-    parser.add_argument("--stage", choices=["extract"], required=True)
+    parser.add_argument("--stage", choices=["extract", "normalize"], required=True)
     parser.add_argument("--processor", help="Only process this processor_id (e.g. PWP-01)")
+    parser.add_argument(
+        "--facts-source",
+        choices=[TRUTH, EXTRACTED],
+        default=TRUTH,
+        help="For --stage normalize: build from ground truth or real extracted_facts.",
+    )
     args = parser.parse_args()
 
     if args.stage == "extract":
         run_extract(args.seed, args.processor)
+    elif args.stage == "normalize":
+        run_normalize(args.seed, args.facts_source, args.processor)
 
 
 if __name__ == "__main__":
