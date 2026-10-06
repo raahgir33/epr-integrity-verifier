@@ -50,7 +50,36 @@ def test_shipments_from_truth_reshapes_fields():
             "verified": True,
         }
     ]
-    rows = shipments_from_truth(SEED, "PWP-01", truth_shipments)
+    documents = [
+        {
+            "doc_id": "PWP-01-INV-001",
+            "fields": {
+                "invoice_no": {"canonical": "PWP-01-INV-001", "printed": "PWP-01-INV-001"},
+                "supplier_gstin": {"canonical": "27JLZBL3315Y9Z4", "printed": "27JLZBL3315Y9Z4"},
+            },
+        },
+        {
+            "doc_id": "PWP-01-EWAY-001",
+            "fields": {
+                "generated_at": {
+                    "canonical": "2025-04-01T10:00:00",
+                    "printed": "01-04-2025 10:00",
+                },
+                "valid_until": {
+                    "canonical": "2025-04-02T23:59:59",
+                    "printed": "02-04-2025 23:59",
+                },
+            },
+        },
+        {
+            "doc_id": "PWP-01-WB-001",
+            "fields": {
+                "ticket_no": {"canonical": "PWP-01-WB-0001", "printed": "PWP-01-WB-0001"},
+                "in_time": {"canonical": "2025-04-01T15:00:00", "printed": "01-04-2025 15:00"},
+            },
+        },
+    ]
+    rows = shipments_from_truth(SEED, "PWP-01", truth_shipments, documents)
     assert rows == [
         {
             "seed": SEED,
@@ -67,6 +96,12 @@ def test_shipments_from_truth_reshapes_fields():
             "ewb_no": "123",
             "vehicle_no": "MH12AB1234",
             "distance_km": 50.0,
+            "eway_generated_at": "2025-04-01T04:30:00+00:00",
+            "eway_valid_until": "2025-04-02T18:29:00+00:00",
+            "weighbridge_in_time": "2025-04-01T09:30:00+00:00",
+            "invoice_no": "PWP-01-INV-001",
+            "supplier_gstin": "27JLZBL3315Y9Z4",
+            "weighbridge_ticket_no": "PWP-01-WB-0001",
         }
     ]
 
@@ -135,7 +170,9 @@ def test_extracted_matching_agrees_with_truth_for_every_processor(ground_truth, 
     processor_entry = next(
         p for p in ground_truth["processors"] if p["processor_id"] == processor_id
     )
-    truth_rows = shipments_from_truth(SEED, processor_id, processor_entry["shipments"])
+    truth_rows = shipments_from_truth(
+        SEED, processor_id, processor_entry["shipments"], ground_truth["documents"]
+    )
     truth_by_invoice = {r["invoice_doc_id"]: r for r in truth_rows}
 
     documents = _processor_documents(ground_truth, processor_id)
@@ -167,6 +204,24 @@ def test_extracted_matching_agrees_with_truth_for_every_processor(ground_truth, 
             assert extracted_row["weighbridge_net_t"] == pytest.approx(
                 truth_row["weighbridge_net_t"]
             ), f"{processor_id}/{invoice_doc_id}: weighbridge_net_t differs"
+        assert extracted_row["invoice_no"] == truth_row["invoice_no"], (
+            f"{processor_id}/{invoice_doc_id}: invoice_no differs"
+        )
+        assert extracted_row["supplier_gstin"] == truth_row["supplier_gstin"], (
+            f"{processor_id}/{invoice_doc_id}: supplier_gstin differs"
+        )
+        assert extracted_row["weighbridge_ticket_no"] == truth_row["weighbridge_ticket_no"], (
+            f"{processor_id}/{invoice_doc_id}: weighbridge_ticket_no differs"
+        )
+        assert extracted_row["eway_generated_at"] == truth_row["eway_generated_at"], (
+            f"{processor_id}/{invoice_doc_id}: eway_generated_at differs"
+        )
+        assert extracted_row["eway_valid_until"] == truth_row["eway_valid_until"], (
+            f"{processor_id}/{invoice_doc_id}: eway_valid_until differs"
+        )
+        assert extracted_row["weighbridge_in_time"] == truth_row["weighbridge_in_time"], (
+            f"{processor_id}/{invoice_doc_id}: weighbridge_in_time differs"
+        )
 
 
 @pytest.mark.parametrize("processor_id", [f"PWP-{i:02d}" for i in range(1, 11)])

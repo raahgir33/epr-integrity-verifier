@@ -1,5 +1,5 @@
 """Precompute pipeline: extract -> normalize -> checks -> site -> agents.
---stage extract and --stage normalize are implemented; T8-T10 add the rest.
+--stage extract, normalize and checks are implemented; T9-T10 add the rest.
 
 Run by the developer — never by the agent (hits real Vertex AI, BigQuery,
 Cloud Storage).
@@ -8,14 +8,19 @@ Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
        uv run python scripts/run_pipeline.py --seed 42 --stage extract --processor PWP-01
        uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source truth
        uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source extracted
+       uv run python scripts/run_pipeline.py --seed 42 --stage checks --facts-source truth
 """
 
 import argparse
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from google.cloud import bigquery
 
+from app.agents.scorer import score_processor
+from app.checks.duplicates import find_duplicate_keys
+from app.checks.runner import run_checks_for_processor
 from app.config import settings
 from app.eval.evaluate import extraction_field_accuracy
 from app.ingest.extract import extract_all, facts_to_field_rows
@@ -111,7 +116,12 @@ def run_extract(seed: int, processor_filter: str | None) -> None:
 
 
 def _fetch_bq_rows(
-    client, table: str, columns: str, seed: int, processor_filter: str | None
+    client,
+    table: str,
+    columns: str,
+    seed: int,
+    processor_filter: str | None,
+    facts_source: str | None = None,
 ) -> list[dict]:
     table_ref = f"{settings.gcp_project}.{settings.bq_dataset}.{table}"
     query = f"SELECT {columns} FROM `{table_ref}` WHERE seed = @seed"
@@ -119,6 +129,9 @@ def _fetch_bq_rows(
     if processor_filter:
         query += " AND processor_id = @processor_id"
         params.append(bigquery.ScalarQueryParameter("processor_id", "STRING", processor_filter))
+    if facts_source:
+        query += " AND facts_source = @facts_source"
+        params.append(bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source))
     job_config = bigquery.QueryJobConfig(query_parameters=params)
     job = client.query(query, job_config=job_config, location=settings.vertex_location)
     return [dict(row) for row in job.result()]
@@ -144,7 +157,9 @@ def run_normalize(seed: int, facts_source: str, processor_filter: str | None) ->
             processors = [p for p in processors if p["processor_id"] == processor_filter]
         for p in processors:
             pid = p["processor_id"]
-            all_shipments.extend(shipments_from_truth(seed, pid, p["shipments"]))
+            all_shipments.extend(
+                shipments_from_truth(seed, pid, p["shipments"], ground_truth["documents"])
+            )
             all_outputs.extend(outputs_from_truth(seed, pid, p["outputs"]))
             all_energy.extend(energy_from_truth(seed, pid, p["energy_monthly"]))
         invoice_count = sum(
@@ -194,16 +209,166 @@ def run_normalize(seed: int, facts_source: str, processor_filter: str | None) ->
     print(f"  energy_monthly: {len(all_energy)}")
 
 
+def _row_timestamp_to_iso(value) -> str | None:
+    """BigQuery TIMESTAMP columns come back as timezone-aware
+    datetime.datetime; checks/transport.py expects an ISO string."""
+    return None if value is None else value.isoformat()
+
+
+def _row_date_to_ddmmyyyy(value) -> str | None:
+    """BigQuery DATE columns come back as datetime.date; checks/capacity.py
+    and checks/consent.py expect the printed "DD/MM/YYYY" format, parsed
+    through units.py — matching how they're built and tested against
+    ground_truth.json's own printed fields."""
+    return None if value is None else value.strftime("%d/%m/%Y")
+
+
+def run_checks(
+    seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
+) -> None:
+    bq_client = bq.get_client()
+
+    processor_rows = _fetch_bq_rows(
+        bq_client,
+        "processors",
+        "processor_id, type, capacity_t_per_year, permitted_categories, "
+        "consent_valid_from, consent_valid_to",
+        seed,
+        processor_filter,
+    )
+    processors = [
+        {
+            **p,
+            "consent_valid_from": _row_date_to_ddmmyyyy(p["consent_valid_from"]),
+            "consent_valid_to": _row_date_to_ddmmyyyy(p["consent_valid_to"]),
+        }
+        for p in processor_rows
+    ]
+
+    certificate_rows = _fetch_bq_rows(
+        bq_client,
+        "certificates",
+        "certificate_id, processor_id, category, quantity_t, period_month, generation_date",
+        seed,
+        processor_filter,
+    )
+    certificates = [
+        {**c, "generation_date": _row_date_to_ddmmyyyy(c["generation_date"])}
+        for c in certificate_rows
+    ]
+    certificates_by_processor = _group_by_processor(certificates)
+
+    shipment_rows = _fetch_bq_rows(
+        bq_client,
+        "shipments",
+        "shipment_id, processor_id, month, invoice_doc_id, eway_doc_id, weighbridge_doc_id, "
+        "invoice_qty_t, weighbridge_net_t, match_status, ewb_no, vehicle_no, distance_km, "
+        "eway_generated_at, eway_valid_until, weighbridge_in_time, invoice_no, supplier_gstin, "
+        "weighbridge_ticket_no",
+        seed,
+        processor_filter,
+        facts_source=facts_source,
+    )
+    shipments = [
+        {
+            **s,
+            "eway_generated_at": _row_timestamp_to_iso(s["eway_generated_at"]),
+            "eway_valid_until": _row_timestamp_to_iso(s["eway_valid_until"]),
+            "weighbridge_in_time": _row_timestamp_to_iso(s["weighbridge_in_time"]),
+        }
+        for s in shipment_rows
+    ]
+    shipments_by_processor = _group_by_processor(shipments)
+
+    outputs = _fetch_bq_rows(
+        bq_client,
+        "outputs",
+        "doc_id, processor_id, month, quantity_t",
+        seed,
+        processor_filter,
+        facts_source=facts_source,
+    )
+    outputs_by_processor = _group_by_processor(outputs)
+
+    energy_monthly = _fetch_bq_rows(
+        bq_client,
+        "energy_monthly",
+        "doc_id, processor_id, month, kwh",
+        seed,
+        processor_filter,
+        facts_source=facts_source,
+    )
+    energy_by_processor = _group_by_processor(energy_monthly)
+
+    if as_of_month is None:
+        months = [c["period_month"] for c in certificates]
+        if not months:
+            print("No certificates found for this seed; cannot determine as_of_month.")
+            return
+        as_of_month = max(months)
+
+    duplicate_keys = find_duplicate_keys(shipments)
+
+    check_rows = []
+    assessment_rows = []
+    computed_at = datetime.now(UTC).isoformat()
+    for processor in processors:
+        pid = processor["processor_id"]
+        p_shipments = shipments_by_processor.get(pid, [])
+        p_outputs = outputs_by_processor.get(pid, [])
+        p_energy = energy_by_processor.get(pid, [])
+        p_certificates = certificates_by_processor.get(pid, [])
+
+        results = run_checks_for_processor(
+            processor, p_shipments, p_outputs, p_energy, p_certificates, duplicate_keys, as_of_month
+        )
+        for r in results:
+            check_rows.append(
+                {"seed": seed, "facts_source": facts_source, "processor_id": pid, **r.model_dump()}
+            )
+
+        score = score_processor(
+            processor, p_certificates, p_shipments, duplicate_keys, results, as_of_month
+        )
+        assessment_rows.append(
+            {
+                "seed": seed,
+                "facts_source": facts_source,
+                "stage": "checks_only",
+                "computed_at": computed_at,
+                **score,
+            }
+        )
+
+    bq.delete_by_seed_and_source(bq_client, "check_results", seed, facts_source)
+    bq.load_rows(bq_client, "check_results", check_rows)
+    bq.delete_assessments_by_stage(bq_client, seed, facts_source, "checks_only")
+    bq.load_rows(bq_client, "assessments", assessment_rows)
+
+    print(f"Checks ({facts_source}) done, as_of_month={as_of_month}:")
+    for row in assessment_rows:
+        print(
+            f"  {row['processor_id']}: certified={row['certified_t']:.2f}t "
+            f"verifiable={row['verifiable_t']:.2f}t unverifiable={row['unverifiable_t']:.2f}t "
+            f"risk={row['risk_band']}"
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run precompute pipeline stages.")
     parser.add_argument("--seed", type=int, required=True)
-    parser.add_argument("--stage", choices=["extract", "normalize"], required=True)
+    parser.add_argument("--stage", choices=["extract", "normalize", "checks"], required=True)
     parser.add_argument("--processor", help="Only process this processor_id (e.g. PWP-01)")
     parser.add_argument(
         "--facts-source",
         choices=[TRUTH, EXTRACTED],
         default=TRUTH,
-        help="For --stage normalize: build from ground truth or real extracted_facts.",
+        help="For --stage normalize/checks: build from ground truth or real extracted_facts.",
+    )
+    parser.add_argument(
+        "--as-of-month",
+        help="For --stage checks: 'YYYY-MM'. Default: the max period_month across every "
+        "processor's certificates in this run (T13's live-demo batch will pass its own).",
     )
     args = parser.parse_args()
 
@@ -211,6 +376,8 @@ def main() -> None:
         run_extract(args.seed, args.processor)
     elif args.stage == "normalize":
         run_normalize(args.seed, args.facts_source, args.processor)
+    elif args.stage == "checks":
+        run_checks(args.seed, args.facts_source, args.processor, args.as_of_month)
 
 
 if __name__ == "__main__":

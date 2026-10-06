@@ -36,29 +36,76 @@ def _safe_datetime(printed: str | None) -> datetime.datetime | None:
         return None
 
 
+def _to_utc_iso(dt: datetime.datetime | None) -> str | None:
+    if dt is None:
+        return None
+    return dt.astimezone(datetime.UTC).isoformat()
+
+
 # ---------- truth mode: direct reshape, no matching needed ----------
 
 
-def shipments_from_truth(seed: int, processor_id: str, truth_shipments: list[dict]) -> list[dict]:
-    return [
-        {
-            "seed": seed,
-            "facts_source": TRUTH,
-            "shipment_id": s["shipment_id"],
-            "processor_id": processor_id,
-            "month": s.get("month"),
-            "invoice_doc_id": s.get("invoice_doc_id"),
-            "eway_doc_id": s.get("eway_doc_id"),
-            "weighbridge_doc_id": s.get("weighbridge_doc_id"),
-            "invoice_qty_t": s.get("invoice_qty_t"),
-            "weighbridge_net_t": s.get("weighbridge_net_t"),
-            "match_status": s.get("match_status"),
-            "ewb_no": s.get("ewb_no"),
-            "vehicle_no": s.get("vehicle_no"),
-            "distance_km": s.get("distance_km"),
-        }
-        for s in truth_shipments
-    ]
+def shipments_from_truth(
+    seed: int, processor_id: str, truth_shipments: list[dict], documents: list[dict]
+) -> list[dict]:
+    """documents: ground_truth.json's top-level "documents" list (any
+    processor's — doc_ids are globally unique), used only to look up the
+    document-content fields (invoice_no, supplier_gstin, weighbridge ticket
+    number, e-way/weighbridge timestamps) that the generator's shipment
+    dicts don't carry directly.
+
+    These lookups read each field's "printed" value and parse it through
+    the same units.py functions extracted mode uses — not "canonical",
+    which carries sub-minute precision (seconds, microseconds) that never
+    appears on the printed document and that a real extraction could never
+    recover. Using canonical here would make this shipment's timing fields
+    permanently disagree with match_shipments_from_extracted's, even for a
+    perfect extraction — see the T7 F4 decision in docs/PROGRESS.md for the
+    same principle applied to a different field.
+    """
+    docs_by_id = {d["doc_id"]: d for d in documents}
+
+    def _printed(doc_id: str | None, field: str) -> str | None:
+        if doc_id is None:
+            return None
+        return docs_by_id.get(doc_id, {}).get("fields", {}).get(field, {}).get("printed")
+
+    rows = []
+    for s in truth_shipments:
+        invoice_doc_id = s.get("invoice_doc_id")
+        eway_doc_id = s.get("eway_doc_id")
+        weighbridge_doc_id = s.get("weighbridge_doc_id")
+        rows.append(
+            {
+                "seed": seed,
+                "facts_source": TRUTH,
+                "shipment_id": s["shipment_id"],
+                "processor_id": processor_id,
+                "month": s.get("month"),
+                "invoice_doc_id": invoice_doc_id,
+                "eway_doc_id": eway_doc_id,
+                "weighbridge_doc_id": weighbridge_doc_id,
+                "invoice_qty_t": s.get("invoice_qty_t"),
+                "weighbridge_net_t": s.get("weighbridge_net_t"),
+                "match_status": s.get("match_status"),
+                "ewb_no": s.get("ewb_no"),
+                "vehicle_no": s.get("vehicle_no"),
+                "distance_km": s.get("distance_km"),
+                "eway_generated_at": _to_utc_iso(
+                    _safe_datetime(_printed(eway_doc_id, "generated_at"))
+                ),
+                "eway_valid_until": _to_utc_iso(
+                    _safe_datetime(_printed(eway_doc_id, "valid_until"))
+                ),
+                "weighbridge_in_time": _to_utc_iso(
+                    _safe_datetime(_printed(weighbridge_doc_id, "in_time"))
+                ),
+                "invoice_no": _printed(invoice_doc_id, "invoice_no"),
+                "supplier_gstin": _printed(invoice_doc_id, "supplier_gstin"),
+                "weighbridge_ticket_no": _printed(weighbridge_doc_id, "ticket_no"),
+            }
+        )
+    return rows
 
 
 def outputs_from_truth(seed: int, processor_id: str, truth_outputs: list[dict]) -> list[dict]:
@@ -134,6 +181,8 @@ def match_shipments_from_extracted(
         # time window (in-time after generation, before valid-until + 3
         # days); earliest such slip wins.
         weighbridge_doc = None
+        generated_at = None
+        valid_until = None
         if eway_doc:
             vehicle_no = eway_facts.get("vehicle_no")
             generated_at = _safe_datetime(eway_facts.get("generated_at"))
@@ -156,10 +205,14 @@ def match_shipments_from_extracted(
                     used_weighbridge_doc_ids.add(weighbridge_doc["doc_id"])
 
         weighbridge_net_t = None
+        weighbridge_ticket_no = None
+        weighbridge_in_time = None
         if weighbridge_doc:
             w_facts = facts.get(weighbridge_doc["doc_id"], {})
             net_kg = _safe_number(w_facts.get("net_kg"))
             weighbridge_net_t = units.kg_to_t(net_kg) if net_kg is not None else None
+            weighbridge_ticket_no = w_facts.get("ticket_no")
+            weighbridge_in_time = _safe_datetime(w_facts.get("in_time"))
 
         month = None
         invoice_date = inv_facts.get("date")
@@ -185,6 +238,12 @@ def match_shipments_from_extracted(
                 "ewb_no": eway_facts.get("ewb_no") if eway_doc else None,
                 "vehicle_no": eway_facts.get("vehicle_no") if eway_doc else None,
                 "distance_km": _safe_number(eway_facts.get("distance_km")) if eway_doc else None,
+                "eway_generated_at": _to_utc_iso(generated_at),
+                "eway_valid_until": _to_utc_iso(valid_until),
+                "weighbridge_in_time": _to_utc_iso(weighbridge_in_time),
+                "invoice_no": inv_facts.get("invoice_no"),
+                "supplier_gstin": inv_facts.get("supplier_gstin"),
+                "weighbridge_ticket_no": weighbridge_ticket_no,
             }
         )
 

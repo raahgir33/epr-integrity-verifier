@@ -91,8 +91,8 @@ For each processor, financial year to date:
 
 1. **Verified inbound tonnes** = Σ weighbridge net tonnes of matched shipments that pass C3, C4 and C5, **minus** shipments cited by a confirmed agent finding (for example F8: material described as virgin).
 2. **Capacity limit** = CTO capacity × months elapsed / 12, set to 0 for months outside CTO validity (C6).
-3. **Verifiable tonnes** = min(certified tonnes, verified inbound tonnes, capacity limit).
-4. **Unverifiable tonnes** = certified tonnes − verifiable tonnes.
+3. **Verifiable tonnes** = min(eligible certified tonnes, verified inbound tonnes, capacity limit), where eligible certified tonnes excludes certificates in a category the CTO does not permit (C6) — that activity is out of consent no matter how well-backed physically, so it is excluded from the basis the minimum is taken over, not just flagged in the risk band.
+4. **Unverifiable tonnes** = certified tonnes (the full figure, not the eligible subset from step 3) − verifiable tonnes.
 5. **Risk band** from unverifiable share: Low < 5%, Medium 5–25%, High > 25%. Each failed soft signal (C2b, C7, C8) raises the band by one step, at most one step in total.
 
 The generator computes `true_verifiable_t` with the same definition, applied to the true underlying shipments rather than to extracted documents. That makes the tonnage error metric meaningful.

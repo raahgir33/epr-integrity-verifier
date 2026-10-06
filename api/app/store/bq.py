@@ -129,6 +129,19 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("ewb_no", "STRING"),
         bigquery.SchemaField("vehicle_no", "STRING"),
         bigquery.SchemaField("distance_km", "FLOAT"),
+        # For C3a/C3b (transport checks) — UTC per CLAUDE.md §6. Nullable:
+        # unmatched shipments have no weighbridge_in_time, and a shipment
+        # with no eway_doc_id has neither eway timestamp.
+        bigquery.SchemaField("eway_generated_at", "TIMESTAMP"),
+        bigquery.SchemaField("eway_valid_until", "TIMESTAMP"),
+        bigquery.SchemaField("weighbridge_in_time", "TIMESTAMP"),
+        # Document-content C5 duplicate keys (not internal doc IDs — see
+        # checks/duplicates.py): invoice_no + supplier_gstin pair, and the
+        # weighbridge ticket number. weighbridge_doc_id/invoice_doc_id are
+        # internal IDs, never used as dedup keys.
+        bigquery.SchemaField("invoice_no", "STRING"),
+        bigquery.SchemaField("supplier_gstin", "STRING"),
+        bigquery.SchemaField("weighbridge_ticket_no", "STRING"),
     ],
     "outputs": [
         bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
@@ -145,6 +158,38 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("processor_id", "STRING"),
         bigquery.SchemaField("month", "STRING"),
         bigquery.SchemaField("kwh", "FLOAT"),
+    ],
+    # T8 (checks) tables below. check_results is facts_source-dimensioned
+    # like shipments/outputs/energy_monthly (delete_by_seed_and_source).
+    # assessments additionally carries a stage column: "checks_only" now
+    # (T8), "full" once T10's agent findings feed in — idempotent delete
+    # is by (seed, facts_source, stage) via delete_assessments_by_stage,
+    # so a T10 "full" run never wipes T8's "checks_only" row or vice versa.
+    "check_results": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("check_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("status", "STRING"),
+        bigquery.SchemaField("severity", "STRING"),
+        bigquery.SchemaField("measured", "FLOAT"),
+        bigquery.SchemaField("threshold", "FLOAT"),
+        bigquery.SchemaField("affected_tonnes", "FLOAT"),
+        bigquery.SchemaField("evidence_ids", "STRING", mode="REPEATED"),
+        bigquery.SchemaField("explanation", "STRING"),
+    ],
+    "assessments": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("stage", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("certified_t", "FLOAT"),
+        bigquery.SchemaField("verified_inbound_t", "FLOAT"),
+        bigquery.SchemaField("capacity_limit_t", "FLOAT"),
+        bigquery.SchemaField("verifiable_t", "FLOAT"),
+        bigquery.SchemaField("unverifiable_t", "FLOAT"),
+        bigquery.SchemaField("risk_band", "STRING"),
+        bigquery.SchemaField("computed_at", "TIMESTAMP"),
     ],
 }
 
@@ -184,6 +229,28 @@ def delete_by_seed_and_source(
         query_parameters=[
             bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
             bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_assessments_by_stage(
+    client: bigquery.Client, seed: int, facts_source: str, stage: str
+) -> None:
+    """assessments is keyed one level finer than delete_by_seed_and_source:
+    a T10 "full" rerun must never delete T8's "checks_only" row, or vice
+    versa, for the same (seed, facts_source)."""
+    table_ref = _table_ref("assessments")
+    query = (
+        f"DELETE FROM `{table_ref}` "
+        "WHERE seed = @seed AND facts_source = @facts_source AND stage = @stage"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+            bigquery.ScalarQueryParameter("stage", "STRING", stage),
         ]
     )
     job = client.query(query, job_config=job_config, location=settings.vertex_location)
