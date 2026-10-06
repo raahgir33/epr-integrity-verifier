@@ -67,6 +67,37 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("generation_date", "DATE"),
         bigquery.SchemaField("period_month", "STRING"),
     ],
+    # T6 (extraction) tables below. extracted_facts/extraction_results use
+    # the same delete-by-seed-then-load idempotency as the tables above.
+    # llm_calls is an append-only operational log (see load_rows callers in
+    # scripts/run_pipeline.py) — re-running extraction adds to call history
+    # rather than replacing it, so it's never passed to delete_by_seed.
+    "extracted_facts": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING"),
+        bigquery.SchemaField("doc_type", "STRING"),
+        bigquery.SchemaField("field_name", "STRING"),
+        bigquery.SchemaField("printed_value", "STRING"),
+        bigquery.SchemaField("confidence", "FLOAT"),
+        bigquery.SchemaField("page", "INTEGER"),
+    ],
+    "extraction_results": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING"),
+        bigquery.SchemaField("doc_type", "STRING"),
+        bigquery.SchemaField("status", "STRING"),
+        bigquery.SchemaField("error_message", "STRING"),
+    ],
+    "llm_calls": [
+        bigquery.SchemaField("seed", "INTEGER"),
+        bigquery.SchemaField("purpose", "STRING"),
+        bigquery.SchemaField("model", "STRING"),
+        bigquery.SchemaField("latency_ms", "FLOAT"),
+        bigquery.SchemaField("success", "BOOLEAN"),
+        bigquery.SchemaField("called_at", "TIMESTAMP"),
+    ],
 }
 
 

@@ -1,0 +1,18 @@
+This is a synthetic (not real) Indian e-way bill for a plastic waste shipment, used to test a document-extraction pipeline. All data on it is fictional. Some e-way bills use Hindi (Devanagari) field labels — the field layout is the same regardless of language.
+
+Extract these fields exactly as printed on the document — do not reformat numbers, dates or units, copy the text verbatim:
+- ewb_no
+- generated_at
+- valid_until
+- from_gstin
+- to_gstin
+- from_pin
+- to_pin
+- distance_km
+- vehicle_no
+- hsn
+- quantity_t
+- value
+- invoice_no
+
+Also return field_confidence: for each field above, your confidence from 0 to 1 that the extracted value is correct, and the page number it was read from (1 for this single-page document).

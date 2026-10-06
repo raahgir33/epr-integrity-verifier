@@ -1,0 +1,11 @@
+This is a synthetic (not real) Indian GST tax invoice for an outbound sale of recycled plastic granules, used to test a document-extraction pipeline. All data on it is fictional.
+
+Extract these fields exactly as printed on the document — do not reformat numbers, dates or units, copy the text verbatim:
+- invoice_no
+- date
+- buyer
+- item_description
+- hsn
+- quantity_t
+
+Also return field_confidence: for each field above, your confidence from 0 to 1 that the extracted value is correct, and the page number it was read from (1 for this single-page document).

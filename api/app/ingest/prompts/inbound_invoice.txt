@@ -1,0 +1,14 @@
+This is a synthetic (not real) Indian GST tax invoice for inbound plastic waste material, used to test a document-extraction pipeline. All data on it is fictional. Some invoices use Hindi (Devanagari) field labels — the field layout is the same regardless of language.
+
+Extract these fields exactly as printed on the document — do not reformat numbers, dates or units, copy the text verbatim (keep Indian digit grouping like "1,23,450.00" exactly as shown):
+- invoice_no
+- date
+- supplier_gstin
+- buyer_gstin
+- item_description
+- hsn
+- quantity_t
+- rate
+- value
+
+Also return field_confidence: for each field above, your confidence from 0 to 1 that the extracted value is correct, and the page number it was read from (1 for this single-page document).

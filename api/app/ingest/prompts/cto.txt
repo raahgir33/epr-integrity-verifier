@@ -1,0 +1,12 @@
+This is a synthetic (not real) Consent to Operate document used to test a document-extraction pipeline. All data on it is fictional.
+
+Extract these fields exactly as printed on the document — do not reformat numbers, dates or units, copy the text verbatim:
+- consent_no
+- processor_name
+- address
+- permitted_categories
+- capacity_t_per_year
+- valid_from
+- valid_to
+
+Also return field_confidence: for each field above, your confidence from 0 to 1 that the extracted value is correct, and the page number it was read from (1 for this single-page document).
