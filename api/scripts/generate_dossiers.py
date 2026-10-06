@@ -6,6 +6,7 @@ See docs/DATA_SPEC.md §2-§6. Runs only on the developer's machine, never
 on Cloud Run — Playwright/Chromium aren't in the deployed image.
 
 Usage: uv run python scripts/generate_dossiers.py --seed 42
+       uv run python scripts/generate_dossiers.py --seed 42 --no-render
 """
 
 import argparse
@@ -44,6 +45,26 @@ def build_all_dossiers(processors: list[Processor], suppliers, rng) -> dict[str,
     return dossiers
 
 
+def run_data_pipeline(seed: int) -> dict:
+    """Everything except rendering: deterministic, pure-Python, fast. The
+    single source of truth for both the CLI (--no-render) and the test
+    suite's determinism checks, so they can't drift apart."""
+    rng = new_rng(seed)
+    processors = build_processors(rng)
+    suppliers = build_suppliers(rng)
+    brands = build_brands()
+    dossiers = build_all_dossiers(processors, suppliers, rng)
+    ground_truth = build_ground_truth(seed, processors, dossiers)
+    return {
+        "seed": seed,
+        "processors": processors,
+        "suppliers": suppliers,
+        "brands": brands,
+        "dossiers": dossiers,
+        "ground_truth": ground_truth,
+    }
+
+
 def render_all_documents(dossiers: dict[str, Dossier], out_dir: Path, rng) -> None:
     with Renderer() as renderer:
         for processor_id, dossier in dossiers.items():
@@ -63,23 +84,12 @@ def write_json(path: Path, data) -> None:
     )
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate the synthetic EPR dossier world.")
-    parser.add_argument("--seed", type=int, required=True)
-    args = parser.parse_args()
-
-    out_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{args.seed}"
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
-
-    rng = new_rng(args.seed)
-    processors = build_processors(rng)
-    suppliers = build_suppliers(rng)
-    brands = build_brands()
-    dossiers = build_all_dossiers(processors, suppliers, rng)
-
-    ground_truth = build_ground_truth(args.seed, processors, dossiers)
+def write_manifests(out_dir: Path, pipeline: dict) -> None:
+    processors = pipeline["processors"]
+    suppliers = pipeline["suppliers"]
+    brands = pipeline["brands"]
+    dossiers = pipeline["dossiers"]
+    ground_truth = pipeline["ground_truth"]
     gt_by_id = {pe["processor_id"]: pe for pe in ground_truth["processors"]}
 
     write_json(out_dir / "ground_truth.json", ground_truth)
@@ -91,13 +101,37 @@ def main() -> None:
         build_certificates_csv(processors, dossiers, brands), encoding="utf-8"
     )
 
-    # A separately-seeded stream for render-time randomness (Pillow
-    # degradation), so it doesn't entangle with document-content generation.
-    render_rng = new_rng(args.seed)
-    render_all_documents(dossiers, out_dir, render_rng)
 
-    total_docs = sum(len(d.documents) for d in dossiers.values())
-    print(f"Generated seed {args.seed}: {len(processors)} processors, {total_docs} documents")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate the synthetic EPR dossier world.")
+    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument(
+        "--no-render",
+        action="store_true",
+        help="Skip Playwright rendering; write only JSON/CSV manifests. Fast — for quick "
+        "iteration on the data pipeline, not a substitute for the full run before a demo.",
+    )
+    args = parser.parse_args()
+
+    out_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{args.seed}"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
+
+    pipeline = run_data_pipeline(args.seed)
+    write_manifests(out_dir, pipeline)
+
+    total_docs = sum(len(d.documents) for d in pipeline["dossiers"].values())
+    if args.no_render:
+        print(f"Generated seed {args.seed}: {len(pipeline['processors'])} processors, ", end="")
+        print(f"{total_docs} documents described (--no-render: not rendered)")
+    else:
+        # A separately-seeded stream for render-time randomness (Pillow
+        # degradation), so it doesn't entangle with document-content generation.
+        render_rng = new_rng(args.seed)
+        render_all_documents(pipeline["dossiers"], out_dir, render_rng)
+        print(f"Generated seed {args.seed}: {len(pipeline['processors'])} processors, ", end="")
+        print(f"{total_docs} documents")
     print(f"-> {out_dir}")
 
 

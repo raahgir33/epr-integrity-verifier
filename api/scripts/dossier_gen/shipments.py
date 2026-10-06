@@ -210,10 +210,13 @@ def build_dossier(
         lang = "hi" if (force_hindi and i == 0) else "en"
         is_f8 = i == f8_index
         if is_f8:
-            desc = (_F8_DESCRIPTIONS_HI if (force_hindi or lang == "hi") else _F8_DESCRIPTIONS_EN)[
-                0
-            ]
-            lang = "hi" if desc in _F8_DESCRIPTIONS_HI else "en"
+            # PWP-08 is the F8-only showcase processor — give it the Hindi
+            # wording ("प्राइम ग्रेड दाना") so at least one F8 instance uses
+            # it, independent of `force_hindi` (which only applies to the
+            # PWP-01 sample, and PWP-01 never carries F8).
+            use_hindi = processor.processor_id == "PWP-08"
+            desc = (_F8_DESCRIPTIONS_HI if use_hindi else _F8_DESCRIPTIONS_EN)[0]
+            lang = "hi" if use_hindi else "en"
         else:
             desc = (_NORMAL_DESCRIPTIONS_HI if lang == "hi" else _NORMAL_DESCRIPTIONS_EN)[0]
 

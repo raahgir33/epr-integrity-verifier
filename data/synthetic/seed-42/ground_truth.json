@@ -13317,8 +13317,8 @@
           "printed": "PWP-08-INV-001"
         },
         "item_description": {
-          "canonical": "Virgin LDPE granules",
-          "printed": "Virgin LDPE granules"
+          "canonical": "प्राइम ग्रेड दाना",
+          "printed": "प्राइम ग्रेड दाना"
         },
         "quantity_t": {
           "canonical": 322.91,
@@ -13337,7 +13337,7 @@
           "printed": "46,66,049.50"
         }
       },
-      "lang": "en",
+      "lang": "hi",
       "processor_id": "PWP-08"
     },
     {
@@ -13397,7 +13397,7 @@
           "printed": "GJ53AB8371"
         }
       },
-      "lang": "en",
+      "lang": "hi",
       "processor_id": "PWP-08"
     },
     {
@@ -13437,7 +13437,7 @@
           "printed": "GJ53AB8371"
         }
       },
-      "lang": "en",
+      "lang": "hi",
       "processor_id": "PWP-08"
     },
     {

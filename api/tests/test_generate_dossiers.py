@@ -1,43 +1,25 @@
-"""Tests the synthetic data generator's data pipeline (not rendering —
-Playwright/Chromium output is visually checked by the developer, not
-asserted on in CI). See docs/BUILD_PLAN.md T4 and docs/DATA_SPEC.md §5.
+"""Tests the synthetic data generator's data pipeline via
+scripts.generate_dossiers.run_data_pipeline — the same function `--no-render`
+uses, so the suite can't drift from the real CLI path. Rendering itself
+(Playwright/Chromium output) is visually checked by the developer, not
+asserted on here. See docs/BUILD_PLAN.md T4 and docs/DATA_SPEC.md §5.
 """
 
 import json
 
 import pytest
 
-from scripts.dossier_gen.ground_truth import build_ground_truth
 from scripts.dossier_gen.manifests import brands_to_json, build_certificates_csv, suppliers_to_json
-from scripts.dossier_gen.rng import new_rng
-from scripts.dossier_gen.world import build_brands, build_processors, build_suppliers
-from scripts.generate_dossiers import build_all_dossiers
+from scripts.generate_dossiers import run_data_pipeline
 
 SEED = 42
 
 HARD_ISSUE_TYPES = {"F1", "F2", "F3", "F4", "F6"}
 
 
-def _run_pipeline(seed: int):
-    rng = new_rng(seed)
-    processors = build_processors(rng)
-    suppliers = build_suppliers(rng)
-    brands = build_brands()
-    dossiers = build_all_dossiers(processors, suppliers, rng)
-    ground_truth = build_ground_truth(seed, processors, dossiers)
-    return processors, suppliers, brands, dossiers, ground_truth
-
-
 @pytest.fixture(scope="module")
 def pipeline():
-    processors, suppliers, brands, dossiers, ground_truth = _run_pipeline(SEED)
-    return {
-        "processors": processors,
-        "suppliers": suppliers,
-        "brands": brands,
-        "dossiers": dossiers,
-        "ground_truth": ground_truth,
-    }
+    return run_data_pipeline(SEED)
 
 
 @pytest.fixture(scope="module")
@@ -46,25 +28,25 @@ def processors_by_id(pipeline):
 
 
 def test_two_runs_produce_byte_identical_ground_truth():
-    _, _, _, _, gt1 = _run_pipeline(SEED)
-    _, _, _, _, gt2 = _run_pipeline(SEED)
+    gt1 = run_data_pipeline(SEED)["ground_truth"]
+    gt2 = run_data_pipeline(SEED)["ground_truth"]
     text1 = json.dumps(gt1, sort_keys=True, ensure_ascii=False)
     text2 = json.dumps(gt2, sort_keys=True, ensure_ascii=False)
     assert text1 == text2
 
 
 def test_two_runs_produce_byte_identical_manifests():
-    processors1, suppliers1, brands1, dossiers1, _ = _run_pipeline(SEED)
-    processors2, suppliers2, brands2, dossiers2, _ = _run_pipeline(SEED)
+    run1 = run_data_pipeline(SEED)
+    run2 = run_data_pipeline(SEED)
 
-    assert json.dumps(suppliers_to_json(suppliers1), sort_keys=True) == json.dumps(
-        suppliers_to_json(suppliers2), sort_keys=True
+    assert json.dumps(suppliers_to_json(run1["suppliers"]), sort_keys=True) == json.dumps(
+        suppliers_to_json(run2["suppliers"]), sort_keys=True
     )
-    assert json.dumps(brands_to_json(brands1), sort_keys=True) == json.dumps(
-        brands_to_json(brands2), sort_keys=True
+    assert json.dumps(brands_to_json(run1["brands"]), sort_keys=True) == json.dumps(
+        brands_to_json(run2["brands"]), sort_keys=True
     )
-    csv1 = build_certificates_csv(processors1, dossiers1, brands1)
-    csv2 = build_certificates_csv(processors2, dossiers2, brands2)
+    csv1 = build_certificates_csv(run1["processors"], run1["dossiers"], run1["brands"])
+    csv2 = build_certificates_csv(run2["processors"], run2["dossiers"], run2["brands"])
     assert csv1 == csv2
 
 
@@ -87,6 +69,17 @@ def test_f8_appears_on_exactly_two_processors(processors_by_id):
 def test_exactly_one_processor_is_f8_only(processors_by_id):
     f8_only = [pid for pid, p in processors_by_id.items() if p.issue_types == ["F8"]]
     assert f8_only == ["PWP-08"]
+
+
+def test_at_least_one_f8_instance_uses_the_hindi_description(pipeline):
+    f8_docs = [
+        doc
+        for dossier in pipeline["dossiers"].values()
+        for doc in dossier.documents
+        if doc["doc_type"] == "inbound_invoice"
+        and doc["fields"]["item_description"]["printed"] in {"प्राइम ग्रेड दाना"}
+    ]
+    assert f8_docs, "no F8 invoice uses the Hindi semantic-contradiction wording"
 
 
 def test_every_f5_carrier_also_carries_a_hard_issue_type(processors_by_id):
