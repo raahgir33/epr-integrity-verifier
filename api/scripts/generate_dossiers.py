@@ -24,7 +24,7 @@ from scripts.dossier_gen.manifests import (
 )
 from scripts.dossier_gen.render import Renderer
 from scripts.dossier_gen.rng import new_rng
-from scripts.dossier_gen.shipments import Dossier, build_dossier
+from scripts.dossier_gen.shipments import Dossier, assign_cross_processor_identifiers, build_dossier
 from scripts.dossier_gen.world import Processor, build_brands, build_processors, build_suppliers
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -54,6 +54,12 @@ def run_data_pipeline(seed: int) -> dict:
     suppliers = build_suppliers(rng)
     brands = build_brands()
     dossiers = build_all_dossiers(processors, suppliers, rng)
+    # Cross-processor/supplier identifier series (invoice_no, ewb_no) can
+    # only be finalized once every dossier — and every supplier's full
+    # usage across all of them — exists (T10 realism fix,
+    # docs/PROGRESS.md). Must run before build_ground_truth, which
+    # serializes the final document fields.
+    assign_cross_processor_identifiers(dossiers, suppliers, rng)
     ground_truth = build_ground_truth(seed, processors, dossiers)
     return {
         "seed": seed,

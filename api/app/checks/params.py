@@ -75,3 +75,11 @@ S2_DATE_END = "2023-12-31"
 # "maximum 8 tool calls per Critic run; per-run timeout 180 s."
 AGENT_MAX_TOOL_CALLS = 8
 AGENT_TIMEOUT_S = 180
+
+# F7 (energy implausibility seeding) — ASSUMPTION. The generator's F7
+# month draws kWh/t from this band — well below KWH_PER_T_MIN (150) so
+# C7 still fails, but not so low it reads as a generator artifact rather
+# than a plausible (if suspicious) low-energy month. Developer-set
+# 2026-10-07 after the first real agent run flagged the previous flat
+# 5-30 kWh absolute draw as implausible once per-shipment tonnage became
+# realistic (docs/PROGRESS.md).

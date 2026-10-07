@@ -29,6 +29,8 @@ class Processor:
     address: str
     pin_code: str
     state: str
+    weighbridge_code: str
+    invoice_prefix: str
     lat: float
     lon: float
     site_validated: bool
@@ -43,6 +45,7 @@ class Supplier:
     name: str
     gstin: str
     pin_code: str
+    invoice_prefix: str
     lat: float
     lon: float
     city: str
@@ -231,6 +234,36 @@ _BRAND_CATALOG = [
 ]
 
 
+# 2-letter vehicle-registration-style state codes — same abbreviations
+# shipments.py already draws vehicle_no prefixes from, reused here so
+# consent/registration/weighbridge references look like the same
+# jurisdiction's documents.
+_STATE_ABBR = {
+    "Maharashtra": "MH",
+    "Gujarat": "GJ",
+    "Tamil Nadu": "TN",
+    "Telangana": "TG",
+    "Madhya Pradesh": "MP",
+    "Haryana": "HR",
+    "Rajasthan": "RJ",
+}
+
+
+def _initials(name: str) -> str:
+    return "".join(word[0] for word in name.split() if word and word[0].isalpha()).upper()
+
+
+def _unique_prefix(name: str, seen: dict[str, int]) -> str:
+    """T10 realism fix (docs/PROGRESS.md): a business-name-derived series
+    prefix, never the internal catalog id (PWP-xx/SUP-xx). Two names can
+    share initials (e.g. two "W..." cities with the same supplier-name
+    suffix) — disambiguated with a small numeric suffix on repeats,
+    checked rather than assumed collision-free."""
+    base = _initials(name)
+    seen[base] = seen.get(base, 0) + 1
+    return base if seen[base] == 1 else f"{base}{seen[base]}"
+
+
 def load_site_coordinates() -> dict:
     with SITE_COORDINATES_PATH.open(encoding="utf-8") as f:
         return json.load(f)
@@ -239,10 +272,12 @@ def load_site_coordinates() -> dict:
 def build_processors(rng: random.Random) -> list[Processor]:
     sites = load_site_coordinates()
     processors = []
+    seen_prefixes: dict[str, int] = {}
     for pid, name, ptype, categories, capacity, issues, hard_negs in _PROCESSOR_CATALOG:
         site = sites[pid]
         state = _STATE_FOR_PROCESSOR[pid]
         city = _CITY_FOR_PROCESSOR[pid]
+        abbr = _STATE_ABBR[state]
         processors.append(
             Processor(
                 processor_id=pid,
@@ -250,14 +285,16 @@ def build_processors(rng: random.Random) -> list[Processor]:
                 type=ptype,
                 permitted_categories=categories,
                 capacity_t_per_year=float(capacity) * WORLD_SCALE_FACTOR,
-                consent_no=f"CTO-{pid}-{rng.randint(10000, 99999)}",
+                consent_no=f"CTO/{abbr}/{rng.randint(100000, 999999)}",
                 consent_valid_from="01/04/2022",
                 consent_valid_to="31/03/2028",
-                registration_no=f"EPR-REG-{pid}-{rng.randint(1000, 9999)}",
+                registration_no=f"EPR-REG/{abbr}/{rng.randint(100000, 999999)}",
                 gstin=generate_invalid_gstin(rng, state_code=STATE_GSTIN_CODE[state]),
                 address=f"Plot {rng.randint(1, 200)}, Industrial Area, {state}",
                 pin_code=f"{PIN_PREFIX[city]}{rng.randint(100, 999)}",
                 state=state,
+                weighbridge_code=f"{abbr}-WB-{rng.randint(1000, 9999)}",
+                invoice_prefix=_unique_prefix(name, seen_prefixes),
                 lat=site["lat"],
                 lon=site["lon"],
                 site_validated=site["site_validated"],
@@ -272,15 +309,18 @@ def build_processors(rng: random.Random) -> list[Processor]:
 def build_suppliers(rng: random.Random) -> list[Supplier]:
     suppliers = []
     name_suffixes = ["Waste Aggregators", "Scrap Traders", "Recyclables Pvt. Ltd.", "Enterprises"]
+    seen_prefixes: dict[str, int] = {}
     for i, (city, state, lat, lon) in enumerate(_SUPPLIER_ANCHORS, start=1):
         supplier_id = f"SUP-{i:02d}"
         suffix = name_suffixes[i % len(name_suffixes)]
+        name = f"{city} {suffix}"
         suppliers.append(
             Supplier(
                 supplier_id=supplier_id,
-                name=f"{city} {suffix}",
+                name=name,
                 gstin=generate_invalid_gstin(rng, state_code=STATE_GSTIN_CODE[state]),
                 pin_code=f"{PIN_PREFIX[city]}{rng.randint(100, 999)}",
+                invoice_prefix=_unique_prefix(name, seen_prefixes),
                 lat=round(lat + rng.uniform(-0.15, 0.15), 4),
                 lon=round(lon + rng.uniform(-0.15, 0.15), 4),
                 city=city,

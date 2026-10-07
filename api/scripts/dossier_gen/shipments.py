@@ -312,6 +312,12 @@ def build_dossier(
         or suppliers
     )
 
+    # Tracks (weighbridge_in, weighbridge_doc) for every matched shipment
+    # so ticket_no can be finalized chronologically after this loop (one
+    # physical weighbridge per site — T10 realism fix, docs/PROGRESS.md),
+    # since shipments are generated in random month order, not date order.
+    weighbridge_entries: list[tuple[datetime.datetime, dict]] = []
+
     seen_counts: dict[str, int] = {}
     for i, month in enumerate(month_for_shipment):
         seen_counts[month] = seen_counts.get(month, 0) + 1
@@ -358,7 +364,11 @@ def build_dossier(
         # (7 t x Rs 8/kg = Rs 56,000) — see tests/test_generator_realism.py.
         rate = round(rng.uniform(8, 18), 2)
         value = round(qty_t * 1000 * rate, 2)
-        invoice_no = f"{processor.processor_id}-INV-{i + 1:03d}"
+        # Placeholder — finalized by assign_cross_processor_identifiers()
+        # after every processor's dossier exists (the real series is
+        # per-SUPPLIER, chronological by date, and suppliers are shared
+        # across processors; T10 realism fix, docs/PROGRESS.md).
+        invoice_no = ""
 
         invoice_doc_id = dossier.add_document(
             "inbound_invoice",
@@ -390,7 +400,11 @@ def build_dossier(
         )
         state_abbr = rng.choice(["MH", "GJ", "TN", "TG", "MP", "HR", "RJ"])
         vehicle_no = f"{state_abbr}{rng.randint(10, 59):02d}AB{rng.randint(1000, 9999)}"
-        ewb_no = f"{rng.randint(10**10, 10**11 - 1)}"
+        # Placeholder — finalized by assign_cross_processor_identifiers()
+        # (GSTN issues e-way bill numbers from one central, roughly
+        # time-ordered sequence, not per-supplier/processor; T10 realism
+        # fix, docs/PROGRESS.md).
+        ewb_no = ""
 
         eway_doc_id = dossier.add_document(
             "eway_bill",
@@ -434,13 +448,15 @@ def build_dossier(
             tare_kg = round(rng.uniform(*_VEHICLE_CLASSES[vehicle_class]["tare_kg"]), 0)
             net_kg = net_t * 1000
             gross_kg = net_kg + tare_kg
-            ticket_no = f"{processor.processor_id}-WB-{i + 1:04d}"
             out_time = weighbridge_in + datetime.timedelta(minutes=rng.randint(15, 45))
             weighbridge_doc_id = dossier.add_document(
                 "weighbridge_slip",
                 lang,
                 {
-                    "ticket_no": pc(ticket_no, ticket_no),
+                    # ticket_no finalized chronologically after this loop
+                    # (same weighbridge_entries pass below) — placeholder
+                    # here is never read, just keeps the field present.
+                    "ticket_no": pc("", ""),
                     "vehicle_no": pc(vehicle_no, vehicle_no),
                     "gross_kg": pc(format_indian_number(gross_kg, 0), gross_kg),
                     "tare_kg": pc(format_indian_number(tare_kg, 0), tare_kg),
@@ -449,6 +465,9 @@ def build_dossier(
                     "out_time": pc(fmt_datetime(out_time), out_time.isoformat()),
                     "remarks": pc("", ""),
                 },
+            )
+            weighbridge_entries.append(
+                (weighbridge_in, dossier.documents[-1])  # the doc just added, for in-place rewrite
             )
 
         dossier.shipments.append(
@@ -472,6 +491,15 @@ def build_dossier(
                 "verified": i not in f2_indices and i != f3_index,
             }
         )
+
+    # Finalize weighbridge ticket numbers chronologically by actual
+    # in_time (one physical weighbridge per site — T10 realism fix,
+    # docs/PROGRESS.md) — the main loop above builds shipments in random
+    # month order, not date order, so this can only be assigned after.
+    weighbridge_entries.sort(key=lambda t: t[0])
+    for seq, (_in_time, doc) in enumerate(weighbridge_entries, start=1):
+        ticket_no = f"{processor.weighbridge_code}-{seq:05d}"
+        doc["fields"]["ticket_no"] = pc(ticket_no, ticket_no)
 
     # --- F4: copy a record from f4_source (PWP-01) with no matching weighbridge slip ---
     if "F4" in processor.issue_types and f4_source is not None:
@@ -506,21 +534,27 @@ def build_dossier(
         matched_total = sum(s["weighbridge_net_t"] or 0 for s in dossier.shipments)
         n_out = rng.randint(4, 8)
         out_month_pool = [m for m in FY_MONTHS if m != h4_month]
-        for j in range(n_out):
+        # Dates drawn first and sorted before building documents, so the
+        # processor's own invoice series (T10 realism fix — the
+        # processor's own prefix, never the internal processor_id) comes
+        # out chronological, not in random draw order.
+        out_dates = []
+        for _j in range(n_out):
             month = rng.choice(out_month_pool)
             start, _end = month_bounds(month)
             out_date = start + datetime.timedelta(days=rng.randint(1, 25))
+            out_dates.append((out_date, month))
+        out_dates.sort(key=lambda t: t[0])
+        for seq, (out_date, month) in enumerate(out_dates, start=1):
             qty = round((matched_total * 0.8 / max(n_out, 1)) * rng.uniform(0.85, 1.15), 2)
+            invoice_no = f"{processor.invoice_prefix}/25-26/{seq:04d}"
             doc_id = dossier.add_document(
                 "outbound_invoice",
                 "en",
                 {
-                    "invoice_no": pc(
-                        f"{processor.processor_id}-OUT-{j + 1:03d}",
-                        f"{processor.processor_id}-OUT-{j + 1:03d}",
-                    ),
+                    "invoice_no": pc(invoice_no, invoice_no),
                     "date": pc(fmt_date(out_date), out_date.isoformat()),
-                    "buyer": pc(f"Fictional Buyer {j + 1}", f"Fictional Buyer {j + 1}"),
+                    "buyer": pc(f"Fictional Buyer {seq}", f"Fictional Buyer {seq}"),
                     "item_description": pc("Recycled PE/PP granules", "Recycled PE/PP granules"),
                     "hsn": pc("3915", "3915"),
                     "quantity_t": pc(format_indian_number(qty), qty),
@@ -538,6 +572,11 @@ def build_dossier(
     # F1/F2/F3 processors keep the old independent smooth-capacity-ratio
     # basis (unchanged), consistent with their certified tonnage.
     connected_load_kw = round(processor.capacity_t_per_year / 10, 1)
+    # One consumer/account number per processor (not per bill — it's a
+    # DISCOM account identifier, the same across all 12 monthly bills),
+    # plausible all-numeric format, never the internal processor_id (T10
+    # realism fix, docs/PROGRESS.md).
+    consumer_no = f"{rng.randint(10**9, 10**10 - 1)}"
     for month in FY_MONTHS:
         if honest_basis:
             monthly_basis_t = sum(
@@ -553,7 +592,16 @@ def build_dossier(
         if month == h4_month:
             kwh = round(rng.uniform(10, 40), 1)
         elif month == f7_target_month:
-            kwh = round(rng.uniform(5, 30), 1)
+            # T10 realism fix (docs/PROGRESS.md): tied to the same
+            # monthly_basis_t every other month uses, at a much lower but
+            # still-plausible ratio — not an absolute number decoupled
+            # from this processor's own scale (the original 5-30 kWh flat
+            # draw read as implausible rather than just "low" once
+            # per-shipment tonnage became realistic). Still comfortably
+            # below KWH_PER_T_MIN, so C7 still fails.
+            kwh = round(
+                monthly_basis_t * rng.uniform(params.F7_KWH_PER_T_MIN, params.F7_KWH_PER_T_MAX), 1
+            )
         else:
             kwh_per_t = rng.uniform(350, 500)
             kwh = round(monthly_basis_t * kwh_per_t, 1)
@@ -561,6 +609,7 @@ def build_dossier(
             "electricity_bill",
             "en",
             {
+                "consumer_no": pc(consumer_no, consumer_no),
                 "billing_month": pc(month, month),
                 "units_consumed_kwh": pc(format_indian_number(kwh), kwh),
                 "connected_load_kw": pc(format_indian_number(connected_load_kw), connected_load_kw),
@@ -604,13 +653,22 @@ def build_dossier(
     if "F6" in processor.issue_types:
         f6_month = next((m for m in FY_MONTHS if monthly_certified_t[m] > 0), FY_MONTHS[0])
 
+    # T10 realism fix: a generic portal-reference-style serial, anchored
+    # on this processor's own registration number suffix (already a
+    # per-processor-unique random reference) rather than the internal
+    # processor_id — keeps certificate_id globally unique across
+    # processors without reintroducing the same bug (certificates are a
+    # structured ledger, not an extracted document — DATA_SPEC.md §3 —
+    # but dropping the internal id keeps it consistent with every other
+    # identifier fix, docs/PROGRESS.md).
+    registration_suffix = processor.registration_no.rsplit("/", 1)[-1]
     for month in FY_MONTHS:
         category = processor.permitted_categories[0]
         if month == f6_month:
             category = "I" if "I" not in processor.permitted_categories else "III"
         dossier.certificates.append(
             {
-                "certificate_id": f"CERT-{processor.processor_id}-{month}",
+                "certificate_id": f"EPR-CERT/{registration_suffix}/{month.replace('-', '')}",
                 "category": category,
                 "quantity_t": monthly_certified_t[month],
                 "generation_date": fmt_date(month_bounds(month)[1]),
@@ -619,3 +677,102 @@ def build_dossier(
         )
 
     return dossier
+
+
+def assign_cross_processor_identifiers(
+    dossiers: dict[str, "Dossier"], suppliers: list[Supplier], rng: random.Random
+) -> None:
+    """Finalizes invoice_no (per supplier, monotonic with invoice date)
+    and ewb_no (one global sequence, monotonic with generation time) once
+    every processor's dossier exists — both span suppliers/processors
+    shared across dossiers, which build_dossier() can't see on its own
+    (T10 realism fix, docs/PROGRESS.md). Called once, after every real
+    `build_dossier()` call (including any F4 duplicate) — the duplicate's
+    copied fields are synced to its original's final values afterward,
+    since a duplicate must stay an exact match of the original it copies,
+    not the placeholder it happened to be built with.
+
+    Mutates each dossier's documents (and, for ewb_no, each shipment dict
+    too — app/checks/duplicates.py's C5 key reads shipment["ewb_no"]
+    directly, not the document, so it must be kept in sync) in place.
+    """
+    supplier_by_gstin = {s.gstin: s for s in suppliers}
+    supplier_by_id = {s.supplier_id: s for s in suppliers}
+
+    # One pass to classify every shipment as "real" (gets a final series
+    # position) or "duplicate" (synced to its original afterward), and to
+    # build a (processor_id, shipment_id) -> (invoice_doc, eway_doc, shipment)
+    # lookup every duplicate can resolve its original through.
+    lookup: dict[tuple[str, str], tuple[dict, dict | None, dict]] = {}
+    real_entries: list[tuple[dict, dict | None, dict]] = []  # (invoice_doc, eway_doc, shipment)
+    duplicate_entries: list[tuple[dict, dict | None, dict, str, str]] = []
+    for dossier in dossiers.values():
+        docs_by_id = {d["doc_id"]: d for d in dossier.documents}
+        for shipment in dossier.shipments:
+            invoice_doc = docs_by_id[shipment["invoice_doc_id"]]
+            eway_doc_id = shipment.get("eway_doc_id")
+            eway_doc = docs_by_id.get(eway_doc_id) if eway_doc_id else None
+            lookup[(dossier.processor_id, shipment["shipment_id"])] = (
+                invoice_doc,
+                eway_doc,
+                shipment,
+            )
+            if "duplicate_of" in shipment:
+                duplicate_entries.append(
+                    (
+                        invoice_doc,
+                        eway_doc,
+                        shipment,
+                        shipment["duplicate_of"],
+                        shipment["duplicate_of_processor"],
+                    )
+                )
+            else:
+                real_entries.append((invoice_doc, eway_doc, shipment))
+
+    # --- Per-supplier invoice series, monotonic by invoice date ---
+    by_supplier: dict[str, list[tuple[str, dict, dict | None]]] = {}
+    for invoice_doc, eway_doc, _shipment in real_entries:
+        supplier_gstin = invoice_doc["fields"]["supplier_gstin"]["canonical"]
+        supplier_id = supplier_by_gstin[supplier_gstin].supplier_id
+        date_str = invoice_doc["fields"]["date"]["canonical"]
+        by_supplier.setdefault(supplier_id, []).append((date_str, invoice_doc, eway_doc))
+    for supplier_id, items in by_supplier.items():
+        items.sort(key=lambda t: t[0])
+        prefix = supplier_by_id[supplier_id].invoice_prefix
+        for seq, (_date_str, invoice_doc, eway_doc) in enumerate(items, start=1):
+            new_no = f"{prefix}/25-26/{seq:04d}"
+            invoice_doc["fields"]["invoice_no"] = pc(new_no, new_no)
+            if eway_doc is not None:
+                eway_doc["fields"]["invoice_no"] = pc(new_no, new_no)
+
+    # --- Global e-way bill series, 12 digits, monotonic with generation time ---
+    eway_entries = [
+        (eway_doc["fields"]["generated_at"]["canonical"], eway_doc, shipment)
+        for _invoice_doc, eway_doc, shipment in real_entries
+        if eway_doc is not None
+    ]
+    eway_entries.sort(key=lambda t: t[0])
+    current = rng.randint(10**11, 10**12 - 1 - 10_000_000)  # headroom for every increment below
+    for _generated_at, eway_doc, shipment in eway_entries:
+        current += rng.randint(100, 5000)
+        ewb_no = str(current)
+        eway_doc["fields"]["ewb_no"] = pc(ewb_no, ewb_no)
+        shipment["ewb_no"] = ewb_no
+
+    # --- Sync F4 duplicates to their (now-finalized) original ---
+    for (
+        dup_invoice_doc,
+        dup_eway_doc,
+        dup_shipment,
+        orig_shipment_id,
+        orig_processor_id,
+    ) in duplicate_entries:
+        orig_invoice_doc, orig_eway_doc, _orig_shipment = lookup[
+            (orig_processor_id, orig_shipment_id)
+        ]
+        dup_invoice_doc["fields"]["invoice_no"] = dict(orig_invoice_doc["fields"]["invoice_no"])
+        if dup_eway_doc is not None and orig_eway_doc is not None:
+            dup_eway_doc["fields"]["invoice_no"] = dict(orig_eway_doc["fields"]["invoice_no"])
+            dup_eway_doc["fields"]["ewb_no"] = dict(orig_eway_doc["fields"]["ewb_no"])
+            dup_shipment["ewb_no"] = orig_eway_doc["fields"]["ewb_no"]["canonical"]
