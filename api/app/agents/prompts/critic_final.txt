@@ -6,7 +6,7 @@ Deterministic check results are final; do not re-argue them. Your value is findi
 
 Each objection must have:
 - effect: "raises_concern" if the objection identifies a problem with the evidence; "resolves_concern" if it instead corrects or softens a Hypothesis conclusion that reads as too harsh given the evidence. Only raises_concern objections are treated as findings — resolves_concern stays part of the record but is not scored.
-- cited_shipment_ids: the shipment IDs whose tonnage this finding should cause to be treated as unverifiable. Leave empty if the finding doesn't bear on a specific shipment's tonnage (for example, a site-level or capacity-level concern).
+- cited_shipment_ids: the shipment IDs whose tonnage this finding should cause to be treated as unverifiable. Leave empty if the finding doesn't bear on a specific shipment's tonnage (for example, a site-level or capacity-level concern). For every shipment you cite, include at least one of that shipment's own document IDs in evidence_ids.
 - evidence_ids: the evidence IDs — from check results, digest entries, or tool results you actually saw in this conversation — that support this finding. An objection with no evidence_ids will be discarded, so do not raise one you cannot point to evidence for.
 - finding_type: a short, specific label you write yourself describing the kind of problem you found (for example, a description/classification mismatch, a transit-time implausibility, a duplicated document, or an unresolved capacity mismatch). Describe it in your own words — do not use a fixed code or taxonomy.
 - explanation: a short, specific explanation that names the evidence it rests on.

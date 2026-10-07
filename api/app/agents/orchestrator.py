@@ -84,19 +84,42 @@ def _build_monthly_table(
     return table
 
 
+def _shipment_doc_ids(shipment: dict) -> dict:
+    """This shipment's own document IDs — invoice, e-way bill,
+    weighbridge slip — exactly what the own-evidence rule (docs/
+    PROGRESS.md) requires a citing finding's evidence_ids to include at
+    least one of. Merged into every digest entry that names a shipment,
+    so the Critic can satisfy that rule from the digest alone, without a
+    separate get_shipments tool call (the call still works too — same
+    data, just also reachable without it)."""
+    return {
+        "invoice_doc_id": shipment.get("invoice_doc_id"),
+        "eway_doc_id": shipment.get("eway_doc_id"),
+        "weighbridge_doc_id": shipment.get("weighbridge_doc_id"),
+    }
+
+
 def _build_dossier_digest(shipments: list[dict], documents: list[dict]) -> dict:
     """docs/ARCHITECTURE.md §4: distinct inbound item descriptions with
     HSN + shipment IDs, non-empty weighbridge remarks, unmatched records
     — what lets the agents notice semantic contradictions without
-    re-reading every file. Only document-observable fields (printed
-    invoice/weighbridge content, shipment linkage) — never a
-    ground-truth-only label."""
+    re-reading every file. Every shipment reference here carries its own
+    document IDs (_shipment_doc_ids above) alongside its shipment_id.
+    Only document-observable fields (printed invoice/weighbridge content,
+    shipment linkage) — never a ground-truth-only label."""
+    shipments_by_id = {s["shipment_id"]: s for s in shipments}
     invoice_doc_to_shipment = {
         s["invoice_doc_id"]: s["shipment_id"] for s in shipments if s.get("invoice_doc_id")
     }
     weighbridge_doc_to_shipment = {
         s["weighbridge_doc_id"]: s["shipment_id"] for s in shipments if s.get("weighbridge_doc_id")
     }
+
+    def _shipment_entry(shipment_id: str) -> dict:
+        return {
+            "shipment_id": shipment_id,
+            **_shipment_doc_ids(shipments_by_id.get(shipment_id, {})),
+        }
 
     item_descriptions: dict[tuple[str, str | None], list[str]] = {}
     weighbridge_remarks = []
@@ -120,11 +143,18 @@ def _build_dossier_digest(shipments: list[dict], documents: list[dict]) -> dict:
 
     return {
         "item_descriptions": [
-            {"description": desc, "hsn": hsn, "shipment_ids": ids}
+            {
+                "description": desc,
+                "hsn": hsn,
+                "shipments": [_shipment_entry(sid) for sid in ids],
+            }
             for (desc, hsn), ids in item_descriptions.items()
         ],
-        "weighbridge_remarks": weighbridge_remarks,
-        "unmatched_shipment_ids": unmatched_shipment_ids,
+        "weighbridge_remarks": [
+            {**_shipment_entry(r["shipment_id"]), "remarks": r["remarks"]}
+            for r in weighbridge_remarks
+        ],
+        "unmatched_shipments": [_shipment_entry(sid) for sid in unmatched_shipment_ids],
     }
 
 
