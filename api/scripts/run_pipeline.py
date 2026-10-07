@@ -1,14 +1,16 @@
 """Precompute pipeline: extract -> normalize -> checks -> site -> agents.
---stage extract, normalize and checks are implemented; T9-T10 add the rest.
+--stage extract, normalize, checks and site are implemented; T10 adds the
+agent loop.
 
 Run by the developer — never by the agent (hits real Vertex AI, BigQuery,
-Cloud Storage).
+Cloud Storage, Earth Engine).
 
 Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
        uv run python scripts/run_pipeline.py --seed 42 --stage extract --processor PWP-01
        uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source truth
        uv run python scripts/run_pipeline.py --seed 42 --stage normalize --facts-source extracted
        uv run python scripts/run_pipeline.py --seed 42 --stage checks --facts-source truth
+       uv run python scripts/run_pipeline.py --seed 42 --stage site
 """
 
 import argparse
@@ -23,6 +25,7 @@ from app.checks.duplicates import find_duplicate_keys
 from app.checks.runner import run_checks_for_processor
 from app.config import settings
 from app.eval.evaluate import extraction_field_accuracy
+from app.geo.site import run_site_assessment, site_assessment_to_check_result, upload_thumbnail
 from app.ingest.extract import extract_all, facts_to_field_rows
 from app.ingest.normalize import (
     EXTRACTED,
@@ -223,6 +226,64 @@ def _row_date_to_ddmmyyyy(value) -> str | None:
     return None if value is None else value.strftime("%d/%m/%Y")
 
 
+def run_site(seed: int, processor_filter: str | None) -> None:
+    bq_client = bq.get_client()
+    gcs_client = gcs.get_client()
+
+    processors = _fetch_bq_rows(
+        bq_client,
+        "processors",
+        "processor_id, capacity_t_per_year, lat, lon",
+        seed,
+        processor_filter,
+    )
+    if not processors:
+        print(
+            f"No processors found for seed {seed}"
+            + (f", processor {processor_filter}" if processor_filter else "")
+        )
+        return
+
+    computed_at = datetime.now(UTC).isoformat()
+    site_rows = []
+    local_snapshot = []
+    print(f"Running site check for {len(processors)} processor(s)...")
+    for processor in processors:
+        pid = processor["processor_id"]
+        row, thumbnail_bytes = run_site_assessment(processor)
+        thumbnail_gcs_path = upload_thumbnail(
+            gcs_client, settings.artifact_bucket, seed, pid, thumbnail_bytes
+        )
+        full_row = {
+            "seed": seed,
+            "computed_at": computed_at,
+            "thumbnail_gcs_path": thumbnail_gcs_path,
+            **row,
+        }
+        site_rows.append(full_row)
+        local_snapshot.append({k: v for k, v in full_row.items() if k != "seed"})
+        print(
+            f"  {pid}: buildings={row['building_count']} "
+            f"footprint={row['total_footprint_m2']:.1f} m^2 status={row['status']} "
+            f"-> {thumbnail_gcs_path}"
+        )
+
+    bq.delete_by_seed(bq_client, "site_assessments", seed)
+    bq.load_rows(bq_client, "site_assessments", site_rows)
+
+    if not processor_filter:
+        snapshot_path = REPO_ROOT / "data" / "synthetic" / f"seed-{seed}" / "site_assessments.json"
+        snapshot_path.write_text(json.dumps(local_snapshot, indent=2), encoding="utf-8")
+        print(f"\nWrote local snapshot: {snapshot_path}")
+    else:
+        print(
+            "\nSkipped the local snapshot (only written for a full, unfiltered run — "
+            "a --processor run would otherwise overwrite it with one entry)."
+        )
+
+    print(f"\nSite check (seed {seed}) done: {len(site_rows)} processor(s).")
+
+
 def run_checks(
     seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
 ) -> None:
@@ -300,6 +361,19 @@ def run_checks(
     )
     energy_by_processor = _group_by_processor(energy_monthly)
 
+    # C8 (site) isn't facts_source-dimensioned (seed-level, not tied to
+    # extracted documents) — read whatever --stage site has already
+    # written. If it hasn't run yet, skip C8 for this run rather than
+    # failing; the soft-signal bump just has nothing to find.
+    site_rows = _fetch_bq_rows(
+        bq_client,
+        "site_assessments",
+        "processor_id, status, severity, measured, threshold, thumbnail_gcs_path, explanation",
+        seed,
+        processor_filter,
+    )
+    site_by_processor = {row["processor_id"]: row for row in site_rows}
+
     if as_of_month is None:
         months = [c["period_month"] for c in certificates]
         if not months:
@@ -322,6 +396,9 @@ def run_checks(
         results = run_checks_for_processor(
             processor, p_shipments, p_outputs, p_energy, p_certificates, duplicate_keys, as_of_month
         )
+        site_row = site_by_processor.get(pid)
+        if site_row is not None:
+            results = [*results, site_assessment_to_check_result(site_row)]
         for r in results:
             check_rows.append(
                 {"seed": seed, "facts_source": facts_source, "processor_id": pid, **r.model_dump()}
@@ -357,7 +434,9 @@ def run_checks(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run precompute pipeline stages.")
     parser.add_argument("--seed", type=int, required=True)
-    parser.add_argument("--stage", choices=["extract", "normalize", "checks"], required=True)
+    parser.add_argument(
+        "--stage", choices=["extract", "normalize", "checks", "site"], required=True
+    )
     parser.add_argument("--processor", help="Only process this processor_id (e.g. PWP-01)")
     parser.add_argument(
         "--facts-source",
@@ -378,6 +457,8 @@ def main() -> None:
         run_normalize(args.seed, args.facts_source, args.processor)
     elif args.stage == "checks":
         run_checks(args.seed, args.facts_source, args.processor, args.as_of_month)
+    elif args.stage == "site":
+        run_site(args.seed, args.processor)
 
 
 if __name__ == "__main__":

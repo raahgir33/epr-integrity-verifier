@@ -191,6 +191,32 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("risk_band", "STRING"),
         bigquery.SchemaField("computed_at", "TIMESTAMP"),
     ],
+    # T9 (site check C8). Not facts_source-dimensioned — C8 depends only
+    # on a processor's registered coordinates (seed-level), never on
+    # extracted documents, so delete_by_seed is the right idempotency
+    # key (like documents/certificates, not shipments/check_results).
+    # polygons_json is evidence/count data (confidence + area + exterior
+    # ring per building), not used for client-side drawing — the overlay
+    # is painted server-side onto the thumbnail itself (geo/site.py).
+    "site_assessments": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("status", "STRING"),
+        bigquery.SchemaField("severity", "STRING"),
+        bigquery.SchemaField("measured", "FLOAT"),
+        bigquery.SchemaField("threshold", "FLOAT"),
+        bigquery.SchemaField("building_count", "INTEGER"),
+        bigquery.SchemaField("total_footprint_m2", "FLOAT"),
+        bigquery.SchemaField("polygons_json", "STRING"),
+        bigquery.SchemaField("thumbnail_gcs_path", "STRING"),
+        bigquery.SchemaField("thumb_bbox_w", "FLOAT"),
+        bigquery.SchemaField("thumb_bbox_s", "FLOAT"),
+        bigquery.SchemaField("thumb_bbox_e", "FLOAT"),
+        bigquery.SchemaField("thumb_bbox_n", "FLOAT"),
+        bigquery.SchemaField("thumb_crs", "STRING"),
+        bigquery.SchemaField("explanation", "STRING"),
+        bigquery.SchemaField("computed_at", "TIMESTAMP"),
+    ],
 }
 
 

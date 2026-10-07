@@ -381,6 +381,7 @@ dependencies = [
     { name = "google-cloud-storage" },
     { name = "google-genai" },
     { name = "pydantic-settings" },
+    { name = "requests" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -405,6 +406,7 @@ requires-dist = [
     { name = "google-cloud-storage", specifier = ">=2.18" },
     { name = "google-genai", specifier = ">=0.8" },
     { name = "pydantic-settings", specifier = ">=2.6" },
+    { name = "requests", specifier = ">=2.32" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
 ]
 

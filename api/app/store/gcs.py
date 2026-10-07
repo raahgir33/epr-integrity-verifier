@@ -23,3 +23,10 @@ def upload_file(client: storage.Client, bucket_name: str, blob_path: str, local_
 def download_bytes(client: storage.Client, bucket_name: str, blob_path: str) -> bytes:
     bucket = client.bucket(bucket_name)
     return bucket.blob(blob_path).download_as_bytes()
+
+
+def upload_bytes(
+    client: storage.Client, bucket_name: str, blob_path: str, data: bytes, content_type: str
+) -> None:
+    bucket = client.bucket(bucket_name)
+    bucket.blob(blob_path).upload_from_string(data, content_type=content_type)

@@ -1,9 +1,19 @@
 """T8 acceptance gate: runs every implemented check (C1, C2a, C2b, C3a,
-C3b, C4, C5, C6, C7 — C8 is T9, not run here) plus the deterministic
-scorer, in truth mode, against the committed seed-42 ground_truth.json and
-processors.json. No BigQuery, no scripts/dossier_gen import — only
-ground_truth.json and processors.json are read, exactly like
-test_normalize.py's existing cross-check tests.
+C3b, C4, C5, C6, C7) plus the deterministic scorer, in truth mode, against
+the committed seed-42 ground_truth.json and processors.json. No BigQuery,
+no scripts/dossier_gen import — only ground_truth.json and processors.json
+are read, exactly like test_normalize.py's existing cross-check tests.
+
+C8 (T9, Earth Engine) is picked up too, but only once it has real data:
+site_assessments_by_processor() loads scripts/run_pipeline.py --stage
+site's local JSON snapshot if it exists
+(data/synthetic/seed-42/site_assessments.json) and folds each
+processor's result into its check list before scoring — see that
+fixture's docstring. Until that file exists, C8 is simply absent and
+IMPLEMENTED_CHECK_IDS/EXPECTED_STATUSES stay as they were pre-T9
+(9 checks). Once it exists, both need "C8" added, together with real
+PWP-09 expectations (see docs/PROGRESS.md for whatever the live run
+showed) — not written blind here.
 
 Two things are asserted for every one of the 10 processors:
 1. The exact status (pass/fail/warn/not_evaluable) of every implemented
@@ -22,6 +32,7 @@ import pytest
 from app.agents.scorer import score_processor
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.runner import run_checks_for_processor
+from app.geo.site import site_assessment_to_check_result
 from app.ingest.normalize import energy_from_truth, outputs_from_truth, shipments_from_truth
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -178,7 +189,22 @@ def processors_meta():
 
 
 @pytest.fixture(scope="module")
-def results_by_processor(ground_truth, processors_meta):
+def site_assessments_by_processor():
+    """scripts/run_pipeline.py --stage site writes a local JSON snapshot
+    (data/synthetic/seed-42/site_assessments.json) alongside its BigQuery
+    rows, precisely so this local/offline test can pick up real C8
+    results once they exist, the same "committed local artifact" pattern
+    ground_truth.json/processors.json already use. Empty dict (C8 simply
+    absent from every processor's results) until that file exists."""
+    path = REPO_ROOT / "data" / "synthetic" / f"seed-{SEED}" / "site_assessments.json"
+    if not path.exists():
+        return {}
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    return {row["processor_id"]: row for row in rows}
+
+
+@pytest.fixture(scope="module")
+def results_by_processor(ground_truth, processors_meta, site_assessments_by_processor):
     shipments_by_processor = {
         p["processor_id"]: shipments_from_truth(
             SEED, p["processor_id"], p["shipments"], ground_truth["documents"]
@@ -198,6 +224,9 @@ def results_by_processor(ground_truth, processors_meta):
         results = run_checks_for_processor(
             meta, shipments, outputs, energy, p["certificates"], duplicate_keys, AS_OF_MONTH
         )
+        site_row = site_assessments_by_processor.get(pid)
+        if site_row is not None:
+            results = [*results, site_assessment_to_check_result(site_row)]
         score = score_processor(
             meta, p["certificates"], shipments, duplicate_keys, results, AS_OF_MONTH
         )
