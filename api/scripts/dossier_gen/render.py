@@ -80,6 +80,7 @@ LABELS: dict[str, dict[str, dict[str, str]]] = {
         "quantity_t": {"en": "Quantity (t)", "hi": "मात्रा (टन)"},
     },
     "electricity_bill": {
+        "consumer_no": {"en": "Consumer No.", "hi": "उपभोक्ता क्रमांक"},
         "billing_month": {"en": "Billing Month", "hi": "बिलिंग माह"},
         "units_consumed_kwh": {"en": "Units Consumed (kWh)", "hi": "उपभोग इकाइयाँ (kWh)"},
         "connected_load_kw": {"en": "Connected Load (kW)", "hi": "संयोजित भार (kW)"},

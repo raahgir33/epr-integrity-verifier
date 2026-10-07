@@ -284,14 +284,14 @@ def test_pwp09_unverifiable_tonnes_uses_raw_certified_not_eligible(results_by_pr
     unverifiable_t rather than surfacing as unverifiable, and the risk
     band would never reflect the consent breach at all."""
     score = results_by_processor["PWP-09"]["score"]
-    assert score["certified_t"] == pytest.approx(342.15)
-    assert score["verifiable_t"] == pytest.approx(302.65)
-    assert score["unverifiable_t"] == pytest.approx(39.50)
+    assert score["certified_t"] == pytest.approx(355.58)
+    assert score["verifiable_t"] == pytest.approx(347.96)
+    assert score["unverifiable_t"] == pytest.approx(7.62)
     assert score["unverifiable_t"] == pytest.approx(score["certified_t"] - score["verifiable_t"])
     # C8's soft-signal bump (F5 ghost site, real Earth Engine data) raises
-    # this from Medium to High — see test_c8_risk_band_matches_full_system
+    # this from Low to Medium — see test_c8_risk_band_matches_full_system
     # for why that's not a coincidence.
-    assert score["risk_band"] == "High"
+    assert score["risk_band"] == "Medium"
 
 
 def test_c8_risk_band_matches_full_system_ground_truth(results_by_processor):
@@ -302,12 +302,15 @@ def test_c8_risk_band_matches_full_system_ground_truth(results_by_processor):
     therefore equal this checks-only scorer's risk_band exactly too, now
     that C8 is wired in. Before T9, this was Medium vs ground truth's
     High — a real gap that real Earth Engine data (not threshold tuning)
-    has now closed."""
+    has now closed. (Both sides moved to Low-bumped-to-Medium after the
+    T10 document-identifier regeneration shifted PWP-09's unverifiable
+    share below 5% — still in agreement with each other, just one soft-
+    signal step lower than before; see docs/PROGRESS.md.)"""
     entry = results_by_processor["PWP-09"]
     assert entry["truth"]["true_verifiable_t"] == pytest.approx(
         entry["truth"]["true_verifiable_t_checks_only"]
     )
-    assert entry["score"]["risk_band"] == entry["truth"]["risk_band"] == "High"
+    assert entry["score"]["risk_band"] == entry["truth"]["risk_band"] == "Medium"
 
 
 def test_no_seeded_scenario_fails_c3a_or_c3b(results_by_processor):

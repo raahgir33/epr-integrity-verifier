@@ -29,6 +29,34 @@ from scripts.dossier_gen.world import Processor, build_brands, build_processors,
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# Everything this script itself writes under data/synthetic/seed-<seed>/ —
+# used to clean a stale run before regenerating. Deliberately NOT a
+# directory-wide wipe: data/synthetic/seed-<seed>/ also holds artifacts
+# from later, non-generator pipeline stages (site_assessments.json from
+# --stage site's real Earth Engine calls; agent_probe_runs/ from
+# scripts/probe_agent_thinking.py's real Gemini calls) that this script
+# must never delete as collateral damage — both are expensive/live-call
+# outputs, unlike anything here, which is cheap to regenerate from the
+# seed alone.
+_GENERATOR_OWNED_RELATIVE_PATHS = (
+    "ground_truth.json",
+    "processors.json",
+    "suppliers.json",
+    "brands.json",
+    "demo_batches.json",
+    "certificates.csv",
+    "documents",
+)
+
+
+def _clean_generator_outputs(out_dir: Path) -> None:
+    for relative_path in _GENERATOR_OWNED_RELATIVE_PATHS:
+        path = out_dir / relative_path
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.exists():
+            path.unlink()
+
 
 def build_all_dossiers(processors: list[Processor], suppliers, rng) -> dict[str, Dossier]:
     """PWP-01 is built first (and forced to carry the Hindi sample) since
@@ -120,9 +148,8 @@ def main() -> None:
     args = parser.parse_args()
 
     out_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{args.seed}"
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
+    _clean_generator_outputs(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     pipeline = run_data_pipeline(args.seed)
     write_manifests(out_dir, pipeline)
