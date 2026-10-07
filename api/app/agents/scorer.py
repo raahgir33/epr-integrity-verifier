@@ -19,13 +19,43 @@ from app.models.checks import CheckResult
 _RISK_BANDS = ["Low", "Medium", "High"]
 SYSTEMIC_FINDING_CHECK_ID = "AGENT_SYSTEMIC_FINDING"
 NO_OWN_EVIDENCE_FINDING_CHECK_ID = "AGENT_NO_OWN_EVIDENCE_FINDING"
+DISPUTED_FINDING_CHECK_ID = "AGENT_DISPUTED_FINDING"
 _SOFT_SIGNAL_CHECK_IDS = {
     "C2b",
     "C7",
     "C8",
     SYSTEMIC_FINDING_CHECK_ID,
     NO_OWN_EVIDENCE_FINDING_CHECK_ID,
+    DISPUTED_FINDING_CHECK_ID,
 }
+
+
+def build_disputed_finding_check_result(review_flag_findings: list) -> CheckResult:
+    """A synthetic soft-signal CheckResult for the Hypothesis/Critic
+    agreement rule (docs/PROGRESS.md): a finding the two agents didn't
+    reach agreement on — a Hypothesis finding the Critic disputed and the
+    Hypothesis then maintained (or never responded to), or a Critic-raised
+    finding the Hypothesis rejected — is kept as a finding (visible in the
+    trail/UI) but never deducted, riding apply_soft_signal_bump's existing
+    one-step cap, same mechanism as the other two synthetic signals above,
+    just a different reason. The caller (scripts/run_pipeline.py,
+    scripts/probe_agent_thinking.py) appends this to check_results before
+    calling score_processor whenever review_flag_findings is non-empty.
+    """
+    return CheckResult(
+        check_id=DISPUTED_FINDING_CHECK_ID,
+        status="warn",
+        severity="soft",
+        measured=float(len(review_flag_findings)),
+        threshold=0.0,
+        affected_tonnes=0.0,
+        evidence_ids=[],
+        explanation=(
+            f"{len(review_flag_findings)} finding(s) did not reach agreement between the "
+            "Hypothesis and Critic agents — kept as findings and flagged for review, not "
+            "deducted."
+        ),
+    )
 
 
 def build_no_own_evidence_finding_check_result(no_evidence_findings: list) -> CheckResult:

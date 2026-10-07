@@ -1,6 +1,8 @@
 from app.agents.scorer import (
+    DISPUTED_FINDING_CHECK_ID,
     SYSTEMIC_FINDING_CHECK_ID,
     apply_soft_signal_bump,
+    build_disputed_finding_check_result,
     build_systemic_finding_check_result,
     capacity_limit_t_with_consent,
     generate_narrative,
@@ -63,6 +65,28 @@ def test_systemic_finding_check_result_capped_alongside_other_soft_signals():
     )
     c7_warn = CheckResult(check_id="C7", status="warn", severity="soft", explanation="x")
     assert apply_soft_signal_bump("Low", [systemic_check, c7_warn]) == "Medium"
+
+
+def test_build_disputed_finding_check_result_is_a_soft_warn():
+    check = build_disputed_finding_check_result(review_flag_findings=["finding-1"])
+    assert check.check_id == DISPUTED_FINDING_CHECK_ID
+    assert check.status == "warn"
+    assert check.severity == "soft"
+
+
+def test_disputed_finding_check_result_bumps_risk_band_one_step():
+    check = build_disputed_finding_check_result(review_flag_findings=["finding-1"])
+    assert apply_soft_signal_bump("Low", [check]) == "Medium"
+    assert apply_soft_signal_bump("Medium", [check]) == "High"
+    assert apply_soft_signal_bump("High", [check]) == "High"
+
+
+def test_disputed_finding_check_result_capped_alongside_other_soft_signals():
+    disputed_check = build_disputed_finding_check_result(
+        review_flag_findings=["finding-1", "finding-2"]
+    )
+    c7_warn = CheckResult(check_id="C7", status="warn", severity="soft", explanation="x")
+    assert apply_soft_signal_bump("Low", [disputed_check, c7_warn]) == "Medium"
 
 
 def test_capacity_limit_zeroed_outside_consent_window():

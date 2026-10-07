@@ -62,6 +62,7 @@ def _real_processor_context(processor_id: str) -> dict:
         "certificates": gt_processor["certificates"],
         "shipments": shipments,
         "duplicate_keys": duplicate_keys,
+        "as_of_month": "2026-03",
         "check_results": [],
         "site_assessment": None,
         "documents": documents,

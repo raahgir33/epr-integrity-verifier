@@ -40,9 +40,10 @@ class Objection(BaseModel):
 
 
 class HypothesisRevision(BaseModel):
-    """One per Objection the Critic raised. objection_index is the
-    0-indexed position in that Objection list — orchestrator.py validates
-    it's in range before use, same discipline as every other model-supplied
+    """The Hypothesis's accept/reject decision on ONE of the Critic's own
+    newly-raised findings. objection_index is the 0-indexed position in
+    that (filtered) Objection list — orchestrator.py validates it's in
+    range before use, same discipline as every other model-supplied
     ID in this module."""
 
     objection_index: int
@@ -50,24 +51,61 @@ class HypothesisRevision(BaseModel):
     explanation: str
 
 
+class CriticVerdict(BaseModel):
+    """The Critic's verdict on ONE of the Hypothesis's own proposed
+    findings (docs/PROGRESS.md's Hypothesis-findings restructure).
+    hypothesis_finding_index is the 0-indexed position in the (filtered,
+    reindexed) list of Hypothesis findings shown to the Critic —
+    orchestrator.py validates it's in range before use."""
+
+    hypothesis_finding_index: int
+    verdict: Literal["upheld", "disputed"]
+    reason: str
+
+
+class HypothesisFindingResponse(BaseModel):
+    """The Hypothesis's maintain/withdraw decision on ONE of its own
+    findings that the Critic disputed (or never gave a verdict on —
+    orchestrator.py treats that the same as disputed, since the Critic
+    not addressing a Hypothesis finding is not evidence of agreement).
+    hypothesis_finding_index matches CriticVerdict's own indexing."""
+
+    hypothesis_finding_index: int
+    decision: Literal["maintain", "withdraw"]
+    explanation: str
+
+
 class ConclusionsResponse(BaseModel):
     """Top-level wrapper for the Hypothesis agent's generate_structured
     call — Gemini structured output needs a single object at the top
-    level, not a bare list."""
+    level, not a bare list. findings is the Hypothesis's own proposed
+    findings (docs/PROGRESS.md), same shape as a Critic Objection — the
+    Critic gives each one a verdict (CriticVerdict) rather than only
+    ever objecting to batch-level conclusions."""
 
     conclusions: list[HypothesisConclusion] = []
+    findings: list[Objection] = []
 
 
 class ObjectionsResponse(BaseModel):
-    """Top-level wrapper for the Critic's phase-2 (no-tools) call."""
+    """Top-level wrapper for the Critic's phase-2 (no-tools) call.
+    verdicts covers the Hypothesis's own findings (upheld/disputed);
+    objections is the Critic's own newly-raised findings, same as
+    before this restructure."""
 
+    verdicts: list[CriticVerdict] = []
     objections: list[Objection] = []
 
 
 class RevisionsResponse(BaseModel):
-    """Top-level wrapper for the Hypothesis revision call."""
+    """Top-level wrapper for the Hypothesis revision call. revisions
+    covers the Critic's own newly-raised findings (accept/reject), same
+    as before this restructure; hypothesis_finding_responses covers the
+    Hypothesis's own disputed (or unaddressed) findings (maintain/
+    withdraw)."""
 
     revisions: list[HypothesisRevision] = []
+    hypothesis_finding_responses: list[HypothesisFindingResponse] = []
 
 
 class NarrativeSummary(BaseModel):

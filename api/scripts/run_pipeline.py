@@ -26,6 +26,7 @@ from google.cloud import bigquery
 
 from app.agents.orchestrator import run_agent_loop
 from app.agents.scorer import (
+    build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
     build_systemic_finding_check_result,
     score_processor,
@@ -600,6 +601,7 @@ def build_processor_context(inputs: dict, processor: dict, gcs_client) -> tuple[
         "certificates": inputs["certificates_by_processor"].get(pid, []),
         "shipments": inputs["shipments_by_processor"].get(pid, []),
         "duplicate_keys": inputs["duplicate_keys"],
+        "as_of_month": inputs["as_of_month"],
         "check_results": check_result_dicts,
         "site_assessment": inputs["site_by_processor"].get(pid),
         "documents": inputs["documents_by_processor"].get(pid, []),
@@ -626,6 +628,11 @@ def run_agents(
     processors = inputs["processors"]
     if as_of_month is None:
         as_of_month = inputs["as_of_month"]
+    # build_processor_context reads as_of_month from inputs, not a separate
+    # parameter — keep it in sync with whatever's actually being used
+    # (default or --as-of-month override) so the context pack's
+    # capacity_status matches the figures this run is scoring against.
+    inputs["as_of_month"] = as_of_month
 
     llm_client = GeminiClient()
     agent_run_rows = []
@@ -667,15 +674,17 @@ def run_agents(
                 }
             )
 
-        # Own-evidence rule + systemic-finding guard (docs/PROGRESS.md):
-        # only deductible_findings subtract shipment tonnage, and only for
-        # their own evidenced shipments (loop_result["excluded_shipment_ids"]
-        # is the ready-made deduction set, computed once in
+        # Own-evidence rule + systemic-finding guard + Hypothesis/Critic
+        # agreement rule (docs/PROGRESS.md): only deductible_findings
+        # subtract shipment tonnage, and only for their own evidenced
+        # shipments (loop_result["excluded_shipment_ids"] is the
+        # ready-made deduction set, computed once in
         # app/agents/orchestrator.py's _classify_findings — not re-derived
-        # from cited_shipment_ids here). systemic_findings and
-        # no_evidence_findings are both kept (visible in agent_runs/the UI)
-        # and instead ride a synthetic soft-signal check result into
-        # score_processor's existing one-step risk-band bump.
+        # from cited_shipment_ids here). systemic_findings,
+        # no_evidence_findings and review_flag_findings are all kept
+        # (visible in agent_runs/the UI) and instead ride a synthetic
+        # soft-signal check result into score_processor's existing
+        # one-step risk-band bump.
         score_check_results = list(p_check_results)
         if loop_result["systemic_findings"]:
             score_check_results.append(
@@ -684,6 +693,10 @@ def run_agents(
         if loop_result["no_evidence_findings"]:
             score_check_results.append(
                 build_no_own_evidence_finding_check_result(loop_result["no_evidence_findings"])
+            )
+        if loop_result["review_flag_findings"]:
+            score_check_results.append(
+                build_disputed_finding_check_result(loop_result["review_flag_findings"])
             )
         score = score_processor(
             processor,
@@ -709,7 +722,9 @@ def run_agents(
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "
-            f"no_evidence={len(loop_result['no_evidence_findings'])}) "
+            f"no_evidence={len(loop_result['no_evidence_findings'])}, "
+            f"review_flag={len(loop_result['review_flag_findings'])}, "
+            f"withdrawn={len(loop_result['withdrawn_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t unverifiable={score['unverifiable_t']:.2f}t "
             f"risk={score['risk_band']}"
         )

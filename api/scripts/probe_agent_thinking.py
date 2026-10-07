@@ -35,6 +35,7 @@ from pathlib import Path
 
 from app.agents.orchestrator import run_agent_loop
 from app.agents.scorer import (
+    build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
     build_systemic_finding_check_result,
     score_processor,
@@ -104,12 +105,12 @@ def run_one(
             processor_context, llm_client, deadline, thinking_level=thinking_level
         )
 
-        # Own-evidence rule + systemic-finding guard (docs/PROGRESS.md) —
-        # see scripts/run_pipeline.py's run_agents() for the same split;
-        # kept identical here so this probe's scoring matches the real
-        # pipeline's. excluded_shipment_ids is the ready-made deduction set
-        # from app/agents/orchestrator.py's _classify_findings, not
-        # re-derived from cited_shipment_ids here.
+        # Own-evidence rule + systemic-finding guard + Hypothesis/Critic
+        # agreement rule (docs/PROGRESS.md) — see scripts/run_pipeline.py's
+        # run_agents() for the same split; kept identical here so this
+        # probe's scoring matches the real pipeline's. excluded_shipment_ids
+        # is the ready-made deduction set from app/agents/orchestrator.py's
+        # _classify_findings, not re-derived from cited_shipment_ids here.
         score_check_results = list(check_result_models)
         if loop_result["systemic_findings"]:
             score_check_results.append(
@@ -118,6 +119,10 @@ def run_one(
         if loop_result["no_evidence_findings"]:
             score_check_results.append(
                 build_no_own_evidence_finding_check_result(loop_result["no_evidence_findings"])
+            )
+        if loop_result["review_flag_findings"]:
+            score_check_results.append(
+                build_disputed_finding_check_result(loop_result["review_flag_findings"])
             )
         score = score_processor(
             processor,
@@ -133,9 +138,16 @@ def run_one(
             "agent_status": loop_result["agent_status"],
             "tool_cap_reached": loop_result["tool_cap_reached"],
             "conclusions": [c.model_dump() for c in loop_result["conclusions"]],
+            "hypothesis_findings": [f.model_dump() for f in loop_result["hypothesis_findings"]],
+            "verdicts": [v.model_dump() for v in loop_result["verdicts"]],
             "objections": [o.model_dump() for o in loop_result["objections"]],
             "revisions": [r.model_dump() for r in loop_result["revisions"]],
+            "hypothesis_finding_responses": [
+                r.model_dump() for r in loop_result["hypothesis_finding_responses"]
+            ],
             "confirmed_findings": [f.model_dump() for f in loop_result["confirmed_findings"]],
+            "review_flag_findings": [f.model_dump() for f in loop_result["review_flag_findings"]],
+            "withdrawn_findings": [f.model_dump() for f in loop_result["withdrawn_findings"]],
             "deductible_findings": [f.model_dump() for f in loop_result["deductible_findings"]],
             "systemic_findings": [f.model_dump() for f in loop_result["systemic_findings"]],
             "no_evidence_findings": [f.model_dump() for f in loop_result["no_evidence_findings"]],
@@ -147,7 +159,9 @@ def run_one(
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "
-            f"no_evidence={len(loop_result['no_evidence_findings'])}) "
+            f"no_evidence={len(loop_result['no_evidence_findings'])}, "
+            f"review_flag={len(loop_result['review_flag_findings'])}, "
+            f"withdrawn={len(loop_result['withdrawn_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t risk={score['risk_band']}"
         )
 
@@ -333,30 +347,47 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
     bq.load_rows(bq_client, "assessments", assessment_rows)
 
 
+def _print_finding(f: dict, label: str) -> None:
+    print(f"  finding_type: {f['finding_type']} [{label}]")
+    print(f"  cited_shipment_ids: {f['cited_shipment_ids']}")
+    print(f"  evidence_ids: {f['evidence_ids']}")
+    print(f"  explanation: {f['explanation']}")
+    print()
+
+
 def _print_every_finding(all_runs: list[dict]) -> None:
-    print("\n=== Every confirmed finding, in full ===")
+    """Every finding from every agreement path (docs/PROGRESS.md's
+    Hypothesis-findings restructure): confirmed (further split into
+    deductible/systemic/no-own-evidence, same as before), review-flagged
+    (the agents disagreed — kept visible, never deducted), and withdrawn
+    (the Hypothesis itself retracted it after the Critic disputed it —
+    trail-only, shown here anyway for full transparency rather than
+    silently dropped)."""
+    print("\n=== Every finding, in full ===")
     for run_record in all_runs:
         for pid, record in run_record["processors"].items():
-            if not record["confirmed_findings"]:
+            has_any = (
+                record["confirmed_findings"]
+                or record["review_flag_findings"]
+                or record["withdrawn_findings"]
+            )
+            if not has_any:
                 continue
             print(f"{run_record['config_name']} run {run_record['run_index']} / {pid}:")
             systemic_findings = record["systemic_findings"]
             no_evidence_findings = record["no_evidence_findings"]
             for f in record["confirmed_findings"]:
-                # Own-evidence rule + systemic-finding guard (docs/PROGRESS.md):
-                # keep this classification visible in the canary printout,
-                # not silently dropped.
                 if f in no_evidence_findings:
-                    label = "no own evidence (not deducted)"
+                    label = "confirmed, no own evidence (not deducted)"
                 elif f in systemic_findings:
-                    label = "systemic (not deducted)"
+                    label = "confirmed, systemic (not deducted)"
                 else:
-                    label = "deductible"
-                print(f"  finding_type: {f['finding_type']} [{label}]")
-                print(f"  cited_shipment_ids: {f['cited_shipment_ids']}")
-                print(f"  evidence_ids: {f['evidence_ids']}")
-                print(f"  explanation: {f['explanation']}")
-                print()
+                    label = "confirmed, deductible"
+                _print_finding(f, label)
+            for f in record["review_flag_findings"]:
+                _print_finding(f, "review flag (agents disagreed, not deducted)")
+            for f in record["withdrawn_findings"]:
+                _print_finding(f, "withdrawn (trail only, no scoring effect)")
 
 
 def main() -> None:

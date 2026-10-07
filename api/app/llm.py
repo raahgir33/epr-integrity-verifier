@@ -17,6 +17,7 @@ Three distinct retry layers, matching three distinct rules:
   immediately, uncaught.
 """
 
+import json
 import logging
 import random
 import threading
@@ -243,6 +244,17 @@ class GeminiClient:
         max_tool_calls is not an error, just a flag for the caller to
         record — the orchestrator proceeds to the final structured call
         with whatever conversation exists so far.
+
+        Tool-call efficiency (docs/PROGRESS.md): a repeated tool call —
+        identical name and arguments to one already made this loop — is
+        not re-executed and does not count toward max_tool_calls; it gets
+        a cheap "already returned in call N" response instead (the fourth
+        canary's PWP-08 trail spent 5 of its 8 real calls on exactly this
+        kind of redundant re-fetch). Each such iteration still costs one
+        real Gemini call though, so a model that keeps repeating itself
+        could otherwise loop indefinitely — max_total_iterations is the
+        backstop against that, generous since real repeats should become
+        rare once the model sees the "already returned" response.
         """
         config_kwargs = {
             "tools": tools,
@@ -258,8 +270,11 @@ class GeminiClient:
 
         tools_by_name = {fn.__name__: fn for fn in tools}
         conversation = list(contents)
+        seen_calls: dict[tuple[str, str], int] = {}
+        call_number = 0
+        max_total_iterations = max_tool_calls * 3
 
-        for _ in range(max_tool_calls):
+        for _ in range(max_total_iterations):
             response = self._call_generate_content(
                 purpose, contents=conversation, config=types.GenerateContentConfig(**config_kwargs)
             )
@@ -271,8 +286,22 @@ class GeminiClient:
             if function_call is None:
                 return conversation, False
 
-            fn = tools_by_name[function_call.name]
-            summary, attachment = fn(**function_call.args)
+            cache_key = (
+                function_call.name,
+                json.dumps(function_call.args, sort_keys=True, default=str),
+            )
+            if cache_key in seen_calls:
+                summary = (
+                    f"Already returned in call {seen_calls[cache_key]} — "
+                    "see that result, do not call this again."
+                )
+                attachment = None
+            else:
+                call_number += 1
+                seen_calls[cache_key] = call_number
+                fn = tools_by_name[function_call.name]
+                summary, attachment = fn(**function_call.args)
+
             conversation = [
                 *conversation,
                 types.Content(
@@ -298,6 +327,9 @@ class GeminiClient:
                         role="user", parts=[types.Part.from_bytes(data=data, mime_type=mime_type)]
                     ),
                 ]
+
+            if call_number >= max_tool_calls:
+                return conversation, True
 
         return conversation, True
 

@@ -7,6 +7,9 @@ processor_context: {
     "processor": {processor_id, capacity_t_per_year, permitted_categories,
         consent_valid_from, consent_valid_to},
     "certificates": [...], "shipments": [...], "duplicate_keys": {...},
+    "as_of_month": "YYYY-MM" (the run's cutoff — build_capacity_status
+        shows C1's own FY-to-date basis at exactly this point, the same
+        "as_of_month" scripts/run_pipeline.py/scorer.py already use),
     "check_results": [dict, ...]  (already CheckResult.model_dump()'d —
         app/agents/tools.py's build_tools expects plain dicts, matching
         its own test fixture, not Pydantic objects),
@@ -46,42 +49,75 @@ from app.models.agent import (
 logger = logging.getLogger(__name__)
 
 
+def _build_capacity_status(processor: dict, certificates: list[dict], as_of_month: str) -> dict:
+    """Capacity shown exactly as C1 itself judges it (docs/PROGRESS.md) —
+    a single FY-to-date figure at the run's as_of_month, not a per-month
+    breakdown. C1 is a cumulative comparison (certified tonnes so far
+    this FY vs capacity available so far), not something each month has
+    its own independent share of; a prior per-month "capacity_limit_t"
+    table column (itself a fix for an even earlier flat annual/12 share)
+    still implied a false month-by-month capacity judgement that doesn't
+    match what the actual hard check computes. Reuses
+    app/checks/capacity.py's own functions, the same ones check_c1 itself
+    calls — never a second, independent computation of the same figure."""
+    return {
+        "as_of_month": as_of_month,
+        "certified_t_fy_to_date": round(certified_t_fy_to_date(certificates, as_of_month), 2),
+        "capacity_limit_t_fy_to_date": round(
+            capacity_limit_t(processor["capacity_t_per_year"], months_elapsed_in_fy(as_of_month)),
+            2,
+        ),
+    }
+
+
 def _build_monthly_table(
-    processor: dict, certificates: list[dict], shipments: list[dict], duplicate_keys: dict
+    certificates: list[dict], shipments: list[dict], duplicate_keys: dict
 ) -> list[dict]:
-    """Per-period_month verified-inbound tonnes (that month's own actual)
-    paired with C1's own basis — FY-to-date cumulative certified tonnes
-    vs FY-to-date pro-rated capacity through that month — rather than a
-    flat annual/12 monthly share compared against that month's own
-    certified slice in isolation (docs/PROGRESS.md: the flat share didn't
-    match what C1, the actual hard check, judges — a flat share could make
-    an early, well-within-capacity month look worse than C1 itself would
-    ever find it). verified_inbound_t reuses mass_balance.py's own C3-C5
-    pass logic (filtered to that month's shipments), never a re-derivation
-    of it — this is contextual, not the authoritative FY-to-date figure
-    (that's app/agents/scorer.py's job, included separately in
-    check_results)."""
+    """Per-period_month certified tonnes (that month's own slice, not
+    cumulative) and verified-inbound tonnes — for the Hypothesis's
+    per-batch judgement (docs/ARCHITECTURE.md §4). Capacity is
+    deliberately NOT a column here — see _build_capacity_status, a
+    single FY-to-date figure shown once, not implied per month.
+    verified_inbound_t reuses mass_balance.py's own C3-C5 pass logic
+    (filtered to that month's shipments), never a re-derivation of it —
+    this is contextual, not the authoritative FY-to-date figure (that's
+    app/agents/scorer.py's job, included separately in check_results)."""
     months = sorted(
         {c["period_month"] for c in certificates}
         | {s["month"] for s in shipments if s.get("month")}
     )
     table = []
     for month in months:
+        certified_t = sum(c["quantity_t"] for c in certificates if c["period_month"] == month)
         month_shipments = [s for s in shipments if s.get("month") == month]
         verified_inbound_t = verified_inbound_tonnes(month_shipments, duplicate_keys)
-        certified_fy_to_date = certified_t_fy_to_date(certificates, month)
-        capacity_fy_to_date = capacity_limit_t(
-            processor["capacity_t_per_year"], months_elapsed_in_fy(month)
-        )
         table.append(
             {
                 "month": month,
+                "certified_t": round(certified_t, 2),
                 "verified_inbound_t": round(verified_inbound_t, 2),
-                "certified_t_fy_to_date": round(certified_fy_to_date, 2),
-                "capacity_limit_t_fy_to_date": round(capacity_fy_to_date, 2),
             }
         )
     return table
+
+
+def _build_shipment_table(shipments: list[dict]) -> list[dict]:
+    """Compact, context-pack-level shipment index (docs/PROGRESS.md: tool
+    efficiency) — every shipment's month, quantities, match status and
+    its own document IDs, all reachable without a get_shipments tool
+    call. The fourth canary's PWP-08 trail spent 5 of its 8 tool calls
+    re-fetching shipment data already available this way."""
+    return [
+        {
+            "shipment_id": s["shipment_id"],
+            "month": s.get("month"),
+            "invoice_qty_t": s.get("invoice_qty_t"),
+            "weighbridge_net_t": s.get("weighbridge_net_t"),
+            "match_status": s.get("match_status"),
+            **_shipment_doc_ids(s),
+        }
+        for s in shipments
+    ]
 
 
 def _shipment_doc_ids(shipment: dict) -> dict:
@@ -168,12 +204,15 @@ def build_context_pack(processor_context: dict) -> dict:
             "consent_valid_from": processor["consent_valid_from"],
             "consent_valid_to": processor["consent_valid_to"],
         },
+        "capacity_status": _build_capacity_status(
+            processor, processor_context["certificates"], processor_context["as_of_month"]
+        ),
         "monthly_table": _build_monthly_table(
-            processor,
             processor_context["certificates"],
             processor_context["shipments"],
             processor_context["duplicate_keys"],
         ),
+        "shipment_table": _build_shipment_table(processor_context["shipments"]),
         "check_results": processor_context["check_results"],
         "site_assessment": processor_context.get("site_assessment"),
         "dossier_digest": _build_dossier_digest(
@@ -290,9 +329,14 @@ def _trail_step(step_index: int, step_type: str, **fields) -> dict:
 def _result(
     agent_status: str,
     conclusions=None,
+    hypothesis_findings=None,
+    verdicts=None,
     objections=None,
     revisions=None,
+    hypothesis_finding_responses=None,
     confirmed_findings=None,
+    review_flag_findings=None,
+    withdrawn_findings=None,
     deductible_findings=None,
     systemic_findings=None,
     no_evidence_findings=None,
@@ -302,9 +346,14 @@ def _result(
 ) -> dict:
     return {
         "conclusions": conclusions or [],
+        "hypothesis_findings": hypothesis_findings or [],
+        "verdicts": verdicts or [],
         "objections": objections or [],
         "revisions": revisions or [],
+        "hypothesis_finding_responses": hypothesis_finding_responses or [],
         "confirmed_findings": confirmed_findings or [],
+        "review_flag_findings": review_flag_findings or [],
+        "withdrawn_findings": withdrawn_findings or [],
         "deductible_findings": deductible_findings or [],
         "systemic_findings": systemic_findings or [],
         "no_evidence_findings": no_evidence_findings or [],
@@ -435,18 +484,40 @@ def run_agent_loop(
     deadline: float,
     thinking_level: str | None = None,
 ) -> dict:
-    """Returns {conclusions, objections, revisions, confirmed_findings,
-    deductible_findings, systemic_findings, no_evidence_findings,
-    excluded_shipment_ids, trail, tool_cap_reached, agent_status}.
-    confirmed_findings is the full "raises_concern" list (for the UI/
-    trail); deductible_findings/systemic_findings/no_evidence_findings
-    partition it (see _classify_findings) and excluded_shipment_ids is
-    the ready-made deduction set — the single thing callers need to pass
-    to app/agents/scorer.py's score_processor. Never raises — on a
-    timeout or an unhandled Gemini error at any step, returns
-    agent_status="timeout" or "error" with whatever was built so far;
-    the caller (scripts/run_pipeline.py's --stage agents) falls back to
-    checks_only scoring in that case, never a partial/guessed agent
+    """Returns {conclusions, hypothesis_findings, verdicts, objections,
+    revisions, hypothesis_finding_responses, confirmed_findings,
+    review_flag_findings, withdrawn_findings, deductible_findings,
+    systemic_findings, no_evidence_findings, excluded_shipment_ids, trail,
+    tool_cap_reached, agent_status}.
+
+    docs/PROGRESS.md's Hypothesis-findings restructure: the Hypothesis now
+    proposes findings of its own (hypothesis_findings, same Objection
+    shape as a Critic finding), not only batch-level conclusions. The
+    Critic gives each one a verdict (verdicts: upheld/disputed) and may
+    also raise new findings of its own (objections, unchanged meaning).
+    The Hypothesis then responds to every disputed-or-unaddressed finding
+    of its own (hypothesis_finding_responses: maintain/withdraw) and to
+    every new Critic finding (revisions: accept/reject, unchanged).
+
+    confirmed_findings = findings both agents agree on (a Hypothesis
+    finding the Critic upheld, or a Critic finding the Hypothesis accepted
+    or never addressed) — these alone feed _classify_findings
+    (deductible/systemic/no_evidence, as before). review_flag_findings =
+    findings the agents did NOT agree on (disputed-and-maintained-or-
+    unaddressed Hypothesis findings; rejected Critic findings) — kept
+    visible, never deducted, contributing a soft-signal risk-band bump
+    via app/agents/scorer.py's build_disputed_finding_check_result.
+    withdrawn_findings = a Hypothesis finding the Hypothesis itself
+    withdrew after the Critic disputed it — visible only in the trail,
+    no scoring effect at all; a finding only vanishes from the live
+    buckets when EXPLICITLY withdrawn, never by silent omission.
+
+    excluded_shipment_ids is the ready-made deduction set — the single
+    thing callers need to pass to app/agents/scorer.py's score_processor.
+    Never raises — on a timeout or an unhandled Gemini error at any step,
+    returns agent_status="timeout" or "error" with whatever was built so
+    far; the caller (scripts/run_pipeline.py's --stage agents) falls back
+    to checks_only scoring in that case, never a partial/guessed agent
     adjustment.
 
     thinking_level is forwarded, unmodified, to every Gemini call in this
@@ -463,7 +534,7 @@ def run_agent_loop(
         context_pack = build_context_pack(processor_context)
         context_json = json.dumps(context_pack, default=str)
 
-        # 1. Hypothesis
+        # 1. Hypothesis — batch-level conclusions AND its own proposed findings.
         conclusions_response = llm_client.generate_structured(
             [HYPOTHESIS_PROMPT, context_json],
             ConclusionsResponse,
@@ -482,9 +553,24 @@ def run_agent_loop(
         conclusions = _enforce_hard_check_floor(
             conclusions_response.conclusions, processor_context["check_results"]
         )
+        # Same objection-direction + ID-validation filtering as any Critic
+        # finding — never trusted from the model regardless of origin.
+        # Re-indexed 0..N-1 here; this is the ONLY indexing the Critic's
+        # verdicts and the Hypothesis's own later responses ever see.
+        hypothesis_findings = [
+            filtered
+            for f in conclusions_response.findings
+            if f.effect == "raises_concern"
+            and (filtered := _filter_objection(f, processor_context)) is not None
+        ]
 
         if _deadline_exceeded():
-            return _result("timeout", conclusions=conclusions, trail=trail)
+            return _result(
+                "timeout",
+                conclusions=conclusions,
+                hypothesis_findings=hypothesis_findings,
+                trail=trail,
+            )
 
         # 2. Critic phase 1: bounded tool-calling loop
         tool_context = {
@@ -496,10 +582,21 @@ def run_agent_loop(
         tools = agent_tools.build_tools(
             tool_context, gcs_client=processor_context.get("gcs_client")
         )
+        conclusions_only_json = json.dumps(
+            [c.model_dump() for c in conclusions_response.conclusions], default=str
+        )
+        hypothesis_findings_json = json.dumps(
+            [
+                {"hypothesis_finding_index": i, **f.model_dump()}
+                for i, f in enumerate(hypothesis_findings)
+            ],
+            default=str,
+        )
         critic_seed = [
             CRITIC_TOOLS_PROMPT,
             context_json,
-            f"Hypothesis conclusions:\n{conclusions_response.model_dump_json()}",
+            f"Hypothesis conclusions:\n{conclusions_only_json}",
+            f"Hypothesis's proposed findings:\n{hypothesis_findings_json}",
         ]
         conversation, tool_cap_reached = llm_client.run_tool_loop(
             contents=critic_seed,
@@ -544,10 +641,15 @@ def run_agent_loop(
 
         if _deadline_exceeded():
             return _result(
-                "timeout", conclusions=conclusions, trail=trail, tool_cap_reached=tool_cap_reached
+                "timeout",
+                conclusions=conclusions,
+                hypothesis_findings=hypothesis_findings,
+                trail=trail,
+                tool_cap_reached=tool_cap_reached,
             )
 
-        # 2b. Critic phase 2: final structured call, no tools
+        # 2b. Critic phase 2: final structured call, no tools — a verdict
+        # on every Hypothesis finding, plus any new findings of its own.
         objections_response = llm_client.generate_structured(
             [*conversation, CRITIC_FINAL_PROMPT],
             ObjectionsResponse,
@@ -576,29 +678,58 @@ def run_agent_loop(
             if o.effect == "raises_concern"
             and (filtered := _filter_objection(o, processor_context)) is not None
         ]
+        # Verdicts on Hypothesis findings — index-validated the same way
+        # as any other model-supplied ID. Silence (no verdict at all) is
+        # NOT evidence of agreement: a Hypothesis finding only becomes
+        # "agreed" if the Critic actively upholds it.
+        verdicts = [
+            v
+            for v in objections_response.verdicts
+            if 0 <= v.hypothesis_finding_index < len(hypothesis_findings)
+        ]
+        verdict_by_index = {v.hypothesis_finding_index: v for v in verdicts}
+        upheld_indices = {i for i, v in verdict_by_index.items() if v.verdict == "upheld"}
+        needs_hypothesis_response_indices = set(range(len(hypothesis_findings))) - upheld_indices
 
         if _deadline_exceeded():
             return _result(
                 "timeout",
                 conclusions=conclusions,
+                hypothesis_findings=hypothesis_findings,
+                verdicts=verdicts,
                 objections=objections,
                 trail=trail,
                 tool_cap_reached=tool_cap_reached,
             )
 
         # 3. Hypothesis revision — at most one round, only if there's
-        # something to revise.
-        revisions = []
-        if objections:
-            earlier_conclusions_json = json.dumps(
-                [c.model_dump() for c in conclusions], default=str
+        # something to revise: a new Critic finding, or one of the
+        # Hypothesis's own findings that wasn't upheld.
+        revisions: list = []
+        hypothesis_finding_responses: list = []
+        if objections or needs_hypothesis_response_indices:
+            earlier_conclusions_json = conclusions_only_json
+            disputed_payload = json.dumps(
+                [
+                    {
+                        "hypothesis_finding_index": i,
+                        "finding": hypothesis_findings[i].model_dump(),
+                        "critic_reason": (
+                            verdict_by_index[i].reason if i in verdict_by_index else None
+                        ),
+                    }
+                    for i in sorted(needs_hypothesis_response_indices)
+                ],
+                default=str,
             )
             objections_json = json.dumps([o.model_dump() for o in objections], default=str)
             revisions_response = llm_client.generate_structured(
                 [
                     REVISION_PROMPT,
                     f"Earlier conclusions:\n{earlier_conclusions_json}",
-                    f"Objections:\n{objections_json}",
+                    f"Your own findings the Critic disputed (or didn't address):\n"
+                    f"{disputed_payload}",
+                    f"New findings the Critic raised:\n{objections_json}",
                 ],
                 RevisionsResponse,
                 purpose="agent_revision",
@@ -616,14 +747,43 @@ def run_agent_loop(
             revisions = [
                 r for r in revisions_response.revisions if 0 <= r.objection_index < len(objections)
             ]
+            hypothesis_finding_responses = [
+                r
+                for r in revisions_response.hypothesis_finding_responses
+                if r.hypothesis_finding_index in needs_hypothesis_response_indices
+            ]
 
-        # 4. Confirmed findings: an objection is confirmed unless a
-        # revision explicitly rejected it. A failed hard check is never
-        # overruled here either — confirmed_findings only ever subtracts
-        # shipment tonnage (app/agents/scorer.py), it never touches a
-        # check's own pass/fail status.
+        # 4. Merge agreement outcomes from both origins.
+        #
+        # Critic-raised findings (objections): confirmed unless explicitly
+        # rejected (silence = accepted — unchanged default; the Critic's
+        # skepticism is the check here, and not using the one chance to
+        # push back means the finding stands).
         rejected_indices = {r.objection_index for r in revisions if not r.accepted}
-        confirmed_findings = [o for i, o in enumerate(objections) if i not in rejected_indices]
+        agreed_critic_findings = [o for i, o in enumerate(objections) if i not in rejected_indices]
+        rejected_critic_findings = [o for i, o in enumerate(objections) if i in rejected_indices]
+
+        # Hypothesis's own findings: confirmed only if the Critic actively
+        # upheld it (silence is NOT agreement here — see verdicts above).
+        # A disputed-or-unaddressed finding only vanishes entirely if the
+        # Hypothesis EXPLICITLY withdrew it; anything else (maintained, or
+        # the Hypothesis itself never responded) stays a visible review
+        # flag rather than being silently dropped or silently confirmed.
+        withdrawn_indices = {
+            r.hypothesis_finding_index
+            for r in hypothesis_finding_responses
+            if r.decision == "withdraw"
+        }
+        review_flag_indices = needs_hypothesis_response_indices - withdrawn_indices
+
+        agreed_hypothesis_findings = [hypothesis_findings[i] for i in sorted(upheld_indices)]
+        review_flag_hypothesis_findings = [
+            hypothesis_findings[i] for i in sorted(review_flag_indices)
+        ]
+        withdrawn_findings = [hypothesis_findings[i] for i in sorted(withdrawn_indices)]
+
+        confirmed_findings = agreed_hypothesis_findings + agreed_critic_findings
+        review_flag_findings = review_flag_hypothesis_findings + rejected_critic_findings
 
         verified_shipment_ids = verified_inbound_shipment_ids(
             processor_context["shipments"], processor_context["duplicate_keys"]
@@ -639,9 +799,14 @@ def run_agent_loop(
         return _result(
             "ok",
             conclusions=conclusions,
+            hypothesis_findings=hypothesis_findings,
+            verdicts=verdicts,
             objections=objections,
             revisions=revisions,
+            hypothesis_finding_responses=hypothesis_finding_responses,
             confirmed_findings=confirmed_findings,
+            review_flag_findings=review_flag_findings,
+            withdrawn_findings=withdrawn_findings,
             deductible_findings=deductible_findings,
             systemic_findings=systemic_findings,
             no_evidence_findings=no_evidence_findings,

@@ -362,6 +362,58 @@ def test_run_tool_loop_stops_at_cap_without_raising(mock_client_cls):
 
 
 @patch("app.llm.genai.Client")
+def test_run_tool_loop_duplicate_call_does_not_count_toward_cap_or_reexecute(mock_client_cls):
+    call_count = {"n": 0}
+
+    def _counting_tool(x: int):
+        call_count["n"] += 1
+        return f"got {x}", None
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_counting_tool", {"x": 1}),
+        _tool_call_response("_counting_tool", {"x": 1}),  # exact duplicate of the call above
+        _tool_call_response("_counting_tool", {"x": 2}),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_counting_tool], max_tool_calls=2, purpose="test"
+    )
+
+    assert tool_cap_reached is True
+    # 3 Gemini calls happened, but only 2 real tool executions — the
+    # duplicate (2nd call) counted toward neither the tool's own call
+    # count nor max_tool_calls.
+    assert mock_client.models.generate_content.call_count == 3
+    assert call_count["n"] == 2
+    duplicate_response = conversation[4].parts[0].function_response.response["result"]
+    assert "already returned in call 1" in duplicate_response.lower()
+
+
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_stops_at_safety_backstop_if_model_repeats_forever(mock_client_cls):
+    mock_client = MagicMock()
+    # The model requests the exact same call every turn — call_number never
+    # advances past 1, so only the total-iteration backstop can stop this.
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_dummy_tool", {"x": 1}) for _ in range(10)
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=2, purpose="test"
+    )
+
+    assert tool_cap_reached is True
+    # max_total_iterations = max_tool_calls * 3 = 6 — the backstop, since
+    # call_number (real, unique calls) never reaches max_tool_calls here.
+    assert mock_client.models.generate_content.call_count == 6
+
+
+@patch("app.llm.genai.Client")
 def test_thinking_budget_parameter_no_longer_exists(mock_client_cls):
     """Never send thinking_budget to Gemini 3.x models — confirmed rejected
     (and inconsistently) for this model/region on 2026-10-07. The parameter

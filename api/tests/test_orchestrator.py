@@ -6,10 +6,12 @@ can't be overruled, the tool-cap and timeout/error paths never raise.
 
 import time
 
-from app.agents.orchestrator import run_agent_loop
+from app.agents.orchestrator import build_context_pack, run_agent_loop
 from app.models.agent import (
     ConclusionsResponse,
+    CriticVerdict,
     HypothesisConclusion,
+    HypothesisFindingResponse,
     HypothesisRevision,
     Objection,
     ObjectionsResponse,
@@ -80,6 +82,7 @@ def _processor_context(**overrides):
             }
         ],
         "duplicate_keys": {},
+        "as_of_month": "2026-01",
         "check_results": [
             {
                 "check_id": "C1",
@@ -546,6 +549,185 @@ def test_finding_with_full_own_evidence_for_every_cited_shipment_is_deducted():
     assert result["systemic_findings"] == []
     assert result["no_evidence_findings"] == []
     assert result["excluded_shipment_ids"] == frozenset({"SHP-1", "SHP-2"})
+
+
+def _hypothesis_finding(**overrides) -> Objection:
+    base = {
+        "finding_type": "x",
+        "effect": "raises_concern",
+        "cited_shipment_ids": ["SHP-1"],
+        "evidence_ids": ["DOC-INV-1"],
+        "explanation": "the Hypothesis found this",
+    }
+    base.update(overrides)
+    return Objection(**base)
+
+
+def test_hypothesis_finding_upheld_by_critic_is_confirmed_and_deductible():
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[], findings=[_hypothesis_finding()])
+    objections = ObjectionsResponse(
+        verdicts=[CriticVerdict(hypothesis_finding_index=0, verdict="upheld", reason="agreed")],
+        objections=[],
+    )
+    fake = _FakeLLMClient([conclusions, objections], tool_loop_side_effect=_text_turn_side_effect)
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert len(result["hypothesis_findings"]) == 1
+    assert len(result["verdicts"]) == 1
+    assert len(result["confirmed_findings"]) == 1
+    assert len(result["deductible_findings"]) == 1
+    assert result["review_flag_findings"] == []
+    assert result["withdrawn_findings"] == []
+    assert result["excluded_shipment_ids"] == frozenset({"SHP-1"})
+    # Upheld needs no response from the Hypothesis — no revision call at all.
+    assert "agent_revision" not in fake.generate_structured_calls
+
+
+def test_hypothesis_finding_disputed_and_maintained_is_review_flag_only():
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[], findings=[_hypothesis_finding()])
+    objections = ObjectionsResponse(
+        verdicts=[
+            CriticVerdict(hypothesis_finding_index=0, verdict="disputed", reason="doesn't hold up")
+        ],
+        objections=[],
+    )
+    revisions = RevisionsResponse(
+        hypothesis_finding_responses=[
+            HypothesisFindingResponse(
+                hypothesis_finding_index=0, decision="maintain", explanation="still stands"
+            )
+        ]
+    )
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert result["confirmed_findings"] == []
+    assert result["deductible_findings"] == []
+    assert len(result["review_flag_findings"]) == 1
+    assert result["withdrawn_findings"] == []
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_hypothesis_finding_disputed_and_withdrawn_is_trail_only():
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[], findings=[_hypothesis_finding()])
+    objections = ObjectionsResponse(
+        verdicts=[
+            CriticVerdict(hypothesis_finding_index=0, verdict="disputed", reason="doesn't hold up")
+        ],
+        objections=[],
+    )
+    revisions = RevisionsResponse(
+        hypothesis_finding_responses=[
+            HypothesisFindingResponse(
+                hypothesis_finding_index=0, decision="withdraw", explanation="fair point"
+            )
+        ]
+    )
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert result["confirmed_findings"] == []
+    assert result["review_flag_findings"] == []
+    assert len(result["withdrawn_findings"]) == 1
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_hypothesis_finding_with_no_critic_verdict_defaults_to_review_flag():
+    """Silence isn't agreement: if the Critic never gives a verdict on a
+    Hypothesis finding (and the Hypothesis itself never responds either),
+    it defaults to a review flag, not silent confirmation or disposal."""
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[], findings=[_hypothesis_finding()])
+    objections = ObjectionsResponse(verdicts=[], objections=[])
+    revisions = RevisionsResponse(hypothesis_finding_responses=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert result["confirmed_findings"] == []
+    assert len(result["review_flag_findings"]) == 1
+    assert result["withdrawn_findings"] == []
+
+
+def test_critic_raised_finding_rejected_by_hypothesis_is_review_flag_not_discarded():
+    """Reworked default (docs/PROGRESS.md): a rejected Critic finding used
+    to be fully discarded; now it's kept as a review flag, visible but
+    never deducted."""
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(
+        objections=[
+            Objection(
+                finding_type="x",
+                effect="raises_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="critic found this",
+            )
+        ]
+    )
+    revisions = RevisionsResponse(
+        revisions=[
+            HypothesisRevision(objection_index=0, accepted=False, explanation="doesn't hold up")
+        ]
+    )
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert result["confirmed_findings"] == []
+    assert len(result["review_flag_findings"]) == 1
+    assert result["review_flag_findings"][0].finding_type == "x"
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_build_context_pack_shows_capacity_as_a_single_fy_to_date_figure():
+    context = _processor_context()
+
+    pack = build_context_pack(context)
+
+    assert pack["capacity_status"] == {
+        "as_of_month": "2026-01",
+        "certified_t_fy_to_date": 100.0,
+        "capacity_limit_t_fy_to_date": 1200.0 * 10 / 12,
+    }
+    # No per-month capacity column — each monthly_table row is month/
+    # certified_t/verified_inbound_t only.
+    for row in pack["monthly_table"]:
+        assert set(row) == {"month", "certified_t", "verified_inbound_t"}
+
+
+def test_build_context_pack_includes_compact_shipment_table():
+    context = _processor_context()
+
+    pack = build_context_pack(context)
+
+    assert pack["shipment_table"] == [
+        {
+            "shipment_id": "SHP-1",
+            "month": "2026-01",
+            "invoice_qty_t": 100.0,
+            "weighbridge_net_t": 100.0,
+            "match_status": "matched",
+            "invoice_doc_id": "DOC-INV-1",
+            "eway_doc_id": "DOC-EWB-1",
+            "weighbridge_doc_id": "DOC-WB-1",
+        }
+    ]
 
 
 def test_unhandled_error_returns_error_status_without_raising():
