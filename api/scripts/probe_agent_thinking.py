@@ -136,11 +136,23 @@ def run_one(
     }
 
 
+def _f5_processor_ids(ground_truth: dict) -> set[str]:
+    """docs/DATA_SPEC.md §7's cited-shipment scoring rule: F5 (ghost site)
+    has no shipment-level manifestation — it's a site-level finding caught
+    by C8 — so any shipment citation the agent produces on an F5 processor
+    is excluded from the F8 precision/recall metric entirely, rather than
+    counted as a false F8 citation."""
+    return {
+        p["processor_id"] for p in ground_truth["processors"] if "F5" in p.get("issue_types", [])
+    }
+
+
 def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
     per_processor = {}
     agg_tp = agg_fp = agg_fn = 0
     verifiable_errors = []
     false_citations = []
+    f5_processor_ids = _f5_processor_ids(ground_truth)
 
     for pid, record in run_record["processors"].items():
         true_f8 = _ground_truth_f8_shipment_ids(ground_truth, pid)
@@ -148,22 +160,25 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
         pr = _precision_recall_f1(cited, true_f8)
         true_verifiable_t = _ground_truth_processor(ground_truth, pid)["true_verifiable_t"]
         abs_error = abs(record["score"]["verifiable_t"] - true_verifiable_t)
+        excluded_from_f8_metric = pid in f5_processor_ids
 
         per_processor[pid] = {
             "cited_shipment_ids": sorted(cited),
             "true_f8_shipment_ids": sorted(true_f8),
             **pr,
+            "excluded_from_f8_metric": excluded_from_f8_metric,
             "verifiable_t": record["score"]["verifiable_t"],
             "true_verifiable_t": true_verifiable_t,
             "verifiable_t_abs_error": abs_error,
         }
         verifiable_errors.append(abs_error)
-        agg_tp += pr["tp"]
-        agg_fp += pr["fp"]
-        agg_fn += pr["fn"]
-        false_citations.extend(
-            {"processor_id": pid, "shipment_id": sid} for sid in sorted(cited - true_f8)
-        )
+        if not excluded_from_f8_metric:
+            agg_tp += pr["tp"]
+            agg_fp += pr["fp"]
+            agg_fn += pr["fn"]
+            false_citations.extend(
+                {"processor_id": pid, "shipment_id": sid} for sid in sorted(cited - true_f8)
+            )
 
     overall_precision = agg_tp / (agg_tp + agg_fp) if (agg_tp + agg_fp) else 1.0
     overall_recall = agg_tp / (agg_tp + agg_fn) if (agg_tp + agg_fn) else 1.0

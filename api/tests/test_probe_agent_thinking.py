@@ -45,12 +45,13 @@ def _run_record(pwp01_cited, pwp01_verifiable_t):
     }
 
 
-def _ground_truth(pwp01_is_f8_shipment_ids, true_verifiable_t):
+def _ground_truth(pwp01_is_f8_shipment_ids, true_verifiable_t, issue_types=None):
     return {
         "processors": [
             {
                 "processor_id": "PWP-01",
                 "true_verifiable_t": true_verifiable_t,
+                "issue_types": issue_types or [],
                 "shipments": [
                     {"shipment_id": sid, "is_f8": True} for sid in pwp01_is_f8_shipment_ids
                 ],
@@ -80,6 +81,22 @@ def test_compute_run_metrics_flags_false_citation():
     assert metrics["false_citations"] == [{"processor_id": "PWP-01", "shipment_id": "SHP-999"}]
     assert metrics["overall_precision"] == 0.0
     assert metrics["overall_recall"] == 0.0
+
+
+def test_compute_run_metrics_f5_processor_citations_are_excluded_not_false():
+    # A citation on an F5 (ghost site) processor for a real non-F8 finding
+    # (e.g. F6 category mismatch) must not count as a false F8 citation.
+    run_record = _run_record(["SHP-1"], 0.0)
+    ground_truth = _ground_truth([], 900.0, issue_types=["F5", "F6"])
+
+    metrics = compute_run_metrics(run_record, ground_truth)
+
+    assert metrics["false_citations"] == []
+    assert metrics["overall_precision"] == 1.0
+    assert metrics["overall_recall"] == 1.0
+    assert metrics["per_processor"]["PWP-01"]["excluded_from_f8_metric"] is True
+    # Tonnage accuracy is unaffected by the exclusion.
+    assert metrics["mean_verifiable_t_abs_error"] == 900.0
 
 
 def test_compute_run_metrics_measures_verifiable_t_error():

@@ -177,6 +177,8 @@ Fixed assignment:
 | **Extraction impact** | Processor-level metrics with `--facts-source truth` vs `extracted`. Shows how much end-to-end accuracy depends on reading documents correctly |
 | **Run-to-run stability** | Agent stage run twice on the test set; share of processors whose risk band is identical |
 
+**Cited-shipment scoring rule (T10, decided 2026-10-07):** a confirmed agent finding's `cited_shipment_ids` are scored against ground truth's `is_f8` flag for precision/recall, **except** on a processor whose seeded issue includes F5 (ghost site) — F5 has no shipment-level manifestation (it is a site-level finding, caught by C8), so any shipment citation the agent produces on that processor is excluded from the precision/recall denominator entirely: neither a true positive nor a false positive. Without this exclusion, a correct non-F8 finding on the F5 processor (for example, F6's category mismatch, which does cite shipments) would be wrongly counted as a false F8 citation. Implemented in `scripts/probe_agent_thinking.py`'s `compute_run_metrics`.
+
 **Protocol:** all parameters in `params.py` and all prompts are frozen (tagged commit) before the seed-7 test set is generated. Reported numbers come from seed 7 only. Seed-42 numbers may be shown as "development set", clearly labelled.
 
 Report all metrics honestly, including weak ones. The `/evaluation` page states that the test set is synthetic and seeded from documented issue types.
