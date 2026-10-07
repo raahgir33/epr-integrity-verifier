@@ -1,11 +1,11 @@
 [
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-01.png",
     "processor_id": "PWP-01",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.5749705085839915,
+    "measured": 0.018399056274687724,
     "threshold": 10.0,
     "building_count": 73,
     "total_footprint_m2": 10435.317830085754,
@@ -15,15 +15,15 @@
     "thumb_bbox_e": 73.8670283027191,
     "thumb_bbox_n": 18.768999432975775,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-01: claimed capacity is 0.57 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-01: claimed capacity is 0.02 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-02.png",
     "processor_id": "PWP-02",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.287817682950221,
+    "measured": 0.009210165854407072,
     "threshold": 10.0,
     "building_count": 241,
     "total_footprint_m2": 25015.836157798767,
@@ -33,15 +33,15 @@
     "thumb_bbox_e": 72.66746624639026,
     "thumb_bbox_n": 23.07709943297577,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-02: claimed capacity is 0.29 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-02: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-03.png",
     "processor_id": "PWP-03",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.3576444698571125,
+    "measured": 0.011444623035427603,
     "threshold": 10.0,
     "building_count": 30,
     "total_footprint_m2": 15098.793508976745,
@@ -51,15 +51,15 @@
     "thumb_bbox_e": 73.19994066468037,
     "thumb_bbox_n": 22.355599432975772,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-03: claimed capacity is 0.36 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-03: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-04.png",
     "processor_id": "PWP-04",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.8490174457672325,
+    "measured": 0.02716855826455144,
     "threshold": 10.0,
     "building_count": 111,
     "total_footprint_m2": 9422.656789779663,
@@ -69,15 +69,15 @@
     "thumb_bbox_e": 79.94619416432265,
     "thumb_bbox_n": 12.972999432975772,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-04: claimed capacity is 0.85 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-04: claimed capacity is 0.03 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-05.png",
     "processor_id": "PWP-05",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.15998320586004122,
+    "measured": 0.005119462587521319,
     "threshold": 10.0,
     "building_count": 102,
     "total_footprint_m2": 30003.149231796266,
@@ -87,15 +87,15 @@
     "thumb_bbox_e": 77.83018989645522,
     "thumb_bbox_n": 12.739599432975767,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-05: claimed capacity is 0.16 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-05: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-06.png",
     "processor_id": "PWP-06",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.18185013859810623,
+    "measured": 0.0058192044351394,
     "threshold": 10.0,
     "building_count": 201,
     "total_footprint_m2": 28594.974081884764,
@@ -105,33 +105,33 @@
     "thumb_bbox_e": 78.27409501891758,
     "thumb_bbox_n": 17.53419943297577,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-06: claimed capacity is 0.18 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-06: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-07.png",
     "processor_id": "PWP-07",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.7829768493957138,
+    "measured": 0.025055259180662842,
     "threshold": 10.0,
     "building_count": 10,
     "total_footprint_m2": 8429.36800122986,
     "polygons_json": "[{\"confidence\": 0.7361000180244446, \"area_m2\": 16.9906005859375, \"ring\": [[75.65486112251384, 22.60859698402389], [75.6548104317945, 22.608603138366917], [75.65480634812806, 22.608574324867355], [75.65485703884883, 22.608568081637166], [75.65486112251384, 22.60859698402389]]}, {\"confidence\": 0.7063000202178955, \"area_m2\": 66.87879943847656, \"ring\": [[75.653493976103, 22.609133036460285], [75.6534588207406, 22.60914371126932], [75.65340582135248, 22.608993131527026], [75.65344097672765, 22.608982456715722], [75.653493976103, 22.609133036460285]]}, {\"confidence\": 0.7911999821662903, \"area_m2\": 8.703300476074219, \"ring\": [[75.65424049289689, 22.608351332910598], [75.65424386637356, 22.608378126473056], [75.65421572447376, 22.608381171941392], [75.65421235099643, 22.60835437838066], [75.65424049289689, 22.608351332910598]]}, {\"confidence\": 0.7652000188827515, \"area_m2\": 10.829400062561035, \"ring\": [[75.65499748134917, 22.608587049786994], [75.65500129868452, 22.608612017114094], [75.65496401307912, 22.60861689937327], [75.65496019574279, 22.60859193204811], [75.65499748134917, 22.608587049786994]]}, {\"confidence\": 0.671999990940094, \"area_m2\": 13.795100212097168, \"ring\": [[75.6531639947543, 22.608743461424833], [75.65311774226456, 22.608751973413714], [75.6531123269049, 22.608726861135324], [75.65315866817274, 22.60871835720283], [75.6531639947543, 22.608743461424833]]}, {\"confidence\": 0.7925000190734863, \"area_m2\": 9.074299812316895, \"ring\": [[75.65425292149473, 22.608336106326774], [75.65425123475653, 22.608366884807825], [75.65422540102666, 22.608365606697816], [75.65422708776518, 22.608334917103424], [75.65425292149473, 22.608336106326774]]}, {\"confidence\": 0.755299985408783, \"area_m2\": 26.638900756835938, \"ring\": [[75.6548104317945, 22.608603138366917], [75.65473088905404, 22.608612807095835], [75.65472680538538, 22.60858399360125], [75.65480634812806, 22.608574324867355], [75.6548104317945, 22.608603138366917]]}, {\"confidence\": 0.8561000227928162, \"area_m2\": 118.6323013305664, \"ring\": [[75.65373944197053, 22.610089661442906], [75.65355629695188, 22.610140321996216], [75.65353960704054, 22.61008814341568], [75.65372266330414, 22.610037563680915], [75.65373944197053, 22.610089661442906]]}, {\"confidence\": 0.832099974155426, \"area_m2\": 21.317399978637695, \"ring\": [[75.65497439978445, 22.608397143014397], [75.65498238955728, 22.608437865956905], [75.65493791314967, 22.60844538432248], [75.65492992337441, 22.608404750267145], [75.65497439978445, 22.608397143014397]]}, {\"confidence\": 0.6894000172615051, \"area_m2\": 15.232099533081055, \"ring\": [[75.65343032358454, 22.609154012711322], [75.65344301857999, 22.609205917535984], [75.65341851635004, 22.609211070807916], [75.65340582135248, 22.60915916598498], [75.65343032358454, 22.609154012711322]]}, {\"confidence\": 0.9599999785423279, \"area_m2\": 3674.0875, \"ring\": [[75.65301138811543, 22.608984526951385], [75.65337173128361, 22.609985088064214], [75.65308240925866, 22.61007499587886], [75.65272206537587, 22.609074434869093], [75.65301138811543, 22.608984526951385]]}, {\"confidence\": 0.7211999893188477, \"area_m2\": 10.870599746704102, \"ring\": [[75.65472680538538, 22.60858399360125], [75.65473088905404, 22.608612807095835], [75.65469848602791, 22.608616799162938], [75.65469440235834, 22.60858798567037], [75.65472680538538, 22.60858399360125]]}, {\"confidence\": 0.8007000088691711, \"area_m2\": 9.844400405883789, \"ring\": [[75.65503352409294, 22.608413175036453], [75.65503228123985, 22.60844479384358], [75.65500502724454, 22.608443831384182], [75.65500627009786, 22.608412301464085], [75.65503352409294, 22.608413175036453]]}, {\"confidence\": 0.7942000031471252, \"area_m2\": 44.55289840698242, \"ring\": [[75.65347213716674, 22.60878040847769], [75.65336400775128, 22.60880463613162], [75.65335521890364, 22.60877050704714], [75.65346325954944, 22.60874627133057], [75.65347213716674, 22.60878040847769]]}, {\"confidence\": 0.6852999925613403, \"area_m2\": 11.332599639892578, \"ring\": [[75.65375142673106, 22.608980770743404], [75.65370348768302, 22.60896664225531], [75.65370996833303, 22.608947764969315], [75.65375790737895, 22.608961982336304], [75.65375142673106, 22.608980770743404]]}, {\"confidence\": 0.9157999753952026, \"area_m2\": 4505.6876, \"ring\": [[75.65342987970358, 22.609259121650243], [75.65355336733992, 22.60922082241713], [75.65378267587982, 22.6098575109722], [75.65337173128361, 22.609985088064214], [75.65302541479396, 22.609023486756264], [75.65331287263034, 22.608934208770982], [75.65342987970358, 22.609259121650243]]}]",
-    "thumb_bbox_w": 75.6495656957789,
-    "thumb_bbox_s": 22.604402296064418,
+    "thumb_bbox_w": 75.64956569577892,
+    "thumb_bbox_s": 22.604402296064414,
     "thumb_bbox_e": 75.6592496861134,
-    "thumb_bbox_n": 22.613399432975775,
+    "thumb_bbox_n": 22.613399432975772,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-07: claimed capacity is 0.78 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-07: claimed capacity is 0.03 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-08.png",
     "processor_id": "PWP-08",
     "status": "pass",
     "severity": "soft",
-    "measured": 0.25183488998276854,
+    "measured": 0.008058716479448594,
     "threshold": 10.0,
     "building_count": 59,
     "total_footprint_m2": 19854.278334277344,
@@ -141,10 +141,10 @@
     "thumb_bbox_e": 77.32288995390238,
     "thumb_bbox_n": 28.413399432975773,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-08: claimed capacity is 0.25 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-08: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-09.png",
     "processor_id": "PWP-09",
     "status": "warn",
@@ -162,12 +162,12 @@
     "explanation": "PWP-09: no building footprint detected within 150 m of the registered coordinates \u2014 a strong signal of a ghost site."
   },
   {
-    "computed_at": "2026-10-07T10:06:51.263642+00:00",
+    "computed_at": "2026-10-07T16:44:43.252701+00:00",
     "thumbnail_gcs_path": "seed-42/site/PWP-10.png",
     "processor_id": "PWP-10",
     "status": "pass",
     "severity": "soft",
-    "measured": 3.675824257311911,
+    "measured": 0.11762637623398114,
     "threshold": 10.0,
     "building_count": 30,
     "total_footprint_m2": 4896.860877990723,
@@ -175,8 +175,8 @@
     "thumb_bbox_w": 79.04721581392066,
     "thumb_bbox_s": 21.11650229606851,
     "thumb_bbox_e": 79.05679940592361,
-    "thumb_bbox_n": 21.125499432975772,
+    "thumb_bbox_n": 21.12549943297577,
     "thumb_crs": "EPSG:3857",
-    "explanation": "PWP-10: claimed capacity is 3.68 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+    "explanation": "PWP-10: claimed capacity is 0.12 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
   }
 ]

@@ -43,13 +43,26 @@ def reset_bigquery(seed: int) -> None:
         print(f"  cleared {table} for seed {seed}")
 
 
-def reset_gcs_documents(seed: int) -> int:
-    client = gcs.get_client()
-    prefix = f"seed-{seed}/documents/"
-    blobs = list(client.list_blobs(settings.dossier_bucket, prefix=prefix))
+def _delete_prefix(client, bucket: str, prefix: str) -> int:
+    blobs = list(client.list_blobs(bucket, prefix=prefix))
     for blob in blobs:
         blob.delete()
     return len(blobs)
+
+
+def reset_gcs_documents(seed: int) -> int:
+    client = gcs.get_client()
+    return _delete_prefix(client, settings.dossier_bucket, f"seed-{seed}/documents/")
+
+
+def reset_gcs_thumbnails(seed: int) -> int:
+    """site_assessments rows are cleared above; the thumbnail PNGs
+    app/geo/site.py's upload_thumbnail wrote are a separate GCS object in
+    artifact_bucket and would otherwise dangle (orphaned, pointed to by
+    nothing) once those rows are gone. Safe to delete here only because
+    --stage site is being re-run, which regenerates them."""
+    client = gcs.get_client()
+    return _delete_prefix(client, settings.artifact_bucket, f"seed-{seed}/site/")
 
 
 def main() -> None:
@@ -61,8 +74,12 @@ def main() -> None:
     reset_bigquery(args.seed)
 
     print(f"Deleting GCS documents for seed {args.seed}...")
-    deleted = reset_gcs_documents(args.seed)
-    print(f"  deleted {deleted} object(s) under seed-{args.seed}/documents/")
+    deleted_docs = reset_gcs_documents(args.seed)
+    print(f"  deleted {deleted_docs} object(s) under seed-{args.seed}/documents/")
+
+    print(f"Deleting GCS site thumbnails for seed {args.seed}...")
+    deleted_thumbs = reset_gcs_thumbnails(args.seed)
+    print(f"  deleted {deleted_thumbs} object(s) under seed-{args.seed}/site/")
 
     print(
         f"\nDone. Next: uv run python scripts/load_dossiers.py --seed {args.seed}, "

@@ -284,9 +284,9 @@ def test_pwp09_unverifiable_tonnes_uses_raw_certified_not_eligible(results_by_pr
     unverifiable_t rather than surfacing as unverifiable, and the risk
     band would never reflect the consent breach at all."""
     score = results_by_processor["PWP-09"]["score"]
-    assert score["certified_t"] == pytest.approx(15248.02)
-    assert score["verifiable_t"] == pytest.approx(12570.06)
-    assert score["unverifiable_t"] == pytest.approx(2677.96)
+    assert score["certified_t"] == pytest.approx(342.15)
+    assert score["verifiable_t"] == pytest.approx(302.65)
+    assert score["unverifiable_t"] == pytest.approx(39.50)
     assert score["unverifiable_t"] == pytest.approx(score["certified_t"] - score["verifiable_t"])
     # C8's soft-signal bump (F5 ghost site, real Earth Engine data) raises
     # this from Medium to High — see test_c8_risk_band_matches_full_system

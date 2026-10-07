@@ -1,11 +1,11 @@
 [
   {
-    "address": "Plot 8, Industrial Area, Maharashtra",
-    "capacity_t_per_year": 6000.0,
+    "address": "Plot 9, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 192.0,
     "consent_no": "CTO-PWP-01-93810",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "27XIHHE1819N1ZY",
+    "gstin": "27AXIHH2181S7Z6",
     "hard_negatives": [],
     "issue_types": [],
     "lat": 18.7645,
@@ -22,11 +22,11 @@
   },
   {
     "address": "Plot 2, Industrial Area, Gujarat",
-    "capacity_t_per_year": 7200.0,
+    "capacity_t_per_year": 230.4,
     "consent_no": "CTO-PWP-02-22280",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "33QTARG8637S5ZI",
+    "gstin": "24HQTAR3863O5ZF",
     "hard_negatives": [],
     "issue_types": [],
     "lat": 23.0726,
@@ -42,12 +42,12 @@
     "type": "recycler"
   },
   {
-    "address": "Plot 155, Industrial Area, Gujarat",
-    "capacity_t_per_year": 5400.0,
+    "address": "Plot 89, Industrial Area, Gujarat",
+    "capacity_t_per_year": 172.8,
     "consent_no": "CTO-PWP-03-30926",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "08IEGYK1161L6ZM",
+    "gstin": "24KIEGY5116D6ZK",
     "hard_negatives": [
       "H1",
       "H2"
@@ -66,12 +66,12 @@
     "type": "recycler"
   },
   {
-    "address": "Plot 12, Industrial Area, Tamil Nadu",
-    "capacity_t_per_year": 8000.0,
+    "address": "Plot 181, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 256.0,
     "consent_no": "CTO-PWP-04-44671",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "23RDMCR4959G2ZE",
+    "gstin": "33XORDM1849L4ZE",
     "hard_negatives": [
       "H3",
       "H4"
@@ -90,12 +90,12 @@
     "type": "recycler"
   },
   {
-    "address": "Plot 172, Industrial Area, Tamil Nadu",
-    "capacity_t_per_year": 4800.0,
-    "consent_no": "CTO-PWP-05-96673",
+    "address": "Plot 91, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 153.6,
+    "consent_no": "CTO-PWP-05-16006",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "36CHDMI7525L4Z6",
+    "gstin": "33YJCHD6475F6Z6",
     "hard_negatives": [],
     "issue_types": [
       "F1",
@@ -114,12 +114,12 @@
     "type": "recycler"
   },
   {
-    "address": "Plot 57, Industrial Area, Telangana",
-    "capacity_t_per_year": 5200.0,
-    "consent_no": "CTO-PWP-06-44993",
+    "address": "Plot 70, Industrial Area, Telangana",
+    "capacity_t_per_year": 166.4,
+    "consent_no": "CTO-PWP-06-97841",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "19UFRXH2764U9Z3",
+    "gstin": "36WVUCT2832O7ZL",
     "hard_negatives": [],
     "issue_types": [
       "F1",
@@ -133,17 +133,17 @@
       "II"
     ],
     "processor_id": "PWP-06",
-    "registration_no": "EPR-REG-PWP-06-2169",
+    "registration_no": "EPR-REG-PWP-06-5374",
     "site_validated": false,
     "type": "recycler"
   },
   {
     "address": "Plot 55, Industrial Area, Madhya Pradesh",
-    "capacity_t_per_year": 6600.0,
-    "consent_no": "CTO-PWP-07-99733",
+    "capacity_t_per_year": 211.20000000000002,
+    "consent_no": "CTO-PWP-07-83000",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "27HBZKM4139W6Z6",
+    "gstin": "23VKYYB3056I2ZZ",
     "hard_negatives": [],
     "issue_types": [
       "F2",
@@ -157,17 +157,17 @@
       "II"
     ],
     "processor_id": "PWP-07",
-    "registration_no": "EPR-REG-PWP-07-6313",
+    "registration_no": "EPR-REG-PWP-07-4598",
     "site_validated": false,
     "type": "recycler"
   },
   {
-    "address": "Plot 150, Industrial Area, Haryana",
-    "capacity_t_per_year": 5000.0,
-    "consent_no": "CTO-PWP-08-95909",
+    "address": "Plot 138, Industrial Area, Haryana",
+    "capacity_t_per_year": 160.0,
+    "consent_no": "CTO-PWP-08-51245",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "06UOEIE3884X7ZQ",
+    "gstin": "06UPMUO2423X9ZZ",
     "hard_negatives": [],
     "issue_types": [
       "F8"
@@ -180,17 +180,17 @@
       "II"
     ],
     "processor_id": "PWP-08",
-    "registration_no": "EPR-REG-PWP-08-9179",
+    "registration_no": "EPR-REG-PWP-08-4483",
     "site_validated": false,
     "type": "recycler"
   },
   {
-    "address": "Plot 153, Industrial Area, Rajasthan",
-    "capacity_t_per_year": 20000.0,
-    "consent_no": "CTO-PWP-09-62350",
+    "address": "Plot 161, Industrial Area, Rajasthan",
+    "capacity_t_per_year": 640.0,
+    "consent_no": "CTO-PWP-09-86622",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "33EQPCY0122Z7ZA",
+    "gstin": "08SMLHE8710D3Z6",
     "hard_negatives": [],
     "issue_types": [
       "F5",
@@ -204,17 +204,17 @@
       "IV"
     ],
     "processor_id": "PWP-09",
-    "registration_no": "EPR-REG-PWP-09-6930",
+    "registration_no": "EPR-REG-PWP-09-8019",
     "site_validated": false,
     "type": "end_of_life"
   },
   {
-    "address": "Plot 29, Industrial Area, Maharashtra",
-    "capacity_t_per_year": 18000.0,
-    "consent_no": "CTO-PWP-10-18326",
+    "address": "Plot 175, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 576.0,
+    "consent_no": "CTO-PWP-10-99192",
     "consent_valid_from": "01/04/2022",
     "consent_valid_to": "31/03/2028",
-    "gstin": "06TOQIR0184Y6ZE",
+    "gstin": "27TCMMT7848A2ZT",
     "hard_negatives": [],
     "issue_types": [
       "F4"
@@ -227,7 +227,7 @@
       "IV"
     ],
     "processor_id": "PWP-10",
-    "registration_no": "EPR-REG-PWP-10-7304",
+    "registration_no": "EPR-REG-PWP-10-7916",
     "site_validated": false,
     "type": "end_of_life"
   }
