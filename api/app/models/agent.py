@@ -8,6 +8,15 @@ from pydantic import BaseModel
 
 HypothesisStatus = Literal["supported", "partly_supported", "unsupported"]
 
+# docs/PROGRESS.md's objection-direction rule — required, no default: the
+# Critic must say which kind of objection this is, not have it assumed.
+# "raises_concern" identifies a problem (a candidate finding, subject to
+# scoring/deduction); "resolves_concern" corrects an earlier Hypothesis
+# conclusion that reads as over-harsh given the evidence — it stays in the
+# reasoning trail (app/agents/orchestrator.py logs the Critic's full raw
+# response before any filtering) but never counts as a finding.
+ObjectionEffect = Literal["raises_concern", "resolves_concern"]
+
 
 class HypothesisConclusion(BaseModel):
     certificate_batch: str  # period_month, e.g. "2026-01"
@@ -24,6 +33,7 @@ class Objection(BaseModel):
     cited_shipment_ids, never by matching this string."""
 
     finding_type: str
+    effect: ObjectionEffect
     cited_shipment_ids: list[str] = []
     evidence_ids: list[str] = []
     explanation: str

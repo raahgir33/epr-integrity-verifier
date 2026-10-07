@@ -18,7 +18,44 @@ from app.models.checks import CheckResult
 
 _RISK_BANDS = ["Low", "Medium", "High"]
 SYSTEMIC_FINDING_CHECK_ID = "AGENT_SYSTEMIC_FINDING"
-_SOFT_SIGNAL_CHECK_IDS = {"C2b", "C7", "C8", SYSTEMIC_FINDING_CHECK_ID}
+NO_OWN_EVIDENCE_FINDING_CHECK_ID = "AGENT_NO_OWN_EVIDENCE_FINDING"
+_SOFT_SIGNAL_CHECK_IDS = {
+    "C2b",
+    "C7",
+    "C8",
+    SYSTEMIC_FINDING_CHECK_ID,
+    NO_OWN_EVIDENCE_FINDING_CHECK_ID,
+}
+
+
+def build_no_own_evidence_finding_check_result(no_evidence_findings: list) -> CheckResult:
+    """A synthetic soft-signal CheckResult for the own-evidence rule
+    (docs/PROGRESS.md; classified by app/agents/orchestrator.py's
+    _classify_findings). A confirmed finding whose evidence is only
+    processor-level (an electricity bill, a site thumbnail, a consent/
+    registration document — never one of its cited shipments' own
+    invoice/e-way-bill/weighbridge documents) can't deduct any shipment's
+    tonnage; it rides this synthetic check into apply_soft_signal_bump's
+    existing one-step cap instead, same mechanism as the systemic-finding
+    guard above, just a different reason. The caller (scripts/run_pipeline.py,
+    scripts/probe_agent_thinking.py) appends this to check_results before
+    calling score_processor whenever no_evidence_findings is non-empty.
+    """
+    return CheckResult(
+        check_id=NO_OWN_EVIDENCE_FINDING_CHECK_ID,
+        status="warn",
+        severity="soft",
+        measured=float(len(no_evidence_findings)),
+        threshold=0.0,
+        affected_tonnes=0.0,
+        evidence_ids=[],
+        explanation=(
+            f"{len(no_evidence_findings)} confirmed agent finding(s) cite shipments but rest "
+            "only on processor-level evidence, not any of those shipments' own documents — "
+            "too broad to deduct as shipment-level evidence; kept as a finding and flagged "
+            "for review instead."
+        ),
+    )
 
 
 def build_systemic_finding_check_result(systemic_findings: list) -> CheckResult:

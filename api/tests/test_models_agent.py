@@ -9,8 +9,8 @@ def test_hypothesis_conclusion_defaults():
 
 
 def test_objection_defaults_and_independent_lists():
-    a = Objection(finding_type="x", explanation="a")
-    b = Objection(finding_type="y", explanation="b")
+    a = Objection(finding_type="x", effect="raises_concern", explanation="a")
+    b = Objection(finding_type="y", effect="raises_concern", explanation="b")
     a.cited_shipment_ids.append("SHP-1")
     assert b.cited_shipment_ids == []
     assert b.evidence_ids == []

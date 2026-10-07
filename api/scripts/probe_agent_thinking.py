@@ -34,7 +34,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.agents.orchestrator import run_agent_loop
-from app.agents.scorer import build_systemic_finding_check_result, score_processor
+from app.agents.scorer import (
+    build_no_own_evidence_finding_check_result,
+    build_systemic_finding_check_result,
+    score_processor,
+)
 from app.checks import params
 from app.ingest.normalize import TRUTH
 from app.llm import GeminiClient
@@ -100,16 +104,20 @@ def run_one(
             processor_context, llm_client, deadline, thinking_level=thinking_level
         )
 
-        # Systemic-finding guard (docs/PROGRESS.md) — see scripts/run_pipeline.py's
-        # run_agents() for the same split; kept identical here so this probe's
-        # scoring matches the real pipeline's.
-        excluded_shipment_ids = frozenset(
-            sid for f in loop_result["deductible_findings"] for sid in f.cited_shipment_ids
-        )
+        # Own-evidence rule + systemic-finding guard (docs/PROGRESS.md) —
+        # see scripts/run_pipeline.py's run_agents() for the same split;
+        # kept identical here so this probe's scoring matches the real
+        # pipeline's. excluded_shipment_ids is the ready-made deduction set
+        # from app/agents/orchestrator.py's _classify_findings, not
+        # re-derived from cited_shipment_ids here.
         score_check_results = list(check_result_models)
         if loop_result["systemic_findings"]:
             score_check_results.append(
                 build_systemic_finding_check_result(loop_result["systemic_findings"])
+            )
+        if loop_result["no_evidence_findings"]:
+            score_check_results.append(
+                build_no_own_evidence_finding_check_result(loop_result["no_evidence_findings"])
             )
         score = score_processor(
             processor,
@@ -118,7 +126,7 @@ def run_one(
             processor_context["duplicate_keys"],
             score_check_results,
             inputs["as_of_month"],
-            excluded_shipment_ids=excluded_shipment_ids,
+            excluded_shipment_ids=loop_result["excluded_shipment_ids"],
         )
 
         processors_record[pid] = {
@@ -130,6 +138,7 @@ def run_one(
             "confirmed_findings": [f.model_dump() for f in loop_result["confirmed_findings"]],
             "deductible_findings": [f.model_dump() for f in loop_result["deductible_findings"]],
             "systemic_findings": [f.model_dump() for f in loop_result["systemic_findings"]],
+            "no_evidence_findings": [f.model_dump() for f in loop_result["no_evidence_findings"]],
             "trail": loop_result["trail"],
             "score": score,
         }
@@ -137,7 +146,8 @@ def run_one(
             f"  {pid}: agent_status={loop_result['agent_status']} "
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
             f"(deductible={len(loop_result['deductible_findings'])}, "
-            f"systemic={len(loop_result['systemic_findings'])}) "
+            f"systemic={len(loop_result['systemic_findings'])}, "
+            f"no_evidence={len(loop_result['no_evidence_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t risk={score['risk_band']}"
         )
 
@@ -331,11 +341,17 @@ def _print_every_finding(all_runs: list[dict]) -> None:
                 continue
             print(f"{run_record['config_name']} run {run_record['run_index']} / {pid}:")
             systemic_findings = record["systemic_findings"]
+            no_evidence_findings = record["no_evidence_findings"]
             for f in record["confirmed_findings"]:
-                # Systemic-finding guard (docs/PROGRESS.md): keep this
-                # classification visible in the canary printout, not
-                # silently dropped.
-                label = "systemic (not deducted)" if f in systemic_findings else "deductible"
+                # Own-evidence rule + systemic-finding guard (docs/PROGRESS.md):
+                # keep this classification visible in the canary printout,
+                # not silently dropped.
+                if f in no_evidence_findings:
+                    label = "no own evidence (not deducted)"
+                elif f in systemic_findings:
+                    label = "systemic (not deducted)"
+                else:
+                    label = "deductible"
                 print(f"  finding_type: {f['finding_type']} [{label}]")
                 print(f"  cited_shipment_ids: {f['cited_shipment_ids']}")
                 print(f"  evidence_ids: {f['evidence_ids']}")

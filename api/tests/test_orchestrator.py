@@ -131,6 +131,7 @@ def test_happy_path_confirms_accepted_objection_and_cites_shipment():
         objections=[
             Objection(
                 finding_type="wording/HSN contradiction",
+                effect="raises_concern",
                 cited_shipment_ids=["SHP-1"],
                 evidence_ids=["DOC-INV-1"],
                 explanation="description reads as virgin material",
@@ -165,6 +166,7 @@ def test_objection_with_no_valid_evidence_is_discarded():
         objections=[
             Objection(
                 finding_type="x",
+                effect="raises_concern",
                 cited_shipment_ids=["SHP-1"],
                 evidence_ids=["DOC-DOES-NOT-EXIST"],
                 explanation="unsupported",
@@ -188,6 +190,7 @@ def test_invented_shipment_id_is_filtered_but_evidence_based_finding_survives():
         objections=[
             Objection(
                 finding_type="x",
+                effect="raises_concern",
                 cited_shipment_ids=["SHP-999"],  # invented, not in this processor's shipments
                 evidence_ids=["DOC-INV-1"],  # real
                 explanation="y",
@@ -277,6 +280,7 @@ def test_thinking_level_is_forwarded_to_every_gemini_call():
         objections=[
             Objection(
                 finding_type="x",
+                effect="raises_concern",
                 cited_shipment_ids=["SHP-1"],
                 evidence_ids=["DOC-INV-1"],
                 explanation="y",
@@ -330,14 +334,24 @@ def _multi_shipment_context(n: int) -> dict:
     return _processor_context(shipments=shipments, documents=documents, duplicate_keys={})
 
 
-def _run_with_one_objection(context: dict, cited_shipment_ids: list[str]) -> dict:
+def _run_with_one_objection(
+    context: dict, cited_shipment_ids: list[str], evidence_ids: list[str] | None = None
+) -> dict:
+    # Default evidence: each cited shipment's own invoice doc (DOC-INV-<n>
+    # for SHP-<n>) — so these tests exercise the systemic-share rule in
+    # isolation, not entangled with the own-evidence rule (own-evidence
+    # has its own dedicated tests below). Pass evidence_ids explicitly to
+    # test a finding resting on processor-level evidence only.
+    if evidence_ids is None:
+        evidence_ids = [f"DOC-INV-{sid.rsplit('-', 1)[-1]}" for sid in cited_shipment_ids]
     conclusions = ConclusionsResponse(conclusions=[])
     objections = ObjectionsResponse(
         objections=[
             Objection(
                 finding_type="x",
+                effect="raises_concern",
                 cited_shipment_ids=cited_shipment_ids,
-                evidence_ids=["DOC-INV-1"],
+                evidence_ids=evidence_ids,
                 explanation="y",
             )
         ]
@@ -381,6 +395,112 @@ def test_finding_citing_majority_of_verified_shipments_is_systemic():
     assert result["deductible_findings"] == []
     assert len(result["systemic_findings"]) == 1
     assert result["systemic_findings"][0].cited_shipment_ids == ["SHP-1", "SHP-2", "SHP-3"]
+
+
+def test_resolves_concern_objection_is_not_a_finding_but_stays_in_trail():
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(
+        objections=[
+            Objection(
+                finding_type="raises one",
+                effect="raises_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="a",
+            ),
+            Objection(
+                finding_type="resolves one",
+                effect="resolves_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="actually fine given the evidence",
+            ),
+        ]
+    )
+    revisions = RevisionsResponse(revisions=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    # Only the raises_concern objection survives into objections/confirmed_findings.
+    assert len(result["objections"]) == 1
+    assert result["objections"][0].finding_type == "raises one"
+    assert len(result["confirmed_findings"]) == 1
+    assert len(result["deductible_findings"]) == 1
+    # But the resolves_concern objection still reached the raw critic_final
+    # trail step, logged before any effect/evidence filtering.
+    critic_final_step = next(s for s in result["trail"] if s["step_type"] == "critic_final")
+    assert "resolves one" in critic_final_step["output_json"]
+    assert "raises one" in critic_final_step["output_json"]
+
+
+def test_only_resolves_concern_objection_yields_no_findings_and_no_revision_call():
+    context = _multi_shipment_context(4)
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(
+        objections=[
+            Objection(
+                finding_type="resolves one",
+                effect="resolves_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="actually fine given the evidence",
+            )
+        ]
+    )
+    fake = _FakeLLMClient([conclusions, objections], tool_loop_side_effect=_text_turn_side_effect)
+
+    result = run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+    assert result["objections"] == []
+    assert result["confirmed_findings"] == []
+    assert result["excluded_shipment_ids"] == frozenset()
+    # No raises_concern objection survived, so no revision round should run.
+    assert "agent_revision" not in fake.generate_structured_calls
+    critic_final_step = next(s for s in result["trail"] if s["step_type"] == "critic_final")
+    assert "resolves one" in critic_final_step["output_json"]
+
+
+def test_finding_resting_only_on_processor_level_evidence_is_not_deducted():
+    """PWP-07's real pattern (first canary, docs/PROGRESS.md): a finding
+    citing shipments in a low-energy month, evidenced only by that
+    month's electricity bill — never any of those shipments' own
+    invoice/e-way-bill/weighbridge documents. Kept as a finding, flagged
+    for review, but deducts nothing."""
+    context = _multi_shipment_context(4)
+    context["documents"].append(
+        {
+            "doc_id": "DOC-ELEC-1",
+            "doc_type": "electricity_bill",
+            "lang": "en",
+            "gcs_path": "gs://bucket/DOC-ELEC-1.pdf",
+            "fields": {"billing_month": "2026-01"},
+        }
+    )
+
+    result = _run_with_one_objection(context, ["SHP-1", "SHP-2"], evidence_ids=["DOC-ELEC-1"])
+
+    assert len(result["confirmed_findings"]) == 1
+    assert result["deductible_findings"] == []
+    assert result["systemic_findings"] == []
+    assert len(result["no_evidence_findings"]) == 1
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_finding_with_partial_own_evidence_deducts_only_the_evidenced_shipment():
+    """A finding citing two shipments but only one of their own documents
+    is in evidence — only that one shipment may be deducted, not both."""
+    context = _multi_shipment_context(4)
+
+    result = _run_with_one_objection(context, ["SHP-1", "SHP-2"], evidence_ids=["DOC-INV-1"])
+
+    assert len(result["deductible_findings"]) == 1
+    assert result["systemic_findings"] == []
+    assert result["no_evidence_findings"] == []
+    assert result["excluded_shipment_ids"] == frozenset({"SHP-1"})
 
 
 def test_unhandled_error_returns_error_status_without_raising():
