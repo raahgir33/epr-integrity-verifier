@@ -72,9 +72,16 @@ S2_DATE_START = "2023-01-01"
 S2_DATE_END = "2023-12-31"
 
 # Agent loop (docs/ARCHITECTURE.md §4) — Rule-derived (architecture spec):
-# "maximum 8 tool calls per Critic run; per-run timeout 180 s."
+# "maximum 8 tool calls per Critic run."
 AGENT_MAX_TOOL_CALLS = 8
-AGENT_TIMEOUT_S = 180
+# Per-run timeout — raised from 180s to 300s, 2026-10-08 (docs/PROGRESS.md,
+# developer decision after the fifth canary): PWP-08's own total wall-clock
+# through just the Hypothesis+Critic tool-loop phase was 282.2s in the run
+# that hit an intermittent ~120s-class backend stall on agent_critic_tools
+# (confirmed server-side — see app/llm.py/app/config.py). Paired with the
+# fail-fast approach (agent_request_timeout_ms=60_000, _AGENT_MAX_ATTEMPTS=3
+# in app/llm.py) rather than simply waiting longer per attempt.
+AGENT_TIMEOUT_S = 300
 
 # F7 (energy implausibility seeding) — ASSUMPTION. The generator's F7
 # month draws kWh/t from this band — well below KWH_PER_T_MIN (150) so

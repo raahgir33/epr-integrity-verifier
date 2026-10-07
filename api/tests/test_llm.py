@@ -147,8 +147,43 @@ def test_extract_gives_up_after_max_timeout_retries(mock_client_cls, _mock_sleep
     with pytest.raises(httpx.ReadTimeout):
         client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
 
-    # 2 retries = 3 total attempts, capped well below _MAX_ATTEMPTS (5) —
-    # a bare timeout carries no status code to judge retryability from.
+    # extract() shares the same max_attempts budget for timeouts as for
+    # APIError (both default to _MAX_ATTEMPTS=5) — see
+    # test_extract_gives_up_after_max_attempts for the APIError version.
+    assert mock_client.models.generate_content.call_count == 5
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_generate_structured_gives_up_after_agent_max_attempts(mock_client_cls, _mock_sleep):
+    """Agent calls (docs/PROGRESS.md: fail fast and retry) use a much
+    smaller max_attempts budget than extract() for the same kind of
+    timeout — 3, not 5."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = httpx.ReadTimeout("timed out")
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(httpx.ReadTimeout):
+        client.generate_structured(["hello"], _DummySchema, purpose="test")
+
+    assert mock_client.models.generate_content.call_count == 3
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_generate_structured_gives_up_after_agent_max_attempts_on_504(mock_client_cls, _mock_sleep):
+    """The agent max-attempts budget is shared by BOTH retryable failure
+    kinds (a 504 APIError here, a raw timeout above) — one combined cap,
+    not two separate ones."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = _api_error(504)
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(errors.APIError):
+        client.generate_structured(["hello"], _DummySchema, purpose="test")
+
     assert mock_client.models.generate_content.call_count == 3
 
 
@@ -411,6 +446,26 @@ def test_run_tool_loop_stops_at_safety_backstop_if_model_repeats_forever(mock_cl
     # max_total_iterations = max_tool_calls * 3 = 6 — the backstop, since
     # call_number (real, unique calls) never reaches max_tool_calls here.
     assert mock_client.models.generate_content.call_count == 6
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_retries_up_to_agent_max_attempts_then_succeeds(mock_client_cls, _mock_sleep):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _api_error(504),
+        _api_error(504),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=8, purpose="test"
+    )
+
+    assert tool_cap_reached is False
+    assert mock_client.models.generate_content.call_count == 3
 
 
 @patch("app.llm.genai.Client")

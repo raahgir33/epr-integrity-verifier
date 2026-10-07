@@ -97,7 +97,7 @@ The loop exists to do what deterministic checks cannot: read meaning in document
 - A finding that should reduce verifiable tonnes must cite the affected shipment IDs; the Scorer deducts exactly those shipments' tonnes and nothing else.
 - A failed hard deterministic check cannot be overruled by an agent.
 - Agents may add findings that checks cannot see (semantic contradictions), but each must cite document evidence and is labelled "agent finding".
-- Maximum one revision round; maximum 8 tool calls per Critic run; per-run timeout 180 s.
+- Maximum one revision round; maximum 8 tool calls per Critic run; per-run timeout 300 s (raised from 180 s, 2026-10-08 — docs/PROGRESS.md: an intermittent ~120s-class backend stall on agent_critic_tools, retried, needed more than 180 s of total wall-clock even after the retry succeeded quickly).
 - Every step is stored in `agent_runs` and shown in the UI as the reasoning trail.
 
 ## 5. Deterministic checks

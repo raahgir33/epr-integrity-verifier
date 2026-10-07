@@ -3,15 +3,20 @@
 Exposes the LLMClient protocol so callers (extraction, and the agent
 orchestrator) can be tested with a fake client instead of hitting Vertex AI.
 
-Three distinct retry layers, matching three distinct rules:
-- Network-level retry (429/5xx, exponential backoff, max 5 attempts) lives
-  here, inside GeminiClient's _call_generate_content, shared by every
-  public method.
-- Client-side timeout retry (httpx.ReadTimeout/ConnectTimeout — the server
-  never responded within _AGENT_REQUEST_TIMEOUT_MS, so there's no API
-  response/error code to inspect; max 2 retries, same backoff) also lives
-  in _call_generate_content, as a second except clause (docs/PROGRESS.md:
-  PWP-08 hit exactly this, twice, on the Hypothesis call).
+Two distinct retry layers, matching two distinct rules:
+- Network-level retry (429/5xx including 504, and a client-side
+  httpx.ReadTimeout/ConnectTimeout if the server never responds at all —
+  one shared attempt budget, exponential backoff) lives here, inside
+  GeminiClient's _call_generate_content, shared by every public method.
+  extract() gets _MAX_ATTEMPTS (5); agent calls (generate_structured,
+  run_tool_loop) get the smaller _AGENT_MAX_ATTEMPTS (3) — fail fast and
+  retry, rather than wait longer, for the intermittent backend stalls
+  docs/PROGRESS.md diagnosed on agent_critic_tools (normal calls <25s;
+  a stalled one took ~118s before the server's own 504 — confirmed via
+  google-genai's _api_client.py source: it forwards our configured
+  timeout to the server as the X-Server-Timeout header, so a 504 here is
+  the server enforcing the deadline we set, not a raw client read
+  timeout; the very next retry succeeded in 4.2s).
 - Schema-validation retry (one retry, then record failure) is the caller's
   job (app/ingest/extract.py) — a ValidationError from here propagates
   immediately, uncaught.
@@ -39,13 +44,11 @@ T = TypeVar("T", bound=BaseModel)
 
 _RETRYABLE_CODES = {429, 500, 502, 503, 504}
 _MAX_ATTEMPTS = 5
-# Max RETRIES (not total attempts) for a client-side read/connect timeout —
-# 2 retries = up to 3 attempts total for a timeout specifically, separate
-# from and much smaller than _MAX_ATTEMPTS above (an APIError at least
-# carries a real status code to judge retryability from; a bare timeout
-# carries no information at all about whether retrying will help, so this
-# stays conservative).
-_TIMEOUT_MAX_RETRIES = 2
+# Agent calls (generate_structured, run_tool_loop) fail fast and retry
+# rather than wait longer (docs/PROGRESS.md) — a much smaller total-attempt
+# budget than extract()'s _MAX_ATTEMPTS, shared by both the 504/5xx path
+# and the raw-timeout path above (one combined cap, not two separate ones).
+_AGENT_MAX_ATTEMPTS = 3
 
 # Never send thinking_budget to Gemini 3.x models — live-verified rejected
 # (and inconsistently) for gemini-3.5-flash/asia-south1 on 2026-10-07; see
@@ -54,25 +57,9 @@ _TIMEOUT_MAX_RETRIES = 2
 # not just documented here.
 _FORBIDDEN_THINKING_LEVELS = {"minimal"}
 
-# Per-request HTTP timeout for agent calls (run_tool_loop, generate_structured)
-# — milliseconds (google.genai's HttpOptions.timeout unit). extract() is
-# unaffected (T6's verified behaviour, unchanged).
-#
-# Raised from 60_000 to 120_000 (docs/PROGRESS.md) after PWP-08 hit a
-# ReadTimeout on its first Hypothesis call in the third canary — the
-# second real near-miss/failure at the old 60s value (the first was a
-# critic_final call that completed in 58.2s, just under the limit). The
-# locally-saved probe run's own call_log (data/synthetic/seed-42/
-# agent_probe_runs/no_thinking_run1.json) shows every call that DID
-# complete well under 60s (agent_hypothesis max 32.1s, agent_critic_final
-# max 14.0s, agent_critic_tools max 5.9s) — but a call that times out
-# tells us nothing about how much longer it actually needed, only that
-# 60s wasn't enough once. 120s gives generous headroom above every
-# completed call and above the prior near-miss; it is not yet verified
-# against the full llm_calls table's historical p95/max (a live BigQuery
-# query, which the agent does not run itself — see docs/PROGRESS.md for
-# the exact query to tighten this further with real data).
-_AGENT_REQUEST_TIMEOUT_MS = 120_000
+# Per-request HTTP timeouts now live in app/config.py's Settings
+# (agent_request_timeout_ms, extract_request_timeout_ms) — see there for
+# how each value was derived and env-override them if needed.
 
 
 class LLMClient(Protocol):
@@ -127,13 +114,17 @@ class GeminiClient:
             )
         return types.ThinkingConfig(thinking_level=types.ThinkingLevel(normalized.upper()))
 
-    def _call_generate_content(self, purpose: str, **kwargs):
+    def _call_generate_content(self, purpose: str, max_attempts: int = _MAX_ATTEMPTS, **kwargs):
         """Shared retry/record wrapper around client.models.generate_content.
         Every public method below goes through this — one retry/backoff/
-        call-log implementation, not duplicated per method."""
+        call-log implementation, not duplicated per method. max_attempts is
+        one shared budget for BOTH retryable failure kinds below — extract()
+        uses the default (_MAX_ATTEMPTS); agent calls pass the smaller
+        _AGENT_MAX_ATTEMPTS (docs/PROGRESS.md: fail fast and retry rather
+        than wait longer, for the intermittent ~120s-class backend stalls
+        observed on agent_critic_tools)."""
         last_exc: Exception | None = None
-        timeout_retry_count = 0
-        for attempt in range(_MAX_ATTEMPTS):
+        for attempt in range(max_attempts):
             start = time.monotonic()
             try:
                 response = self._client.models.generate_content(
@@ -149,31 +140,34 @@ class GeminiClient:
             except errors.APIError as exc:
                 self._record_call(purpose, (time.monotonic() - start) * 1000, success=False)
                 last_exc = exc
-                if exc.code not in _RETRYABLE_CODES or attempt == _MAX_ATTEMPTS - 1:
+                if exc.code not in _RETRYABLE_CODES or attempt == max_attempts - 1:
                     raise
                 backoff = min(2**attempt + random.uniform(0, 1), 30)
                 logger.warning(
-                    "retryable Gemini error (code=%s) on attempt %d, backing off %.1fs",
+                    "retryable Gemini error (code=%s) on attempt %d/%d, backing off %.1fs",
                     exc.code,
                     attempt + 1,
+                    max_attempts,
                     backoff,
                 )
                 time.sleep(backoff)
             except (httpx.ReadTimeout, httpx.ConnectTimeout) as exc:
-                # The server never responded within _AGENT_REQUEST_TIMEOUT_MS
-                # — no API response/status code exists to judge retryability
-                # from, unlike errors.APIError above, so this is capped much
-                # more conservatively (_TIMEOUT_MAX_RETRIES, not _MAX_ATTEMPTS).
+                # The server never responded at all within the configured
+                # timeout — no API response/status code exists to judge
+                # retryability from, unlike errors.APIError above (which is
+                # what a 504 Gateway Timeout actually is — see the module
+                # docstring). Shares the same max_attempts budget as the
+                # APIError path above, not a separate cap.
                 self._record_call(purpose, (time.monotonic() - start) * 1000, success=False)
                 last_exc = exc
-                timeout_retry_count += 1
-                if timeout_retry_count > _TIMEOUT_MAX_RETRIES:
+                if attempt == max_attempts - 1:
                     raise
-                backoff = min(2 ** (timeout_retry_count - 1) + random.uniform(0, 1), 30)
+                backoff = min(2**attempt + random.uniform(0, 1), 30)
                 logger.warning(
-                    "retryable network timeout (%s) on attempt %d, backing off %.1fs",
+                    "retryable network timeout (%s) on attempt %d/%d, backing off %.1fs",
                     type(exc).__name__,
                     attempt + 1,
+                    max_attempts,
                     backoff,
                 )
                 time.sleep(backoff)
@@ -192,6 +186,7 @@ class GeminiClient:
             "response_mime_type": "application/json",
             "response_schema": schema,
             "temperature": 0,
+            "http_options": types.HttpOptions(timeout=settings.extract_request_timeout_ms),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
@@ -217,13 +212,16 @@ class GeminiClient:
             "response_mime_type": "application/json",
             "response_schema": schema,
             "temperature": 0.2,
-            "http_options": types.HttpOptions(timeout=_AGENT_REQUEST_TIMEOUT_MS),
+            "http_options": types.HttpOptions(timeout=settings.agent_request_timeout_ms),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
 
         response = self._call_generate_content(
-            purpose, contents=contents, config=types.GenerateContentConfig(**config_kwargs)
+            purpose,
+            max_attempts=_AGENT_MAX_ATTEMPTS,
+            contents=contents,
+            config=types.GenerateContentConfig(**config_kwargs),
         )
         return schema.model_validate_json(response.text)
 
@@ -263,7 +261,7 @@ class GeminiClient:
                 function_calling_config=types.FunctionCallingConfig(mode="AUTO")
             ),
             "temperature": 0.2,
-            "http_options": types.HttpOptions(timeout=_AGENT_REQUEST_TIMEOUT_MS),
+            "http_options": types.HttpOptions(timeout=settings.agent_request_timeout_ms),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
@@ -276,7 +274,10 @@ class GeminiClient:
 
         for _ in range(max_total_iterations):
             response = self._call_generate_content(
-                purpose, contents=conversation, config=types.GenerateContentConfig(**config_kwargs)
+                purpose,
+                max_attempts=_AGENT_MAX_ATTEMPTS,
+                contents=conversation,
+                config=types.GenerateContentConfig(**config_kwargs),
             )
             model_turn = response.candidates[0].content
             conversation = [*conversation, model_turn]
