@@ -315,6 +315,9 @@ def _result(
     }
 
 
+_SHIPMENT_LEVEL_DOC_TYPES = {"inbound_invoice", "eway_bill", "weighbridge_slip"}
+
+
 def _shipment_own_doc_ids(shipment: dict) -> set[str]:
     return {
         doc_id
@@ -327,41 +330,68 @@ def _shipment_own_doc_ids(shipment: dict) -> set[str]:
     }
 
 
-def _evidenced_shipment_ids(finding: Objection, shipments_by_id: dict[str, dict]) -> frozenset[str]:
-    """Own-evidence rule (docs/PROGRESS.md): a cited shipment counts
-    toward a finding's deduction only if at least one of ITS OWN documents
-    (invoice, e-way bill, weighbridge slip) — not merely the processor at
-    large — is among the finding's evidence_ids. A finding resting only on
-    processor-level evidence (an electricity bill, a site thumbnail, a
-    consent/registration document) has no evidenced shipments at all, even
-    when it cites shipment IDs — for example F7's low-energy-month
-    citations, evidenced only by that month's electricity bill, not by
-    any of those shipments' own invoice/e-way-bill/weighbridge documents."""
-    evidence = set(finding.evidence_ids)
-    evidenced = {
-        sid
-        for sid in finding.cited_shipment_ids
-        if (shipment := shipments_by_id.get(sid)) is not None
-        and _shipment_own_doc_ids(shipment) & evidence
-    }
-    return frozenset(evidenced)
+def _is_shipment_level_evidence_id(evidence_id: str, documents_by_id: dict[str, dict]) -> bool:
+    doc = documents_by_id.get(evidence_id)
+    return doc is not None and doc.get("doc_type") in _SHIPMENT_LEVEL_DOC_TYPES
+
+
+def _evidenced_shipment_ids(
+    finding: Objection, shipments_by_id: dict[str, dict], documents_by_id: dict[str, dict]
+) -> frozenset[str]:
+    """Own-evidence rule, reworked after the third canary (docs/
+    PROGRESS.md): the first version was satisfiable by attaching a
+    shipment's own invoice *alongside* a processor-level document (PWP-07
+    did exactly that — invoices plus the electricity bill its F7 finding
+    actually rested on) — valid shipment-level evidence being present
+    doesn't offset processor-level evidence also being present.
+
+    A finding's evidence must now be shipment-level *only*: if even one
+    evidence_id isn't one of the three shipment-level document types
+    (invoice, e-way bill, weighbridge slip) — an electricity bill, site
+    imagery, a CTO/consent or EPR registration document, an output
+    invoice, or any non-document evidence_id (a certificate_id, a site
+    thumbnail path) all count as processor-level — the WHOLE finding is
+    processor-level, never partially deductible.
+
+    Even with shipment-level-only evidence, every CITED shipment must
+    have at least one of its own documents among that evidence for the
+    finding to be deductible at all: a finding that evidences some but
+    not all of its cited shipments deducts nothing, rather than
+    partially deducting the evidenced subset. Returns the empty set in
+    both failure cases; returns the full, unfiltered cited_shipment_ids
+    (every member individually evidenced, by construction) when the
+    finding qualifies.
+    """
+    evidence_ids = finding.evidence_ids
+    if not finding.cited_shipment_ids:
+        return frozenset()
+    if any(not _is_shipment_level_evidence_id(eid, documents_by_id) for eid in evidence_ids):
+        return frozenset()
+    evidence = set(evidence_ids)
+    for sid in finding.cited_shipment_ids:
+        shipment = shipments_by_id.get(sid)
+        if shipment is None or not (_shipment_own_doc_ids(shipment) & evidence):
+            return frozenset()
+    return frozenset(finding.cited_shipment_ids)
 
 
 def _classify_findings(
     confirmed_findings: list[Objection],
     verified_shipment_ids: frozenset[str],
     shipments_by_id: dict[str, dict],
+    documents_by_id: dict[str, dict],
 ) -> tuple[list[Objection], list[Objection], list[Objection], frozenset[str]]:
     """Two guards against over-broad deduction, applied in order, per
     finding (docs/PROGRESS.md):
 
-    1. Own-evidence rule: a finding with no evidenced shipments at all
-       (see _evidenced_shipment_ids) can't deduct anything — it's kept
-       as a finding (shown in the UI/trail) but moved to
-       no_evidence_findings, a review flag, not a tonnage deduction.
-    2. Systemic-finding guard: of a finding's evidenced shipments, citing
-       more than params.SYSTEMIC_FINDING_SHARE_THRESHOLD of the
-       processor's own verified shipments is too broad to treat as
+    1. Own-evidence rule: a finding whose evidence isn't shipment-level
+       only, or doesn't cover every one of its cited shipments (see
+       _evidenced_shipment_ids), can't deduct anything — it's kept as a
+       finding (shown in the UI/trail) but moved to no_evidence_findings,
+       a review flag, not a tonnage deduction.
+    2. Systemic-finding guard: a finding's (now all-or-nothing) evidenced
+       shipments citing more than params.SYSTEMIC_FINDING_SHARE_THRESHOLD
+       of the processor's own verified shipments is too broad to treat as
        ordinary per-shipment evidence — deducting all of them would let
        one finding zero out most of the processor's verifiable tonnage.
        Moved to systemic_findings instead of deductible_findings.
@@ -370,10 +400,9 @@ def _classify_findings(
     and build_systemic_finding_check_result turn their respective
     non-empty list into a soft-signal risk-band bump instead of a tonnage
     deduction. excluded_shipment_ids is the union of deductible findings'
-    own evidenced shipment IDs (not their full cited_shipment_ids — a
-    finding can have some evidenced and some unevidenced citations) —
-    computed once here, the single source of truth callers use for the
-    actual deduction, rather than each caller re-deriving it.
+    (full) cited_shipment_ids — computed once here, the single source of
+    truth callers use for the actual deduction, rather than each caller
+    re-deriving it.
 
     With zero verified shipments, "cites more than half of them" has no
     meaningful denominator — every evidenced finding is deductible in
@@ -384,7 +413,7 @@ def _classify_findings(
     no_evidence: list[Objection] = []
     excluded_shipment_ids: set[str] = set()
     for finding in confirmed_findings:
-        evidenced = _evidenced_shipment_ids(finding, shipments_by_id)
+        evidenced = _evidenced_shipment_ids(finding, shipments_by_id, documents_by_id)
         if not evidenced:
             no_evidence.append(finding)
             continue
@@ -600,8 +629,11 @@ def run_agent_loop(
             processor_context["shipments"], processor_context["duplicate_keys"]
         )
         shipments_by_id = {s["shipment_id"]: s for s in processor_context["shipments"]}
+        documents_by_id = {d["doc_id"]: d for d in processor_context["documents"]}
         deductible_findings, systemic_findings, no_evidence_findings, excluded_shipment_ids = (
-            _classify_findings(confirmed_findings, verified_shipment_ids, shipments_by_id)
+            _classify_findings(
+                confirmed_findings, verified_shipment_ids, shipments_by_id, documents_by_id
+            )
         )
 
         return _result(

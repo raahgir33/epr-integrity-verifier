@@ -3,10 +3,15 @@
 Exposes the LLMClient protocol so callers (extraction, and the agent
 orchestrator) can be tested with a fake client instead of hitting Vertex AI.
 
-Two distinct retry layers, matching two distinct rules:
+Three distinct retry layers, matching three distinct rules:
 - Network-level retry (429/5xx, exponential backoff, max 5 attempts) lives
   here, inside GeminiClient's _call_generate_content, shared by every
   public method.
+- Client-side timeout retry (httpx.ReadTimeout/ConnectTimeout — the server
+  never responded within _AGENT_REQUEST_TIMEOUT_MS, so there's no API
+  response/error code to inspect; max 2 retries, same backoff) also lives
+  in _call_generate_content, as a second except clause (docs/PROGRESS.md:
+  PWP-08 hit exactly this, twice, on the Hypothesis call).
 - Schema-validation retry (one retry, then record failure) is the caller's
   job (app/ingest/extract.py) — a ValidationError from here propagates
   immediately, uncaught.
@@ -20,6 +25,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Protocol, TypeVar
 
+import httpx
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel
@@ -32,6 +38,13 @@ T = TypeVar("T", bound=BaseModel)
 
 _RETRYABLE_CODES = {429, 500, 502, 503, 504}
 _MAX_ATTEMPTS = 5
+# Max RETRIES (not total attempts) for a client-side read/connect timeout —
+# 2 retries = up to 3 attempts total for a timeout specifically, separate
+# from and much smaller than _MAX_ATTEMPTS above (an APIError at least
+# carries a real status code to judge retryability from; a bare timeout
+# carries no information at all about whether retrying will help, so this
+# stays conservative).
+_TIMEOUT_MAX_RETRIES = 2
 
 # Never send thinking_budget to Gemini 3.x models — live-verified rejected
 # (and inconsistently) for gemini-3.5-flash/asia-south1 on 2026-10-07; see
@@ -41,10 +54,24 @@ _MAX_ATTEMPTS = 5
 _FORBIDDEN_THINKING_LEVELS = {"minimal"}
 
 # Per-request HTTP timeout for agent calls (run_tool_loop, generate_structured)
-# — milliseconds (google.genai's HttpOptions.timeout unit). Leaves room for
-# several calls inside the 180s per-run agent-loop deadline (ARCHITECTURE.md
-# §4); extract() is unaffected (T6's verified behaviour, unchanged).
-_AGENT_REQUEST_TIMEOUT_MS = 60_000
+# — milliseconds (google.genai's HttpOptions.timeout unit). extract() is
+# unaffected (T6's verified behaviour, unchanged).
+#
+# Raised from 60_000 to 120_000 (docs/PROGRESS.md) after PWP-08 hit a
+# ReadTimeout on its first Hypothesis call in the third canary — the
+# second real near-miss/failure at the old 60s value (the first was a
+# critic_final call that completed in 58.2s, just under the limit). The
+# locally-saved probe run's own call_log (data/synthetic/seed-42/
+# agent_probe_runs/no_thinking_run1.json) shows every call that DID
+# complete well under 60s (agent_hypothesis max 32.1s, agent_critic_final
+# max 14.0s, agent_critic_tools max 5.9s) — but a call that times out
+# tells us nothing about how much longer it actually needed, only that
+# 60s wasn't enough once. 120s gives generous headroom above every
+# completed call and above the prior near-miss; it is not yet verified
+# against the full llm_calls table's historical p95/max (a live BigQuery
+# query, which the agent does not run itself — see docs/PROGRESS.md for
+# the exact query to tighten this further with real data).
+_AGENT_REQUEST_TIMEOUT_MS = 120_000
 
 
 class LLMClient(Protocol):
@@ -104,6 +131,7 @@ class GeminiClient:
         Every public method below goes through this — one retry/backoff/
         call-log implementation, not duplicated per method."""
         last_exc: Exception | None = None
+        timeout_retry_count = 0
         for attempt in range(_MAX_ATTEMPTS):
             start = time.monotonic()
             try:
@@ -126,6 +154,24 @@ class GeminiClient:
                 logger.warning(
                     "retryable Gemini error (code=%s) on attempt %d, backing off %.1fs",
                     exc.code,
+                    attempt + 1,
+                    backoff,
+                )
+                time.sleep(backoff)
+            except (httpx.ReadTimeout, httpx.ConnectTimeout) as exc:
+                # The server never responded within _AGENT_REQUEST_TIMEOUT_MS
+                # — no API response/status code exists to judge retryability
+                # from, unlike errors.APIError above, so this is capped much
+                # more conservatively (_TIMEOUT_MAX_RETRIES, not _MAX_ATTEMPTS).
+                self._record_call(purpose, (time.monotonic() - start) * 1000, success=False)
+                last_exc = exc
+                timeout_retry_count += 1
+                if timeout_retry_count > _TIMEOUT_MAX_RETRIES:
+                    raise
+                backoff = min(2 ** (timeout_retry_count - 1) + random.uniform(0, 1), 30)
+                logger.warning(
+                    "retryable network timeout (%s) on attempt %d, backing off %.1fs",
+                    type(exc).__name__,
                     attempt + 1,
                     backoff,
                 )

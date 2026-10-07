@@ -465,9 +465,8 @@ def test_only_resolves_concern_objection_yields_no_findings_and_no_revision_call
 
 
 def test_finding_resting_only_on_processor_level_evidence_is_not_deducted():
-    """PWP-07's real pattern (first canary, docs/PROGRESS.md): a finding
-    citing shipments in a low-energy month, evidenced only by that
-    month's electricity bill — never any of those shipments' own
+    """A finding citing shipments in a low-energy month, evidenced only by
+    that month's electricity bill — never any of those shipments' own
     invoice/e-way-bill/weighbridge documents. Kept as a finding, flagged
     for review, but deducts nothing."""
     context = _multi_shipment_context(4)
@@ -490,17 +489,63 @@ def test_finding_resting_only_on_processor_level_evidence_is_not_deducted():
     assert result["excluded_shipment_ids"] == frozenset()
 
 
-def test_finding_with_partial_own_evidence_deducts_only_the_evidenced_shipment():
+def test_finding_mixing_shipment_and_processor_level_evidence_is_not_deducted():
+    """PWP-07's real pattern (third canary, docs/PROGRESS.md): the
+    finding's evidence included BOTH the cited shipments' own invoices
+    AND the electricity bill its F7 concern actually rested on. Valid
+    shipment-level evidence being present does not offset processor-
+    level evidence also being present — the whole finding stays a
+    review flag, not partially deducted."""
+    context = _multi_shipment_context(4)
+    context["documents"].append(
+        {
+            "doc_id": "DOC-ELEC-1",
+            "doc_type": "electricity_bill",
+            "lang": "en",
+            "gcs_path": "gs://bucket/DOC-ELEC-1.pdf",
+            "fields": {"billing_month": "2026-01"},
+        }
+    )
+
+    result = _run_with_one_objection(
+        context, ["SHP-1", "SHP-2"], evidence_ids=["DOC-INV-1", "DOC-INV-2", "DOC-ELEC-1"]
+    )
+
+    assert len(result["confirmed_findings"]) == 1
+    assert result["deductible_findings"] == []
+    assert result["systemic_findings"] == []
+    assert len(result["no_evidence_findings"]) == 1
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_finding_with_partial_own_evidence_deducts_nothing():
     """A finding citing two shipments but only one of their own documents
-    is in evidence — only that one shipment may be deducted, not both."""
+    is in evidence — not every cited shipment is evidenced, so (reworked
+    own-evidence rule, docs/PROGRESS.md) the whole finding deducts
+    nothing, rather than partially deducting the one evidenced shipment."""
     context = _multi_shipment_context(4)
 
     result = _run_with_one_objection(context, ["SHP-1", "SHP-2"], evidence_ids=["DOC-INV-1"])
 
+    assert result["deductible_findings"] == []
+    assert result["systemic_findings"] == []
+    assert len(result["no_evidence_findings"]) == 1
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_finding_with_full_own_evidence_for_every_cited_shipment_is_deducted():
+    """F8-style finding: every cited shipment has its own invoice in
+    evidence, no processor-level evidence mixed in — fully deductible."""
+    context = _multi_shipment_context(4)
+
+    result = _run_with_one_objection(
+        context, ["SHP-1", "SHP-2"], evidence_ids=["DOC-INV-1", "DOC-INV-2"]
+    )
+
     assert len(result["deductible_findings"]) == 1
     assert result["systemic_findings"] == []
     assert result["no_evidence_findings"] == []
-    assert result["excluded_shipment_ids"] == frozenset({"SHP-1"})
+    assert result["excluded_shipment_ids"] == frozenset({"SHP-1", "SHP-2"})
 
 
 def test_unhandled_error_returns_error_status_without_raising():

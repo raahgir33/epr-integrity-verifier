@@ -58,6 +58,12 @@ def check_c7(
         )
 
     affected_tonnes = sum(certified_t_by_month.get(e["month"], 0.0) for e in failed)
+    # Each evidence_id paired with its own period_month right in the
+    # explanation text (docs/PROGRESS.md) — evidence_ids alone can't carry
+    # this, and the Hypothesis agent has misdated which month an
+    # electricity-bill evidence_id belongs to without it (two canaries
+    # running).
+    evidence_detail = "; ".join(f"{e['doc_id']} (period {e['month']})" for e in failed)
     return CheckResult(
         check_id="C7",
         status="warn",
@@ -66,6 +72,7 @@ def check_c7(
         evidence_ids=[e["doc_id"] for e in failed],
         explanation=(
             f"{len(failed)} month(s) for {processor_id} fall outside the "
-            f"{params.KWH_PER_T_MIN}-{params.KWH_PER_T_MAX} kWh/t plausible band."
+            f"{params.KWH_PER_T_MIN}-{params.KWH_PER_T_MAX} kWh/t plausible band: "
+            f"{evidence_detail}."
         ),
     )

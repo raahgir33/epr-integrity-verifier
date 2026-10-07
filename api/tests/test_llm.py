@@ -4,6 +4,7 @@ no real network calls.
 
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 from google.genai import errors, types
 from pydantic import BaseModel
@@ -97,6 +98,58 @@ def test_extract_gives_up_after_max_attempts(mock_client_cls, _mock_sleep):
         client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
 
     assert mock_client.models.generate_content.call_count == 5
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_extract_retries_on_read_timeout_then_succeeds(mock_client_cls, _mock_sleep):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        httpx.ReadTimeout("timed out"),
+        _make_response('{"value": "ok"}'),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    result = client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
+
+    assert result.value == "ok"
+    assert mock_client.models.generate_content.call_count == 2
+    log = client.flush_call_log()
+    assert [r["success"] for r in log] == [False, True]
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_extract_retries_on_connect_timeout_too(mock_client_cls, _mock_sleep):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        httpx.ConnectTimeout("timed out"),
+        _make_response('{"value": "ok"}'),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    result = client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
+
+    assert result.value == "ok"
+    assert mock_client.models.generate_content.call_count == 2
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_extract_gives_up_after_max_timeout_retries(mock_client_cls, _mock_sleep):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = httpx.ReadTimeout("timed out")
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(httpx.ReadTimeout):
+        client.extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
+
+    # 2 retries = 3 total attempts, capped well below _MAX_ATTEMPTS (5) —
+    # a bare timeout carries no status code to judge retryability from.
+    assert mock_client.models.generate_content.call_count == 3
 
 
 @patch("app.llm.genai.Client")
