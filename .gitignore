@@ -29,9 +29,10 @@ htmlcov/
 *.swp
 *.swo
 
-# Planning Files
+# Build, Planning & Reference Files
 docs/BUILD_PLAN.md
 docs/PROGRESS.md
+api/ref
 
 # GCP/Local credentials (Safety)
 !google-services.json

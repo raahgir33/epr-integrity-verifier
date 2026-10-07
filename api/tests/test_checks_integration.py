@@ -4,16 +4,17 @@ the committed seed-42 ground_truth.json and processors.json. No BigQuery,
 no scripts/dossier_gen import — only ground_truth.json and processors.json
 are read, exactly like test_normalize.py's existing cross-check tests.
 
-C8 (T9, Earth Engine) is picked up too, but only once it has real data:
-site_assessments_by_processor() loads scripts/run_pipeline.py --stage
-site's local JSON snapshot if it exists
-(data/synthetic/seed-42/site_assessments.json) and folds each
-processor's result into its check list before scoring — see that
-fixture's docstring. Until that file exists, C8 is simply absent and
-IMPLEMENTED_CHECK_IDS/EXPECTED_STATUSES stay as they were pre-T9
-(9 checks). Once it exists, both need "C8" added, together with real
-PWP-09 expectations (see docs/PROGRESS.md for whatever the live run
-showed) — not written blind here.
+C8 (T9, Earth Engine) is included: site_assessments_by_processor() loads
+scripts/run_pipeline.py --stage site's local JSON snapshot
+(data/synthetic/seed-42/site_assessments.json, committed like
+ground_truth.json/processors.json) and folds each processor's result into
+its check list before scoring — see that fixture's docstring. The real
+Earth Engine data showed PWP-04's and PWP-09's fictional coordinates were
+both placed inaccurately relative to real imagery (PWP-04's point sat in a
+lake; PWP-09's "farmland" point sat inside a real village settlement) —
+both were nudged in data/synthetic/site_coordinates.json after visually
+reviewing the thumbnails (see docs/PROGRESS.md), not by changing any
+check/threshold code.
 
 Two things are asserted for every one of the 10 processors:
 1. The exact status (pass/fail/warn/not_evaluable) of every implemented
@@ -38,7 +39,7 @@ from app.ingest.normalize import energy_from_truth, outputs_from_truth, shipment
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED = 42
 AS_OF_MONTH = "2026-03"
-IMPLEMENTED_CHECK_IDS = {"C1", "C2a", "C2b", "C3a", "C3b", "C4", "C5", "C6", "C7"}
+IMPLEMENTED_CHECK_IDS = {"C1", "C2a", "C2b", "C3a", "C3b", "C4", "C5", "C6", "C7", "C8"}
 
 # Hand-verified against the committed seed-42 data (see docs/PROGRESS.md
 # for the per-processor narrative). Processors carrying no issue_types are
@@ -73,6 +74,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-02": {
         "C1": "pass",
@@ -84,6 +86,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-03": {  # H1 (95% capacity), H2 (900 km long-haul, plausible timing)
         "C1": "pass",
@@ -95,6 +98,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-04": {  # H3 (quantity inside tolerance), H4 (shutdown month)
         "C1": "pass",
@@ -106,6 +110,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-05": {  # F1 capacity inflation, F8 (agents only)
         "C1": "fail",
@@ -117,6 +122,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-06": {  # F1 capacity inflation, F3 quantity inflation
         "C1": "fail",
@@ -128,6 +134,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
     "PWP-07": {  # F2 phantom inbound, F7 energy implausibility
         "C1": "pass",
@@ -139,6 +146,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "warn",
+        "C8": "pass",
     },
     "PWP-08": {  # F8 only (agents only, no deterministic check — see note above)
         "C1": "pass",
@@ -150,8 +158,9 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "pass",
         "C7": "pass",
+        "C8": "pass",
     },
-    "PWP-09": {  # F5 ghost site (C8, not built yet), F6 consent breach; end-of-life
+    "PWP-09": {  # F5 ghost site (C8 warn, 0 buildings within 150 m), F6 breach; end-of-life
         "C1": "pass",
         "C2a": "pass",
         "C2b": "not_evaluable",
@@ -161,6 +170,7 @@ EXPECTED_STATUSES = {
         "C5": "pass",
         "C6": "fail",
         "C7": "not_evaluable",
+        "C8": "warn",
     },
     "PWP-10": {  # F4 double use; end-of-life
         "C1": "pass",
@@ -172,6 +182,7 @@ EXPECTED_STATUSES = {
         "C5": "fail",
         "C6": "pass",
         "C7": "not_evaluable",
+        "C8": "pass",
     },
 }
 
@@ -277,7 +288,26 @@ def test_pwp09_unverifiable_tonnes_uses_raw_certified_not_eligible(results_by_pr
     assert score["verifiable_t"] == pytest.approx(12570.06)
     assert score["unverifiable_t"] == pytest.approx(2677.96)
     assert score["unverifiable_t"] == pytest.approx(score["certified_t"] - score["verifiable_t"])
-    assert score["risk_band"] == "Medium"
+    # C8's soft-signal bump (F5 ghost site, real Earth Engine data) raises
+    # this from Medium to High — see test_c8_risk_band_matches_full_system
+    # for why that's not a coincidence.
+    assert score["risk_band"] == "High"
+
+
+def test_c8_risk_band_matches_full_system_ground_truth(results_by_processor):
+    """PWP-09 carries no F8 (agent-only), so true_verifiable_t ==
+    true_verifiable_t_checks_only exactly — the generator's own full-system
+    risk_band (which always folds in F5's soft signal, agent-independent;
+    see scripts/dossier_gen/ground_truth.py's _SOFT_ISSUE_TYPES) should
+    therefore equal this checks-only scorer's risk_band exactly too, now
+    that C8 is wired in. Before T9, this was Medium vs ground truth's
+    High — a real gap that real Earth Engine data (not threshold tuning)
+    has now closed."""
+    entry = results_by_processor["PWP-09"]
+    assert entry["truth"]["true_verifiable_t"] == pytest.approx(
+        entry["truth"]["true_verifiable_t_checks_only"]
+    )
+    assert entry["score"]["risk_band"] == entry["truth"]["risk_band"] == "High"
 
 
 def test_no_seeded_scenario_fails_c3a_or_c3b(results_by_processor):

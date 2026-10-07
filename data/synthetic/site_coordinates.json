@@ -2,11 +2,11 @@
   "PWP-01": {"lat": 18.7645, "lon": 73.8623, "note": "Chakan industrial area, Pune district", "site_validated": false},
   "PWP-02": {"lat": 23.0726, "lon": 72.6626, "note": "Naroda industrial estate, Ahmedabad", "site_validated": false},
   "PWP-03": {"lat": 22.3511, "lon": 73.1951, "note": "Vadodara GIDC industrial estate", "site_validated": false},
-  "PWP-04": {"lat": 12.9675, "lon": 79.9385, "note": "Sriperumbudur industrial area, Tamil Nadu", "site_validated": false},
+  "PWP-04": {"lat": 12.9685, "lon": 79.9416, "note": "Sriperumbudur industrial area, Tamil Nadu — nudged 2026-10-07 off a lake onto the building cluster, per C8 thumbnail review", "site_validated": false},
   "PWP-05": {"lat": 12.7351, "lon": 77.8256, "note": "Hosur industrial area, Tamil Nadu", "site_validated": false},
   "PWP-06": {"lat": 17.5297, "lon": 78.2694, "note": "Patancheru industrial area, Telangana", "site_validated": false},
   "PWP-07": {"lat": 22.6089, "lon": 75.6544, "note": "Pithampur industrial area, Madhya Pradesh", "site_validated": false},
   "PWP-08": {"lat": 28.4089, "lon": 77.3178, "note": "Faridabad industrial area, Haryana", "site_validated": false},
-  "PWP-09": {"lat": 27.5500, "lon": 76.6000, "note": "open farmland, no registered structures — F5 ghost site", "site_validated": false},
+  "PWP-09": {"lat": 27.5486, "lon": 76.5960, "note": "open farmland, no registered structures — F5 ghost site; nudged 2026-10-07 (three times) off a village settlement, per C8 thumbnail review", "site_validated": false},
   "PWP-10": {"lat": 21.1210, "lon": 79.0520, "note": "Nagpur MIDC industrial belt, Maharashtra", "site_validated": false}
 }

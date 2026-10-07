@@ -20796,9 +20796,9 @@
         }
       ],
       "site": {
-        "lat": 12.9675,
-        "lon": 79.9385,
-        "placement_note": "Sriperumbudur industrial area, Tamil Nadu",
+        "lat": 12.9685,
+        "lon": 79.9416,
+        "placement_note": "Sriperumbudur industrial area, Tamil Nadu — nudged 2026-10-07 off a lake onto the building cluster, per C8 thumbnail review",
         "site_validated": false
       },
       "true_verifiable_t": 5994.3,
@@ -22663,9 +22663,9 @@
         }
       ],
       "site": {
-        "lat": 27.55,
-        "lon": 76.6,
-        "placement_note": "open farmland, no registered structures — F5 ghost site",
+        "lat": 27.5486,
+        "lon": 76.596,
+        "placement_note": "open farmland, no registered structures — F5 ghost site; nudged 2026-10-07 (three times) off a village settlement, per C8 thumbnail review",
         "site_validated": false
       },
       "true_verifiable_t": 12570.06,
