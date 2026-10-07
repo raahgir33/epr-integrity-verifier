@@ -6,13 +6,24 @@ docs/DATA_SPEC.md, never the internal F1-F8/H1-H4 taxonomy and never a
 processor or shipment ID. Dynamic context (the context pack, dossier
 digest, objections) is appended by orchestrator.py as separate content
 after this text, not interpolated into it.
+
+red_flags.txt is a single shared fragment appended to both the Hypothesis
+and Critic (tool-loop) prompts below — one place to edit the red-flag
+list, not two independently-maintained copies.
 """
 
 from pathlib import Path
 
 _PROMPTS_DIR = Path(__file__).resolve().parent
 
-HYPOTHESIS_PROMPT = (_PROMPTS_DIR / "hypothesis.txt").read_text(encoding="utf-8")
-CRITIC_TOOLS_PROMPT = (_PROMPTS_DIR / "critic_tools.txt").read_text(encoding="utf-8")
-CRITIC_FINAL_PROMPT = (_PROMPTS_DIR / "critic_final.txt").read_text(encoding="utf-8")
-REVISION_PROMPT = (_PROMPTS_DIR / "revision.txt").read_text(encoding="utf-8")
+
+def _read(name: str) -> str:
+    return (_PROMPTS_DIR / name).read_text(encoding="utf-8")
+
+
+_RED_FLAGS = _read("red_flags.txt")
+
+HYPOTHESIS_PROMPT = _read("hypothesis.txt") + "\n" + _RED_FLAGS
+CRITIC_TOOLS_PROMPT = _read("critic_tools.txt") + "\n" + _RED_FLAGS
+CRITIC_FINAL_PROMPT = _read("critic_final.txt")
+REVISION_PROMPT = _read("revision.txt")

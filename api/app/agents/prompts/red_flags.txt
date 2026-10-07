@@ -1,0 +1,11 @@
+Red-flag patterns documented in public reporting on this sector or standard in GST compliance practice — any may or may not be present:
+- certified quantity beyond registered capacity or beyond verified inbound material
+- inbound tonnage without corresponding weighbridge evidence
+- quantities that disagree across invoice, e-way bill and weighbridge slip
+- transit timings inconsistent with declared distance
+- goods descriptions inconsistent with the declared HSN classification
+- the same document appearing more than once
+- energy use inconsistent with claimed processing
+- claimed operations at a site with no visible industrial footprint
+
+Normal and not suspicious on their own: month-to-month variation in volumes; long but feasible distances; small weighbridge differences within tolerance; documents in Hindi or other Indian languages; months with no certificates.
