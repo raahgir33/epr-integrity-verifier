@@ -70,3 +70,8 @@ MAX_TPA_PER_M2 = 10
 # confirm either way.
 S2_DATE_START = "2023-01-01"
 S2_DATE_END = "2023-12-31"
+
+# Agent loop (docs/ARCHITECTURE.md §4) — Rule-derived (architecture spec):
+# "maximum 8 tool calls per Critic run; per-run timeout 180 s."
+AGENT_MAX_TOOL_CALLS = 8
+AGENT_TIMEOUT_S = 180

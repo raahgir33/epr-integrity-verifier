@@ -1,0 +1,9 @@
+Based on everything you have seen in this conversation — the context pack, the Hypothesis agent's conclusions, and the tool results above — list your objections, if any, to the Hypothesis agent's conclusions.
+
+Each objection must have:
+- finding_type: a short, specific label you write yourself describing the kind of problem you found (for example, a wording/HSN-code contradiction, a transit-time implausibility, a duplicated document, or an unresolved capacity mismatch). Describe it in your own words — do not use a fixed code or taxonomy.
+- cited_shipment_ids: the shipment IDs whose tonnage this finding should cause to be treated as unverifiable. Leave empty if the finding doesn't bear on a specific shipment's tonnage (for example, a site-level or capacity-level concern).
+- evidence_ids: the evidence IDs — from check results, digest entries, or tool results you actually saw in this conversation — that support this finding. An objection with no evidence_ids will be discarded, so do not raise one you cannot point to evidence for.
+- explanation: a short, specific explanation that names the evidence it rests on.
+
+Only raise an objection you can support with evidence you actually saw in this conversation. Never cite a shipment ID or evidence ID that didn't appear in the context pack or a tool result above. If you have no objections, return an empty list — do not invent a finding just to have something to report.

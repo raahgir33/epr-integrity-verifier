@@ -10,10 +10,21 @@ from app.checks.transport import shipment_passes_c3a, shipment_passes_c3b
 from app.models.checks import CheckResult
 
 
-def verified_inbound_tonnes(shipments: list[dict], duplicate_keys: dict[str, dict]) -> float:
+def verified_inbound_tonnes(
+    shipments: list[dict],
+    duplicate_keys: dict[str, dict],
+    excluded_shipment_ids: frozenset[str] = frozenset(),
+) -> float:
     """docs/DATA_SPEC.md §4a.1: sum of weighbridge net tonnes of matched
-    shipments that pass C3, C4 and C5 — the checks-only definition (minus
-    a confirmed agent finding is T10's addition, not this function's).
+    shipments that pass C3, C4 and C5, minus any shipment cited by a
+    confirmed agent finding (T10, e.g. F8-style semantic contradictions —
+    see app/agents/orchestrator.py).
+
+    excluded_shipment_ids defaults to empty, so the checks-only call sites
+    (check_c2a below, and agents/scorer.py's "checks_only" stage) are
+    byte-for-byte unchanged from before T10 — this is the same function
+    serving both the "checks_only" and "full" assessment stages, not a
+    fork of it.
 
     A shipment missing a field a check needs (shipment_passes_c3a etc.
     returning None) is treated as not failing that check, not as failing
@@ -27,6 +38,8 @@ def verified_inbound_tonnes(shipments: list[dict], duplicate_keys: dict[str, dic
     """
     total = 0.0
     for s in shipments:
+        if s["shipment_id"] in excluded_shipment_ids:
+            continue
         if s.get("match_status") != "matched":
             continue
         if shipment_passes_c3a(s) is False:

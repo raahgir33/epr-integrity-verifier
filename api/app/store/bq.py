@@ -189,6 +189,12 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("verifiable_t", "FLOAT"),
         bigquery.SchemaField("unverifiable_t", "FLOAT"),
         bigquery.SchemaField("risk_band", "STRING"),
+        # T10: how the "full" stage's agent loop finished for this
+        # processor — "ok", "timeout" or "error". Null for "checks_only"
+        # rows, which never run the agent loop. On timeout/error the row's
+        # tonnage/risk_band columns above are the checks_only fallback
+        # values (app/agents/orchestrator.py), never a partial guess.
+        bigquery.SchemaField("agent_status", "STRING"),
         bigquery.SchemaField("computed_at", "TIMESTAMP"),
     ],
     # T9 (site check C8). Not facts_source-dimensioned — C8 depends only
@@ -215,6 +221,28 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("thumb_bbox_n", "FLOAT"),
         bigquery.SchemaField("thumb_crs", "STRING"),
         bigquery.SchemaField("explanation", "STRING"),
+        bigquery.SchemaField("computed_at", "TIMESTAMP"),
+    ],
+    # T10 (agent loop). One row per step in orchestrator.py's trail
+    # (Hypothesis, each tool call, the Critic's final structured call,
+    # revision). facts_source-dimensioned like shipments/check_results —
+    # delete_by_seed_and_source is this table's idempotency key, same
+    # pattern, not a new one. tool_name/tool_args_json are null for a
+    # non-tool step.
+    "agent_runs": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("step_index", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("step_type", "STRING"),
+        bigquery.SchemaField("tool_name", "STRING"),
+        bigquery.SchemaField("tool_args_json", "STRING"),
+        bigquery.SchemaField("input_summary", "STRING"),
+        bigquery.SchemaField("output_json", "STRING"),
+        bigquery.SchemaField("latency_ms", "FLOAT"),
+        bigquery.SchemaField("input_tokens", "INTEGER"),
+        bigquery.SchemaField("output_tokens", "INTEGER"),
+        bigquery.SchemaField("thinking_tokens", "INTEGER"),
         bigquery.SchemaField("computed_at", "TIMESTAMP"),
     ],
 }

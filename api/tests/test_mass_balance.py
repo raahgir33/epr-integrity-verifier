@@ -59,6 +59,33 @@ def test_verified_inbound_tonnes_excludes_c5_failure():
     assert verified_inbound_tonnes([s], duplicate_keys) == 0.0
 
 
+def test_verified_inbound_tonnes_excludes_cited_shipment_id():
+    # T10: a confirmed agent finding cites SHP-1 for exclusion even though
+    # it passes every deterministic check.
+    s = _matched_shipment(shipment_id="SHP-1")
+    assert verified_inbound_tonnes([s], duplicate_keys={}) == 99.0
+    assert (
+        verified_inbound_tonnes([s], duplicate_keys={}, excluded_shipment_ids=frozenset({"SHP-1"}))
+        == 0.0
+    )
+
+
+def test_verified_inbound_tonnes_exclusion_only_affects_cited_shipment():
+    s1 = _matched_shipment(shipment_id="SHP-1")
+    s2 = _matched_shipment(
+        shipment_id="SHP-2",
+        invoice_doc_id="INV-2",
+        eway_doc_id="EWAY-2",
+        weighbridge_doc_id="WB-2",
+        invoice_qty_t=50.0,
+        weighbridge_net_t=49.5,
+    )
+    total = verified_inbound_tonnes(
+        [s1, s2], duplicate_keys={}, excluded_shipment_ids=frozenset({"SHP-1"})
+    )
+    assert total == 49.5
+
+
 def test_c2a_passes_when_certified_within_verified_inbound():
     result = check_c2a("PWP-01", certified_t=90.0, verified_inbound_t=100.0)
     assert result.status == "pass"

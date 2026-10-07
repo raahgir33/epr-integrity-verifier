@@ -194,6 +194,120 @@ def test_thinking_level_minimal_is_rejected_before_any_call(mock_client_cls):
     mock_client.models.generate_content.assert_not_called()
 
 
+def _function_call_part(name: str, args: dict):
+    fc = MagicMock()
+    fc.name = name
+    fc.args = args
+    part = MagicMock()
+    part.function_call = fc
+    return part
+
+
+def _text_part():
+    part = MagicMock()
+    part.function_call = None
+    return part
+
+
+def _tool_call_response(name: str, args: dict) -> MagicMock:
+    response = MagicMock()
+    response.candidates = [MagicMock(content=MagicMock(parts=[_function_call_part(name, args)]))]
+    response.usage_metadata = None
+    return response
+
+
+def _text_response() -> MagicMock:
+    response = MagicMock()
+    response.candidates = [MagicMock(content=MagicMock(parts=[_text_part()]))]
+    response.usage_metadata = None
+    return response
+
+
+def _dummy_tool(x: int):
+    """A trivial tool for testing."""
+    return f"got {x}", None
+
+
+@patch("app.llm.genai.Client")
+def test_generate_structured_uses_temperature_0_2(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    result = client.generate_structured(["hello"], _DummySchema, purpose="test")
+
+    assert result.value == "ok"
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert config.temperature == 0.2
+
+
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_calls_tool_and_stops_when_model_returns_text(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_dummy_tool", {"x": 5}),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=8, purpose="test"
+    )
+
+    assert tool_cap_reached is False
+    assert mock_client.models.generate_content.call_count == 2
+    # initial content + model turn 1 (tool call) + function response + model turn 2 (text)
+    assert len(conversation) == 4
+
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert config.tool_config.function_calling_config.mode == types.FunctionCallingConfigMode.AUTO
+
+
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_appends_attachment_as_separate_part(mock_client_cls):
+    def _tool_with_attachment(path: str):
+        """A tool that hands back raw bytes alongside its summary."""
+        return f"read {path}", (b"%PDF-1.4 fake", "application/pdf")
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_tool_with_attachment", {"path": "gs://bucket/doc.pdf"}),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, _ = client.run_tool_loop(
+        contents=["question"], tools=[_tool_with_attachment], max_tool_calls=8, purpose="test"
+    )
+
+    # initial + model turn (tool call) + function response + attachment Part + model turn (text)
+    assert len(conversation) == 5
+    attachment_content = conversation[3]
+    assert attachment_content.parts[0].inline_data.data == b"%PDF-1.4 fake"
+    assert attachment_content.parts[0].inline_data.mime_type == "application/pdf"
+
+
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_stops_at_cap_without_raising(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_dummy_tool", {"x": 1}),
+        _tool_call_response("_dummy_tool", {"x": 2}),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=2, purpose="test"
+    )
+
+    assert tool_cap_reached is True
+    assert mock_client.models.generate_content.call_count == 2
+
+
 @patch("app.llm.genai.Client")
 def test_thinking_budget_parameter_no_longer_exists(mock_client_cls):
     """Never send thinking_budget to Gemini 3.x models — confirmed rejected
