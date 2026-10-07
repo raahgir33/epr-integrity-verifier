@@ -1,0 +1,1786 @@
+{
+  "config_name": "no_thinking",
+  "thinking_level": null,
+  "run_index": 1,
+  "as_of_month": "2026-03",
+  "processors": {
+    "PWP-01": {
+      "agent_status": "ok",
+      "tool_cap_reached": true,
+      "conclusions": [
+        {
+          "certificate_batch": "2025-04",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued for this period, which is consistent with zero verified inbound tonnage."
+        },
+        {
+          "certificate_batch": "2025-05",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-036",
+            "PWP-01-EWAY_BILL-037",
+            "PWP-01-WEIGHBRIDGE_SLIP-038",
+            "PWP-01-INBOUND_INVOICE-018",
+            "PWP-01-EWAY_BILL-019",
+            "PWP-01-WEIGHBRIDGE_SLIP-020"
+          ],
+          "explanation": "The certified tonnage of 16.41 t is fully supported by verified inbound shipments PWP-01-SHP-012 and PWP-01-SHP-006, which have matching invoices, e-way bills, and weighbridge slips totaling 16.41 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2025-06",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued for this period, which is consistent with zero verified inbound tonnage."
+        },
+        {
+          "certificate_batch": "2025-07",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-009",
+            "PWP-01-EWAY_BILL-010",
+            "PWP-01-WEIGHBRIDGE_SLIP-011"
+          ],
+          "explanation": "The certified tonnage of 8.92 t is fully supported by verified inbound shipment PWP-01-SHP-003, which has matching invoice, e-way bill, and weighbridge slip totaling 8.92 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2025-08",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-048",
+            "PWP-01-EWAY_BILL-049",
+            "PWP-01-WEIGHBRIDGE_SLIP-050",
+            "PWP-01-INBOUND_INVOICE-042",
+            "PWP-01-EWAY_BILL-043",
+            "PWP-01-WEIGHBRIDGE_SLIP-044"
+          ],
+          "explanation": "The certified tonnage of 16.82 t is fully supported by verified inbound shipments PWP-01-SHP-016 and PWP-01-SHP-014, which have matching invoices, e-way bills, and weighbridge slips totaling 16.83 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2025-09",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-012",
+            "PWP-01-EWAY_BILL-013",
+            "PWP-01-WEIGHBRIDGE_SLIP-014",
+            "PWP-01-INBOUND_INVOICE-024",
+            "PWP-01-EWAY_BILL-025",
+            "PWP-01-WEIGHBRIDGE_SLIP-026",
+            "PWP-01-INBOUND_INVOICE-030",
+            "PWP-01-EWAY_BILL-031",
+            "PWP-01-WEIGHBRIDGE_SLIP-032"
+          ],
+          "explanation": "The certified tonnage of 23.96 t is fully supported by verified inbound shipments PWP-01-SHP-004, PWP-01-SHP-008, and PWP-01-SHP-010, which have matching invoices, e-way bills, and weighbridge slips totaling 23.96 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2025-10",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-015",
+            "PWP-01-EWAY_BILL-016",
+            "PWP-01-WEIGHBRIDGE_SLIP-017"
+          ],
+          "explanation": "The certified tonnage of 7.23 t is fully supported by verified inbound shipment PWP-01-SHP-005, which has matching invoice, e-way bill, and weighbridge slip totaling 7.23 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2025-11",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued for this period, which is consistent with zero verified inbound tonnage."
+        },
+        {
+          "certificate_batch": "2025-12",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-045",
+            "PWP-01-EWAY_BILL-046",
+            "PWP-01-WEIGHBRIDGE_SLIP-047"
+          ],
+          "explanation": "The certified tonnage of 8.65 t is fully supported by verified inbound shipment PWP-01-SHP-015, which has matching invoice, e-way bill, and weighbridge slip totaling 8.65 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2026-01",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-027",
+            "PWP-01-EWAY_BILL-028",
+            "PWP-01-WEIGHBRIDGE_SLIP-029"
+          ],
+          "explanation": "The certified tonnage of 7.64 t is fully supported by verified inbound shipment PWP-01-SHP-009, which has matching invoice, e-way bill, and weighbridge slip totaling 7.64 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2026-02",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-006",
+            "PWP-01-EWAY_BILL-007",
+            "PWP-01-WEIGHBRIDGE_SLIP-008",
+            "PWP-01-INBOUND_INVOICE-021",
+            "PWP-01-EWAY_BILL-022",
+            "PWP-01-WEIGHBRIDGE_SLIP-023",
+            "PWP-01-INBOUND_INVOICE-033",
+            "PWP-01-EWAY_BILL-034",
+            "PWP-01-WEIGHBRIDGE_SLIP-035"
+          ],
+          "explanation": "The certified tonnage of 23.35 t is fully supported by verified inbound shipments PWP-01-SHP-002, PWP-01-SHP-007, and PWP-01-SHP-011, which have matching invoices, e-way bills, and weighbridge slips totaling 23.35 t. All deterministic checks passed."
+        },
+        {
+          "certificate_batch": "2026-03",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-01-INBOUND_INVOICE-003",
+            "PWP-01-EWAY_BILL-004",
+            "PWP-01-WEIGHBRIDGE_SLIP-005",
+            "PWP-01-INBOUND_INVOICE-039",
+            "PWP-01-EWAY_BILL-040",
+            "PWP-01-WEIGHBRIDGE_SLIP-041"
+          ],
+          "explanation": "The certified tonnage of 16.43 t is fully supported by verified inbound shipments PWP-01-SHP-001 and PWP-01-SHP-013, which have matching invoices, e-way bills, and weighbridge slips totaling 16.44 t. All deterministic checks passed."
+        }
+      ],
+      "hypothesis_findings": [],
+      "verdicts": [],
+      "objections": [],
+      "revisions": [],
+      "hypothesis_finding_responses": [],
+      "confirmed_findings": [],
+      "review_flag_findings": [],
+      "withdrawn_findings": [],
+      "deductible_findings": [],
+      "systemic_findings": [],
+      "no_evidence_findings": [],
+      "trail": [
+        {
+          "step_index": 0,
+          "step_type": "hypothesis",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "You are reviewing whether a plastic-waste processor's EPR recycling certificates for one financial year are backed by real, verifiable material. You will be given a context pack: the processor's regis",
+          "output_json": "{\"conclusions\":[{\"certificate_batch\":\"2025-04\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued for this period, which is consistent with zero verified inbound tonnage.\"},{\"certificate_batch\":\"2025-05\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-036\",\"PWP-01-EWAY_BILL-037\",\"PWP-01-WEIGHBRIDGE_SLIP-038\",\"PWP-01-INBOUND_INVOICE-018\",\"PWP-01-EWAY_BILL-019\",\"PWP-01-WEIGHBRIDGE_SLIP-020\"],\"explanation\":\"The certified tonnage of 16.41 t is fully supported by verified inbound shipments PWP-01-SHP-012 and PWP-01-SHP-006, which have matching invoices, e-way bills, and weighbridge slips totaling 16.41 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2025-06\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued for this period, which is consistent with zero verified inbound tonnage.\"},{\"certificate_batch\":\"2025-07\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-009\",\"PWP-01-EWAY_BILL-010\",\"PWP-01-WEIGHBRIDGE_SLIP-011\"],\"explanation\":\"The certified tonnage of 8.92 t is fully supported by verified inbound shipment PWP-01-SHP-003, which has matching invoice, e-way bill, and weighbridge slip totaling 8.92 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2025-08\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-048\",\"PWP-01-EWAY_BILL-049\",\"PWP-01-WEIGHBRIDGE_SLIP-050\",\"PWP-01-INBOUND_INVOICE-042\",\"PWP-01-EWAY_BILL-043\",\"PWP-01-WEIGHBRIDGE_SLIP-044\"],\"explanation\":\"The certified tonnage of 16.82 t is fully supported by verified inbound shipments PWP-01-SHP-016 and PWP-01-SHP-014, which have matching invoices, e-way bills, and weighbridge slips totaling 16.83 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2025-09\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-012\",\"PWP-01-EWAY_BILL-013\",\"PWP-01-WEIGHBRIDGE_SLIP-014\",\"PWP-01-INBOUND_INVOICE-024\",\"PWP-01-EWAY_BILL-025\",\"PWP-01-WEIGHBRIDGE_SLIP-026\",\"PWP-01-INBOUND_INVOICE-030\",\"PWP-01-EWAY_BILL-031\",\"PWP-01-WEIGHBRIDGE_SLIP-032\"],\"explanation\":\"The certified tonnage of 23.96 t is fully supported by verified inbound shipments PWP-01-SHP-004, PWP-01-SHP-008, and PWP-01-SHP-010, which have matching invoices, e-way bills, and weighbridge slips totaling 23.96 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2025-10\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-015\",\"PWP-01-EWAY_BILL-016\",\"PWP-01-WEIGHBRIDGE_SLIP-017\"],\"explanation\":\"The certified tonnage of 7.23 t is fully supported by verified inbound shipment PWP-01-SHP-005, which has matching invoice, e-way bill, and weighbridge slip totaling 7.23 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2025-11\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued for this period, which is consistent with zero verified inbound tonnage.\"},{\"certificate_batch\":\"2025-12\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-045\",\"PWP-01-EWAY_BILL-046\",\"PWP-01-WEIGHBRIDGE_SLIP-047\"],\"explanation\":\"The certified tonnage of 8.65 t is fully supported by verified inbound shipment PWP-01-SHP-015, which has matching invoice, e-way bill, and weighbridge slip totaling 8.65 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2026-01\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-027\",\"PWP-01-EWAY_BILL-028\",\"PWP-01-WEIGHBRIDGE_SLIP-029\"],\"explanation\":\"The certified tonnage of 7.64 t is fully supported by verified inbound shipment PWP-01-SHP-009, which has matching invoice, e-way bill, and weighbridge slip totaling 7.64 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2026-02\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-006\",\"PWP-01-EWAY_BILL-007\",\"PWP-01-WEIGHBRIDGE_SLIP-008\",\"PWP-01-INBOUND_INVOICE-021\",\"PWP-01-EWAY_BILL-022\",\"PWP-01-WEIGHBRIDGE_SLIP-023\",\"PWP-01-INBOUND_INVOICE-033\",\"PWP-01-EWAY_BILL-034\",\"PWP-01-WEIGHBRIDGE_SLIP-035\"],\"explanation\":\"The certified tonnage of 23.35 t is fully supported by verified inbound shipments PWP-01-SHP-002, PWP-01-SHP-007, and PWP-01-SHP-011, which have matching invoices, e-way bills, and weighbridge slips totaling 23.35 t. All deterministic checks passed.\"},{\"certificate_batch\":\"2026-03\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-01-INBOUND_INVOICE-003\",\"PWP-01-EWAY_BILL-004\",\"PWP-01-WEIGHBRIDGE_SLIP-005\",\"PWP-01-INBOUND_INVOICE-039\",\"PWP-01-EWAY_BILL-040\",\"PWP-01-WEIGHBRIDGE_SLIP-041\"],\"explanation\":\"The certified tonnage of 16.43 t is fully supported by verified inbound shipments PWP-01-SHP-001 and PWP-01-SHP-013, which have matching invoices, e-way bills, and weighbridge slips totaling 16.44 t. All deterministic checks passed.\"}],\"findings\":[]}"
+        },
+        {
+          "step_index": 1,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-001\", \"PWP-01-SHP-002\", \"PWP-01-SHP-003\", \"PWP-01-SHP-004\", \"PWP-01-SHP-005\", \"PWP-01-SHP-006\", \"PWP-01-SHP-007\", \"PWP-01-SHP-008\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 2,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-001\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-03\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-003\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-004\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-005\\\", \\\"invoice_qty_t\\\": 8.39, \\\"weighbridge_net_t\\\": 8.37, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484322875\\\", \\\"vehicle_no\\\": \\\"HR21AB5930\\\", \\\"distance_km\\\": 777.8, \\\"eway_generated_at\\\": \\\"2026-03-22T06:13:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-03-26T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-03-23T00:44:00+00:00\\\", \\\"invoice_no\\\": \\\"NWA/25-26/0003\\\", \\\"supplier_gstin\\\": \\\"27FIQTN3834M6Z3\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00016\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-002\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-006\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-007\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-008\\\", \\\"invoice_qty_t\\\": 8.16, \\\"weighbridge_net_t\\\": 8.19, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484255156\\\", \\\"vehicle_no\\\": \\\"TG57AB3780\\\", \\\"distance_km\\\": 141.5, \\\"eway_generated_at\\\": \\\"2026-02-10T04:02:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-02-11T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-02-10T07:45:00+00:00\\\", \\\"invoice_no\\\": \\\"MRPL/25-26/0013\\\", \\\"supplier_gstin\\\": \\\"27FRYQA9570D6Z2\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00012\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-003\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-07\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-009\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-010\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-011\\\", \\\"invoice_qty_t\\\": 8.9, \\\"weighbridge_net_t\\\": 8.92, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483989139\\\", \\\"vehicle_no\\\": \\\"MH25AB8784\\\", \\\"distance_km\\\": 184.7, \\\"eway_generated_at\\\": \\\"2025-07-21T03:31:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-07-22T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-07-21T07:39:00+00:00\\\", \\\"invoice_no\\\": \\\"NE/25-26/0002\\\", \\\"supplier_gstin\\\": \\\"27HBHSC1718Y3ZM\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00003\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-004\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-09\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-012\\\", \\\"ew...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 3,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-004\", \"PWP-01-SHP-005\", \"PWP-01-SHP-006\", \"PWP-01-SHP-007\", \"PWP-01-SHP-008\", \"PWP-01-SHP-009\", \"PWP-01-SHP-010\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 4,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-004\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-09\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-012\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-013\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-014\\\", \\\"invoice_qty_t\\\": 7.77, \\\"weighbridge_net_t\\\": 7.83, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484058051\\\", \\\"vehicle_no\\\": \\\"TG24AB3881\\\", \\\"distance_km\\\": 134.9, \\\"eway_generated_at\\\": \\\"2025-09-14T03:19:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-09-15T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-09-14T06:29:00+00:00\\\", \\\"invoice_no\\\": \\\"MRPL/25-26/0006\\\", \\\"supplier_gstin\\\": \\\"27FRYQA9570D6Z2\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00007\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-005\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-10\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-015\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-016\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-017\\\", \\\"invoice_qty_t\\\": 7.24, \\\"weighbridge_net_t\\\": 7.23, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484083578\\\", \\\"vehicle_no\\\": \\\"TG49AB9270\\\", \\\"distance_km\\\": 141.5, \\\"eway_generated_at\\\": \\\"2025-10-02T05:18:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-10-03T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-10-02T08:52:00+00:00\\\", \\\"invoice_no\\\": \\\"MRPL/25-26/0007\\\", \\\"supplier_gstin\\\": \\\"27FRYQA9570D6Z2\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00009\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-006\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-05\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-018\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-019\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-020\\\", \\\"invoice_qty_t\\\": 8.5, \\\"weighbridge_net_t\\\": 8.41, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483913921\\\", \\\"vehicle_no\\\": \\\"GJ27AB8206\\\", \\\"distance_km\\\": 788.0, \\\"eway_generated_at\\\": \\\"2025-05-06T06:10:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-05-10T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-05-07T00:04:00+00:00\\\", \\\"invoice_no\\\": \\\"NWA/25-26/0001\\\", \\\"supplier_gstin\\\": \\\"27FIQTN3834M6Z3\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00002\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-007\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-021\\\", \\\"...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 5,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-007\", \"PWP-01-SHP-008\", \"PWP-01-SHP-009\", \"PWP-01-SHP-010\", \"PWP-01-SHP-011\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 6,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-007\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-021\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-022\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-023\\\", \\\"invoice_qty_t\\\": 7.16, \\\"weighbridge_net_t\\\": 7.17, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484256625\\\", \\\"vehicle_no\\\": \\\"TG36AB6421\\\", \\\"distance_km\\\": 186.7, \\\"eway_generated_at\\\": \\\"2026-02-11T03:34:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-02-12T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-02-11T09:16:00+00:00\\\", \\\"invoice_no\\\": \\\"NE/25-26/0010\\\", \\\"supplier_gstin\\\": \\\"27HBHSC1718Y3ZM\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00013\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-008\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-09\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-024\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-025\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-026\\\", \\\"invoice_qty_t\\\": 8.17, \\\"weighbridge_net_t\\\": 8.22, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484062834\\\", \\\"vehicle_no\\\": \\\"MH32AB5892\\\", \\\"distance_km\\\": 857.1, \\\"eway_generated_at\\\": \\\"2025-09-14T06:00:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-09-19T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-09-15T01:34:00+00:00\\\", \\\"invoice_no\\\": \\\"NWA/25-26/0002\\\", \\\"supplier_gstin\\\": \\\"27FIQTN3834M6Z3\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00008\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-009\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-01\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-027\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-028\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-029\\\", \\\"invoice_qty_t\\\": 7.55, \\\"weighbridge_net_t\\\": 7.64, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484207541\\\", \\\"vehicle_no\\\": \\\"GJ39AB3091\\\", \\\"distance_km\\\": 139.9, \\\"eway_generated_at\\\": \\\"2026-01-14T06:16:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-01-15T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-01-14T09:35:00+00:00\\\", \\\"invoice_no\\\": \\\"MRPL/25-26/0011\\\", \\\"supplier_gstin\\\": \\\"27FRYQA9570D6Z2\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00011\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-010\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-09\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-030\\\", \\\"e...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 7,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-010\", \"PWP-01-SHP-011\", \"PWP-01-SHP-012\", \"PWP-01-SHP-013\", \"PWP-01-SHP-014\", \"PWP-01-SHP-015\", \"PWP-01-SHP-016\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 8,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-010\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-09\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-030\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-031\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-032\\\", \\\"invoice_qty_t\\\": 7.86, \\\"weighbridge_net_t\\\": 7.91, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484054733\\\", \\\"vehicle_no\\\": \\\"TG30AB6529\\\", \\\"distance_km\\\": 47.6, \\\"eway_generated_at\\\": \\\"2025-09-13T04:43:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-09-14T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-09-13T06:05:00+00:00\\\", \\\"invoice_no\\\": \\\"PST/25-26/0009\\\", \\\"supplier_gstin\\\": \\\"27XXIQY2814U9ZH\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00006\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-011\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-033\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-034\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-035\\\", \\\"invoice_qty_t\\\": 7.94, \\\"weighbridge_net_t\\\": 7.99, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484261271\\\", \\\"vehicle_no\\\": \\\"MH59AB1659\\\", \\\"distance_km\\\": 177.5, \\\"eway_generated_at\\\": \\\"2026-02-14T04:11:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-02-15T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-02-14T07:56:00+00:00\\\", \\\"invoice_no\\\": \\\"NE/25-26/0012\\\", \\\"supplier_gstin\\\": \\\"27HBHSC1718Y3ZM\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00014\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-012\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-05\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-036\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-037\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-038\\\", \\\"invoice_qty_t\\\": 7.95, \\\"weighbridge_net_t\\\": 8.0, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483911456\\\", \\\"vehicle_no\\\": \\\"TN20AB2876\\\", \\\"distance_km\\\": 151.5, \\\"eway_generated_at\\\": \\\"2025-05-01T05:19:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-05-02T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-05-01T09:15:00+00:00\\\", \\\"invoice_no\\\": \\\"MRPL/25-26/0003\\\", \\\"supplier_gstin\\\": \\\"27FRYQA9570D6Z2\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00001\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-013\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-03\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-039\\\", \\\"ewa...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 9,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-013\", \"PWP-01-SHP-014\", \"PWP-01-SHP-015\", \"PWP-01-SHP-016\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 10,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-013\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2026-03\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-039\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-040\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-041\\\", \\\"invoice_qty_t\\\": 8.15, \\\"weighbridge_net_t\\\": 8.07, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484287404\\\", \\\"vehicle_no\\\": \\\"MP54AB4978\\\", \\\"distance_km\\\": 49.0, \\\"eway_generated_at\\\": \\\"2026-03-04T03:34:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-03-05T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-03-04T04:36:00+00:00\\\", \\\"invoice_no\\\": \\\"PST/25-26/0012\\\", \\\"supplier_gstin\\\": \\\"27XXIQY2814U9ZH\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00015\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-014\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-08\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-042\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-043\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-044\\\", \\\"invoice_qty_t\\\": 8.13, \\\"weighbridge_net_t\\\": 8.2, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484024287\\\", \\\"vehicle_no\\\": \\\"HR31AB1207\\\", \\\"distance_km\\\": 50.2, \\\"eway_generated_at\\\": \\\"2025-08-22T03:02:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-08-23T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-08-22T04:13:00+00:00\\\", \\\"invoice_no\\\": \\\"PST/25-26/0005\\\", \\\"supplier_gstin\\\": \\\"27XXIQY2814U9ZH\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00005\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-015\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-12\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-045\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-046\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-047\\\", \\\"invoice_qty_t\\\": 8.66, \\\"weighbridge_net_t\\\": 8.65, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484176256\\\", \\\"vehicle_no\\\": \\\"RJ44AB8921\\\", \\\"distance_km\\\": 188.2, \\\"eway_generated_at\\\": \\\"2025-12-14T05:09:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-12-15T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-12-14T09:30:00+00:00\\\", \\\"invoice_no\\\": \\\"NE/25-26/0006\\\", \\\"supplier_gstin\\\": \\\"27HBHSC1718Y3ZM\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00010\\\"}, {\\\"shipment_id\\\": \\\"PWP-01-SHP-016\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-08\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-048\\\", \\\"eway_...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 11,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-01-SHP-016\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 12,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-01-SHP-016\\\", \\\"processor_id\\\": \\\"PWP-01\\\", \\\"month\\\": \\\"2025-08\\\", \\\"invoice_doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-048\\\", \\\"eway_doc_id\\\": \\\"PWP-01-EWAY_BILL-049\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-01-WEIGHBRIDGE_SLIP-050\\\", \\\"invoice_qty_t\\\": 8.66, \\\"weighbridge_net_t\\\": 8.63, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484004250\\\", \\\"vehicle_no\\\": \\\"MP52AB7209\\\", \\\"distance_km\\\": 200.6, \\\"eway_generated_at\\\": \\\"2025-08-09T06:06:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-08-10T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-08-09T11:55:00+00:00\\\", \\\"invoice_no\\\": \\\"NE/25-26/0004\\\", \\\"supplier_gstin\\\": \\\"27HBHSC1718Y3ZM\\\", \\\"weighbridge_ticket_no\\\": \\\"MH-WB-2535-00004\\\"}]\"}}]}"
+        },
+        {
+          "step_index": 13,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-01-INBOUND_INVOICE-003\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 14,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-01-INBOUND_INVOICE-003\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"hi\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"27AXIHH2181S7Z6\\\", \\\"date\\\": \\\"22/03/2026\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"NWA/25-26/0003\\\", \\\"item_description\\\": \\\"\\\\u0909\\\\u092a\\\\u092d\\\\u094b\\\\u0915\\\\u094d\\\\u0924\\\\u093e-\\\\u092a\\\\u0936\\\\u094d\\\\u091a\\\\u093e\\\\u0924 \\\\u092a\\\\u094d\\\\u0932\\\\u093e\\\\u0938\\\\u094d\\\\u091f\\\\u093f\\\\u0915 \\\\u0905\\\\u092a\\\\u0936\\\\u093f\\\\u0937\\\\u094d\\\\u091f, \\\\u092e\\\\u093f\\\\u0936\\\\u094d\\\\u0930\\\\u093f\\\\u0924 \\\\u092a\\\\u0940\\\\u0908/\\\\u092a\\\\u0940\\\\u092a\\\\u0940\\\", \\\"quantity_t\\\": \\\"8.39\\\", \\\"rate\\\": \\\"13.54\\\", \\\"supplier_gstin\\\": \\\"27FIQTN3834M6Z3\\\", \\\"value\\\": \\\"1,13,600.60\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 15,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-01-EWAY_BILL-004\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 16,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-01-EWAY_BILL-004\\\", \\\"doc_type\\\": \\\"eway_bill\\\", \\\"lang\\\": \\\"hi\\\", \\\"fields\\\": {\\\"distance_km\\\": \\\"777.8\\\", \\\"ewb_no\\\": \\\"649484322875\\\", \\\"from_gstin\\\": \\\"27FIQTN3834M6Z3\\\", \\\"from_pin\\\": \\\"440548\\\", \\\"generated_at\\\": \\\"22-03-2026 11:43\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"NWA/25-26/0003\\\", \\\"quantity_t\\\": \\\"8.39\\\", \\\"to_gstin\\\": \\\"27AXIHH2181S7Z6\\\", \\\"to_pin\\\": \\\"411130\\\", \\\"valid_until\\\": \\\"26-03-2026 23:59\\\", \\\"value\\\": \\\"1,13,600.60\\\", \\\"vehicle_no\\\": \\\"HR21AB5930\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 17,
+          "step_type": "tool_cap_reached",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"tool_cap_reached\": true}"
+        },
+        {
+          "step_index": 18,
+          "step_type": "critic_final",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "Based on everything you have seen in this conversation \u2014 the context pack, the Hypothesis agent's conclusions and proposed findings, and the tool results above \u2014 do two things.\n\nFirst, give a verdict ",
+          "output_json": "{\"verdicts\":[],\"objections\":[]}"
+        }
+      ],
+      "score": {
+        "processor_id": "PWP-01",
+        "certified_t": 129.41,
+        "verified_inbound_t": 129.43,
+        "capacity_limit_t": 192.0,
+        "verifiable_t": 129.41,
+        "unverifiable_t": 0.0,
+        "risk_band": "Low"
+      }
+    },
+    "PWP-03": {
+      "agent_status": "ok",
+      "tool_cap_reached": true,
+      "conclusions": [
+        {
+          "certificate_batch": "2025-04",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound material was received during this period, which is consistent."
+        },
+        {
+          "certificate_batch": "2025-05",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound material was received during this period, which is consistent."
+        },
+        {
+          "certificate_batch": "2025-06",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-024",
+            "PWP-03-EWAY_BILL-025",
+            "PWP-03-WEIGHBRIDGE_SLIP-026"
+          ],
+          "explanation": "The certified quantity of 7.1 tonnes is fully supported by verified inbound shipment PWP-03-SHP-008 (7.1 tonnes net weight) with matching invoice, e-way bill, and weighbridge slip."
+        },
+        {
+          "certificate_batch": "2025-07",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-015",
+            "PWP-03-EWAY_BILL-016",
+            "PWP-03-WEIGHBRIDGE_SLIP-017",
+            "PWP-03-INBOUND_INVOICE-027",
+            "PWP-03-EWAY_BILL-028",
+            "PWP-03-WEIGHBRIDGE_SLIP-029"
+          ],
+          "explanation": "The certified quantity of 15.41 tonnes is fully supported by verified inbound shipments PWP-03-SHP-005 (7.43 tonnes) and PWP-03-SHP-009 (7.98 tonnes), totaling 15.41 tonnes."
+        },
+        {
+          "certificate_batch": "2025-08",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-036",
+            "PWP-03-EWAY_BILL-037",
+            "PWP-03-WEIGHBRIDGE_SLIP-038",
+            "PWP-03-INBOUND_INVOICE-042",
+            "PWP-03-EWAY_BILL-043",
+            "PWP-03-WEIGHBRIDGE_SLIP-044"
+          ],
+          "explanation": "The certified quantity of 16.39 tonnes is fully supported by verified inbound shipments PWP-03-SHP-012 (8.48 tonnes) and PWP-03-SHP-014 (7.91 tonnes), totaling 16.39 tonnes."
+        },
+        {
+          "certificate_batch": "2025-09",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound material was received during this period, which is consistent."
+        },
+        {
+          "certificate_batch": "2025-10",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-006",
+            "PWP-03-EWAY_BILL-007",
+            "PWP-03-WEIGHBRIDGE_SLIP-008"
+          ],
+          "explanation": "The certified quantity of 7.17 tonnes is fully supported by verified inbound shipment PWP-03-SHP-002 (7.17 tonnes net weight) with matching documentation."
+        },
+        {
+          "certificate_batch": "2025-11",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-018",
+            "PWP-03-EWAY_BILL-019",
+            "PWP-03-WEIGHBRIDGE_SLIP-020",
+            "PWP-03-INBOUND_INVOICE-030",
+            "PWP-03-EWAY_BILL-031",
+            "PWP-03-WEIGHBRIDGE_SLIP-032",
+            "PWP-03-INBOUND_INVOICE-039",
+            "PWP-03-EWAY_BILL-040",
+            "PWP-03-WEIGHBRIDGE_SLIP-041"
+          ],
+          "explanation": "The certified quantity of 23.17 tonnes is fully supported by verified inbound shipments PWP-03-SHP-006 (7.08 tonnes), PWP-03-SHP-010 (8.91 tonnes), and PWP-03-SHP-013 (7.18 tonnes), totaling 23.17 tonnes."
+        },
+        {
+          "certificate_batch": "2025-12",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound material was received during this period, which is consistent."
+        },
+        {
+          "certificate_batch": "2026-01",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-003",
+            "PWP-03-EWAY_BILL-004",
+            "PWP-03-WEIGHBRIDGE_SLIP-005",
+            "PWP-03-INBOUND_INVOICE-009",
+            "PWP-03-EWAY_BILL-010",
+            "PWP-03-WEIGHBRIDGE_SLIP-011",
+            "PWP-03-INBOUND_INVOICE-021",
+            "PWP-03-EWAY_BILL-022",
+            "PWP-03-WEIGHBRIDGE_SLIP-023"
+          ],
+          "explanation": "The certified quantity of 40.26 tonnes is fully supported by verified inbound shipments PWP-03-SHP-001 (23.16 tonnes), PWP-03-SHP-003 (8.85 tonnes), and PWP-03-SHP-007 (8.25 tonnes), totaling 40.26 tonnes."
+        },
+        {
+          "certificate_batch": "2026-02",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-03-INBOUND_INVOICE-012",
+            "PWP-03-EWAY_BILL-013",
+            "PWP-03-WEIGHBRIDGE_SLIP-014",
+            "PWP-03-INBOUND_INVOICE-033",
+            "PWP-03-EWAY_BILL-034",
+            "PWP-03-WEIGHBRIDGE_SLIP-035"
+          ],
+          "explanation": "The certified quantity of 17.22 tonnes is fully supported by verified inbound shipments PWP-03-SHP-004 (8.38 tonnes) and PWP-03-SHP-011 (8.84 tonnes), totaling 17.22 tonnes."
+        },
+        {
+          "certificate_batch": "2026-03",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound material was received during this period, which is consistent."
+        }
+      ],
+      "hypothesis_findings": [],
+      "verdicts": [],
+      "objections": [],
+      "revisions": [],
+      "hypothesis_finding_responses": [],
+      "confirmed_findings": [],
+      "review_flag_findings": [],
+      "withdrawn_findings": [],
+      "deductible_findings": [],
+      "systemic_findings": [],
+      "no_evidence_findings": [],
+      "trail": [
+        {
+          "step_index": 0,
+          "step_type": "hypothesis",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "You are reviewing whether a plastic-waste processor's EPR recycling certificates for one financial year are backed by real, verifiable material. You will be given a context pack: the processor's regis",
+          "output_json": "{\"conclusions\":[{\"certificate_batch\":\"2025-04\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound material was received during this period, which is consistent.\"},{\"certificate_batch\":\"2025-05\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound material was received during this period, which is consistent.\"},{\"certificate_batch\":\"2025-06\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-024\",\"PWP-03-EWAY_BILL-025\",\"PWP-03-WEIGHBRIDGE_SLIP-026\"],\"explanation\":\"The certified quantity of 7.1 tonnes is fully supported by verified inbound shipment PWP-03-SHP-008 (7.1 tonnes net weight) with matching invoice, e-way bill, and weighbridge slip.\"},{\"certificate_batch\":\"2025-07\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-015\",\"PWP-03-EWAY_BILL-016\",\"PWP-03-WEIGHBRIDGE_SLIP-017\",\"PWP-03-INBOUND_INVOICE-027\",\"PWP-03-EWAY_BILL-028\",\"PWP-03-WEIGHBRIDGE_SLIP-029\"],\"explanation\":\"The certified quantity of 15.41 tonnes is fully supported by verified inbound shipments PWP-03-SHP-005 (7.43 tonnes) and PWP-03-SHP-009 (7.98 tonnes), totaling 15.41 tonnes.\"},{\"certificate_batch\":\"2025-08\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-036\",\"PWP-03-EWAY_BILL-037\",\"PWP-03-WEIGHBRIDGE_SLIP-038\",\"PWP-03-INBOUND_INVOICE-042\",\"PWP-03-EWAY_BILL-043\",\"PWP-03-WEIGHBRIDGE_SLIP-044\"],\"explanation\":\"The certified quantity of 16.39 tonnes is fully supported by verified inbound shipments PWP-03-SHP-012 (8.48 tonnes) and PWP-03-SHP-014 (7.91 tonnes), totaling 16.39 tonnes.\"},{\"certificate_batch\":\"2025-09\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound material was received during this period, which is consistent.\"},{\"certificate_batch\":\"2025-10\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-006\",\"PWP-03-EWAY_BILL-007\",\"PWP-03-WEIGHBRIDGE_SLIP-008\"],\"explanation\":\"The certified quantity of 7.17 tonnes is fully supported by verified inbound shipment PWP-03-SHP-002 (7.17 tonnes net weight) with matching documentation.\"},{\"certificate_batch\":\"2025-11\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-018\",\"PWP-03-EWAY_BILL-019\",\"PWP-03-WEIGHBRIDGE_SLIP-020\",\"PWP-03-INBOUND_INVOICE-030\",\"PWP-03-EWAY_BILL-031\",\"PWP-03-WEIGHBRIDGE_SLIP-032\",\"PWP-03-INBOUND_INVOICE-039\",\"PWP-03-EWAY_BILL-040\",\"PWP-03-WEIGHBRIDGE_SLIP-041\"],\"explanation\":\"The certified quantity of 23.17 tonnes is fully supported by verified inbound shipments PWP-03-SHP-006 (7.08 tonnes), PWP-03-SHP-010 (8.91 tonnes), and PWP-03-SHP-013 (7.18 tonnes), totaling 23.17 tonnes.\"},{\"certificate_batch\":\"2025-12\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound material was received during this period, which is consistent.\"},{\"certificate_batch\":\"2026-01\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-003\",\"PWP-03-EWAY_BILL-004\",\"PWP-03-WEIGHBRIDGE_SLIP-005\",\"PWP-03-INBOUND_INVOICE-009\",\"PWP-03-EWAY_BILL-010\",\"PWP-03-WEIGHBRIDGE_SLIP-011\",\"PWP-03-INBOUND_INVOICE-021\",\"PWP-03-EWAY_BILL-022\",\"PWP-03-WEIGHBRIDGE_SLIP-023\"],\"explanation\":\"The certified quantity of 40.26 tonnes is fully supported by verified inbound shipments PWP-03-SHP-001 (23.16 tonnes), PWP-03-SHP-003 (8.85 tonnes), and PWP-03-SHP-007 (8.25 tonnes), totaling 40.26 tonnes.\"},{\"certificate_batch\":\"2026-02\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-03-INBOUND_INVOICE-012\",\"PWP-03-EWAY_BILL-013\",\"PWP-03-WEIGHBRIDGE_SLIP-014\",\"PWP-03-INBOUND_INVOICE-033\",\"PWP-03-EWAY_BILL-034\",\"PWP-03-WEIGHBRIDGE_SLIP-035\"],\"explanation\":\"The certified quantity of 17.22 tonnes is fully supported by verified inbound shipments PWP-03-SHP-004 (8.38 tonnes) and PWP-03-SHP-011 (8.84 tonnes), totaling 17.22 tonnes.\"},{\"certificate_batch\":\"2026-03\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound material was received during this period, which is consistent.\"}],\"findings\":[]}"
+        },
+        {
+          "step_index": 1,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-03-SHP-001\", \"PWP-03-SHP-002\", \"PWP-03-SHP-003\", \"PWP-03-SHP-004\", \"PWP-03-SHP-005\", \"PWP-03-SHP-006\", \"PWP-03-SHP-007\", \"PWP-03-SHP-008\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 2,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-03-SHP-001\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-01\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-003\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-004\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-005\\\", \\\"invoice_qty_t\\\": 23.05, \\\"weighbridge_net_t\\\": 23.16, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484225646\\\", \\\"vehicle_no\\\": \\\"MP29AB7951\\\", \\\"distance_km\\\": 935.0, \\\"eway_generated_at\\\": \\\"2026-01-22T05:52:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-01-27T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-01-23T10:20:00+00:00\\\", \\\"invoice_no\\\": \\\"ARPL/25-26/0001\\\", \\\"supplier_gstin\\\": \\\"08XZHIF1607H4ZC\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00011\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-002\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-10\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-006\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-007\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-008\\\", \\\"invoice_qty_t\\\": 7.21, \\\"weighbridge_net_t\\\": 7.17, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484090551\\\", \\\"vehicle_no\\\": \\\"RJ52AB7484\\\", \\\"distance_km\\\": 159.2, \\\"eway_generated_at\\\": \\\"2025-10-07T04:31:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-10-08T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-10-07T09:01:00+00:00\\\", \\\"invoice_no\\\": \\\"SRPL/25-26/0005\\\", \\\"supplier_gstin\\\": \\\"24CBKCQ3473R3ZJ\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00006\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-003\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-01\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-009\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-010\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-011\\\", \\\"invoice_qty_t\\\": 8.82, \\\"weighbridge_net_t\\\": 8.85, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484242689\\\", \\\"vehicle_no\\\": \\\"RJ32AB4588\\\", \\\"distance_km\\\": 343.2, \\\"eway_generated_at\\\": \\\"2026-01-25T04:08:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-01-27T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-01-25T11:33:00+00:00\\\", \\\"invoice_no\\\": \\\"RWA/25-26/0006\\\", \\\"supplier_gstin\\\": \\\"24XBVUU1065Z2ZB\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00012\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-004\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-012\\\"...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 3,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-03-SHP-004\", \"PWP-03-SHP-005\", \"PWP-03-SHP-006\", \"PWP-03-SHP-007\", \"PWP-03-SHP-008\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 4,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-03-SHP-004\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-012\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-013\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-014\\\", \\\"invoice_qty_t\\\": 8.36, \\\"weighbridge_net_t\\\": 8.38, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484282665\\\", \\\"vehicle_no\\\": \\\"RJ38AB1546\\\", \\\"distance_km\\\": 307.9, \\\"eway_generated_at\\\": \\\"2026-02-25T02:49:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-02-27T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-02-25T10:16:00+00:00\\\", \\\"invoice_no\\\": \\\"RWA/25-26/0007\\\", \\\"supplier_gstin\\\": \\\"24XBVUU1065Z2ZB\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00014\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-005\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-07\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-015\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-016\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-017\\\", \\\"invoice_qty_t\\\": 7.35, \\\"weighbridge_net_t\\\": 7.43, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483979362\\\", \\\"vehicle_no\\\": \\\"GJ26AB8894\\\", \\\"distance_km\\\": 163.5, \\\"eway_generated_at\\\": \\\"2025-07-10T05:23:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-07-11T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-07-10T08:49:00+00:00\\\", \\\"invoice_no\\\": \\\"SRPL/25-26/0002\\\", \\\"supplier_gstin\\\": \\\"24CBKCQ3473R3ZJ\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00003\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-006\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-11\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-018\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-019\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-020\\\", \\\"invoice_qty_t\\\": 7.15, \\\"weighbridge_net_t\\\": 7.08, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484138226\\\", \\\"vehicle_no\\\": \\\"RJ45AB6992\\\", \\\"distance_km\\\": 144.0, \\\"eway_generated_at\\\": \\\"2025-11-11T06:24:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-11-12T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-11-11T09:48:00+00:00\\\", \\\"invoice_no\\\": \\\"AST/25-26/0003\\\", \\\"supplier_gstin\\\": \\\"24HHCKA9839H1ZI\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00007\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-007\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-01\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-021\\\", \\\"...(truncated)\"}}]}"
+        },
+        {
+          "step_index": 5,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-03-SHP-007\", \"PWP-03-SHP-008\", \"PWP-03-SHP-009\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 6,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-03-SHP-007\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-01\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-021\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-022\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-023\\\", \\\"invoice_qty_t\\\": 8.35, \\\"weighbridge_net_t\\\": 8.25, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484218351\\\", \\\"vehicle_no\\\": \\\"HR24AB8724\\\", \\\"distance_km\\\": 151.8, \\\"eway_generated_at\\\": \\\"2026-01-18T04:36:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-01-19T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-01-18T07:59:00+00:00\\\", \\\"invoice_no\\\": \\\"AST/25-26/0004\\\", \\\"supplier_gstin\\\": \\\"24HHCKA9839H1ZI\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00010\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-008\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-06\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-024\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-025\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-026\\\", \\\"invoice_qty_t\\\": 7.13, \\\"weighbridge_net_t\\\": 7.1, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483940739\\\", \\\"vehicle_no\\\": \\\"GJ12AB1609\\\", \\\"distance_km\\\": 346.8, \\\"eway_generated_at\\\": \\\"2025-06-11T05:37:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-06-13T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-06-11T15:24:00+00:00\\\", \\\"invoice_no\\\": \\\"RWA/25-26/0002\\\", \\\"supplier_gstin\\\": \\\"24XBVUU1065Z2ZB\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00001\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-009\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-07\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-027\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-028\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-029\\\", \\\"invoice_qty_t\\\": 7.91, \\\"weighbridge_net_t\\\": 7.98, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483976474\\\", \\\"vehicle_no\\\": \\\"HR56AB3531\\\", \\\"distance_km\\\": 338.9, \\\"eway_generated_at\\\": \\\"2025-07-08T06:07:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-07-10T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-07-08T13:19:00+00:00\\\", \\\"invoice_no\\\": \\\"RWA/25-26/0003\\\", \\\"supplier_gstin\\\": \\\"24XBVUU1065Z2ZB\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00002\\\"}]\"}}]}"
+        },
+        {
+          "step_index": 7,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-03-SHP-010\", \"PWP-03-SHP-011\", \"PWP-03-SHP-012\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 8,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-03-SHP-010\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-11\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-030\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-031\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-032\\\", \\\"invoice_qty_t\\\": 8.9, \\\"weighbridge_net_t\\\": 8.91, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484150028\\\", \\\"vehicle_no\\\": \\\"TN16AB7018\\\", \\\"distance_km\\\": 321.0, \\\"eway_generated_at\\\": \\\"2025-11-16T04:24:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-11-18T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-11-16T12:51:00+00:00\\\", \\\"invoice_no\\\": \\\"RWA/25-26/0005\\\", \\\"supplier_gstin\\\": \\\"24XBVUU1065Z2ZB\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00008\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-011\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2026-02\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-033\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-034\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-035\\\", \\\"invoice_qty_t\\\": 8.94, \\\"weighbridge_net_t\\\": 8.84, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484248777\\\", \\\"vehicle_no\\\": \\\"HR48AB1349\\\", \\\"distance_km\\\": 170.3, \\\"eway_generated_at\\\": \\\"2026-02-02T04:11:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2026-02-03T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2026-02-02T09:33:00+00:00\\\", \\\"invoice_no\\\": \\\"SRPL/25-26/0010\\\", \\\"supplier_gstin\\\": \\\"24CBKCQ3473R3ZJ\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00013\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-012\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-08\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-036\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-037\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-038\\\", \\\"invoice_qty_t\\\": 8.53, \\\"weighbridge_net_t\\\": 8.48, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484022363\\\", \\\"vehicle_no\\\": \\\"GJ48AB1046\\\", \\\"distance_km\\\": 143.8, \\\"eway_generated_at\\\": \\\"2025-08-19T05:19:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-08-20T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-08-19T08:27:00+00:00\\\", \\\"invoice_no\\\": \\\"AST/25-26/0002\\\", \\\"supplier_gstin\\\": \\\"24HHCKA9839H1ZI\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00005\\\"}]\"}}]}"
+        },
+        {
+          "step_index": 9,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-03-SHP-013\", \"PWP-03-SHP-014\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 10,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-03-SHP-013\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-11\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-039\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-040\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-041\\\", \\\"invoice_qty_t\\\": 7.22, \\\"weighbridge_net_t\\\": 7.18, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484153937\\\", \\\"vehicle_no\\\": \\\"TN11AB3854\\\", \\\"distance_km\\\": 153.8, \\\"eway_generated_at\\\": \\\"2025-11-18T04:07:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-11-19T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-11-18T08:20:00+00:00\\\", \\\"invoice_no\\\": \\\"SRPL/25-26/0006\\\", \\\"supplier_gstin\\\": \\\"24CBKCQ3473R3ZJ\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00009\\\"}, {\\\"shipment_id\\\": \\\"PWP-03-SHP-014\\\", \\\"processor_id\\\": \\\"PWP-03\\\", \\\"month\\\": \\\"2025-08\\\", \\\"invoice_doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-042\\\", \\\"eway_doc_id\\\": \\\"PWP-03-EWAY_BILL-043\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-044\\\", \\\"invoice_qty_t\\\": 7.95, \\\"weighbridge_net_t\\\": 7.91, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649484017256\\\", \\\"vehicle_no\\\": \\\"MH56AB9543\\\", \\\"distance_km\\\": 150.3, \\\"eway_generated_at\\\": \\\"2025-08-17T04:09:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-08-18T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-08-17T08:51:00+00:00\\\", \\\"invoice_no\\\": \\\"AST/25-26/0001\\\", \\\"supplier_gstin\\\": \\\"24HHCKA9839H1ZI\\\", \\\"weighbridge_ticket_no\\\": \\\"GJ-WB-5333-00004\\\"}]\"}}]}"
+        },
+        {
+          "step_index": 11,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-03-EWAY_BILL-004\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 12,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-03-EWAY_BILL-004\\\", \\\"doc_type\\\": \\\"eway_bill\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"distance_km\\\": \\\"935.0\\\", \\\"ewb_no\\\": \\\"649484225646\\\", \\\"from_gstin\\\": \\\"08XZHIF1607H4ZC\\\", \\\"from_pin\\\": \\\"301936\\\", \\\"generated_at\\\": \\\"22-01-2026 11:22\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"ARPL/25-26/0001\\\", \\\"quantity_t\\\": \\\"23.05\\\", \\\"to_gstin\\\": \\\"24KIEGY5116D6ZK\\\", \\\"to_pin\\\": \\\"390718\\\", \\\"valid_until\\\": \\\"27-01-2026 23:59\\\", \\\"value\\\": \\\"3,92,080.50\\\", \\\"vehicle_no\\\": \\\"MP29AB7951\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 13,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-03-INBOUND_INVOICE-003\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 14,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-03-INBOUND_INVOICE-003\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"24KIEGY5116D6ZK\\\", \\\"date\\\": \\\"22/01/2026\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"ARPL/25-26/0001\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"23.05\\\", \\\"rate\\\": \\\"17.01\\\", \\\"supplier_gstin\\\": \\\"08XZHIF1607H4ZC\\\", \\\"value\\\": \\\"3,92,080.50\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 15,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-03-WEIGHBRIDGE_SLIP-005\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 16,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-03-WEIGHBRIDGE_SLIP-005\\\", \\\"doc_type\\\": \\\"weighbridge_slip\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"gross_kg\\\": \\\"31,531\\\", \\\"in_time\\\": \\\"23-01-2026 15:50\\\", \\\"net_kg\\\": \\\"23,160\\\", \\\"out_time\\\": \\\"23-01-2026 16:14\\\", \\\"remarks\\\": \\\"\\\", \\\"tare_kg\\\": \\\"8,371\\\", \\\"ticket_no\\\": \\\"GJ-WB-5333-00011\\\", \\\"vehicle_no\\\": \\\"MP29AB7951\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 17,
+          "step_type": "tool_cap_reached",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"tool_cap_reached\": true}"
+        },
+        {
+          "step_index": 18,
+          "step_type": "critic_final",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "Based on everything you have seen in this conversation \u2014 the context pack, the Hypothesis agent's conclusions and proposed findings, and the tool results above \u2014 do two things.\n\nFirst, give a verdict ",
+          "output_json": "{\"verdicts\":[],\"objections\":[]}"
+        }
+      ],
+      "score": {
+        "processor_id": "PWP-03",
+        "certified_t": 126.72,
+        "verified_inbound_t": 126.72,
+        "capacity_limit_t": 172.80000000000004,
+        "verifiable_t": 126.72,
+        "unverifiable_t": 0.0,
+        "risk_band": "Low"
+      }
+    },
+    "PWP-05": {
+      "agent_status": "ok",
+      "tool_cap_reached": true,
+      "conclusions": [
+        {
+          "certificate_batch": "2025-04",
+          "status": "unsupported",
+          "evidence_ids": [],
+          "explanation": "There was no verified inbound material received during this month to support the certified quantity of 16.64 t."
+        },
+        {
+          "certificate_batch": "2025-05",
+          "status": "unsupported",
+          "evidence_ids": [],
+          "explanation": "There was no verified inbound material received during this month to support the certified quantity of 16.64 t."
+        },
+        {
+          "certificate_batch": "2025-06",
+          "status": "unsupported",
+          "evidence_ids": [],
+          "explanation": "There was no verified inbound material received during this month to support the certified quantity of 16.64 t."
+        },
+        {
+          "certificate_batch": "2025-07",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-017",
+            "PWP-05-WEIGHBRIDGE_SLIP-023",
+            "PWP-05-WEIGHBRIDGE_SLIP-032"
+          ],
+          "explanation": "The certified quantity of 16.64 t is fully supported by 22.81 t of verified inbound material across shipments PWP-05-SHP-005, PWP-05-SHP-007, and PWP-05-SHP-010. (downgraded: a hard deterministic check failed for this processor.)"
+        },
+        {
+          "certificate_batch": "2025-08",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-008",
+            "PWP-05-WEIGHBRIDGE_SLIP-026"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported because the verified inbound material of 15.39 t across shipments PWP-05-SHP-002 and PWP-05-SHP-008 is insufficient to cover the certified amount."
+        },
+        {
+          "certificate_batch": "2025-09",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-035"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported because the verified inbound material of 8.01 t from shipment PWP-05-SHP-011 is insufficient to cover the certified amount."
+        },
+        {
+          "certificate_batch": "2025-10",
+          "status": "unsupported",
+          "evidence_ids": [],
+          "explanation": "There was no verified inbound material received during this month to support the certified quantity of 16.64 t."
+        },
+        {
+          "certificate_batch": "2025-11",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-044",
+            "PWP-05-WEIGHBRIDGE_SLIP-029",
+            "PWP-05-WEIGHBRIDGE_SLIP-047",
+            "PWP-05-WEIGHBRIDGE_SLIP-014"
+          ],
+          "explanation": "The certified quantity of 16.64 t is fully supported by 35.38 t of verified inbound material across shipments PWP-05-SHP-014, PWP-05-SHP-009, PWP-05-SHP-015, and PWP-05-SHP-004. (downgraded: a hard deterministic check failed for this processor.)"
+        },
+        {
+          "certificate_batch": "2025-12",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-020"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported because the verified inbound material of 7.01 t from shipment PWP-05-SHP-006 is insufficient to cover the certified amount."
+        },
+        {
+          "certificate_batch": "2026-01",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-INBOUND_INVOICE-003",
+            "PWP-05-EWAY_BILL-004",
+            "PWP-05-WEIGHBRIDGE_SLIP-005",
+            "PWP-05-WEIGHBRIDGE_SLIP-041"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported. The total verified inbound of 15.8 t is already insufficient, and shipment PWP-05-SHP-001 (8.08 t) consists of virgin LDPE granules rather than plastic waste, leaving only 7.72 t of valid waste from shipment PWP-05-SHP-013."
+        },
+        {
+          "certificate_batch": "2026-02",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-038"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported because the verified inbound material of 7.85 t from shipment PWP-05-SHP-012 is insufficient to cover the certified amount."
+        },
+        {
+          "certificate_batch": "2026-03",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-05-WEIGHBRIDGE_SLIP-011"
+          ],
+          "explanation": "The certified quantity of 16.64 t is only partly supported because the verified inbound material of 8.06 t from shipment PWP-05-SHP-003 is insufficient to cover the certified amount."
+        }
+      ],
+      "hypothesis_findings": [
+        {
+          "finding_type": "Inbound shipment of virgin polymer material",
+          "effect": "raises_concern",
+          "cited_shipment_ids": [
+            "PWP-05-SHP-001"
+          ],
+          "evidence_ids": [
+            "PWP-05-INBOUND_INVOICE-003",
+            "PWP-05-EWAY_BILL-004",
+            "PWP-05-WEIGHBRIDGE_SLIP-005"
+          ],
+          "explanation": "Shipment PWP-05-SHP-001 is described as 'Virgin LDPE granules', which represents virgin polymer material rather than recyclable plastic waste. Virgin material cannot be used to claim EPR recycling credits, and its HSN is misclassified as 3915 (waste/scrap) to disguise it."
+        }
+      ],
+      "verdicts": [
+        {
+          "hypothesis_finding_index": 0,
+          "verdict": "upheld",
+          "reason": "The inbound invoice PWP-05-INBOUND_INVOICE-003 clearly describes the item as 'Virgin LDPE granules', which is a virgin polymer material rather than recyclable plastic waste. Furthermore, it is misclassified under HSN 3915 (waste/scrap) instead of HSN 3901 (polymers of ethylene in primary form)."
+        }
+      ],
+      "objections": [],
+      "revisions": [],
+      "hypothesis_finding_responses": [],
+      "confirmed_findings": [
+        {
+          "finding_type": "Inbound shipment of virgin polymer material",
+          "effect": "raises_concern",
+          "cited_shipment_ids": [
+            "PWP-05-SHP-001"
+          ],
+          "evidence_ids": [
+            "PWP-05-INBOUND_INVOICE-003",
+            "PWP-05-EWAY_BILL-004",
+            "PWP-05-WEIGHBRIDGE_SLIP-005"
+          ],
+          "explanation": "Shipment PWP-05-SHP-001 is described as 'Virgin LDPE granules', which represents virgin polymer material rather than recyclable plastic waste. Virgin material cannot be used to claim EPR recycling credits, and its HSN is misclassified as 3915 (waste/scrap) to disguise it."
+        }
+      ],
+      "review_flag_findings": [],
+      "withdrawn_findings": [],
+      "deductible_findings": [
+        {
+          "finding_type": "Inbound shipment of virgin polymer material",
+          "effect": "raises_concern",
+          "cited_shipment_ids": [
+            "PWP-05-SHP-001"
+          ],
+          "evidence_ids": [
+            "PWP-05-INBOUND_INVOICE-003",
+            "PWP-05-EWAY_BILL-004",
+            "PWP-05-WEIGHBRIDGE_SLIP-005"
+          ],
+          "explanation": "Shipment PWP-05-SHP-001 is described as 'Virgin LDPE granules', which represents virgin polymer material rather than recyclable plastic waste. Virgin material cannot be used to claim EPR recycling credits, and its HSN is misclassified as 3915 (waste/scrap) to disguise it."
+        }
+      ],
+      "systemic_findings": [],
+      "no_evidence_findings": [],
+      "trail": [
+        {
+          "step_index": 0,
+          "step_type": "hypothesis",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "You are reviewing whether a plastic-waste processor's EPR recycling certificates for one financial year are backed by real, verifiable material. You will be given a context pack: the processor's regis",
+          "output_json": "{\"conclusions\":[{\"certificate_batch\":\"2025-04\",\"status\":\"unsupported\",\"evidence_ids\":[],\"explanation\":\"There was no verified inbound material received during this month to support the certified quantity of 16.64 t.\"},{\"certificate_batch\":\"2025-05\",\"status\":\"unsupported\",\"evidence_ids\":[],\"explanation\":\"There was no verified inbound material received during this month to support the certified quantity of 16.64 t.\"},{\"certificate_batch\":\"2025-06\",\"status\":\"unsupported\",\"evidence_ids\":[],\"explanation\":\"There was no verified inbound material received during this month to support the certified quantity of 16.64 t.\"},{\"certificate_batch\":\"2025-07\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-017\",\"PWP-05-WEIGHBRIDGE_SLIP-023\",\"PWP-05-WEIGHBRIDGE_SLIP-032\"],\"explanation\":\"The certified quantity of 16.64 t is fully supported by 22.81 t of verified inbound material across shipments PWP-05-SHP-005, PWP-05-SHP-007, and PWP-05-SHP-010.\"},{\"certificate_batch\":\"2025-08\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-008\",\"PWP-05-WEIGHBRIDGE_SLIP-026\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported because the verified inbound material of 15.39 t across shipments PWP-05-SHP-002 and PWP-05-SHP-008 is insufficient to cover the certified amount.\"},{\"certificate_batch\":\"2025-09\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-035\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported because the verified inbound material of 8.01 t from shipment PWP-05-SHP-011 is insufficient to cover the certified amount.\"},{\"certificate_batch\":\"2025-10\",\"status\":\"unsupported\",\"evidence_ids\":[],\"explanation\":\"There was no verified inbound material received during this month to support the certified quantity of 16.64 t.\"},{\"certificate_batch\":\"2025-11\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-044\",\"PWP-05-WEIGHBRIDGE_SLIP-029\",\"PWP-05-WEIGHBRIDGE_SLIP-047\",\"PWP-05-WEIGHBRIDGE_SLIP-014\"],\"explanation\":\"The certified quantity of 16.64 t is fully supported by 35.38 t of verified inbound material across shipments PWP-05-SHP-014, PWP-05-SHP-009, PWP-05-SHP-015, and PWP-05-SHP-004.\"},{\"certificate_batch\":\"2025-12\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-020\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported because the verified inbound material of 7.01 t from shipment PWP-05-SHP-006 is insufficient to cover the certified amount.\"},{\"certificate_batch\":\"2026-01\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-INBOUND_INVOICE-003\",\"PWP-05-EWAY_BILL-004\",\"PWP-05-WEIGHBRIDGE_SLIP-005\",\"PWP-05-WEIGHBRIDGE_SLIP-041\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported. The total verified inbound of 15.8 t is already insufficient, and shipment PWP-05-SHP-001 (8.08 t) consists of virgin LDPE granules rather than plastic waste, leaving only 7.72 t of valid waste from shipment PWP-05-SHP-013.\"},{\"certificate_batch\":\"2026-02\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-038\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported because the verified inbound material of 7.85 t from shipment PWP-05-SHP-012 is insufficient to cover the certified amount.\"},{\"certificate_batch\":\"2026-03\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-05-WEIGHBRIDGE_SLIP-011\"],\"explanation\":\"The certified quantity of 16.64 t is only partly supported because the verified inbound material of 8.06 t from shipment PWP-05-SHP-003 is insufficient to cover the certified amount.\"}],\"findings\":[{\"finding_type\":\"Inbound shipment of virgin polymer material\",\"effect\":\"raises_concern\",\"cited_shipment_ids\":[\"PWP-05-SHP-001\"],\"evidence_ids\":[\"PWP-05-INBOUND_INVOICE-003\",\"PWP-05-EWAY_BILL-004\",\"PWP-05-WEIGHBRIDGE_SLIP-005\"],\"explanation\":\"Shipment PWP-05-SHP-001 is described as 'Virgin LDPE granules', which represents virgin polymer material rather than recyclable plastic waste. Virgin material cannot be used to claim EPR recycling credits, and its HSN is misclassified as 3915 (waste/scrap) to disguise it.\"}]}"
+        },
+        {
+          "step_index": 1,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-003\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 2,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-003\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"25/01/2026\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"CRPL/25-26/0005\\\", \\\"item_description\\\": \\\"Virgin LDPE granules\\\", \\\"quantity_t\\\": \\\"8.01\\\", \\\"rate\\\": \\\"12.19\\\", \\\"supplier_gstin\\\": \\\"33CYHFN7736B3Z0\\\", \\\"value\\\": \\\"97,641.90\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 3,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-EWAY_BILL-004\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 4,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-EWAY_BILL-004\\\", \\\"doc_type\\\": \\\"eway_bill\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"distance_km\\\": \\\"291.0\\\", \\\"ewb_no\\\": \\\"649484247470\\\", \\\"from_gstin\\\": \\\"33CYHFN7736B3Z0\\\", \\\"from_pin\\\": \\\"641488\\\", \\\"generated_at\\\": \\\"25-01-2026 09:55\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"CRPL/25-26/0005\\\", \\\"quantity_t\\\": \\\"8.01\\\", \\\"to_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"to_pin\\\": \\\"635314\\\", \\\"valid_until\\\": \\\"27-01-2026 23:59\\\", \\\"value\\\": \\\"97,641.90\\\", \\\"vehicle_no\\\": \\\"TN13AB8873\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 5,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-WEIGHBRIDGE_SLIP-005\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 6,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-WEIGHBRIDGE_SLIP-005\\\", \\\"doc_type\\\": \\\"weighbridge_slip\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"gross_kg\\\": \\\"13,189\\\", \\\"in_time\\\": \\\"25-01-2026 18:34\\\", \\\"net_kg\\\": \\\"8,080\\\", \\\"out_time\\\": \\\"25-01-2026 18:52\\\", \\\"remarks\\\": \\\"\\\", \\\"tare_kg\\\": \\\"5,109\\\", \\\"ticket_no\\\": \\\"TN-WB-5374-00013\\\", \\\"vehicle_no\\\": \\\"TN13AB8873\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 7,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-006\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 8,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-006\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"23/08/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"ME/25-26/0004\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"7.57\\\", \\\"rate\\\": \\\"15.63\\\", \\\"supplier_gstin\\\": \\\"33ZZOJN8723J4ZG\\\", \\\"value\\\": \\\"1,18,319.10\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 9,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-009\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 10,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-009\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"01/03/2026\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"CRPL/25-26/0008\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"8.00\\\", \\\"rate\\\": \\\"10.36\\\", \\\"supplier_gstin\\\": \\\"33CYHFN7736B3Z0\\\", \\\"value\\\": \\\"82,880.00\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 11,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-012\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 12,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-012\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"16/11/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"ME/25-26/0012\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"8.52\\\", \\\"rate\\\": \\\"12.69\\\", \\\"supplier_gstin\\\": \\\"33ZZOJN8723J4ZG\\\", \\\"value\\\": \\\"1,08,118.80\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 13,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-015\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 14,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-015\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"04/07/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"CRPL/25-26/0003\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"7.24\\\", \\\"rate\\\": \\\"10.38\\\", \\\"supplier_gstin\\\": \\\"33CYHFN7736B3Z0\\\", \\\"value\\\": \\\"75,151.20\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 15,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-05-INBOUND_INVOICE-021\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 16,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-05-INBOUND_INVOICE-021\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"33YJCHD6475F6Z6\\\", \\\"date\\\": \\\"18/07/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"CST/25-26/0001\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"7.94\\\", \\\"rate\\\": \\\"14.36\\\", \\\"supplier_gstin\\\": \\\"33ENFIO3178D1ZG\\\", \\\"value\\\": \\\"1,14,018.40\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 17,
+          "step_type": "tool_cap_reached",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"tool_cap_reached\": true}"
+        },
+        {
+          "step_index": 18,
+          "step_type": "critic_final",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "Based on everything you have seen in this conversation \u2014 the context pack, the Hypothesis agent's conclusions and proposed findings, and the tool results above \u2014 do two things.\n\nFirst, give a verdict ",
+          "output_json": "{\"verdicts\":[{\"hypothesis_finding_index\":0,\"verdict\":\"upheld\",\"reason\":\"The inbound invoice PWP-05-INBOUND_INVOICE-003 clearly describes the item as 'Virgin LDPE granules', which is a virgin polymer material rather than recyclable plastic waste. Furthermore, it is misclassified under HSN 3915 (waste/scrap) instead of HSN 3901 (polymers of ethylene in primary form).\"}],\"objections\":[]}"
+        }
+      ],
+      "score": {
+        "processor_id": "PWP-05",
+        "certified_t": 199.68,
+        "verified_inbound_t": 112.23,
+        "capacity_limit_t": 153.6,
+        "verifiable_t": 112.23,
+        "unverifiable_t": 87.45,
+        "risk_band": "High"
+      }
+    },
+    "PWP-08": {
+      "agent_status": "timeout",
+      "tool_cap_reached": true,
+      "conclusions": [
+        {
+          "certificate_batch": "2025-04",
+          "status": "partly_supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-003",
+            "PWP-08-EWAY_BILL-004",
+            "PWP-08-WEIGHBRIDGE_SLIP-005",
+            "PWP-08-INBOUND_INVOICE-021",
+            "PWP-08-EWAY_BILL-022",
+            "PWP-08-WEIGHBRIDGE_SLIP-023"
+          ],
+          "explanation": "The certified tonnage of 16.29 t is only partly supported. Shipment PWP-08-SHP-001 (7.71 t) is ineligible as its description '\u092a\u094d\u0930\u093e\u0907\u092e \u0917\u094d\u0930\u0947\u0921 \u0926\u093e\u0928\u093e' indicates virgin plastic granules rather than plastic waste. Only shipment PWP-08-SHP-007 (8.58 t) is supported."
+        },
+        {
+          "certificate_batch": "2025-05",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-024",
+            "PWP-08-EWAY_BILL-025",
+            "PWP-08-WEIGHBRIDGE_SLIP-026"
+          ],
+          "explanation": "The certified tonnage of 7.09 t is fully supported by verified inbound shipment PWP-08-SHP-008 of post-consumer plastic waste."
+        },
+        {
+          "certificate_batch": "2025-06",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound waste was recorded for this month."
+        },
+        {
+          "certificate_batch": "2025-07",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-027",
+            "PWP-08-EWAY_BILL-028",
+            "PWP-08-WEIGHBRIDGE_SLIP-029",
+            "PWP-08-INBOUND_INVOICE-042",
+            "PWP-08-EWAY_BILL-043",
+            "PWP-08-WEIGHBRIDGE_SLIP-044"
+          ],
+          "explanation": "The certified tonnage of 15.69 t is fully supported by verified inbound shipments PWP-08-SHP-009 and PWP-08-SHP-014."
+        },
+        {
+          "certificate_batch": "2025-08",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-006",
+            "PWP-08-EWAY_BILL-007",
+            "PWP-08-WEIGHBRIDGE_SLIP-008"
+          ],
+          "explanation": "The certified tonnage of 7.81 t is fully supported by verified inbound shipment PWP-08-SHP-002."
+        },
+        {
+          "certificate_batch": "2025-09",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound waste was recorded for this month."
+        },
+        {
+          "certificate_batch": "2025-10",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-009",
+            "PWP-08-EWAY_BILL-010",
+            "PWP-08-WEIGHBRIDGE_SLIP-011"
+          ],
+          "explanation": "The certified tonnage of 8.08 t is fully supported by verified inbound shipment PWP-08-SHP-003."
+        },
+        {
+          "certificate_batch": "2025-11",
+          "status": "supported",
+          "evidence_ids": [],
+          "explanation": "No certificates were issued and no inbound waste was recorded for this month."
+        },
+        {
+          "certificate_batch": "2025-12",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-039",
+            "PWP-08-EWAY_BILL-040",
+            "PWP-08-WEIGHBRIDGE_SLIP-041"
+          ],
+          "explanation": "The certified tonnage of 8.28 t is fully supported by verified inbound shipment PWP-08-SHP-013 (8.29 t)."
+        },
+        {
+          "certificate_batch": "2026-01",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-015",
+            "PWP-08-EWAY_BILL-016",
+            "PWP-08-WEIGHBRIDGE_SLIP-017",
+            "PWP-08-INBOUND_INVOICE-018",
+            "PWP-08-EWAY_BILL-019",
+            "PWP-08-WEIGHBRIDGE_SLIP-020",
+            "PWP-08-INBOUND_INVOICE-030",
+            "PWP-08-EWAY_BILL-031",
+            "PWP-08-WEIGHBRIDGE_SLIP-032"
+          ],
+          "explanation": "The certified tonnage of 25.68 t is fully supported by verified inbound shipments PWP-08-SHP-005, PWP-08-SHP-006, and PWP-08-SHP-010."
+        },
+        {
+          "certificate_batch": "2026-02",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-012",
+            "PWP-08-EWAY_BILL-013",
+            "PWP-08-WEIGHBRIDGE_SLIP-014",
+            "PWP-08-INBOUND_INVOICE-036",
+            "PWP-08-EWAY_BILL-037",
+            "PWP-08-WEIGHBRIDGE_SLIP-038"
+          ],
+          "explanation": "The certified tonnage of 16.49 t is fully supported by verified inbound shipments PWP-08-SHP-004 and PWP-08-SHP-012."
+        },
+        {
+          "certificate_batch": "2026-03",
+          "status": "supported",
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-033",
+            "PWP-08-EWAY_BILL-034",
+            "PWP-08-WEIGHBRIDGE_SLIP-035"
+          ],
+          "explanation": "The certified tonnage of 7.65 t is fully supported by verified inbound shipment PWP-08-SHP-011."
+        }
+      ],
+      "hypothesis_findings": [
+        {
+          "finding_type": "Ineligible virgin plastic material",
+          "effect": "raises_concern",
+          "cited_shipment_ids": [
+            "PWP-08-SHP-001"
+          ],
+          "evidence_ids": [
+            "PWP-08-INBOUND_INVOICE-003",
+            "PWP-08-EWAY_BILL-004",
+            "PWP-08-WEIGHBRIDGE_SLIP-005"
+          ],
+          "explanation": "Shipment PWP-08-SHP-001 is described as '\u092a\u094d\u0930\u093e\u0907\u092e \u0917\u094d\u0930\u0947\u0921 \u0926\u093e\u0928\u093e' (Prime grade dana), which refers to virgin plastic granules rather than plastic waste. Virgin plastic is ineligible for generating EPR recycling certificates, despite being declared under HSN 3915."
+        }
+      ],
+      "verdicts": [],
+      "objections": [],
+      "revisions": [],
+      "hypothesis_finding_responses": [],
+      "confirmed_findings": [],
+      "review_flag_findings": [],
+      "withdrawn_findings": [],
+      "deductible_findings": [],
+      "systemic_findings": [],
+      "no_evidence_findings": [],
+      "trail": [
+        {
+          "step_index": 0,
+          "step_type": "hypothesis",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": "You are reviewing whether a plastic-waste processor's EPR recycling certificates for one financial year are backed by real, verifiable material. You will be given a context pack: the processor's regis",
+          "output_json": "{\"conclusions\":[{\"certificate_batch\":\"2025-04\",\"status\":\"partly_supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-003\",\"PWP-08-EWAY_BILL-004\",\"PWP-08-WEIGHBRIDGE_SLIP-005\",\"PWP-08-INBOUND_INVOICE-021\",\"PWP-08-EWAY_BILL-022\",\"PWP-08-WEIGHBRIDGE_SLIP-023\"],\"explanation\":\"The certified tonnage of 16.29 t is only partly supported. Shipment PWP-08-SHP-001 (7.71 t) is ineligible as its description '\u092a\u094d\u0930\u093e\u0907\u092e \u0917\u094d\u0930\u0947\u0921 \u0926\u093e\u0928\u093e' indicates virgin plastic granules rather than plastic waste. Only shipment PWP-08-SHP-007 (8.58 t) is supported.\"},{\"certificate_batch\":\"2025-05\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-024\",\"PWP-08-EWAY_BILL-025\",\"PWP-08-WEIGHBRIDGE_SLIP-026\"],\"explanation\":\"The certified tonnage of 7.09 t is fully supported by verified inbound shipment PWP-08-SHP-008 of post-consumer plastic waste.\"},{\"certificate_batch\":\"2025-06\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound waste was recorded for this month.\"},{\"certificate_batch\":\"2025-07\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-027\",\"PWP-08-EWAY_BILL-028\",\"PWP-08-WEIGHBRIDGE_SLIP-029\",\"PWP-08-INBOUND_INVOICE-042\",\"PWP-08-EWAY_BILL-043\",\"PWP-08-WEIGHBRIDGE_SLIP-044\"],\"explanation\":\"The certified tonnage of 15.69 t is fully supported by verified inbound shipments PWP-08-SHP-009 and PWP-08-SHP-014.\"},{\"certificate_batch\":\"2025-08\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-006\",\"PWP-08-EWAY_BILL-007\",\"PWP-08-WEIGHBRIDGE_SLIP-008\"],\"explanation\":\"The certified tonnage of 7.81 t is fully supported by verified inbound shipment PWP-08-SHP-002.\"},{\"certificate_batch\":\"2025-09\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound waste was recorded for this month.\"},{\"certificate_batch\":\"2025-10\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-009\",\"PWP-08-EWAY_BILL-010\",\"PWP-08-WEIGHBRIDGE_SLIP-011\"],\"explanation\":\"The certified tonnage of 8.08 t is fully supported by verified inbound shipment PWP-08-SHP-003.\"},{\"certificate_batch\":\"2025-11\",\"status\":\"supported\",\"evidence_ids\":[],\"explanation\":\"No certificates were issued and no inbound waste was recorded for this month.\"},{\"certificate_batch\":\"2025-12\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-039\",\"PWP-08-EWAY_BILL-040\",\"PWP-08-WEIGHBRIDGE_SLIP-041\"],\"explanation\":\"The certified tonnage of 8.28 t is fully supported by verified inbound shipment PWP-08-SHP-013 (8.29 t).\"},{\"certificate_batch\":\"2026-01\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-015\",\"PWP-08-EWAY_BILL-016\",\"PWP-08-WEIGHBRIDGE_SLIP-017\",\"PWP-08-INBOUND_INVOICE-018\",\"PWP-08-EWAY_BILL-019\",\"PWP-08-WEIGHBRIDGE_SLIP-020\",\"PWP-08-INBOUND_INVOICE-030\",\"PWP-08-EWAY_BILL-031\",\"PWP-08-WEIGHBRIDGE_SLIP-032\"],\"explanation\":\"The certified tonnage of 25.68 t is fully supported by verified inbound shipments PWP-08-SHP-005, PWP-08-SHP-006, and PWP-08-SHP-010.\"},{\"certificate_batch\":\"2026-02\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-012\",\"PWP-08-EWAY_BILL-013\",\"PWP-08-WEIGHBRIDGE_SLIP-014\",\"PWP-08-INBOUND_INVOICE-036\",\"PWP-08-EWAY_BILL-037\",\"PWP-08-WEIGHBRIDGE_SLIP-038\"],\"explanation\":\"The certified tonnage of 16.49 t is fully supported by verified inbound shipments PWP-08-SHP-004 and PWP-08-SHP-012.\"},{\"certificate_batch\":\"2026-03\",\"status\":\"supported\",\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-033\",\"PWP-08-EWAY_BILL-034\",\"PWP-08-WEIGHBRIDGE_SLIP-035\"],\"explanation\":\"The certified tonnage of 7.65 t is fully supported by verified inbound shipment PWP-08-SHP-011.\"}],\"findings\":[{\"finding_type\":\"Ineligible virgin plastic material\",\"effect\":\"raises_concern\",\"cited_shipment_ids\":[\"PWP-08-SHP-001\"],\"evidence_ids\":[\"PWP-08-INBOUND_INVOICE-003\",\"PWP-08-EWAY_BILL-004\",\"PWP-08-WEIGHBRIDGE_SLIP-005\"],\"explanation\":\"Shipment PWP-08-SHP-001 is described as '\u092a\u094d\u0930\u093e\u0907\u092e \u0917\u094d\u0930\u0947\u0921 \u0926\u093e\u0928\u093e' (Prime grade dana), which refers to virgin plastic granules rather than plastic waste. Virgin plastic is ineligible for generating EPR recycling certificates, despite being declared under HSN 3915.\"}]}"
+        },
+        {
+          "step_index": 1,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-08-INBOUND_INVOICE-003\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 2,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-08-INBOUND_INVOICE-003\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"hi\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"06OEIEH8849N7ZW\\\", \\\"date\\\": \\\"16/04/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"GE/25-26/0001\\\", \\\"item_description\\\": \\\"\\\\u092a\\\\u094d\\\\u0930\\\\u093e\\\\u0907\\\\u092e \\\\u0917\\\\u094d\\\\u0930\\\\u0947\\\\u0921 \\\\u0926\\\\u093e\\\\u0928\\\\u093e\\\", \\\"quantity_t\\\": \\\"7.67\\\", \\\"rate\\\": \\\"17.57\\\", \\\"supplier_gstin\\\": \\\"06FXORW6801C3Z1\\\", \\\"value\\\": \\\"1,34,761.90\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 3,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_shipments",
+          "tool_args_json": "{\"shipment_ids\": [\"PWP-08-SHP-001\", \"PWP-08-SHP-007\"]}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 4,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"[{\\\"shipment_id\\\": \\\"PWP-08-SHP-001\\\", \\\"processor_id\\\": \\\"PWP-08\\\", \\\"month\\\": \\\"2025-04\\\", \\\"invoice_doc_id\\\": \\\"PWP-08-INBOUND_INVOICE-003\\\", \\\"eway_doc_id\\\": \\\"PWP-08-EWAY_BILL-004\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-08-WEIGHBRIDGE_SLIP-005\\\", \\\"invoice_qty_t\\\": 7.67, \\\"weighbridge_net_t\\\": 7.71, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483894840\\\", \\\"vehicle_no\\\": \\\"RJ40AB4974\\\", \\\"distance_km\\\": 41.8, \\\"eway_generated_at\\\": \\\"2025-04-16T03:17:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-04-17T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-04-16T04:10:00+00:00\\\", \\\"invoice_no\\\": \\\"GE/25-26/0001\\\", \\\"supplier_gstin\\\": \\\"06FXORW6801C3Z1\\\", \\\"weighbridge_ticket_no\\\": \\\"HR-WB-3266-00001\\\"}, {\\\"shipment_id\\\": \\\"PWP-08-SHP-007\\\", \\\"processor_id\\\": \\\"PWP-08\\\", \\\"month\\\": \\\"2025-04\\\", \\\"invoice_doc_id\\\": \\\"PWP-08-INBOUND_INVOICE-021\\\", \\\"eway_doc_id\\\": \\\"PWP-08-EWAY_BILL-022\\\", \\\"weighbridge_doc_id\\\": \\\"PWP-08-WEIGHBRIDGE_SLIP-023\\\", \\\"invoice_qty_t\\\": 8.63, \\\"weighbridge_net_t\\\": 8.58, \\\"match_status\\\": \\\"matched\\\", \\\"ewb_no\\\": \\\"649483896889\\\", \\\"vehicle_no\\\": \\\"MH43AB3439\\\", \\\"distance_km\\\": 339.1, \\\"eway_generated_at\\\": \\\"2025-04-18T03:28:00+00:00\\\", \\\"eway_valid_until\\\": \\\"2025-04-20T18:29:00+00:00\\\", \\\"weighbridge_in_time\\\": \\\"2025-04-18T10:46:00+00:00\\\", \\\"invoice_no\\\": \\\"PWA/25-26/0001\\\", \\\"supplier_gstin\\\": \\\"06RENEB4505G4ZZ\\\", \\\"weighbridge_ticket_no\\\": \\\"HR-WB-3266-00002\\\"}]\"}}]}"
+        },
+        {
+          "step_index": 5,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-08-EWAY_BILL-004\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 6,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-08-EWAY_BILL-004\\\", \\\"doc_type\\\": \\\"eway_bill\\\", \\\"lang\\\": \\\"hi\\\", \\\"fields\\\": {\\\"distance_km\\\": \\\"41.8\\\", \\\"ewb_no\\\": \\\"649483894840\\\", \\\"from_gstin\\\": \\\"06FXORW6801C3Z1\\\", \\\"from_pin\\\": \\\"122658\\\", \\\"generated_at\\\": \\\"16-04-2025 08:47\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"GE/25-26/0001\\\", \\\"quantity_t\\\": \\\"7.67\\\", \\\"to_gstin\\\": \\\"06OEIEH8849N7ZW\\\", \\\"to_pin\\\": \\\"121324\\\", \\\"valid_until\\\": \\\"17-04-2025 23:59\\\", \\\"value\\\": \\\"1,34,761.90\\\", \\\"vehicle_no\\\": \\\"RJ40AB4974\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 7,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-08-WEIGHBRIDGE_SLIP-005\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 8,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-08-WEIGHBRIDGE_SLIP-005\\\", \\\"doc_type\\\": \\\"weighbridge_slip\\\", \\\"lang\\\": \\\"hi\\\", \\\"fields\\\": {\\\"gross_kg\\\": \\\"13,118\\\", \\\"in_time\\\": \\\"16-04-2025 09:40\\\", \\\"net_kg\\\": \\\"7,710\\\", \\\"out_time\\\": \\\"16-04-2025 10:07\\\", \\\"remarks\\\": \\\"\\\", \\\"tare_kg\\\": \\\"5,408\\\", \\\"ticket_no\\\": \\\"HR-WB-3266-00001\\\", \\\"vehicle_no\\\": \\\"RJ40AB4974\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 9,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_site_assessment",
+          "tool_args_json": "{}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 10,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"processor_id\\\": \\\"PWP-08\\\", \\\"status\\\": \\\"pass\\\", \\\"severity\\\": \\\"soft\\\", \\\"measured\\\": 0.008058716479448594, \\\"threshold\\\": 10.0, \\\"building_count\\\": 59, \\\"total_footprint_m2\\\": 19854.278334277344, \\\"thumbnail_gcs_path\\\": \\\"seed-42/site/PWP-08.png\\\", \\\"explanation\\\": \\\"PWP-08: claimed capacity is 0.01 t per m\\\\u00b2 of building footprint (ceiling 10 t/m\\\\u00b2).\\\"}\"}}]}"
+        },
+        {
+          "step_index": 11,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-08-INBOUND_INVOICE-021\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 12,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-08-INBOUND_INVOICE-021\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"06OEIEH8849N7ZW\\\", \\\"date\\\": \\\"18/04/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"PWA/25-26/0001\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"8.63\\\", \\\"rate\\\": \\\"14.74\\\", \\\"supplier_gstin\\\": \\\"06RENEB4505G4ZZ\\\", \\\"value\\\": \\\"1,27,206.20\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 13,
+          "step_type": "critic_tool_call",
+          "tool_name": "get_document_facts",
+          "tool_args_json": "{\"doc_id\": \"PWP-08-INBOUND_INVOICE-024\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 14,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"doc_id\\\": \\\"PWP-08-INBOUND_INVOICE-024\\\", \\\"doc_type\\\": \\\"inbound_invoice\\\", \\\"lang\\\": \\\"en\\\", \\\"fields\\\": {\\\"buyer_gstin\\\": \\\"06OEIEH8849N7ZW\\\", \\\"date\\\": \\\"12/05/2025\\\", \\\"hsn\\\": \\\"3915\\\", \\\"invoice_no\\\": \\\"PWA/25-26/0002\\\", \\\"item_description\\\": \\\"Post-consumer plastic waste, mixed PE/PP\\\", \\\"quantity_t\\\": \\\"7.16\\\", \\\"rate\\\": \\\"17.59\\\", \\\"supplier_gstin\\\": \\\"06RENEB4505G4ZZ\\\", \\\"value\\\": \\\"1,25,944.40\\\"}}\"}}]}"
+        },
+        {
+          "step_index": 15,
+          "step_type": "critic_tool_call",
+          "tool_name": "run_check",
+          "tool_args_json": "{\"check_id\": \"C2b\"}",
+          "input_summary": null,
+          "output_json": null
+        },
+        {
+          "step_index": 16,
+          "step_type": "critic_tool_result",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"role\": \"user\", \"parts\": [{\"function_response\": {\"result\": \"{\\\"processor_id\\\": \\\"PWP-08\\\", \\\"check_id\\\": \\\"C2b\\\", \\\"status\\\": \\\"pass\\\", \\\"severity\\\": \\\"soft\\\", \\\"measured\\\": 94.33, \\\"threshold\\\": 107.41649999999998, \\\"affected_tonnes\\\": 0.0, \\\"evidence_ids\\\": [], \\\"explanation\\\": \\\"PWP-08: recycled output sold (94.33 t) does not exceed 95% of verified inbound tonnes (107.42 t).\\\"}\"}}]}"
+        },
+        {
+          "step_index": 17,
+          "step_type": "tool_cap_reached",
+          "tool_name": null,
+          "tool_args_json": null,
+          "input_summary": null,
+          "output_json": "{\"tool_cap_reached\": true}"
+        }
+      ],
+      "score": {
+        "processor_id": "PWP-08",
+        "certified_t": 113.06,
+        "verified_inbound_t": 113.07,
+        "capacity_limit_t": 160.0,
+        "verifiable_t": 113.06,
+        "unverifiable_t": 0.0,
+        "risk_band": "Low"
+      }
+    }
+  },
+  "call_log": [
+    {
+      "purpose": "agent_hypothesis",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 36480.839322000975,
+      "success": true,
+      "called_at": "2026-10-07T19:25:16.591972+00:00",
+      "input_tokens": 7716,
+      "output_tokens": 1738,
+      "thinking_tokens": 8912,
+      "total_tokens": 18366
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 4145.34301700769,
+      "success": true,
+      "called_at": "2026-10-07T19:25:20.747979+00:00",
+      "input_tokens": 8877,
+      "output_tokens": 136,
+      "thinking_tokens": 768,
+      "total_tokens": 9781
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 3392.8429809748195,
+      "success": true,
+      "called_at": "2026-10-07T19:25:24.145597+00:00",
+      "input_tokens": 10950,
+      "output_tokens": 121,
+      "thinking_tokens": 710,
+      "total_tokens": 11781
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1153.0534240009729,
+      "success": true,
+      "called_at": "2026-10-07T19:25:25.299206+00:00",
+      "input_tokens": 12954,
+      "output_tokens": 91,
+      "thinking_tokens": 17,
+      "total_tokens": 13062
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1093.0067180015612,
+      "success": true,
+      "called_at": "2026-10-07T19:25:26.392711+00:00",
+      "input_tokens": 14241,
+      "output_tokens": 121,
+      "thinking_tokens": 13,
+      "total_tokens": 14375
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1066.5802659932524,
+      "success": true,
+      "called_at": "2026-10-07T19:25:27.459750+00:00",
+      "input_tokens": 15545,
+      "output_tokens": 76,
+      "thinking_tokens": 15,
+      "total_tokens": 15636
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 906.5952649980318,
+      "success": true,
+      "called_at": "2026-10-07T19:25:28.366755+00:00",
+      "input_tokens": 16814,
+      "output_tokens": 31,
+      "thinking_tokens": 10,
+      "total_tokens": 16855
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1378.1312670034822,
+      "success": true,
+      "called_at": "2026-10-07T19:25:29.745110+00:00",
+      "input_tokens": 17229,
+      "output_tokens": 35,
+      "thinking_tokens": 150,
+      "total_tokens": 17414
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 835.8968319953419,
+      "success": true,
+      "called_at": "2026-10-07T19:25:30.581290+00:00",
+      "input_tokens": 17855,
+      "output_tokens": 33,
+      "thinking_tokens": 31,
+      "total_tokens": 17919
+    },
+    {
+      "purpose": "agent_critic_final",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 7824.037170998054,
+      "success": true,
+      "called_at": "2026-10-07T19:25:38.406418+00:00",
+      "input_tokens": 19075,
+      "output_tokens": 11,
+      "thinking_tokens": 2040,
+      "total_tokens": 21126
+    },
+    {
+      "purpose": "agent_hypothesis",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 25906.542513985187,
+      "success": true,
+      "called_at": "2026-10-07T19:26:04.316060+00:00",
+      "input_tokens": 6948,
+      "output_tokens": 1931,
+      "thinking_tokens": 5723,
+      "total_tokens": 14602
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 6012.3212590115145,
+      "success": true,
+      "called_at": "2026-10-07T19:26:10.329241+00:00",
+      "input_tokens": 7891,
+      "output_tokens": 136,
+      "thinking_tokens": 1426,
+      "total_tokens": 9453
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1856.2628770014271,
+      "success": true,
+      "called_at": "2026-10-07T19:26:12.186246+00:00",
+      "input_tokens": 10623,
+      "output_tokens": 91,
+      "thinking_tokens": 228,
+      "total_tokens": 10942
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 963.2104499905836,
+      "success": true,
+      "called_at": "2026-10-07T19:26:13.149940+00:00",
+      "input_tokens": 12119,
+      "output_tokens": 61,
+      "thinking_tokens": 14,
+      "total_tokens": 12194
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1258.316712017404,
+      "success": true,
+      "called_at": "2026-10-07T19:26:14.408517+00:00",
+      "input_tokens": 13303,
+      "output_tokens": 61,
+      "thinking_tokens": 43,
+      "total_tokens": 13407
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 911.6694760159589,
+      "success": true,
+      "called_at": "2026-10-07T19:26:15.320583+00:00",
+      "input_tokens": 14517,
+      "output_tokens": 46,
+      "thinking_tokens": 30,
+      "total_tokens": 14593
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 2882.1314070082735,
+      "success": true,
+      "called_at": "2026-10-07T19:26:18.203115+00:00",
+      "input_tokens": 15336,
+      "output_tokens": 33,
+      "thinking_tokens": 584,
+      "total_tokens": 15953
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 915.2820769813843,
+      "success": true,
+      "called_at": "2026-10-07T19:26:19.118711+00:00",
+      "input_tokens": 16213,
+      "output_tokens": 35,
+      "thinking_tokens": 28,
+      "total_tokens": 16276
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 943.8539799884893,
+      "success": true,
+      "called_at": "2026-10-07T19:26:20.062934+00:00",
+      "input_tokens": 16462,
+      "output_tokens": 35,
+      "thinking_tokens": 30,
+      "total_tokens": 16527
+    },
+    {
+      "purpose": "agent_critic_final",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 7160.518671997124,
+      "success": true,
+      "called_at": "2026-10-07T19:26:27.224141+00:00",
+      "input_tokens": 17593,
+      "output_tokens": 17,
+      "thinking_tokens": 1676,
+      "total_tokens": 19286
+    },
+    {
+      "purpose": "agent_hypothesis",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 24817.445361986756,
+      "success": true,
+      "called_at": "2026-10-07T19:26:52.043506+00:00",
+      "input_tokens": 7237,
+      "output_tokens": 1732,
+      "thinking_tokens": 5348,
+      "total_tokens": 14317
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 4517.6520429959055,
+      "success": true,
+      "called_at": "2026-10-07T19:26:56.562011+00:00",
+      "input_tokens": 8002,
+      "output_tokens": 35,
+      "thinking_tokens": 1022,
+      "total_tokens": 9059
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1031.3592920138035,
+      "success": true,
+      "called_at": "2026-10-07T19:26:57.593760+00:00",
+      "input_tokens": 9238,
+      "output_tokens": 33,
+      "thinking_tokens": 61,
+      "total_tokens": 9332
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 976.3706090161577,
+      "success": true,
+      "called_at": "2026-10-07T19:26:58.570546+00:00",
+      "input_tokens": 9591,
+      "output_tokens": 35,
+      "thinking_tokens": 22,
+      "total_tokens": 9648
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 12290.64761599875,
+      "success": true,
+      "called_at": "2026-10-07T19:27:10.861532+00:00",
+      "input_tokens": 9818,
+      "output_tokens": 35,
+      "thinking_tokens": 3231,
+      "total_tokens": 13084
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 991.2876070011407,
+      "success": true,
+      "called_at": "2026-10-07T19:27:11.853146+00:00",
+      "input_tokens": 13269,
+      "output_tokens": 35,
+      "thinking_tokens": 47,
+      "total_tokens": 13351
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1656.222006015014,
+      "success": true,
+      "called_at": "2026-10-07T19:27:13.509773+00:00",
+      "input_tokens": 13536,
+      "output_tokens": 35,
+      "thinking_tokens": 216,
+      "total_tokens": 13787
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 943.5724570066668,
+      "success": true,
+      "called_at": "2026-10-07T19:27:14.453769+00:00",
+      "input_tokens": 13972,
+      "output_tokens": 35,
+      "thinking_tokens": 36,
+      "total_tokens": 14043
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1570.068118016934,
+      "success": true,
+      "called_at": "2026-10-07T19:27:16.024092+00:00",
+      "input_tokens": 14228,
+      "output_tokens": 35,
+      "thinking_tokens": 213,
+      "total_tokens": 14476
+    },
+    {
+      "purpose": "agent_critic_final",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 5601.165555010084,
+      "success": true,
+      "called_at": "2026-10-07T19:27:21.626077+00:00",
+      "input_tokens": 15557,
+      "output_tokens": 113,
+      "thinking_tokens": 1155,
+      "total_tokens": 16825
+    },
+    {
+      "purpose": "agent_hypothesis",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 24881.612049997784,
+      "success": true,
+      "called_at": "2026-10-07T19:27:46.510313+00:00",
+      "input_tokens": 7061,
+      "output_tokens": 2020,
+      "thinking_tokens": 5034,
+      "total_tokens": 14115
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 2144.3726569996215,
+      "success": true,
+      "called_at": "2026-10-07T19:27:48.655519+00:00",
+      "input_tokens": 8230,
+      "output_tokens": 35,
+      "thinking_tokens": 340,
+      "total_tokens": 8605
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 7834.833176981192,
+      "success": true,
+      "called_at": "2026-10-07T19:27:56.490642+00:00",
+      "input_tokens": 8869,
+      "output_tokens": 46,
+      "thinking_tokens": 1991,
+      "total_tokens": 10906
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1077.6748489879537,
+      "success": true,
+      "called_at": "2026-10-07T19:27:57.568698+00:00",
+      "input_tokens": 11648,
+      "output_tokens": 33,
+      "thinking_tokens": 81,
+      "total_tokens": 11762
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1019.8579440184403,
+      "success": true,
+      "called_at": "2026-10-07T19:27:58.589017+00:00",
+      "input_tokens": 12020,
+      "output_tokens": 35,
+      "thinking_tokens": 28,
+      "total_tokens": 12083
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1231.104703998426,
+      "success": true,
+      "called_at": "2026-10-07T19:27:59.820522+00:00",
+      "input_tokens": 12253,
+      "output_tokens": 12,
+      "thinking_tokens": 88,
+      "total_tokens": 12353
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1939.767898991704,
+      "success": true,
+      "called_at": "2026-10-07T19:28:01.760660+00:00",
+      "input_tokens": 12526,
+      "output_tokens": 35,
+      "thinking_tokens": 286,
+      "total_tokens": 12847
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 1012.3194969783071,
+      "success": true,
+      "called_at": "2026-10-07T19:28:02.773381+00:00",
+      "input_tokens": 13032,
+      "output_tokens": 35,
+      "thinking_tokens": 56,
+      "total_tokens": 13123
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 118488.49480197532,
+      "success": false,
+      "called_at": "2026-10-07T19:30:01.261913+00:00",
+      "input_tokens": null,
+      "output_tokens": null,
+      "thinking_tokens": null,
+      "total_tokens": null
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 118444.70288002049,
+      "success": false,
+      "called_at": "2026-10-07T19:32:01.282526+00:00",
+      "input_tokens": null,
+      "output_tokens": null,
+      "thinking_tokens": null,
+      "total_tokens": null
+    },
+    {
+      "purpose": "agent_critic_tools",
+      "model": "gemini-3.5-flash",
+      "latency_ms": 4168.371323001338,
+      "success": true,
+      "called_at": "2026-10-07T19:32:07.697599+00:00",
+      "input_tokens": 13308,
+      "output_tokens": 20,
+      "thinking_tokens": 936,
+      "total_tokens": 14264
+    }
+  ],
+  "computed_at": "2026-10-07T19:32:07.705891+00:00",
+  "metrics": {
+    "per_processor": {
+      "PWP-01": {
+        "cited_shipment_ids": [],
+        "f7_neutral_shipment_ids": [],
+        "true_f8_shipment_ids": [],
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "excluded_from_f8_metric": false,
+        "verifiable_t": 129.41,
+        "true_verifiable_t": 129.41,
+        "verifiable_t_abs_error": 0.0
+      },
+      "PWP-03": {
+        "cited_shipment_ids": [],
+        "f7_neutral_shipment_ids": [],
+        "true_f8_shipment_ids": [],
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "excluded_from_f8_metric": false,
+        "verifiable_t": 126.72,
+        "true_verifiable_t": 126.72,
+        "verifiable_t_abs_error": 0.0
+      },
+      "PWP-05": {
+        "cited_shipment_ids": [
+          "PWP-05-SHP-001"
+        ],
+        "f7_neutral_shipment_ids": [],
+        "true_f8_shipment_ids": [
+          "PWP-05-SHP-001"
+        ],
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "excluded_from_f8_metric": false,
+        "verifiable_t": 112.23,
+        "true_verifiable_t": 112.23,
+        "verifiable_t_abs_error": 0.0
+      },
+      "PWP-08": {
+        "cited_shipment_ids": [],
+        "f7_neutral_shipment_ids": [],
+        "true_f8_shipment_ids": [
+          "PWP-08-SHP-001"
+        ],
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "excluded_from_f8_metric": false,
+        "verifiable_t": 113.06,
+        "true_verifiable_t": 105.36,
+        "verifiable_t_abs_error": 7.700000000000003
+      }
+    },
+    "overall_precision": 1.0,
+    "overall_recall": 0.5,
+    "overall_f1": 0.6666666666666666,
+    "mean_verifiable_t_abs_error": 1.9250000000000007,
+    "false_citations": [],
+    "agent_status_counts": {
+      "ok": 3,
+      "timeout": 1
+    }
+  },
+  "cost_usd": 1.195332
+}
