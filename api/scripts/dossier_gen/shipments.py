@@ -9,6 +9,7 @@ import datetime
 import math
 import random
 
+from app.checks import params
 from scripts.dossier_gen.world import Processor, Supplier
 
 FY_MONTHS = [
@@ -27,6 +28,8 @@ FY_MONTHS = [
 ]
 
 _HSN_WASTE = "3915"
+# Category I/II (rigid/flexible) wording — recyclers (permitted_categories
+# includes "I" or "II").
 _NORMAL_DESCRIPTIONS_EN = [
     "Post-consumer plastic waste, mixed PE/PP",
     "Segregated plastic scrap, LDPE film",
@@ -35,8 +38,78 @@ _NORMAL_DESCRIPTIONS_EN = [
 _NORMAL_DESCRIPTIONS_HI = [
     "उपभोक्ता-पश्चात प्लास्टिक अपशिष्ट, मिश्रित पीई/पीपी",
 ]
+# Category III/IV (multilayered/compostable) wording — end-of-life
+# processors (permitted_categories is ["III", "IV"]). Same HSN 3915
+# (waste/scrap) — only the category changes, not the HSN chapter. Fixes a
+# universal, unintentional category mismatch found during the T10 realism
+# investigation: every PWP-09/PWP-10 shipment previously used the
+# recycler-oriented wording above regardless of what the processor was
+# actually permitted to handle (docs/PROGRESS.md).
+_EOL_DESCRIPTIONS_EN = [
+    "Multilayered plastic pouches and sachets, mixed",
+    "Baled multilayer packaging waste",
+    "Compostable plastic sheet waste, mixed",
+]
+_EOL_DESCRIPTIONS_HI = [
+    "बहुस्तरीय प्लास्टिक पाउच और पाउच अपशिष्ट, मिश्रित",
+]
 _F8_DESCRIPTIONS_EN = ["Virgin LDPE granules", "Fresh film rolls, unused"]
 _F8_DESCRIPTIONS_HI = ["प्राइम ग्रेड दाना"]
+
+# Vehicle classes (ASSUMPTION: approximate Indian commercial goods-vehicle
+# GVW/payload bands for scrap/waste road transport — not cited to a
+# specific dated regulatory source, since legal GVW limits are tiered by
+# axle count and periodically revised. Chosen so net+tare never exceeds a
+# plausible GVW for that class; see docs/PROGRESS.md and
+# tests/test_generator_realism.py, which enforces this on every clean/
+# hard-negative shipment.)
+_VEHICLE_CLASSES = {
+    "light_2axle": {"net_t": (7.0, 9.0), "tare_kg": (4000, 6000)},
+    "heavy_multiaxle": {"net_t": (15.0, 25.0), "tare_kg": (7000, 10000)},
+}
+_LIGHT_AVG_NET_T = sum(_VEHICLE_CLASSES["light_2axle"]["net_t"]) / 2
+_HEAVY_AVG_NET_T = sum(_VEHICLE_CLASSES["heavy_multiaxle"]["net_t"]) / 2
+_MIN_SHIPMENTS = 15
+_MAX_SHIPMENTS = 25
+
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance in km (mean Earth radius 6371 km)."""
+    earth_radius_km = 6371.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return 2 * earth_radius_km * math.asin(math.sqrt(a))
+
+
+_TARGET_MARGIN = 0.75  # see _shipment_plan's docstring
+
+
+def _shipment_plan(target_annual_t: float, rng: random.Random) -> tuple[int, float]:
+    """Returns (shipment_count, heavy_class_fraction), sized together so
+    the realistic total lands at roughly _TARGET_MARGIN of
+    target_annual_t on average — not 100%, since per-shipment draws have
+    variance and C1 requires certified_t (honest-basis: derived FROM the
+    actual total) to never exceed capacity x ratio; aiming for the
+    ceiling itself would let upside variance tip a clean processor over
+    it by chance.
+
+    Shipment count and class mix are solved together, not independently
+    (confirmed necessary empirically, docs/PROGRESS.md): starting from an
+    all-light assumption keeps a small processor's count naturally low
+    rather than forcing extra shipments a small target can't support
+    without either exceeding the ceiling or needing an artificially thin
+    heavy-class sliver whose own wide range (15-25 t) would otherwise
+    dominate that processor's total variance.
+    """
+    target = target_annual_t * _TARGET_MARGIN
+    base_n = target / _LIGHT_AVG_NET_T
+    n = max(_MIN_SHIPMENTS, min(_MAX_SHIPMENTS, round(base_n)))
+    n = max(1, n + rng.randint(-1, 1))
+    avg_net_needed = target / n
+    p_heavy = (avg_net_needed - _LIGHT_AVG_NET_T) / (_HEAVY_AVG_NET_T - _LIGHT_AVG_NET_T)
+    return n, min(0.95, max(0.0, p_heavy))
 
 
 def pc(printed: str, canonical) -> dict:
@@ -181,7 +254,7 @@ def build_dossier(
     )
 
     # --- inbound shipments: invoice + e-way bill + weighbridge slip ---
-    total_inbound = rng.randint(8, 14)
+    total_inbound, p_heavy = _shipment_plan(_annual_inbound_target_t(processor), rng)
     month_for_shipment = [rng.choice(FY_MONTHS) for _ in range(total_inbound)]
     month_counts: dict[str, int] = {}
     for m in month_for_shipment:
@@ -200,9 +273,43 @@ def build_dossier(
     if "H4" in processor.hard_negatives:
         h4_month = FY_MONTHS[8]  # December 2025: a quiet shutdown month
 
-    effective_inbound_count = total_inbound - month_counts.get(h4_month, 0)
-    qty_per_shipment_baseline = _annual_inbound_target_t(processor) / max(
-        effective_inbound_count, 1
+    # H2 (long-haul, ~900 km) gets a specific real supplier (Alwar) whose
+    # great-circle distance to this processor's site, times ROAD_FACTOR,
+    # already lands close to 900 km — so H2's declared distance is
+    # geographically consistent rather than a bare magic number (T10
+    # realism fix, docs/PROGRESS.md). Falls back to a random supplier if
+    # this seed's supplier list is ever rebuilt without an Alwar entry.
+    h2_supplier = next((s for s in suppliers if s.city == "Alwar"), None)
+
+    # Every other (non-H2) shipment draws from same-state suppliers only
+    # — real waste aggregators are regional, and a nationwide-random
+    # supplier pool combined with a real haversine distance (below) would
+    # otherwise produce absurd long-haul "normal" shipments (confirmed:
+    # up to ~2,700 km before this restriction) that aren't part of any
+    # seeded issue. H2 is the sole deliberate long-haul exception.
+    #
+    # Also excludes suppliers implausibly close to this processor's own
+    # site (< _MIN_SUPPLIER_DISTANCE_KM raw great-circle) — not a
+    # geography concern, a printed-timestamp-precision one: e-way-bill/
+    # weighbridge times are printed to the minute (docs/DATA_SPEC.md §3),
+    # so a transit of only a couple of minutes lets ±1 minute of print
+    # rounding swing the *recomputed* speed past MAX_AVG_SPEED_KMPH even
+    # though the real (canonical, sub-minute) speed never does — confirmed
+    # empirically (seed 4/PWP-10/SHP-004, a 2.3 km hop). The original
+    # pre-fix design had a 40 km floor for exactly this reason; this
+    # keeps that safety margin while staying geographically real (filters
+    # suppliers, never fakes the distance of the one actually chosen).
+    _MIN_SUPPLIER_DISTANCE_KM = 25.0
+    same_state_suppliers = (
+        [
+            s
+            for s in suppliers
+            if s.state == processor.state
+            and haversine_km(s.lat, s.lon, processor.lat, processor.lon)
+            >= _MIN_SUPPLIER_DISTANCE_KM
+        ]
+        or [s for s in suppliers if s.state == processor.state]
+        or suppliers
     )
 
     seen_counts: dict[str, int] = {}
@@ -215,7 +322,10 @@ def build_dossier(
         start, _end = month_bounds(month)
         day = rng.randint(1, 25)
         invoice_date = start + datetime.timedelta(days=day - 1)
-        supplier = rng.choice(suppliers)
+        if h2_index is not None and i == h2_index and h2_supplier is not None:
+            supplier = h2_supplier
+        else:
+            supplier = rng.choice(same_state_suppliers)
 
         lang = "hi" if (force_hindi and i == 0) else "en"
         is_f8 = i == f8_index
@@ -227,10 +337,25 @@ def build_dossier(
             use_hindi = processor.processor_id == "PWP-08"
             desc = (_F8_DESCRIPTIONS_HI if use_hindi else _F8_DESCRIPTIONS_EN)[0]
             lang = "hi" if use_hindi else "en"
-        else:
+        elif is_recycler:
             desc = (_NORMAL_DESCRIPTIONS_HI if lang == "hi" else _NORMAL_DESCRIPTIONS_EN)[0]
+        else:
+            # End-of-life processor (permitted categories III/IV) — fixes
+            # a universal, unintentional category mismatch (every
+            # shipment previously used recycler-oriented I/II wording
+            # regardless of what this processor is actually permitted to
+            # handle; docs/PROGRESS.md). F6's own deliberate one-month
+            # certificate-level category breach, below, is unaffected.
+            desc = (_EOL_DESCRIPTIONS_HI if lang == "hi" else _EOL_DESCRIPTIONS_EN)[0]
 
-        qty_t = round(qty_per_shipment_baseline * rng.uniform(0.9, 1.1), 2)
+        vehicle_class = "heavy_multiaxle" if rng.random() < p_heavy else "light_2axle"
+        net_t_range = _VEHICLE_CLASSES[vehicle_class]["net_t"]
+        qty_t = round(rng.uniform(*net_t_range), 2)
+        # ASSUMPTION: ₹/kg for mixed post-consumer plastic scrap — not
+        # cited to a specific source (docs/DATA_SPEC.md §1 has no entry
+        # for scrap pricing). Verified to always clear the ₹50,000
+        # e-way-bill threshold even at the smallest realistic shipment
+        # (7 t x Rs 8/kg = Rs 56,000) — see tests/test_generator_realism.py.
         rate = round(rng.uniform(8, 18), 2)
         value = round(qty_t * 1000 * rate, 2)
         invoice_no = f"{processor.processor_id}-INV-{i + 1:03d}"
@@ -251,7 +376,8 @@ def build_dossier(
             },
         )
 
-        distance_km = 900.0 if i == h2_index else round(rng.uniform(40, 300), 1)
+        raw_km = haversine_km(supplier.lat, supplier.lon, processor.lat, processor.lon)
+        distance_km = round(raw_km * params.ROAD_FACTOR * rng.uniform(0.95, 1.1), 1)
         avg_speed = rng.uniform(30, 48)
         transit_hours = distance_km / avg_speed
         generated_at = datetime.datetime.combine(
@@ -276,10 +402,7 @@ def build_dossier(
                 "from_gstin": pc(supplier.gstin, supplier.gstin),
                 "to_gstin": pc(processor.gstin, processor.gstin),
                 "from_pin": pc(supplier.pin_code, supplier.pin_code),
-                "to_pin": pc(
-                    processor.address[-6:] if processor.address[-6:].isdigit() else "400001",
-                    "400001",
-                ),
+                "to_pin": pc(processor.pin_code, processor.pin_code),
                 "distance_km": pc(f"{distance_km:.1f}", distance_km),
                 "vehicle_no": pc(vehicle_no, vehicle_no),
                 "hsn": pc(_HSN_WASTE, _HSN_WASTE),
@@ -302,8 +425,15 @@ def build_dossier(
                 # (-25%) and H3 (-1.5%, deliberately near the limit) exceed
                 # this band, via their own branches above.
                 net_t = round(qty_t * rng.uniform(0.988, 1.012), 2)
-            gross_kg = round((net_t + rng.uniform(8, 15)) * 1000, 0)
-            tare_kg = round(gross_kg - net_t * 1000, 0)
+            # Tare drawn independently from the SAME vehicle class as the
+            # invoice quantity (not derived from net_t) — physically
+            # correct (gross is definitionally net+tare) and realistic at
+            # any shipment size, replacing the pre-fix formula that added
+            # 8-15 TONNES of "tare" regardless of net_t (plausible only
+            # when net_t was ~500 t; absurd at a realistic ~8-25 t net).
+            tare_kg = round(rng.uniform(*_VEHICLE_CLASSES[vehicle_class]["tare_kg"]), 0)
+            net_kg = net_t * 1000
+            gross_kg = net_kg + tare_kg
             ticket_no = f"{processor.processor_id}-WB-{i + 1:04d}"
             out_time = weighbridge_in + datetime.timedelta(minutes=rng.randint(15, 45))
             weighbridge_doc_id = dossier.add_document(
@@ -314,7 +444,7 @@ def build_dossier(
                     "vehicle_no": pc(vehicle_no, vehicle_no),
                     "gross_kg": pc(format_indian_number(gross_kg, 0), gross_kg),
                     "tare_kg": pc(format_indian_number(tare_kg, 0), tare_kg),
-                    "net_kg": pc(format_indian_number(net_t * 1000, 0), net_t * 1000),
+                    "net_kg": pc(format_indian_number(net_kg, 0), net_kg),
                     "in_time": pc(fmt_datetime(weighbridge_in), weighbridge_in.isoformat()),
                     "out_time": pc(fmt_datetime(out_time), out_time.isoformat()),
                     "remarks": pc("", ""),

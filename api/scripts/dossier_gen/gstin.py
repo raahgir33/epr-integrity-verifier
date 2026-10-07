@@ -13,10 +13,6 @@ _MOD = 36
 _LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _DIGITS = "0123456789"
 
-# Real Indian state GSTIN codes — public information, used only so the
-# fictional prefix looks plausible.
-STATE_CODES = ["27", "24", "29", "33", "36", "08", "06", "23", "21", "19"]
-
 
 def _real_check_digit(prefix: str) -> str:
     """The actual public GSTIN mod-36 check-digit algorithm.
@@ -35,9 +31,14 @@ def _real_check_digit(prefix: str) -> str:
     return _CODEPOINTS[(_MOD - (checksum % _MOD)) % _MOD]
 
 
-def generate_invalid_gstin(rng: random.Random) -> str:
-    """A GSTIN-shaped string with a deliberately incorrect check digit."""
-    state_code = rng.choice(STATE_CODES)
+def generate_invalid_gstin(rng: random.Random, state_code: str) -> str:
+    """A GSTIN-shaped string with a deliberately incorrect check digit.
+
+    state_code: the real 2-digit GST state code for this entity's actual
+    state (see world.py's STATE_GSTIN_CODE) — callers must supply the
+    correct one so the fictional GSTIN is geographically consistent with
+    the entity's real address/PIN, not an independently-random state.
+    """
     pan_letters = "".join(rng.choice(_LETTERS) for _ in range(5))
     pan_digits = "".join(rng.choice(_DIGITS) for _ in range(4))
     pan_check_letter = rng.choice(_LETTERS)

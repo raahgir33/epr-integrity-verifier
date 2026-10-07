@@ -23,8 +23,11 @@ already been run for this seed (agent context is read from their output
 tables).
 
 Usage: uv run python scripts/probe_agent_thinking.py
+       uv run python scripts/probe_agent_thinking.py --processors PWP-01,PWP-03,PWP-07 \\
+           --configs no_thinking --runs-per-config 1   # canary, before the full acceptance pair
 """
 
+import argparse
 import json
 import time
 from datetime import UTC, datetime
@@ -278,7 +281,47 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
     bq.load_rows(bq_client, "assessments", assessment_rows)
 
 
+def _print_every_finding(all_runs: list[dict]) -> None:
+    print("\n=== Every confirmed finding, in full ===")
+    for run_record in all_runs:
+        for pid, record in run_record["processors"].items():
+            if not record["confirmed_findings"]:
+                continue
+            print(f"{run_record['config_name']} run {run_record['run_index']} / {pid}:")
+            for f in record["confirmed_findings"]:
+                print(f"  finding_type: {f['finding_type']}")
+                print(f"  cited_shipment_ids: {f['cited_shipment_ids']}")
+                print(f"  evidence_ids: {f['evidence_ids']}")
+                print(f"  explanation: {f['explanation']}")
+                print()
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--processors",
+        help="Comma-separated processor_ids to restrict this run to (e.g. a canary run "
+        "on PWP-01,PWP-03,PWP-07). Default: all processors.",
+    )
+    parser.add_argument(
+        "--configs",
+        default="no_thinking,low_thinking",
+        help="Comma-separated subset of configs to run. Default: both.",
+    )
+    parser.add_argument(
+        "--runs-per-config",
+        type=int,
+        default=RUNS_PER_CONFIG,
+        help="Default: 2 (needed for the run-to-run agreement metric). A canary run "
+        "should pass 1 — the decision/winner step is skipped whenever fewer than both "
+        "configs x 2 runs are present.",
+    )
+    args = parser.parse_args()
+
+    configs = [c for c in CONFIGS if c[0] in args.configs.split(",")]
+    runs_per_config = args.runs_per_config
+    requested_processors = set(args.processors.split(",")) if args.processors else None
+
     ground_truth = load_ground_truth(SEED)
     bq_client = bq.get_client()
     gcs_client = gcs.get_client()
@@ -286,12 +329,19 @@ def main() -> None:
     if inputs is None:
         print("Nothing to probe — run --stage normalize/checks/site first.")
         return
+    if requested_processors is not None:
+        inputs["processors"] = [
+            p for p in inputs["processors"] if p["processor_id"] in requested_processors
+        ]
+        missing = requested_processors - {p["processor_id"] for p in inputs["processors"]}
+        if missing:
+            print(f"Warning: requested processor(s) not found, skipping: {sorted(missing)}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     all_runs = []
-    for config_name, thinking_level in CONFIGS:
-        for run_index in range(1, RUNS_PER_CONFIG + 1):
+    for config_name, thinking_level in configs:
+        for run_index in range(1, runs_per_config + 1):
             run_record = run_one(config_name, thinking_level, run_index, inputs, gcs_client)
             run_record["computed_at"] = datetime.now(UTC).isoformat()
             run_record["metrics"] = compute_run_metrics(run_record, ground_truth)
@@ -321,6 +371,17 @@ def main() -> None:
         )
         if m["false_citations"]:
             print(f"    false citations: {m['false_citations']}")
+
+    _print_every_finding(all_runs)
+
+    is_full_acceptance_shape = len(configs) == len(CONFIGS) and runs_per_config == 2
+    if not is_full_acceptance_shape:
+        print(
+            "\nPartial run (canary or single-config) — skipping the run-to-run agreement "
+            "and winner decision, which need both configs x 2 runs each. Review the "
+            "findings above, then run the full acceptance pair when ready."
+        )
+        return
 
     print("\n=== Run-to-run agreement within each config ===")
     config_scores = {}

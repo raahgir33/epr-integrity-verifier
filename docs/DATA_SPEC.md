@@ -27,19 +27,29 @@ Anything not in this table that the code relies on is an **assumption** and must
 - **Demo batches (`demo_batches.json`):** one scripted "new certificate batch" per processor for the live event demo. For at least one processor with issues, the batch pushes cumulative certified tonnes past verifiable tonnes, so the alert fires on camera.
 - **Two seeds:** `--seed 42` is the development set (used to build and tune). `--seed 7` is the held-out test set, generated only after parameters are frozen (T14). Reported metrics come from seed 7.
 
+**Per-shipment realism (T10 fix, 2026-10-07; `api/scripts/dossier_gen/world.py`/`shipments.py`):** the original generator divided a whole year's target tonnage across only ~9–14 shipments while modelling each as one vehicle's one trip — physically impossible net weights (260–1,370 t) on every processor, confirmed by the T10 agent loop's first real run (`docs/PROGRESS.md`). Fixed:
+- **Vehicle classes** (`ASSUMPTION` — approximate Indian commercial goods-vehicle GVW/payload bands, not a specific dated regulatory citation): `light_2axle` (net 7–9 t, tare 4,000–6,000 kg) and `heavy_multiaxle` (net 15–25 t, tare 7,000–10,000 kg). Shipment count and the class mix are solved together per processor so the realistic total stays safely under its C1 capacity ceiling (`_shipment_plan` in `shipments.py`).
+- **GSTIN state codes** (`STATE_GSTIN_CODE` in `world.py`): the existing 7 real GST state codes already in `gstin.py`, plus Delhi (07) and Uttar Pradesh (09) for supplier-anchor-only states — all real, public GST Council codes.
+- **PIN codes** (`PIN_PREFIX` in `world.py`): each of the 25 supplier anchor cities' and 10 processors' real 3-digit India Post PIN prefix, web-search-verified against public sources (bankbazaar.com / indiatvnews.com city PIN-code pages), not guessed. Each processor's city is the one already named in its `site_coordinates.json` note.
+- **Distance** (`haversine_km` in `shipments.py`): `distance_km = great_circle(supplier, processor) × ROAD_FACTOR × jitter`, replacing a distance independent of which supplier was actually drawn. Non-H2 shipments draw suppliers from the processor's own state only (real waste aggregation is regional) and exclude suppliers closer than 25 km (a real but very short hop would otherwise let e-way-bill/weighbridge timestamps' 1-minute print precision swing the *recomputed* transit speed past `MAX_AVG_SPEED_KMPH`, even though the true sub-minute speed never does). H2 (the long-haul hard negative) is assigned to a specific real supplier (Alwar) whose distance already lands close to 900 km.
+- **End-of-life item descriptions** (`_EOL_DESCRIPTIONS_EN/HI` in `shipments.py`): category III/IV-appropriate wording for PWP-09/PWP-10's normal shipments — fixes a universal, unintentional category mismatch (every shipment previously used recycler-oriented category I/II wording regardless of what the processor is actually permitted to handle). F6's own deliberate one-month certificate-level category breach is untouched.
+- **Invoice rate**: `₹8–18/kg`, unchanged in value but now explicitly labelled `ASSUMPTION` in `shipments.py` (no prior citation existed).
+
+Realism enforced by `tests/test_generator_realism.py` (seeds 1–20 excl. 7; every clean/H1–H4 shipment — F2/F3/F8/F4-duplicate are deliberately divergent and excluded).
+
 ## 3. Documents per processor
 
 | Type | Format | Count per processor | Key fields to extract |
 |---|---|---|---|
 | Consent to Operate (CTO) | PDF | 1 | Consent no., processor name, address, permitted categories, capacity (t/yr), valid from, valid to |
 | EPR registration certificate | PDF | 1 | Registration no., processor type, categories, capacity |
-| Inbound GST tax invoice (from aggregator) | PDF | 8–14 | Invoice no., date, supplier GSTIN, buyer GSTIN, item description, HSN, quantity (t), rate, value |
+| Inbound GST tax invoice (from aggregator) | PDF | ~15–25 (T10 realism fix, 2026-10-07: each invoice is one real vehicle's one trip — see §2 — so count tracks capacity rather than the pre-fix fixed 8–14) | Invoice no., date, supplier GSTIN, buyer GSTIN, item description, HSN, quantity (t), rate, value |
 | E-way bill | PDF | one per inbound invoice | EWB no., generated at (datetime), valid until, from/to GSTIN, from/to PIN, distance (km), vehicle no., HSN, quantity, value, invoice no. |
 | Weighbridge slip | PNG (photo-like: slight rotation, noise, uneven light) | one per inbound invoice | Ticket no., vehicle no., gross, tare, net (kg), in time, out time, remarks |
 | Outbound sales invoice (recycled granules or flakes) | PDF | 4–8 | Invoice no., date, buyer, item description, HSN, quantity (t) |
 | Electricity bill | PDF | 12 (monthly) | Billing month, units consumed (kWh), connected load |
 
-Target total: ~400 documents. Around 10% use Hindi labels (Devanagari) for field names, rendered with Noto Sans Devanagari. Hindi documents are a stretch goal; if they slow Day 1, drop them.
+Target total: ~700 documents across all 10 processors (measured 689–729 across dev seeds 1–20 post-realism-fix; was ~400–500 pre-fix with the old 8–14-invoice count — the realism fix increases shipment count per processor since each is now a single realistic vehicle load, not a large artificial batch). Around 10% use Hindi labels (Devanagari) for field names, rendered with Noto Sans Devanagari. Hindi documents are a stretch goal; if they slow Day 1, drop them.
 
 **How documents are rendered:** Jinja2 HTML templates (one per document type, in `api/scripts/templates/`) rendered to PDF with headless Chromium via Playwright. Weighbridge slips are rendered to PNG the same way, then degraded with Pillow (rotation ±3°, noise, uneven brightness) to look photographed. Chromium shapes Devanagari correctly; ReportLab does not reliably.
 

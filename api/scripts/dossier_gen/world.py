@@ -27,6 +27,8 @@ class Processor:
     registration_no: str
     gstin: str
     address: str
+    pin_code: str
+    state: str
     lat: float
     lon: float
     site_validated: bool
@@ -43,6 +45,8 @@ class Supplier:
     pin_code: str
     lat: float
     lon: float
+    city: str
+    state: str
 
 
 @dataclass(frozen=True)
@@ -112,6 +116,84 @@ _STATE_FOR_PROCESSOR = {
     "PWP-10": "Maharashtra",
 }
 
+# Which anchor city (see _SUPPLIER_ANCHORS below) each processor's PIN
+# code is consistent with — not arbitrary: matches the city already named
+# in each processor's data/synthetic/site_coordinates.json "note" field
+# (PWP-04/06/07/09 use the nearest anchor to their real coordinates, the
+# rest are exact matches).
+_CITY_FOR_PROCESSOR = {
+    "PWP-01": "Pune",
+    "PWP-02": "Ahmedabad",
+    "PWP-03": "Vadodara",
+    "PWP-04": "Chennai",
+    "PWP-05": "Hosur",
+    "PWP-06": "Hyderabad",
+    "PWP-07": "Indore",
+    "PWP-08": "Faridabad",
+    "PWP-09": "Alwar",
+    "PWP-10": "Nagpur",
+}
+
+# Real GST state codes (public information) for every state in play —
+# the 7 processor states plus Delhi and Uttar Pradesh (supplier-anchor
+# states with no processor). Used so a fictional GSTIN's state code
+# matches the entity's actual state, not an independently-random one.
+STATE_GSTIN_CODE = {
+    "Maharashtra": "27",
+    "Gujarat": "24",
+    "Tamil Nadu": "33",
+    "Telangana": "36",
+    "Madhya Pradesh": "23",
+    "Haryana": "06",
+    "Rajasthan": "08",
+    "Delhi": "07",
+    "Uttar Pradesh": "09",
+}
+
+# Real India Post PIN prefixes (first 3 digits) for every anchor city —
+# web-search-verified public information (bankbazaar.com / indiatvnews.com
+# city PIN-code pages), not guessed. Used so a fictional PIN code's prefix
+# matches the entity's actual city.
+PIN_PREFIX = {
+    "Pune": "411",
+    "Mumbai": "400",
+    "Nashik": "422",
+    "Nagpur": "440",
+    "Ahmedabad": "380",
+    "Surat": "395",
+    "Vadodara": "390",
+    "Rajkot": "360",
+    "Chennai": "600",
+    "Coimbatore": "641",
+    "Madurai": "625",
+    "Hosur": "635",
+    "Hyderabad": "500",
+    "Warangal": "506",
+    "Indore": "452",
+    "Bhopal": "462",
+    "Gwalior": "474",
+    "Faridabad": "121",
+    "Gurugram": "122",
+    "Panchkula": "134",
+    "Jaipur": "302",
+    "Alwar": "301",
+    "Kota": "324",
+    "Delhi": "110",
+    "Kanpur": "208",
+}
+
+# T10 realism fix (docs/PROGRESS.md): a single global scale applied to
+# every processor's capacity_t_per_year, so FY inbound tonnage divides
+# into realistic single-vehicle-trip shipments (app/checks/params.py's
+# vehicle classes, see shipments.py) instead of the pre-fix ~260-1,370 t
+# per shipment. Certificates/outputs/energy all auto-scale through their
+# existing formulas (derived from capacity_t_per_year or actual shipment
+# totals) — this is the only place the scale itself is applied.
+# Tuned empirically (tests/test_generator_realism.py, all 20 dev seeds)
+# against the vehicle-class net ranges and the 15-35 shipment-count band
+# in shipments.py — not independently meaningful on its own.
+WORLD_SCALE_FACTOR = 0.032
+
 # 25 fictional aggregators across nearby states, one per anchor city.
 # (city, state, approx lat, approx lon) — city-centre level, not addresses.
 _SUPPLIER_ANCHORS = [
@@ -160,19 +242,22 @@ def build_processors(rng: random.Random) -> list[Processor]:
     for pid, name, ptype, categories, capacity, issues, hard_negs in _PROCESSOR_CATALOG:
         site = sites[pid]
         state = _STATE_FOR_PROCESSOR[pid]
+        city = _CITY_FOR_PROCESSOR[pid]
         processors.append(
             Processor(
                 processor_id=pid,
                 name=name,
                 type=ptype,
                 permitted_categories=categories,
-                capacity_t_per_year=float(capacity),
+                capacity_t_per_year=float(capacity) * WORLD_SCALE_FACTOR,
                 consent_no=f"CTO-{pid}-{rng.randint(10000, 99999)}",
                 consent_valid_from="01/04/2022",
                 consent_valid_to="31/03/2028",
                 registration_no=f"EPR-REG-{pid}-{rng.randint(1000, 9999)}",
-                gstin=generate_invalid_gstin(rng),
+                gstin=generate_invalid_gstin(rng, state_code=STATE_GSTIN_CODE[state]),
                 address=f"Plot {rng.randint(1, 200)}, Industrial Area, {state}",
+                pin_code=f"{PIN_PREFIX[city]}{rng.randint(100, 999)}",
+                state=state,
                 lat=site["lat"],
                 lon=site["lon"],
                 site_validated=site["site_validated"],
@@ -187,17 +272,19 @@ def build_processors(rng: random.Random) -> list[Processor]:
 def build_suppliers(rng: random.Random) -> list[Supplier]:
     suppliers = []
     name_suffixes = ["Waste Aggregators", "Scrap Traders", "Recyclables Pvt. Ltd.", "Enterprises"]
-    for i, (city, _state, lat, lon) in enumerate(_SUPPLIER_ANCHORS, start=1):
+    for i, (city, state, lat, lon) in enumerate(_SUPPLIER_ANCHORS, start=1):
         supplier_id = f"SUP-{i:02d}"
         suffix = name_suffixes[i % len(name_suffixes)]
         suppliers.append(
             Supplier(
                 supplier_id=supplier_id,
                 name=f"{city} {suffix}",
-                gstin=generate_invalid_gstin(rng),
-                pin_code=f"{rng.randint(100000, 899999)}",
+                gstin=generate_invalid_gstin(rng, state_code=STATE_GSTIN_CODE[state]),
+                pin_code=f"{PIN_PREFIX[city]}{rng.randint(100, 999)}",
                 lat=round(lat + rng.uniform(-0.15, 0.15), 4),
                 lon=round(lon + rng.uniform(-0.15, 0.15), 4),
+                city=city,
+                state=state,
             )
         )
     return suppliers
