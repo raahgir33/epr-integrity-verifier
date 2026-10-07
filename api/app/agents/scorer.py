@@ -8,6 +8,7 @@ stage); called with a confirmed agent finding's cited shipment IDs
 import datetime
 import re
 
+from app.checks import params
 from app.checks.capacity import certified_t_fy_to_date, fy_start_month
 from app.checks.mass_balance import verified_inbound_tonnes
 from app.ingest import units
@@ -16,7 +17,36 @@ from app.models.agent import NarrativeSummary
 from app.models.checks import CheckResult
 
 _RISK_BANDS = ["Low", "Medium", "High"]
-_SOFT_SIGNAL_CHECK_IDS = {"C2b", "C7", "C8"}
+SYSTEMIC_FINDING_CHECK_ID = "AGENT_SYSTEMIC_FINDING"
+_SOFT_SIGNAL_CHECK_IDS = {"C2b", "C7", "C8", SYSTEMIC_FINDING_CHECK_ID}
+
+
+def build_systemic_finding_check_result(systemic_findings: list) -> CheckResult:
+    """A synthetic soft-signal CheckResult for the systemic-finding guard
+    (docs/PROGRESS.md; classified by app/agents/orchestrator.py's
+    _classify_findings). The caller (scripts/run_pipeline.py,
+    scripts/probe_agent_thinking.py) appends this to check_results before
+    calling score_processor whenever systemic_findings is non-empty, so it
+    rides apply_soft_signal_bump's existing one-step cap rather than
+    adding a parallel bump mechanism. score_processor itself stays a pure
+    function of the check_results it's given — this is never computed
+    inside it.
+    """
+    return CheckResult(
+        check_id=SYSTEMIC_FINDING_CHECK_ID,
+        status="warn",
+        severity="soft",
+        measured=float(len(systemic_findings)),
+        threshold=0.0,
+        affected_tonnes=0.0,
+        evidence_ids=[],
+        explanation=(
+            f"{len(systemic_findings)} confirmed agent finding(s) each cite more than "
+            f"{params.SYSTEMIC_FINDING_SHARE_THRESHOLD:.0%} of this processor's verified "
+            "shipments — too broad to deduct as ordinary shipment-level evidence; kept as a "
+            "finding and flagged for review instead."
+        ),
+    )
 
 
 def _fy_months_up_to(as_of_month: str) -> list[str]:

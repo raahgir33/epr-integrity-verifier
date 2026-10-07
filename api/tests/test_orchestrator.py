@@ -295,6 +295,94 @@ def test_thinking_level_is_forwarded_to_every_gemini_call():
     assert fake.thinking_levels_seen == ["low", "low", "low", "low"]
 
 
+def _clean_shipment(i: int) -> dict:
+    return {
+        "shipment_id": f"SHP-{i}",
+        "invoice_doc_id": f"DOC-INV-{i}",
+        "eway_doc_id": f"DOC-EWB-{i}",
+        "weighbridge_doc_id": f"DOC-WB-{i}",
+        "match_status": "matched",
+        "month": "2026-01",
+        "distance_km": 110.0,
+        "eway_generated_at": "2026-01-14T06:20:00+00:00",
+        "eway_valid_until": "2026-01-15T18:29:00+00:00",
+        "weighbridge_in_time": "2026-01-14T10:00:00+00:00",
+        "invoice_qty_t": 100.0,
+        "weighbridge_net_t": 100.0,
+    }
+
+
+def _multi_shipment_context(n: int) -> dict:
+    """n fully clean, matched, C3/C4/C5-passing shipments — every one of
+    them counts toward verified_inbound_shipment_ids, so the systemic-
+    finding guard's share calculation has a known, exact denominator."""
+    shipments = [_clean_shipment(i) for i in range(1, n + 1)]
+    documents = [
+        {
+            "doc_id": f"DOC-INV-{i}",
+            "doc_type": "inbound_invoice",
+            "lang": "en",
+            "gcs_path": f"gs://bucket/DOC-INV-{i}.pdf",
+            "fields": {"item_description": "post-consumer plastic waste", "hsn": "3915"},
+        }
+        for i in range(1, n + 1)
+    ]
+    return _processor_context(shipments=shipments, documents=documents, duplicate_keys={})
+
+
+def _run_with_one_objection(context: dict, cited_shipment_ids: list[str]) -> dict:
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(
+        objections=[
+            Objection(
+                finding_type="x",
+                cited_shipment_ids=cited_shipment_ids,
+                evidence_ids=["DOC-INV-1"],
+                explanation="y",
+            )
+        ]
+    )
+    revisions = RevisionsResponse(revisions=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections, revisions], tool_loop_side_effect=_text_turn_side_effect
+    )
+    return run_agent_loop(context, fake, deadline=time.monotonic() + 60)
+
+
+def test_finding_citing_minority_of_verified_shipments_is_deductible():
+    # 1 of 4 verified shipments cited = 25%, well under the 50% threshold.
+    context = _multi_shipment_context(4)
+
+    result = _run_with_one_objection(context, ["SHP-1"])
+
+    assert len(result["confirmed_findings"]) == 1
+    assert len(result["deductible_findings"]) == 1
+    assert result["systemic_findings"] == []
+
+
+def test_finding_citing_exactly_half_of_verified_shipments_is_deductible():
+    # 2 of 4 = exactly the threshold — the guard requires MORE than the
+    # share, so this stays deductible (confirms the ">" is strict, not ">=").
+    context = _multi_shipment_context(4)
+
+    result = _run_with_one_objection(context, ["SHP-1", "SHP-2"])
+
+    assert len(result["deductible_findings"]) == 1
+    assert result["systemic_findings"] == []
+
+
+def test_finding_citing_majority_of_verified_shipments_is_systemic():
+    # 3 of 4 = 75%, over the 50% threshold — kept as a finding, not deducted.
+    context = _multi_shipment_context(4)
+
+    result = _run_with_one_objection(context, ["SHP-1", "SHP-2", "SHP-3"])
+
+    assert len(result["confirmed_findings"]) == 1
+    assert result["deductible_findings"] == []
+    assert len(result["systemic_findings"]) == 1
+    assert result["systemic_findings"][0].cited_shipment_ids == ["SHP-1", "SHP-2", "SHP-3"]
+
+
 def test_unhandled_error_returns_error_status_without_raising():
     fake = _FakeLLMClient([], raise_on_call="agent_hypothesis")
 

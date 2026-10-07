@@ -25,7 +25,7 @@ from pathlib import Path
 from google.cloud import bigquery
 
 from app.agents.orchestrator import run_agent_loop
-from app.agents.scorer import score_processor
+from app.agents.scorer import build_systemic_finding_check_result, score_processor
 from app.checks import params
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.runner import run_checks_for_processor
@@ -663,15 +663,24 @@ def run_agents(
                 }
             )
 
+        # Systemic-finding guard (docs/PROGRESS.md): only deductible_findings
+        # subtract shipment tonnage; systemic_findings are kept (visible in
+        # agent_runs/the UI) and instead ride a synthetic soft-signal check
+        # result into score_processor's existing one-step risk-band bump.
         excluded_shipment_ids = frozenset(
-            sid for f in loop_result["confirmed_findings"] for sid in f.cited_shipment_ids
+            sid for f in loop_result["deductible_findings"] for sid in f.cited_shipment_ids
         )
+        score_check_results = list(p_check_results)
+        if loop_result["systemic_findings"]:
+            score_check_results.append(
+                build_systemic_finding_check_result(loop_result["systemic_findings"])
+            )
         score = score_processor(
             processor,
             p_certificates,
             p_shipments,
             duplicate_keys,
-            p_check_results,
+            score_check_results,
             as_of_month,
             excluded_shipment_ids=excluded_shipment_ids,
         )
@@ -688,6 +697,8 @@ def run_agents(
         print(
             f"  {pid}: agent_status={loop_result['agent_status']} "
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
+            f"(deductible={len(loop_result['deductible_findings'])}, "
+            f"systemic={len(loop_result['systemic_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t unverifiable={score['unverifiable_t']:.2f}t "
             f"risk={score['risk_band']}"
         )

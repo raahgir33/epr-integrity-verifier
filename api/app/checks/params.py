@@ -83,3 +83,11 @@ AGENT_TIMEOUT_S = 180
 # 2026-10-07 after the first real agent run flagged the previous flat
 # 5-30 kWh absolute draw as implausible once per-shipment tonnage became
 # realistic (docs/PROGRESS.md).
+F7_KWH_PER_T_MIN = 50
+F7_KWH_PER_T_MAX = 110
+
+# Agent systemic-finding guard (docs/PROGRESS.md) — ASSUMPTION. A
+# confirmed finding citing more than this share of a processor's verified
+# shipments is treated as a systemic/UI-review flag rather than a normal
+# per-shipment deduction — see app/agents/orchestrator.py.
+SYSTEMIC_FINDING_SHARE_THRESHOLD = 0.5

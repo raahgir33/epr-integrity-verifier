@@ -99,11 +99,13 @@ All capacity and mass-balance checks are **cumulative over the financial year to
 
 For each processor, financial year to date:
 
-1. **Verified inbound tonnes** = Σ weighbridge net tonnes of matched shipments that pass C3, C4 and C5, **minus** shipments cited by a confirmed agent finding (for example F8: material described as virgin).
+1. **Verified inbound tonnes** = Σ weighbridge net tonnes of matched shipments that pass C3, C4 and C5, **minus** shipments cited by a confirmed agent finding that is "deductible" (for example F8: material described as virgin) — see the systemic-finding guard below for findings excluded from this deduction.
 2. **Capacity limit** = CTO capacity × months elapsed / 12, set to 0 for months outside CTO validity (C6).
 3. **Verifiable tonnes** = min(eligible certified tonnes, verified inbound tonnes, capacity limit), where eligible certified tonnes excludes certificates in a category the CTO does not permit (C6) — that activity is out of consent no matter how well-backed physically, so it is excluded from the basis the minimum is taken over, not just flagged in the risk band.
 4. **Unverifiable tonnes** = certified tonnes (the full figure, not the eligible subset from step 3) − verifiable tonnes.
-5. **Risk band** from unverifiable share: Low < 5%, Medium 5–25%, High > 25%. Each failed soft signal (C2b, C7, C8) raises the band by one step, at most one step in total.
+5. **Risk band** from unverifiable share: Low < 5%, Medium 5–25%, High > 25%. Each failed soft signal (C2b, C7, C8) or a non-empty systemic-finding list (below) raises the band by one step, at most one step in total.
+
+**Systemic-finding guard (T10, decided 2026-10-07):** a confirmed agent finding that cites more than `SYSTEMIC_FINDING_SHARE_THRESHOLD` (0.5, `ASSUMPTION`, `app/checks/params.py`) of the processor's own verified shipments is too broad to treat as ordinary per-shipment evidence — deducting all of them would let one finding zero out most of the processor's verifiable tonnage from a single objection. Such a finding is **kept** (visible in `confirmed_findings`, the agent trail, and the UI) but classified as "systemic" rather than "deductible": it is excluded from step 1's tonnage deduction and instead contributes to step 5's one-step risk-band bump via a synthetic soft-signal `CheckResult` (`check_id="AGENT_SYSTEMIC_FINDING"`). Implemented in `app/agents/orchestrator.py`'s `_classify_findings` (classification) and `app/agents/scorer.py`'s `build_systemic_finding_check_result` (the synthetic check result); the denominator is `app/checks/mass_balance.py`'s `verified_inbound_shipment_ids`, the same C3/C4/C5 predicate `verified_inbound_tonnes` sums, exposed as an ID set.
 
 The generator computes `true_verifiable_t` with the same definition, applied to the true underlying shipments rather than to extracted documents. That makes the tonnage error metric meaningful.
 
@@ -188,6 +190,8 @@ Fixed assignment:
 | **Run-to-run stability** | Agent stage run twice on the test set; share of processors whose risk band is identical |
 
 **Cited-shipment scoring rule (T10, decided 2026-10-07):** a confirmed agent finding's `cited_shipment_ids` are scored against ground truth's `is_f8` flag for precision/recall, **except** on a processor whose seeded issue includes F5 (ghost site) — F5 has no shipment-level manifestation (it is a site-level finding, caught by C8), so any shipment citation the agent produces on that processor is excluded from the precision/recall denominator entirely: neither a true positive nor a false positive. Without this exclusion, a correct non-F8 finding on the F5 processor (for example, F6's category mismatch, which does cite shipments) would be wrongly counted as a false F8 citation. Implemented in `scripts/probe_agent_thinking.py`'s `compute_run_metrics`.
+
+**F7's narrower version of the same rule (T10, decided 2026-10-07):** a processor's F7 (energy implausibility) month likewise has no shipment-level manifestation — it is a monthly electricity-bill figure, caught by C7 — so a citation of a shipment that falls in that processor's own seeded F7 month is neutral too, exactly like F5. Unlike F5, this exclusion is **per-month, not per-processor**: F7 doesn't invalidate every other month's citation-worthiness (for example PWP-07 also carries F2, whose phantom-inbound shipments are still fair game for the metric). The target month is found from the data itself — the month with minimum `kwh` in that processor's own `energy_monthly` — not by re-deriving the generator's own month-selection logic. Implemented in `scripts/probe_agent_thinking.py`'s `_f7_neutral_shipment_ids` and `compute_run_metrics`.
 
 **Protocol:** all parameters in `params.py` and all prompts are frozen (tagged commit) before the seed-7 test set is generated. Reported numbers come from seed 7 only. Seed-42 numbers may be shown as "development set", clearly labelled.
 

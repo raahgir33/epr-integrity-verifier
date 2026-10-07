@@ -32,7 +32,7 @@ from app.agents.prompts import (
     REVISION_PROMPT,
 )
 from app.checks import params
-from app.checks.mass_balance import verified_inbound_tonnes
+from app.checks.mass_balance import verified_inbound_shipment_ids, verified_inbound_tonnes
 from app.llm import LLMClient
 from app.models.agent import (
     ConclusionsResponse,
@@ -254,6 +254,8 @@ def _result(
     objections=None,
     revisions=None,
     confirmed_findings=None,
+    deductible_findings=None,
+    systemic_findings=None,
     trail=None,
     tool_cap_reached=False,
 ) -> dict:
@@ -262,10 +264,43 @@ def _result(
         "objections": objections or [],
         "revisions": revisions or [],
         "confirmed_findings": confirmed_findings or [],
+        "deductible_findings": deductible_findings or [],
+        "systemic_findings": systemic_findings or [],
         "trail": trail or [],
         "tool_cap_reached": tool_cap_reached,
         "agent_status": agent_status,
     }
+
+
+def _classify_findings(
+    confirmed_findings: list[Objection], verified_shipment_ids: frozenset[str]
+) -> tuple[list[Objection], list[Objection]]:
+    """Systemic-finding guard (docs/PROGRESS.md) — a confirmed finding
+    citing more than params.SYSTEMIC_FINDING_SHARE_THRESHOLD of the
+    processor's own verified shipments is too broad to treat as ordinary
+    per-shipment evidence: deducting all of them would let one finding
+    zero out most of the processor's verifiable tonnage. Such a finding
+    is kept (shown in the UI/trail) but moved to systemic_findings instead
+    of deductible_findings — app/agents/scorer.py turns a non-empty
+    systemic_findings list into a soft-signal risk-band bump instead of a
+    tonnage deduction.
+
+    With zero verified shipments, "cites more than half of them" has no
+    meaningful denominator — every finding is deductible in that case,
+    same as before this guard existed.
+    """
+    if not verified_shipment_ids:
+        return list(confirmed_findings), []
+    deductible: list[Objection] = []
+    systemic: list[Objection] = []
+    for finding in confirmed_findings:
+        cited = set(finding.cited_shipment_ids) & verified_shipment_ids
+        share = len(cited) / len(verified_shipment_ids)
+        if share > params.SYSTEMIC_FINDING_SHARE_THRESHOLD:
+            systemic.append(finding)
+        else:
+            deductible.append(finding)
+    return deductible, systemic
 
 
 def run_agent_loop(
@@ -450,12 +485,21 @@ def run_agent_loop(
         rejected_indices = {r.objection_index for r in revisions if not r.accepted}
         confirmed_findings = [o for i, o in enumerate(objections) if i not in rejected_indices]
 
+        verified_shipment_ids = verified_inbound_shipment_ids(
+            processor_context["shipments"], processor_context["duplicate_keys"]
+        )
+        deductible_findings, systemic_findings = _classify_findings(
+            confirmed_findings, verified_shipment_ids
+        )
+
         return _result(
             "ok",
             conclusions=conclusions,
             objections=objections,
             revisions=revisions,
             confirmed_findings=confirmed_findings,
+            deductible_findings=deductible_findings,
+            systemic_findings=systemic_findings,
             trail=trail,
             tool_cap_reached=tool_cap_reached,
         )

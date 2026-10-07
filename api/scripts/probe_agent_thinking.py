@@ -34,7 +34,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.agents.orchestrator import run_agent_loop
-from app.agents.scorer import score_processor
+from app.agents.scorer import build_systemic_finding_check_result, score_processor
 from app.checks import params
 from app.ingest.normalize import TRUTH
 from app.llm import GeminiClient
@@ -100,15 +100,23 @@ def run_one(
             processor_context, llm_client, deadline, thinking_level=thinking_level
         )
 
+        # Systemic-finding guard (docs/PROGRESS.md) — see scripts/run_pipeline.py's
+        # run_agents() for the same split; kept identical here so this probe's
+        # scoring matches the real pipeline's.
         excluded_shipment_ids = frozenset(
-            sid for f in loop_result["confirmed_findings"] for sid in f.cited_shipment_ids
+            sid for f in loop_result["deductible_findings"] for sid in f.cited_shipment_ids
         )
+        score_check_results = list(check_result_models)
+        if loop_result["systemic_findings"]:
+            score_check_results.append(
+                build_systemic_finding_check_result(loop_result["systemic_findings"])
+            )
         score = score_processor(
             processor,
             processor_context["certificates"],
             processor_context["shipments"],
             processor_context["duplicate_keys"],
-            check_result_models,
+            score_check_results,
             inputs["as_of_month"],
             excluded_shipment_ids=excluded_shipment_ids,
         )
@@ -120,12 +128,16 @@ def run_one(
             "objections": [o.model_dump() for o in loop_result["objections"]],
             "revisions": [r.model_dump() for r in loop_result["revisions"]],
             "confirmed_findings": [f.model_dump() for f in loop_result["confirmed_findings"]],
+            "deductible_findings": [f.model_dump() for f in loop_result["deductible_findings"]],
+            "systemic_findings": [f.model_dump() for f in loop_result["systemic_findings"]],
             "trail": loop_result["trail"],
             "score": score,
         }
         print(
             f"  {pid}: agent_status={loop_result['agent_status']} "
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
+            f"(deductible={len(loop_result['deductible_findings'])}, "
+            f"systemic={len(loop_result['systemic_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t risk={score['risk_band']}"
         )
 
@@ -150,6 +162,32 @@ def _f5_processor_ids(ground_truth: dict) -> set[str]:
     }
 
 
+def _f7_target_month(ground_truth_processor: dict) -> str | None:
+    """The seeded F7 low-energy anomaly's month, found from the data
+    itself — the month with minimum kwh in this processor's own
+    energy_monthly — rather than re-deriving the generator's own
+    f7_target_month selection (docs/DATA_SPEC.md §7)."""
+    energy_monthly = ground_truth_processor.get("energy_monthly") or []
+    if not energy_monthly:
+        return None
+    return min(energy_monthly, key=lambda r: r["kwh"])["month"]
+
+
+def _f7_neutral_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
+    """docs/DATA_SPEC.md §7's cited-shipment scoring rule: a citation of a
+    shipment in an F7 processor's own seeded low-energy month is neutral —
+    like F5, it never counts as a false F8 citation — but only that one
+    month's shipments are excluded, not the whole processor: unlike F5,
+    F7 doesn't invalidate every other month's citation-worthiness."""
+    gt_processor = _ground_truth_processor(ground_truth, processor_id)
+    if "F7" not in gt_processor.get("issue_types", []):
+        return set()
+    target_month = _f7_target_month(gt_processor)
+    if target_month is None:
+        return set()
+    return {s["shipment_id"] for s in gt_processor["shipments"] if s.get("month") == target_month}
+
+
 def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
     per_processor = {}
     agg_tp = agg_fp = agg_fn = 0
@@ -160,13 +198,16 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
     for pid, record in run_record["processors"].items():
         true_f8 = _ground_truth_f8_shipment_ids(ground_truth, pid)
         cited = _cited_shipment_ids(record)
-        pr = _precision_recall_f1(cited, true_f8)
+        f7_neutral = _f7_neutral_shipment_ids(ground_truth, pid)
+        cited_for_metric = cited - f7_neutral
+        pr = _precision_recall_f1(cited_for_metric, true_f8)
         true_verifiable_t = _ground_truth_processor(ground_truth, pid)["true_verifiable_t"]
         abs_error = abs(record["score"]["verifiable_t"] - true_verifiable_t)
         excluded_from_f8_metric = pid in f5_processor_ids
 
         per_processor[pid] = {
             "cited_shipment_ids": sorted(cited),
+            "f7_neutral_shipment_ids": sorted(f7_neutral),
             "true_f8_shipment_ids": sorted(true_f8),
             **pr,
             "excluded_from_f8_metric": excluded_from_f8_metric,
@@ -180,7 +221,8 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
             agg_fp += pr["fp"]
             agg_fn += pr["fn"]
             false_citations.extend(
-                {"processor_id": pid, "shipment_id": sid} for sid in sorted(cited - true_f8)
+                {"processor_id": pid, "shipment_id": sid}
+                for sid in sorted(cited_for_metric - true_f8)
             )
 
     overall_precision = agg_tp / (agg_tp + agg_fp) if (agg_tp + agg_fp) else 1.0
@@ -288,8 +330,13 @@ def _print_every_finding(all_runs: list[dict]) -> None:
             if not record["confirmed_findings"]:
                 continue
             print(f"{run_record['config_name']} run {run_record['run_index']} / {pid}:")
+            systemic_findings = record["systemic_findings"]
             for f in record["confirmed_findings"]:
-                print(f"  finding_type: {f['finding_type']}")
+                # Systemic-finding guard (docs/PROGRESS.md): keep this
+                # classification visible in the canary printout, not
+                # silently dropped.
+                label = "systemic (not deducted)" if f in systemic_findings else "deductible"
+                print(f"  finding_type: {f['finding_type']} [{label}]")
                 print(f"  cited_shipment_ids: {f['cited_shipment_ids']}")
                 print(f"  evidence_ids: {f['evidence_ids']}")
                 print(f"  explanation: {f['explanation']}")

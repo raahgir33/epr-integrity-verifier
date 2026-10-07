@@ -10,6 +10,43 @@ from app.checks.transport import shipment_passes_c3a, shipment_passes_c3b
 from app.models.checks import CheckResult
 
 
+def verified_inbound_shipment_ids(
+    shipments: list[dict],
+    duplicate_keys: dict[str, dict],
+    excluded_shipment_ids: frozenset[str] = frozenset(),
+) -> frozenset[str]:
+    """The shipment_ids verified_inbound_tonnes (below) would sum — docs/
+    DATA_SPEC.md §4a.1's "matched, passes C3/C4/C5" predicate, exposed as
+    an id set rather than a total so callers (app/agents/orchestrator.py's
+    systemic-finding guard) can reason about *which* shipments a finding
+    cites relative to the full verified set, not just how many tonnes.
+
+    A shipment missing a field a check needs (shipment_passes_c3a etc.
+    returning None) is treated as not failing that check, not as failing
+    it: a matched shipment always carries the fields its own matching
+    required (vehicle number, time window, quantities), so None here would
+    mean a genuine data gap unrelated to the check itself, not grounds to
+    exclude a shipment that was otherwise physically evidenced.
+    """
+    ids = set()
+    for s in shipments:
+        if s["shipment_id"] in excluded_shipment_ids:
+            continue
+        if s.get("match_status") != "matched":
+            continue
+        if shipment_passes_c3a(s) is False:
+            continue
+        if shipment_passes_c3b(s) is False:
+            continue
+        if shipment_passes_c4(s) is False:
+            continue
+        if not shipment_passes_c5(s["shipment_id"], duplicate_keys):
+            continue
+        if s.get("weighbridge_net_t") is not None:
+            ids.add(s["shipment_id"])
+    return frozenset(ids)
+
+
 def verified_inbound_tonnes(
     shipments: list[dict],
     duplicate_keys: dict[str, dict],
@@ -26,34 +63,12 @@ def verified_inbound_tonnes(
     serving both the "checks_only" and "full" assessment stages, not a
     fork of it.
 
-    A shipment missing a field a check needs (shipment_passes_c3a etc.
-    returning None) is treated as not failing that check, not as failing
-    it: a matched shipment always carries the fields its own matching
-    required (vehicle number, time window, quantities), so None here would
-    mean a genuine data gap unrelated to the check itself, not grounds to
-    zero out tonnes that were otherwise physically evidenced.
-
     Shared by check_c2a (below) and agents/scorer.py, so the definition of
     "verified" lives in exactly one place.
     """
-    total = 0.0
-    for s in shipments:
-        if s["shipment_id"] in excluded_shipment_ids:
-            continue
-        if s.get("match_status") != "matched":
-            continue
-        if shipment_passes_c3a(s) is False:
-            continue
-        if shipment_passes_c3b(s) is False:
-            continue
-        if shipment_passes_c4(s) is False:
-            continue
-        if not shipment_passes_c5(s["shipment_id"], duplicate_keys):
-            continue
-        net_t = s.get("weighbridge_net_t")
-        if net_t is not None:
-            total += net_t
-    return total
+    verified_ids = verified_inbound_shipment_ids(shipments, duplicate_keys, excluded_shipment_ids)
+    by_id = {s["shipment_id"]: s for s in shipments}
+    return sum(by_id[sid]["weighbridge_net_t"] for sid in verified_ids)
 
 
 def check_c2a(processor_id: str, certified_t: float, verified_inbound_t: float) -> CheckResult:
