@@ -29,11 +29,10 @@ Usage: uv run python scripts/probe_agent_thinking.py
 
 import argparse
 import json
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from app.agents.orchestrator import classify_confirmed_findings, run_agent_loop
+from app.agents.orchestrator import classify_confirmed_findings, run_agent_loop_with_retry
 from app.agents.scorer import (
     build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
@@ -115,9 +114,8 @@ def run_one(
         processor_context, check_result_models = build_processor_context(
             inputs, processor, gcs_client
         )
-        deadline = time.monotonic() + params.AGENT_TIMEOUT_S
-        loop_result = run_agent_loop(
-            processor_context, llm_client, deadline, thinking_level=thinking_level
+        loop_result, attempts = run_agent_loop_with_retry(
+            processor_context, llm_client, params.AGENT_TIMEOUT_S, thinking_level=thinking_level
         )
 
         # Own-evidence rule + systemic-finding guard + Hypothesis/Critic
@@ -170,10 +168,12 @@ def run_one(
                 f.model_dump() for f in loop_result["concurs_with_check_findings"]
             ],
             "trail": loop_result["trail"],
+            "attempts": attempts,
             "score": score,
         }
+        retried_note = f" (retried, {len(attempts)} attempts)" if len(attempts) > 1 else ""
         print(
-            f"  {pid}: agent_status={loop_result['agent_status']} "
+            f"  {pid}: agent_status={loop_result['agent_status']}{retried_note} "
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "
@@ -323,6 +323,18 @@ def _run_cost_usd(run_record: dict) -> float:
     )
 
 
+def _attempts_from_record(record: dict) -> list[dict]:
+    """New runs (after the 2026-10-08 processor-level retry) store
+    "attempts" directly. A --rescore of an already-saved pre-retry run
+    (e.g. the acceptance pair's own saved JSON, written before this
+    change landed) only has a flat "trail" — treated as a single
+    attempt 1, so rescoring an old file still writes correctly tagged
+    rows instead of KeyError-ing."""
+    if "attempts" in record:
+        return record["attempts"]
+    return [{"attempt": 1, "trail": record["trail"]}]
+
+
 def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
     """Same shape/idempotency as scripts/run_pipeline.py's run_agents() —
     deliberately duplicated here only for the write, not the fetch (the
@@ -330,28 +342,30 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
     agent_run_rows = []
     assessment_rows = []
     for pid, record in run_record["processors"].items():
-        for step in record["trail"]:
-            agent_run_rows.append(
-                {
-                    "seed": SEED,
-                    "facts_source": TRUTH,
-                    "processor_id": pid,
-                    "computed_at": run_record["computed_at"],
-                    "step_index": step["step_index"],
-                    "step_type": step["step_type"],
-                    "tool_name": step["tool_name"],
-                    "tool_args_json": step["tool_args_json"],
-                    "input_summary": step["input_summary"],
-                    "output_json": step["output_json"],
-                    # Populated by run_agent_loop from GeminiClient.call_log
-                    # (docs/PROGRESS.md) — None for steps with no
-                    # underlying Gemini call.
-                    "latency_ms": step.get("latency_ms"),
-                    "input_tokens": step.get("input_tokens"),
-                    "output_tokens": step.get("output_tokens"),
-                    "thinking_tokens": step.get("thinking_tokens"),
-                }
-            )
+        for attempt in _attempts_from_record(record):
+            for step in attempt["trail"]:
+                agent_run_rows.append(
+                    {
+                        "seed": SEED,
+                        "facts_source": TRUTH,
+                        "processor_id": pid,
+                        "attempt": attempt["attempt"],
+                        "computed_at": run_record["computed_at"],
+                        "step_index": step["step_index"],
+                        "step_type": step["step_type"],
+                        "tool_name": step["tool_name"],
+                        "tool_args_json": step["tool_args_json"],
+                        "input_summary": step["input_summary"],
+                        "output_json": step["output_json"],
+                        # Populated by run_agent_loop from GeminiClient.call_log
+                        # (docs/PROGRESS.md) — None for steps with no
+                        # underlying Gemini call.
+                        "latency_ms": step.get("latency_ms"),
+                        "input_tokens": step.get("input_tokens"),
+                        "output_tokens": step.get("output_tokens"),
+                        "thinking_tokens": step.get("thinking_tokens"),
+                    }
+                )
         assessment_rows.append(
             {
                 "seed": SEED,

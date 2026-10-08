@@ -187,6 +187,66 @@ def test_generate_structured_gives_up_after_agent_max_attempts_on_504(mock_clien
     assert mock_client.models.generate_content.call_count == 3
 
 
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_generate_structured_critic_phase_purpose_gets_a_fourth_attempt(
+    mock_client_cls, _mock_sleep
+):
+    """Critic-phase purposes (agent_critic_tools/agent_critic_final/
+    agent_revision) get 4 attempts, not 3 — raised 2026-10-08 after the
+    acceptance pair's PWP-05 loss to exactly three consecutive 504s."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _api_error(504),
+        _api_error(504),
+        _api_error(504),
+        _make_response('{"value": "ok"}'),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    result = client.generate_structured(["hello"], _DummySchema, purpose="agent_critic_final")
+
+    assert result.value == "ok"
+    assert mock_client.models.generate_content.call_count == 4
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_generate_structured_critic_phase_purpose_gives_up_after_four_attempts(
+    mock_client_cls, _mock_sleep
+):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = _api_error(504)
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(errors.APIError):
+        client.generate_structured(["hello"], _DummySchema, purpose="agent_revision")
+
+    assert mock_client.models.generate_content.call_count == 4
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_generate_structured_hypothesis_purpose_still_gives_up_after_three_attempts(
+    mock_client_cls, _mock_sleep
+):
+    """agent_hypothesis deliberately keeps the original 3-attempt budget —
+    only the critic-phase purposes (tools/final/revision) were raised to
+    4, since the first step failing fast surfaces the processor-level
+    retry (run_agent_loop_with_retry) sooner rather than later."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = _api_error(504)
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    with pytest.raises(errors.APIError):
+        client.generate_structured(["hello"], _DummySchema, purpose="agent_hypothesis")
+
+    assert mock_client.models.generate_content.call_count == 3
+
+
 @patch("app.llm.genai.Client")
 def test_extract_records_token_usage_from_response(mock_client_cls):
     mock_client = MagicMock()
@@ -519,6 +579,30 @@ def test_run_tool_loop_retries_up_to_agent_max_attempts_then_succeeds(mock_clien
 
     assert tool_cap_reached is False
     assert mock_client.models.generate_content.call_count == 3
+
+
+@patch("app.llm.time.sleep", return_value=None)
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_critic_tools_purpose_gets_a_fourth_attempt(mock_client_cls, _mock_sleep):
+    """agent_critic_tools is one of the critic-phase purposes raised to 4
+    attempts, 2026-10-08 — 3 consecutive 504s no longer exhausts the
+    budget before a 4th attempt can succeed."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _api_error(504),
+        _api_error(504),
+        _api_error(504),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    conversation, tool_cap_reached = client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=8, purpose="agent_critic_tools"
+    )
+
+    assert tool_cap_reached is False
+    assert mock_client.models.generate_content.call_count == 4
 
 
 @patch("app.llm.genai.Client")

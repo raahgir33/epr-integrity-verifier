@@ -80,8 +80,13 @@ AGENT_MAX_TOOL_CALLS = 8
 # that hit an intermittent ~120s-class backend stall on agent_critic_tools
 # (confirmed server-side — see app/llm.py/app/config.py). Paired with the
 # fail-fast approach (app/config.py's per-purpose agent_*_timeout_ms
-# settings, _AGENT_MAX_ATTEMPTS=3 in app/llm.py) rather than simply
-# waiting longer per attempt.
+# settings; app/llm.py's _agent_max_attempts — 3 for agent_hypothesis, 4
+# for the critic-phase purposes since 2026-10-08) rather than simply
+# waiting longer per attempt. Also paired with a processor-level retry
+# (app/agents/orchestrator.py's run_agent_loop_with_retry) that re-runs
+# the whole loop once more, with its own fresh AGENT_TIMEOUT_S budget, if
+# even that isn't enough — the acceptance pair's own PWP-05 loss was
+# exactly this budget being exhausted by three consecutive 504s.
 AGENT_TIMEOUT_S = 300
 
 # F7 (energy implausibility seeding) — ASSUMPTION. The generator's F7

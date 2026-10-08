@@ -265,7 +265,7 @@ def _agent_runs(seed: int, facts_source: str) -> list[dict]:
         return _fetch_rows(
             bq.get_client(),
             "agent_runs",
-            "processor_id, step_index, step_type, tool_name, tool_args_json, "
+            "processor_id, attempt, step_index, step_type, tool_name, tool_args_json, "
             "input_summary, output_json, latency_ms, input_tokens, output_tokens, "
             "thinking_tokens",
             seed,
@@ -279,10 +279,22 @@ def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dic
     """Raw agent_runs rows for one processor, ordered by step_index — the
     shape app/agents/orchestrator.py's reconstruct_agent_findings expects.
     All processors are fetched and cached in one query (the table is
-    small); filtering/sorting happens here per call."""
+    small); filtering/sorting happens here per call.
+
+    A processor can have two attempts' worth of rows since the
+    2026-10-08 processor-level retry (run_agent_loop_with_retry) — only
+    the LATEST attempt's rows are ever returned (never a blend of both:
+    step_index restarts at 0 for each attempt, so sorting across both
+    would interleave two unrelated trails). NULL attempt (pre-retry rows,
+    or an old table before the ALTER TABLE lands) is treated as 1."""
     all_rows = _agent_runs(seed, facts_source)
+    processor_rows = [r for r in all_rows if r["processor_id"] == processor_id]
+    if not processor_rows:
+        return []
+    latest_attempt = max(r["attempt"] or 1 for r in processor_rows)
     return sorted(
-        (r for r in all_rows if r["processor_id"] == processor_id), key=lambda r: r["step_index"]
+        (r for r in processor_rows if (r["attempt"] or 1) == latest_attempt),
+        key=lambda r: r["step_index"],
     )
 
 

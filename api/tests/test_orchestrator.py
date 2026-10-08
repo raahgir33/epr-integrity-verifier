@@ -6,11 +6,13 @@ can't be overruled, the tool-cap and timeout/error paths never raise.
 
 import time
 
+import app.agents.orchestrator as orchestrator_module
 from app.agents.orchestrator import (
     build_context_pack,
     reconstruct_agent_findings,
     reconstruct_findings,
     run_agent_loop,
+    run_agent_loop_with_retry,
 )
 from app.models.agent import (
     ConclusionsResponse,
@@ -31,12 +33,24 @@ def _fake_get(obj, key):
 
 
 class _FakeLLMClient:
-    def __init__(self, structured_responses, tool_loop_side_effect=None, raise_on_call=None):
+    def __init__(
+        self,
+        structured_responses,
+        tool_loop_side_effect=None,
+        raise_on_call=None,
+        fail_once_purposes=None,
+    ):
         self._structured_responses = list(structured_responses)
         self._tool_loop_side_effect = tool_loop_side_effect or (
             lambda contents, tools, cap: (contents, False)
         )
         self._raise_on_call = raise_on_call
+        # One-shot failure per purpose (run_agent_loop_with_retry tests):
+        # raises on the FIRST call of a purpose in this set, then is
+        # removed from the set — so a second attempt's call of the same
+        # purpose succeeds normally, unlike raise_on_call above (which
+        # raises every time).
+        self._fail_once_purposes = set(fail_once_purposes or [])
         self.generate_structured_calls = []
         self.run_tool_loop_calls = []
         self.thinking_levels_seen = []
@@ -67,6 +81,9 @@ class _FakeLLMClient:
         self.thinking_levels_seen.append(thinking_level)
         if self._raise_on_call == purpose:
             raise RuntimeError("boom")
+        if purpose in self._fail_once_purposes:
+            self._fail_once_purposes.discard(purpose)
+            raise RuntimeError("boom (one-shot)")
         self._record_call(purpose)
         response = self._structured_responses.pop(0)
         assert isinstance(response, schema)
@@ -887,6 +904,86 @@ def test_unhandled_error_returns_error_status_without_raising():
     assert result["agent_status"] == "error"
     assert result["conclusions"] == []
     assert result["confirmed_findings"] == []
+
+
+# ---------- run_agent_loop_with_retry (processor-level retry, 2026-10-08) ----------
+
+
+def test_run_agent_loop_with_retry_retries_once_on_error_and_keeps_second_result():
+    """Attempt 1's hypothesis call raises (agent_status="error"); attempt
+    2 is a fresh loop against the same queued responses and succeeds —
+    the acceptance pair's PWP-05 scenario (a transient failure that a
+    plain re-run recovers from)."""
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(objections=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections],
+        tool_loop_side_effect=_text_turn_side_effect,
+        fail_once_purposes={"agent_hypothesis"},
+    )
+
+    result, attempts = run_agent_loop_with_retry(_processor_context(), fake, timeout_s=60)
+
+    assert result["agent_status"] == "ok"
+    assert len(attempts) == 2
+    assert attempts[0] == {"attempt": 1, "trail": [], "agent_status": "error"}
+    assert attempts[1]["attempt"] == 2
+    assert attempts[1]["agent_status"] == "ok"
+    assert attempts[1]["trail"] == result["trail"]
+
+
+def test_run_agent_loop_with_retry_does_not_retry_a_successful_first_attempt():
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(objections=[])
+    fake = _FakeLLMClient([conclusions, objections], tool_loop_side_effect=_text_turn_side_effect)
+
+    result, attempts = run_agent_loop_with_retry(_processor_context(), fake, timeout_s=60)
+
+    assert result["agent_status"] == "ok"
+    assert len(attempts) == 1
+    assert attempts[0]["attempt"] == 1
+    # Only one loop's worth of Gemini calls — a successful run is never
+    # re-run just because this layer exists.
+    assert fake.generate_structured_calls.count("agent_hypothesis") == 1
+
+
+def test_run_agent_loop_with_retry_keeps_second_error_if_the_retry_also_fails():
+    fake = _FakeLLMClient([], raise_on_call="agent_hypothesis")
+
+    result, attempts = run_agent_loop_with_retry(_processor_context(), fake, timeout_s=60)
+
+    assert result["agent_status"] == "error"
+    assert len(attempts) == 2
+    assert attempts[0]["agent_status"] == "error"
+    assert attempts[1]["agent_status"] == "error"
+    assert fake.generate_structured_calls.count("agent_hypothesis") == 2
+
+
+def test_run_agent_loop_with_retry_also_retries_on_timeout(monkeypatch):
+    """Same retry path for agent_status="timeout" as for "error" — both
+    are in orchestrator._RETRIABLE_AGENT_STATUSES, exercised here by
+    stubbing run_agent_loop itself rather than re-deriving a real
+    deadline-timing scenario through the fake client."""
+    calls = {"n": 0}
+
+    def _stub(processor_context, llm_client, deadline, thinking_level=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return {"trail": [{"step_type": "hypothesis"}], "agent_status": "timeout"}
+        return {
+            "trail": [{"step_type": "hypothesis"}, {"step_type": "critic_final"}],
+            "agent_status": "ok",
+        }
+
+    monkeypatch.setattr(orchestrator_module, "run_agent_loop", _stub)
+
+    result, attempts = run_agent_loop_with_retry(
+        _processor_context(), _FakeLLMClient([]), timeout_s=60
+    )
+
+    assert calls["n"] == 2
+    assert result["agent_status"] == "ok"
+    assert [a["agent_status"] for a in attempts] == ["timeout", "ok"]
 
 
 # ---------- reconstruct_findings (T11's agreement-merge extraction) ----------

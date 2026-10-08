@@ -18,13 +18,12 @@ Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
 
 import argparse
 import json
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 
 from google.cloud import bigquery
 
-from app.agents.orchestrator import run_agent_loop
+from app.agents.orchestrator import run_agent_loop_with_retry
 from app.agents.scorer import (
     build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
@@ -647,35 +646,43 @@ def run_agents(
         p_certificates = processor_context["certificates"]
         duplicate_keys = processor_context["duplicate_keys"]
 
-        deadline = time.monotonic() + params.AGENT_TIMEOUT_S
-        loop_result = run_agent_loop(processor_context, llm_client, deadline)
+        loop_result, attempts = run_agent_loop_with_retry(
+            processor_context, llm_client, params.AGENT_TIMEOUT_S
+        )
 
-        for step in loop_result["trail"]:
-            agent_run_rows.append(
-                {
-                    "seed": seed,
-                    "facts_source": facts_source,
-                    "processor_id": pid,
-                    "computed_at": computed_at,
-                    "step_index": step["step_index"],
-                    "step_type": step["step_type"],
-                    "tool_name": step["tool_name"],
-                    "tool_args_json": step["tool_args_json"],
-                    "input_summary": step["input_summary"],
-                    "output_json": step["output_json"],
-                    # Populated by app/agents/orchestrator.py's run_agent_
-                    # loop from GeminiClient.call_log (docs/PROGRESS.md) —
-                    # None for steps with no underlying Gemini call
-                    # (critic_tool_result, tool_cap_reached). llm_calls
-                    # (flushed below) remains the authoritative call-level
-                    # accounting; this is the same data, joined to the
-                    # specific trail step that caused it.
-                    "latency_ms": step.get("latency_ms"),
-                    "input_tokens": step.get("input_tokens"),
-                    "output_tokens": step.get("output_tokens"),
-                    "thinking_tokens": step.get("thinking_tokens"),
-                }
-            )
+        # Both attempts are logged (docs/PROGRESS.md's 2026-10-08
+        # processor-level retry) — attempt=1's rows are kept even when a
+        # retry ran, so a failed-then-recovered run stays auditable in
+        # agent_runs. Only attempts[-1] (== loop_result) is ever used for
+        # scoring below.
+        for attempt in attempts:
+            for step in attempt["trail"]:
+                agent_run_rows.append(
+                    {
+                        "seed": seed,
+                        "facts_source": facts_source,
+                        "processor_id": pid,
+                        "attempt": attempt["attempt"],
+                        "computed_at": computed_at,
+                        "step_index": step["step_index"],
+                        "step_type": step["step_type"],
+                        "tool_name": step["tool_name"],
+                        "tool_args_json": step["tool_args_json"],
+                        "input_summary": step["input_summary"],
+                        "output_json": step["output_json"],
+                        # Populated by app/agents/orchestrator.py's run_agent_
+                        # loop from GeminiClient.call_log (docs/PROGRESS.md) —
+                        # None for steps with no underlying Gemini call
+                        # (critic_tool_result, tool_cap_reached). llm_calls
+                        # (flushed below) remains the authoritative call-level
+                        # accounting; this is the same data, joined to the
+                        # specific trail step that caused it.
+                        "latency_ms": step.get("latency_ms"),
+                        "input_tokens": step.get("input_tokens"),
+                        "output_tokens": step.get("output_tokens"),
+                        "thinking_tokens": step.get("thinking_tokens"),
+                    }
+                )
 
         # Own-evidence rule + systemic-finding guard + Hypothesis/Critic
         # agreement rule (docs/PROGRESS.md): only deductible_findings
@@ -724,8 +731,9 @@ def run_agents(
                 **score,
             }
         )
+        retried_note = f" (retried, {len(attempts)} attempts)" if len(attempts) > 1 else ""
         print(
-            f"  {pid}: agent_status={loop_result['agent_status']} "
+            f"  {pid}: agent_status={loop_result['agent_status']}{retried_note} "
             f"confirmed_findings={len(loop_result['confirmed_findings'])} "
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "

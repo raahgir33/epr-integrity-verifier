@@ -9,14 +9,21 @@ Two distinct retry layers, matching two distinct rules:
   one shared attempt budget, exponential backoff) lives here, inside
   GeminiClient's _call_generate_content, shared by every public method.
   extract() gets _MAX_ATTEMPTS (5); agent calls (generate_structured,
-  run_tool_loop) get the smaller _AGENT_MAX_ATTEMPTS (3) — fail fast and
-  retry, rather than wait longer, for the intermittent backend stalls
+  run_tool_loop) get the smaller _agent_max_attempts(purpose) — fail fast
+  and retry, rather than wait longer, for the intermittent backend stalls
   docs/PROGRESS.md diagnosed on agent_critic_tools (normal calls <25s;
   a stalled one took ~118s before the server's own 504 — confirmed via
   google-genai's _api_client.py source: it forwards our configured
   timeout to the server as the X-Server-Timeout header, so a 504 here is
   the server enforcing the deadline we set, not a raw client read
-  timeout; the very next retry succeeded in 4.2s).
+  timeout; the very next retry succeeded in 4.2s). That budget is itself
+  split in two (2026-10-08, after the acceptance pair): agent_hypothesis
+  keeps the original 3; agent_critic_tools/agent_critic_final/
+  agent_revision get 4 — PWP-05's run-1 loss in the acceptance pair was
+  exactly three consecutive retryable 504s on a critic-phase call,
+  exhausting the old shared budget of 3. Paired with the processor-level
+  retry in app/agents/orchestrator.py's run_agent_loop_with_retry, which
+  re-runs the whole loop once more if either budget is still exhausted.
 - Schema-validation retry (one retry, then record failure) is the caller's
   job (app/ingest/extract.py) — a ValidationError from here propagates
   immediately, uncaught.
@@ -48,7 +55,20 @@ _MAX_ATTEMPTS = 5
 # rather than wait longer (docs/PROGRESS.md) — a much smaller total-attempt
 # budget than extract()'s _MAX_ATTEMPTS, shared by both the 504/5xx path
 # and the raw-timeout path above (one combined cap, not two separate ones).
+# agent_hypothesis keeps the original budget; the critic-phase purposes
+# (which is where the acceptance pair's own PWP-05 loss happened — three
+# consecutive 504s on one agent_critic_tools call) get one more attempt,
+# 2026-10-08. Not raised for agent_hypothesis: it's the first step, so a
+# fast failure there surfaces app/agents/orchestrator.py's
+# run_agent_loop_with_retry sooner rather than later.
 _AGENT_MAX_ATTEMPTS = 3
+_CRITIC_PHASE_MAX_ATTEMPTS = 4
+_CRITIC_PHASE_PURPOSES = {"agent_critic_tools", "agent_critic_final", "agent_revision"}
+
+
+def _agent_max_attempts(purpose: str) -> int:
+    return _CRITIC_PHASE_MAX_ATTEMPTS if purpose in _CRITIC_PHASE_PURPOSES else _AGENT_MAX_ATTEMPTS
+
 
 # Never send thinking_budget to Gemini 3.x models — live-verified rejected
 # (and inconsistently) for gemini-3.5-flash/asia-south1 on 2026-10-07; see
@@ -248,7 +268,7 @@ class GeminiClient:
 
         response = self._call_generate_content(
             purpose,
-            max_attempts=_AGENT_MAX_ATTEMPTS,
+            max_attempts=_agent_max_attempts(purpose),
             contents=contents,
             config=types.GenerateContentConfig(**config_kwargs),
         )
@@ -324,7 +344,7 @@ class GeminiClient:
         for _ in range(max_total_iterations):
             response = self._call_generate_content(
                 purpose,
-                max_attempts=_AGENT_MAX_ATTEMPTS,
+                max_attempts=_agent_max_attempts(purpose),
                 contents=conversation,
                 config=types.GenerateContentConfig(**config_kwargs),
             )

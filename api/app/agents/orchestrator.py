@@ -1169,3 +1169,62 @@ def run_agent_loop(
             processor_context.get("processor", {}).get("processor_id"),
         )
         return _result("error", trail=trail)
+
+
+_RETRIABLE_AGENT_STATUSES = {"error", "timeout"}
+
+
+def run_agent_loop_with_retry(
+    processor_context: dict,
+    llm_client: LLMClient,
+    timeout_s: float,
+    thinking_level: str | None = None,
+) -> tuple[dict, list[dict]]:
+    """Processor-level retry (docs/PROGRESS.md, 2026-10-08 acceptance
+    pair): run_agent_loop's own per-call retry budget (app/llm.py's
+    _agent_max_attempts) can still be exhausted by an unlucky run of
+    consecutive 504s — PWP-05's run-1 loss in the acceptance pair was
+    exactly that, three in a row on one critic-phase call. Rather than
+    let a processor permanently fall back to checks_only-equivalent
+    scoring (agent_status="error"/"timeout", excluded_shipment_ids empty)
+    just because it was unlucky, this re-runs the WHOLE loop once more,
+    fresh — a new context pack, a new deadline, never a resumption of the
+    failed attempt — if and only if the first attempt's agent_status is
+    "error" or "timeout". A successful first attempt ("ok") is never
+    retried; this layer has nothing to do with whether the findings
+    themselves look right.
+
+    Both attempts are returned so a caller can log both into agent_runs
+    (docs/PROGRESS.md: one audit trail each, tagged by attempt number) —
+    but only the kept attempt's result is ever used for scoring, win or
+    lose, never a merge of the two, even if the first attempt actually
+    produced more findings before timing out.
+
+    timeout_s is the SAME per-attempt budget for both attempts
+    (params.AGENT_TIMEOUT_S, unchanged by this retry) — each attempt gets
+    its own fresh timeout_s-long deadline from the moment it starts, not
+    one budget shared across both.
+
+    Returns (result, attempts): result is whichever attempt's own
+    run_agent_loop return shape is being kept — the only attempt, if no
+    retry was needed; the second, if one ran. attempts is
+    [{"attempt": 1, "trail": [...], "agent_status": "..."}] (length 1), or
+    that plus the same shape for attempt 2 (length 2) if a retry ran."""
+    processor_id = processor_context.get("processor", {}).get("processor_id")
+    deadline = time.monotonic() + timeout_s
+    result = run_agent_loop(processor_context, llm_client, deadline, thinking_level)
+    attempts = [{"attempt": 1, "trail": result["trail"], "agent_status": result["agent_status"]}]
+
+    if result["agent_status"] in _RETRIABLE_AGENT_STATUSES:
+        logger.warning(
+            "agent loop attempt 1 agent_status=%s for processor_id=%s, retrying once",
+            result["agent_status"],
+            processor_id,
+        )
+        deadline = time.monotonic() + timeout_s
+        result = run_agent_loop(processor_context, llm_client, deadline, thinking_level)
+        attempts.append(
+            {"attempt": 2, "trail": result["trail"], "agent_status": result["agent_status"]}
+        )
+
+    return result, attempts

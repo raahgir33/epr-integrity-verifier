@@ -317,6 +317,62 @@ def test_get_document_validates_against_seed():
     assert cache.get_document(SEED, "DOC-DOES-NOT-EXIST") is None
 
 
+# ---------- agent trail (attempt filtering) ----------
+#
+# The 2026-10-08 processor-level retry (app/agents/orchestrator.py's
+# run_agent_loop_with_retry) can write two attempts' worth of agent_runs
+# rows for one processor — get_agent_trail must return only the latest
+# attempt's rows, never a blend of both (step_index restarts at 0 per
+# attempt, so sorting across both would interleave two unrelated trails).
+
+
+def test_get_agent_trail_returns_only_the_latest_attempt(monkeypatch):
+    monkeypatch.setattr(
+        cache,
+        "_agent_runs",
+        lambda seed, fs: [
+            {"processor_id": "PWP-05", "attempt": 1, "step_index": 0, "step_type": "hypothesis"},
+            {"processor_id": "PWP-05", "attempt": 1, "step_index": 1, "step_type": "critic_final"},
+            {"processor_id": "PWP-05", "attempt": 2, "step_index": 0, "step_type": "hypothesis"},
+            {"processor_id": "PWP-01", "attempt": 1, "step_index": 0, "step_type": "hypothesis"},
+        ],
+    )
+    trail = cache.get_agent_trail(SEED, FACTS_SOURCE, "PWP-05")
+    assert [r["attempt"] for r in trail] == [2]
+    assert trail[0]["step_type"] == "hypothesis"
+
+
+def test_get_agent_trail_treats_null_attempt_as_one(monkeypatch):
+    """Pre-retry rows (written before the ALTER TABLE/retry rollout) have
+    attempt=NULL — must still read back as a normal single-attempt trail,
+    not get dropped or mis-sorted."""
+    monkeypatch.setattr(
+        cache,
+        "_agent_runs",
+        lambda seed, fs: [
+            {
+                "processor_id": "PWP-01",
+                "attempt": None,
+                "step_index": 0,
+                "step_type": "hypothesis",
+            },
+            {
+                "processor_id": "PWP-01",
+                "attempt": None,
+                "step_index": 1,
+                "step_type": "critic_final",
+            },
+        ],
+    )
+    trail = cache.get_agent_trail(SEED, FACTS_SOURCE, "PWP-01")
+    assert [r["step_index"] for r in trail] == [0, 1]
+
+
+def test_get_agent_trail_empty_for_unknown_processor(monkeypatch):
+    monkeypatch.setattr(cache, "_agent_runs", lambda seed, fs: [])
+    assert cache.get_agent_trail(SEED, FACTS_SOURCE, "PWP-99") == []
+
+
 # ---------- monthly flow ----------
 
 

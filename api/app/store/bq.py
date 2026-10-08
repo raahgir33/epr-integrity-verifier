@@ -231,10 +231,21 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
     # delete_by_seed_and_source is this table's idempotency key, same
     # pattern, not a new one. tool_name/tool_args_json are null for a
     # non-tool step.
+    #
+    # attempt (nullable INTEGER, added 2026-10-08 for the processor-level
+    # retry — app/agents/orchestrator.py's run_agent_loop_with_retry):
+    # 1 for the first attempt's steps, 2 for a retry's, if one ran. NEW
+    # COLUMN on an existing table — create_tables.py's CREATE TABLE IF NOT
+    # EXISTS does nothing for it; the developer needs:
+    #   ALTER TABLE `epr.agent_runs` ADD COLUMN IF NOT EXISTS attempt INTEGER;
+    # Existing rows get NULL until the next --stage agents / probe run
+    # rewrites them (app/store/cache.py's get_agent_trail treats a NULL
+    # attempt as 1, so old rows still read correctly meanwhile).
     "agent_runs": [
         bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
         bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
         bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("attempt", "INTEGER"),
         bigquery.SchemaField("step_index", "INTEGER", mode="REQUIRED"),
         bigquery.SchemaField("step_type", "STRING"),
         bigquery.SchemaField("tool_name", "STRING"),
