@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Deploys epr-web to Cloud Run. Run by the developer — never by the agent.
-# Usage: api/scripts/deploy/deploy_web.sh [api-url]
-#   api-url is optional if deploy_api.sh already ran on this machine —
-#   it falls back to the URL that script recorded.
+# Usage: api/scripts/deploy/deploy_web.sh
+#   Requires epr-api to already be deployed — its URL is read live from
+#   `gcloud run services describe epr-api`, never cached or hardcoded, so
+#   epr-web always points at whatever epr-api currently is.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -19,23 +20,21 @@ set -a
 source "$ENV_FILE"
 set +a
 
+if [[ -z "${GCP_PROJECT:-}" ]]; then
+  GCP_PROJECT="$(gcloud config get-value project 2>/dev/null || true)"
+fi
+
 for var in GCP_PROJECT VERTEX_LOCATION; do
   if [[ -z "${!var:-}" ]]; then
-    echo "error: $var is not set in $ENV_FILE" >&2
+    echo "error: $var is not set in $ENV_FILE (and no gcloud fallback available for it)" >&2
     exit 1
   fi
 done
 
-API_URL="${1:-}"
-URL_FILE="$REPO_ROOT/api/scripts/deploy/.epr-api-url"
-if [[ -z "$API_URL" && -f "$URL_FILE" ]]; then
-  API_URL="$(cat "$URL_FILE")"
-fi
-
+API_URL="$(gcloud run services describe epr-api --region="$VERTEX_LOCATION" --format='value(status.url)' 2>/dev/null || true)"
 if [[ -z "$API_URL" ]]; then
-  echo "error: no API URL given and $URL_FILE does not exist." >&2
-  echo "Run deploy_api.sh first, or pass the URL explicitly:" >&2
-  echo "  api/scripts/deploy/deploy_web.sh https://epr-api-....run.app" >&2
+  echo "error: could not read epr-api's URL from 'gcloud run services describe epr-api'." >&2
+  echo "Deploy epr-api first: api/scripts/deploy/deploy_api.sh" >&2
   exit 1
 fi
 
@@ -43,10 +42,14 @@ echo "Deploying epr-web to project $GCP_PROJECT in $VERTEX_LOCATION, API_BASE_UR
 
 gcloud run deploy epr-web --source=web --region="$VERTEX_LOCATION" \
   --service-account="epr-web-sa@${GCP_PROJECT}.iam.gserviceaccount.com" \
-  --allow-unauthenticated --memory=512Mi \
+  --allow-unauthenticated --memory=512Mi --cpu-boost \
   --set-env-vars="API_BASE_URL=${API_URL}"
 
 WEB_URL="$(gcloud run services describe epr-web --region="$VERTEX_LOCATION" --format='value(status.url)')"
+if [[ -z "$WEB_URL" ]]; then
+  echo "error: deploy succeeded but 'gcloud run services describe epr-web' returned no URL" >&2
+  exit 1
+fi
 
 echo ""
 echo "epr-web deployed: $WEB_URL"

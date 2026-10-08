@@ -97,29 +97,81 @@ All five must pass. If Gemini fails on region or model, stop and record the exac
 
 ## 8. Deploy
 
-Deployment scripts live in `api/scripts/deploy/`. Run them yourself. Equivalent commands:
+Deployment scripts live in `api/scripts/deploy/`. Run them yourself:
 
 ```bash
-# API
+api/scripts/deploy/deploy_api.sh   # epr-api — prints its URL at the end
+api/scripts/deploy/deploy_web.sh   # epr-web — reads epr-api's URL automatically
+```
+
+Equivalent commands, for reference (the scripts also fill in every agent/extract timeout setting from `app/config.py`'s defaults — omitted below for brevity; see `deploy_api.sh`):
+
+```bash
+# API — PUSH_TOKEN is deliberately not set; nothing checks it until T13's
+# push endpoint exists (app/config.py's push_token is Optional for exactly
+# this reason). Add it once T13's push subscription (below) is created.
 gcloud run deploy epr-api --source=api --region=asia-south1 \
   --service-account=epr-api-sa@PROJECT_ID.iam.gserviceaccount.com \
-  --allow-unauthenticated --timeout=600 --memory=1Gi \
-  --set-env-vars=GCP_PROJECT=PROJECT_ID,VERTEX_LOCATION=asia-south1,GEMINI_MODEL=gemini-3.5-flash,BQ_DATASET=epr,DOSSIER_BUCKET=PROJECT_ID-epr-dossiers,ARTIFACT_BUCKET=PROJECT_ID-epr-artifacts,PUBSUB_TOPIC=certificate-batches,PUSH_TOKEN=CHOOSE_A_LONG_RANDOM_STRING
+  --allow-unauthenticated --timeout=600 --memory=1Gi --cpu-boost --min-instances=0 \
+  --set-env-vars=GCP_PROJECT=PROJECT_ID,VERTEX_LOCATION=asia-south1,GEMINI_MODEL=gemini-3.5-flash,BQ_DATASET=epr,DOSSIER_BUCKET=PROJECT_ID-epr-dossiers,ARTIFACT_BUCKET=PROJECT_ID-epr-artifacts,PUBSUB_TOPIC=certificate-batches,DEFAULT_SEED=42,DEFAULT_FACTS_SOURCE=truth
 
-# Web (after the API URL is known)
+# Web — API_BASE_URL is read live from `gcloud run services describe epr-api`,
+# never hardcoded or cached, so it always points at whatever epr-api
+# currently is
+EPR_API_URL="$(gcloud run services describe epr-api --region=asia-south1 --format='value(status.url)')"
 gcloud run deploy epr-web --source=web --region=asia-south1 \
   --service-account=epr-web-sa@PROJECT_ID.iam.gserviceaccount.com \
-  --allow-unauthenticated --memory=512Mi \
-  --set-env-vars=API_BASE_URL=https://EPR_API_URL
+  --allow-unauthenticated --memory=512Mi --cpu-boost \
+  --set-env-vars="API_BASE_URL=${EPR_API_URL}"
 
-# Push subscription (after the API URL is known)
+# Push subscription (T13 — after the API URL is known and PUSH_TOKEN has
+# been added to epr-api's env vars)
 gcloud pubsub subscriptions create certificate-batches-push \
   --topic=certificate-batches \
-  --push-endpoint="https://EPR_API_URL/events/certificate-batch?token=SAME_PUSH_TOKEN" \
+  --push-endpoint="${EPR_API_URL}/events/certificate-batch?token=SAME_PUSH_TOKEN" \
   --ack-deadline=600
 ```
 
 From 9 October until results: add `--min-instances=1` to both services (`gcloud run services update epr-api --min-instances=1`, same for `epr-web`).
+
+## 8a. Post-deploy verification
+
+Run these after every `deploy_api.sh`/`deploy_web.sh`. `API_URL` is the URL `deploy_api.sh` printed.
+
+**Health and consistency.** `consistency_ok` reflects `app/store/cache.check_consistency()` (docs/ARCHITECTURE.md §7) — it should be `true`, never `false`; `null` means the request raced startup and should clear on a retry a few seconds later.
+
+```bash
+curl -s "${API_URL}/health" | python3 -m json.tool
+```
+
+**First-request latency.** `app/main.py`'s `lifespan` blocks on `preload()` before the app reports ready, so even the *first* request after a cold start should already be warm — this is the regression to watch for (see `app/store/cache.py`'s A2 fix: a short TTL was previously undermining "preload once, stay warm").
+
+```bash
+# cold (first request after a fresh revision/instance)
+curl -s -o /dev/null -w "cold: %{time_total}s (HTTP %{http_code})\n" "${API_URL}/processors/PWP-08"
+# warm (immediately after)
+curl -s -o /dev/null -w "warm: %{time_total}s (HTTP %{http_code})\n" "${API_URL}/processors/PWP-08"
+```
+
+Both should be well under 1s. If "cold" is many seconds slower than "warm", `preload()` is running later than startup (check the startup log query below) rather than being blocked on as intended.
+
+**Startup log.** Confirms `preload()` + `check_consistency()` actually ran at boot, and how long they took (`app/main.py` logs this once, after both finish).
+
+```bash
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND resource.labels.service_name="epr-api" AND textPayload:"startup complete"' \
+  --project=PROJECT_ID --freshness=1h --limit=5 --format='value(timestamp, textPayload)'
+```
+
+**Out-of-memory check.** `--memory=1Gi` is a guess, not a measured figure — watch for Cloud Run's own OOM log line, especially right after a cold start (preload loads all of seed 42's tables and site thumbnails into memory at once) or during an agent run.
+
+```bash
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND resource.labels.service_name="epr-api" AND severity>=ERROR AND textPayload:"Memory limit"' \
+  --project=PROJECT_ID --freshness=1d --limit=20 --format='value(timestamp, textPayload)'
+```
+
+An empty result is good. If it's not empty, raise `--memory` on `epr-api` (`gcloud run services update epr-api --memory=2Gi`) rather than investigating further — this dataset's size is fixed and known, not a leak to chase.
 
 ## 9. Troubleshooting source deploys
 
