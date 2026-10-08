@@ -11,7 +11,8 @@ real token/cost totals from llm_calls.
 Reads ground_truth.json only for scoring (is_f8 / is_f9 / true_verifiable_t) —
 never for building what the agents themselves see; that boundary is
 scripts/run_pipeline.py's fetch_agent_inputs()/build_processor_context(),
-reused here unchanged (see tests/test_agent_leak_guard.py).
+reused here unchanged (see tests/test_agent_leak_guard.py) for either
+--facts-source.
 
 Never send thinking_budget, or thinking_level="minimal", to Gemini 3.x
 models (developer instruction; enforced in app/llm.py) — this script only
@@ -20,11 +21,13 @@ ever tries "low" against the no-thinking default.
 Run by the developer — never by the agent (hits real Vertex AI,
 BigQuery, Cloud Storage). Requires --stage normalize/checks/site to have
 already been run for this seed (agent context is read from their output
-tables).
+tables) — and, for --facts-source extracted, --stage extract too.
 
 Usage: uv run python scripts/probe_agent_thinking.py
        uv run python scripts/probe_agent_thinking.py --processors PWP-01,PWP-03,PWP-07 \\
            --configs no_thinking --runs-per-config 1   # canary, before the full acceptance pair
+       uv run python scripts/probe_agent_thinking.py --facts-source extracted \\
+           --configs no_thinking --runs-per-config 2
 """
 
 import argparse
@@ -40,7 +43,7 @@ from app.agents.scorer import (
     score_processor,
 )
 from app.checks import params
-from app.ingest.normalize import TRUTH
+from app.ingest.normalize import EXTRACTED, TRUTH
 from app.llm import GeminiClient
 from app.models.agent import Objection
 from app.models.checks import CheckResult
@@ -101,6 +104,7 @@ def run_one(
     run_index: int,
     inputs: dict,
     gcs_client,
+    facts_source: str = TRUTH,
 ) -> dict:
     """Runs the full agent loop for every processor in `inputs`, once,
     under one thinking config. Returns a fully JSON-serializable record —
@@ -188,6 +192,7 @@ def run_one(
         "config_name": config_name,
         "thinking_level": thinking_level,
         "run_index": run_index,
+        "facts_source": facts_source,
         "as_of_month": inputs["as_of_month"],
         "processors": processors_record,
         "call_log": llm_client.flush_call_log(),
@@ -338,7 +343,11 @@ def _attempts_from_record(record: dict) -> list[dict]:
 def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
     """Same shape/idempotency as scripts/run_pipeline.py's run_agents() —
     deliberately duplicated here only for the write, not the fetch (the
-    fetch is already shared via fetch_agent_inputs/build_processor_context)."""
+    fetch is already shared via fetch_agent_inputs/build_processor_context).
+    facts_source comes from the run_record itself (set by run_one), with a
+    TRUTH fallback for runs saved before this field existed — same fallback
+    pattern as _attempts_from_record below."""
+    facts_source = run_record.get("facts_source", TRUTH)
     agent_run_rows = []
     assessment_rows = []
     for pid, record in run_record["processors"].items():
@@ -347,7 +356,7 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
                 agent_run_rows.append(
                     {
                         "seed": SEED,
-                        "facts_source": TRUTH,
+                        "facts_source": facts_source,
                         "processor_id": pid,
                         "attempt": attempt["attempt"],
                         "computed_at": run_record["computed_at"],
@@ -369,7 +378,7 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
         assessment_rows.append(
             {
                 "seed": SEED,
-                "facts_source": TRUTH,
+                "facts_source": facts_source,
                 "stage": "full",
                 "computed_at": run_record["computed_at"],
                 "agent_status": record["agent_status"],
@@ -377,9 +386,9 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
             }
         )
 
-    bq.delete_by_seed_and_source(bq_client, "agent_runs", SEED, TRUTH)
+    bq.delete_by_seed_and_source(bq_client, "agent_runs", SEED, facts_source)
     bq.load_rows(bq_client, "agent_runs", agent_run_rows)
-    bq.delete_assessments_by_stage(bq_client, SEED, TRUTH, "full")
+    bq.delete_assessments_by_stage(bq_client, SEED, facts_source, "full")
     bq.load_rows(bq_client, "assessments", assessment_rows)
 
 
@@ -538,6 +547,15 @@ def main() -> None:
         "configs x 2 runs are present.",
     )
     parser.add_argument(
+        "--facts-source",
+        choices=[TRUTH, EXTRACTED],
+        default=TRUTH,
+        help="Build agent context from ground truth or real extracted_facts (same meaning "
+        "as scripts/run_pipeline.py's --stage agents --facts-source). Default: truth. "
+        "Saved run files get a _extracted suffix for this mode, so they never collide "
+        "with the committed truth-mode acceptance-pair files.",
+    )
+    parser.add_argument(
         "--rescore",
         help="An already-saved agent_probe_runs/*.json to re-classify under the CURRENT "
         "code (e.g. after a scoring-rule change) and write to BigQuery as stage='full' — "
@@ -555,7 +573,7 @@ def main() -> None:
 
     bq_client = bq.get_client()
     gcs_client = gcs.get_client()
-    inputs = fetch_agent_inputs(bq_client, SEED, TRUTH, processor_filter=None)
+    inputs = fetch_agent_inputs(bq_client, SEED, args.facts_source, processor_filter=None)
     if inputs is None:
         print("Nothing to probe — run --stage normalize/checks/site first.")
         return
@@ -575,16 +593,25 @@ def main() -> None:
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    filename_suffix = "" if args.facts_source == TRUTH else f"_{args.facts_source}"
+
     all_runs = []
     for config_name, thinking_level in configs:
         for run_index in range(1, runs_per_config + 1):
-            run_record = run_one(config_name, thinking_level, run_index, inputs, gcs_client)
+            run_record = run_one(
+                config_name,
+                thinking_level,
+                run_index,
+                inputs,
+                gcs_client,
+                facts_source=args.facts_source,
+            )
             run_record["computed_at"] = datetime.now(UTC).isoformat()
             run_record["metrics"] = compute_run_metrics(run_record, ground_truth)
             run_record["cost_usd"] = _run_cost_usd(run_record)
             all_runs.append(run_record)
 
-            out_path = OUTPUT_DIR / f"{config_name}_run{run_index}.json"
+            out_path = OUTPUT_DIR / f"{config_name}{filename_suffix}_run{run_index}.json"
             out_path.write_text(json.dumps(run_record, indent=2, default=str), encoding="utf-8")
             print(f"Saved: {out_path}")
 
@@ -656,7 +683,7 @@ def main() -> None:
     else:
         print("The winning config's run is already the last one written to BigQuery.")
 
-    summary_path = OUTPUT_DIR / "summary.json"
+    summary_path = OUTPUT_DIR / f"summary{filename_suffix}.json"
     summary = {
         "winner": winner,
         "configs": {

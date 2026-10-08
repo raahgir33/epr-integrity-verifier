@@ -1,8 +1,10 @@
 """Precompute pipeline: extract -> normalize -> checks -> site -> agents.
-All five stages are implemented. --stage agents currently only supports
---facts-source truth (see docs/PROGRESS.md's Deferred Items ledger — a
-re-run against extracted facts is deferred until after the full
-496-document extraction run).
+All five stages are implemented, both --facts-source truth and extracted
+(the full 714-document extraction run completed 2026-10-08 — see
+docs/PROGRESS.md — so --stage agents --facts-source extracted is now
+supported; the agent reads extracted_facts/documents through the same
+fetch_agent_inputs()/build_processor_context() shape truth mode already
+used, never ground_truth.json).
 
 Run by the developer — never by the agent (hits real Vertex AI, BigQuery,
 Cloud Storage, Earth Engine).
@@ -14,6 +16,7 @@ Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
        uv run python scripts/run_pipeline.py --seed 42 --stage checks --facts-source truth
        uv run python scripts/run_pipeline.py --seed 42 --stage site
        uv run python scripts/run_pipeline.py --seed 42 --stage agents --facts-source truth
+       uv run python scripts/run_pipeline.py --seed 42 --stage agents --facts-source extracted
 """
 
 import argparse
@@ -34,7 +37,7 @@ from app.checks import params
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.runner import run_checks_for_processor
 from app.config import settings
-from app.eval.evaluate import extraction_field_accuracy
+from app.eval.evaluate import extraction_field_accuracy, format_accuracy_pct
 from app.geo.site import run_site_assessment, site_assessment_to_check_result, upload_thumbnail
 from app.ingest.extract import extract_all, facts_to_field_rows
 from app.ingest.normalize import (
@@ -119,13 +122,13 @@ def run_extract(seed: int, processor_filter: str | None) -> None:
     for doc_type, stats in sorted(report.items()):
         if doc_type == "overall":
             continue
-        acc = f"{stats['accuracy']:.1%}" if stats["accuracy"] is not None else "n/a"
+        acc = format_accuracy_pct(stats["correct"], stats["total"])
         print(f"  {doc_type:20s} {stats['correct']:4d}/{stats['total']:<4d}  {acc}")
 
     overall = report["overall"]
-    overall_acc = overall["accuracy"] or 0.0
-    print(f"\nOverall: {overall['correct']}/{overall['total']} ({overall_acc:.1%})")
-    gate_status = "PASS" if overall_acc >= ACCURACY_GATE else "FAIL"
+    overall_acc_pct = format_accuracy_pct(overall["correct"], overall["total"])
+    print(f"\nOverall: {overall['correct']}/{overall['total']} ({overall_acc_pct})")
+    gate_status = "PASS" if (overall["accuracy"] or 0.0) >= ACCURACY_GATE else "FAIL"
     print(f"Gate (>= {ACCURACY_GATE:.0%}): {gate_status}")
 
 
@@ -472,6 +475,33 @@ def _documents_from_truth(
     ]
 
 
+def _documents_from_extracted(
+    documents_rows: list[dict], facts: dict[str, dict[str, str]]
+) -> list[dict]:
+    """Same output shape as _documents_from_truth (doc_id, processor_id,
+    doc_type, lang, gcs_path, fields: {field_name: printed_value}) built
+    from real BigQuery rows instead of ground_truth.json — documents_rows:
+    the "documents" table's rows for this (seed, processor_filter) scope
+    (doc_id, processor_id, doc_type, lang, gcs_path); facts: doc_id ->
+    {field_name: printed_value}, from facts_by_doc_id(extracted_facts
+    rows) for the same scope. "fields" only ever carries what Gemini
+    actually read off the document — never ground truth — so this is the
+    extracted-mode half of the same leak-guard boundary _documents_from_
+    truth already enforces, just with no ground_truth.json involved at
+    all. Pure function (no I/O) — fetch_agent_inputs does the querying."""
+    return [
+        {
+            "doc_id": d["doc_id"],
+            "processor_id": d["processor_id"],
+            "doc_type": d["doc_type"],
+            "lang": d.get("lang"),
+            "gcs_path": _to_gcs_uri(d["gcs_path"]),
+            "fields": facts.get(d["doc_id"], {}),
+        }
+        for d in documents_rows
+    ]
+
+
 def fetch_agent_inputs(
     bq_client, seed: int, facts_source: str, processor_filter: str | None
 ) -> dict | None:
@@ -481,7 +511,7 @@ def fetch_agent_inputs(
     processor_context shape from the exact same query — no second,
     divergent copy of this fetch logic. Returns None (after printing why)
     if there's nothing to run against."""
-    ground_truth = load_ground_truth(seed)
+    ground_truth = load_ground_truth(seed) if facts_source == TRUTH else None
 
     processor_rows = _fetch_bq_rows(
         bq_client,
@@ -563,9 +593,28 @@ def fetch_agent_inputs(
     )
     site_by_processor = {row["processor_id"]: row for row in site_rows}
 
-    documents_by_processor = _group_by_processor(
-        _documents_from_truth(seed, ground_truth, processor_filter)
-    )
+    if facts_source == TRUTH:
+        documents_by_processor = _group_by_processor(
+            _documents_from_truth(seed, ground_truth, processor_filter)
+        )
+    else:
+        documents_rows = _fetch_bq_rows(
+            bq_client,
+            "documents",
+            "doc_id, processor_id, doc_type, lang, gcs_path",
+            seed,
+            processor_filter,
+        )
+        extracted_rows = _fetch_bq_rows(
+            bq_client,
+            "extracted_facts",
+            "doc_id, processor_id, field_name, printed_value",
+            seed,
+            processor_filter,
+        )
+        documents_by_processor = _group_by_processor(
+            _documents_from_extracted(documents_rows, facts_by_doc_id(extracted_rows))
+        )
 
     months = [c["period_month"] for c in certificates]
     if not months:
@@ -612,13 +661,6 @@ def build_processor_context(inputs: dict, processor: dict, gcs_client) -> tuple[
 def run_agents(
     seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
 ) -> None:
-    if facts_source != TRUTH:
-        print(
-            "--stage agents currently only supports --facts-source truth "
-            "(see docs/PROGRESS.md's Deferred Items ledger)."
-        )
-        return
-
     bq_client = bq.get_client()
     gcs_client = gcs.get_client()
     inputs = fetch_agent_inputs(bq_client, seed, facts_source, processor_filter)
