@@ -28,7 +28,9 @@
     "consent_valid_to": "31/03/2028",
     "gstin": "24QTARG8637S5ZH",
     "hard_negatives": [],
-    "issue_types": [],
+    "issue_types": [
+      "F9"
+    ],
     "lat": 23.0726,
     "lon": 72.6626,
     "name": "Sabarmati Polymer Recovery Pvt. Ltd.",
@@ -74,7 +76,8 @@
     "gstin": "33XORDM1849L4ZE",
     "hard_negatives": [
       "H3",
-      "H4"
+      "H4",
+      "H5"
     ],
     "issue_types": [],
     "lat": 12.9685,

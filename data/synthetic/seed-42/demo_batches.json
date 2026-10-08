@@ -11,8 +11,8 @@
   {
     "batch_id": "BATCH-PWP-02-001",
     "period_month": "2026-04",
-    "pre_batch_certified_t": 134.6,
-    "pre_batch_true_verifiable_t": 134.6,
+    "pre_batch_certified_t": 136.05,
+    "pre_batch_true_verifiable_t": 127.68,
     "processor_id": "PWP-02",
     "pushes_over_verifiable": false,
     "quantity_t": 1.92
@@ -29,8 +29,8 @@
   {
     "batch_id": "BATCH-PWP-04-001",
     "period_month": "2026-04",
-    "pre_batch_certified_t": 136.27,
-    "pre_batch_true_verifiable_t": 136.27,
+    "pre_batch_certified_t": 137.55,
+    "pre_batch_true_verifiable_t": 137.55,
     "processor_id": "PWP-04",
     "pushes_over_verifiable": false,
     "quantity_t": 2.13
@@ -39,7 +39,7 @@
     "batch_id": "BATCH-PWP-05-001",
     "period_month": "2026-04",
     "pre_batch_certified_t": 199.68,
-    "pre_batch_true_verifiable_t": 112.23,
+    "pre_batch_true_verifiable_t": 113.83,
     "processor_id": "PWP-05",
     "pushes_over_verifiable": true,
     "quantity_t": 25.6
@@ -48,7 +48,7 @@
     "batch_id": "BATCH-PWP-06-001",
     "period_month": "2026-04",
     "pre_batch_certified_t": 216.36,
-    "pre_batch_true_verifiable_t": 110.03,
+    "pre_batch_true_verifiable_t": 113.72,
     "processor_id": "PWP-06",
     "pushes_over_verifiable": false,
     "quantity_t": 1.39
@@ -57,7 +57,7 @@
     "batch_id": "BATCH-PWP-07-001",
     "period_month": "2026-04",
     "pre_batch_certified_t": 158.4,
-    "pre_batch_true_verifiable_t": 111.67,
+    "pre_batch_true_verifiable_t": 112.93,
     "processor_id": "PWP-07",
     "pushes_over_verifiable": false,
     "quantity_t": 1.76
@@ -65,8 +65,8 @@
   {
     "batch_id": "BATCH-PWP-08-001",
     "period_month": "2026-04",
-    "pre_batch_certified_t": 113.06,
-    "pre_batch_true_verifiable_t": 105.36,
+    "pre_batch_certified_t": 114.45,
+    "pre_batch_true_verifiable_t": 107.38,
     "processor_id": "PWP-08",
     "pushes_over_verifiable": false,
     "quantity_t": 1.33
