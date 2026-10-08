@@ -477,6 +477,24 @@ def rescore_and_write(run_path: Path, inputs: dict, gcs_client, bq_client) -> di
     return run_record
 
 
+def _resolve_rescore_path(raw: str) -> Path:
+    """--rescore accepts a bare filename or a path; resolved against the
+    current working directory first (so an explicit relative/absolute
+    path still works), then against OUTPUT_DIR (computed from this
+    script's own location, not the working directory) so a bare filename
+    like "no_thinking_run2.json" works regardless of where this script
+    is invoked from."""
+    as_given = Path(raw)
+    if as_given.exists():
+        return as_given
+    candidate = OUTPUT_DIR / as_given.name
+    if candidate.exists():
+        return candidate
+    raise FileNotFoundError(
+        f"--rescore {raw!r} not found as given ({as_given}) or under OUTPUT_DIR ({candidate})"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -499,9 +517,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--rescore",
-        help="Path to an already-saved agent_probe_runs/*.json to re-classify under the "
-        "CURRENT code (e.g. after a scoring-rule change) and write to BigQuery as "
-        "stage='full' — no Gemini call at all, just a local reclassify + a BigQuery write. "
+        help="An already-saved agent_probe_runs/*.json to re-classify under the CURRENT "
+        "code (e.g. after a scoring-rule change) and write to BigQuery as stage='full' — "
+        "no Gemini call at all, just a local reclassify + a BigQuery write. Takes either a "
+        "bare filename (e.g. no_thinking_run2.json, resolved against OUTPUT_DIR regardless "
+        "of the current working directory) or a path, resolved relative to the current "
+        "working directory (run this script from api/, same as every other command here). "
         "Mutually exclusive with running new probes.",
     )
     args = parser.parse_args()
@@ -518,7 +539,7 @@ def main() -> None:
         return
 
     if args.rescore:
-        rescore_and_write(Path(args.rescore), inputs, gcs_client, bq_client)
+        rescore_and_write(_resolve_rescore_path(args.rescore), inputs, gcs_client, bq_client)
         return
 
     ground_truth = load_ground_truth(SEED)
