@@ -23,25 +23,33 @@ class Settings(BaseSettings):
     gemini_input_price_per_million: float = 1.50
     gemini_output_price_per_million: float = 9.00
 
-    # Per-request HTTP timeout for agent calls (app/llm.py's
-    # generate_structured/run_tool_loop) — milliseconds. Derived
-    # 2026-10-08 from the fifth-canary acceptance run's own llm_calls:
-    # PWP-08 hit two consecutive agent_critic_tools failures at ~118.4s
-    # each (HTTP 504), confirmed via google-genai's _api_client.py
-    # (populate_server_timeout_header) to be the SERVER enforcing OUR OWN
-    # configured timeout, forwarded as the X-Server-Timeout header — not
-    # a client-side stall. Every call that actually completed in that run
-    # finished well under 25s (max 36.8s, agent_hypothesis; next-slowest
-    # purpose maxed at 24.4s) — so a ~118s stall is an outlier, not a
-    # request that genuinely needs more time. Decided to fail fast and
-    # retry instead of waiting longer: 60_000 (~2.4x the observed normal
-    # max of ~25s) cuts a stall short quickly, and app/llm.py's
-    # _AGENT_MAX_ATTEMPTS (3 total attempts, retrying this fast) lets a
-    # fresh attempt (observed: succeeds in ~4s) run again well within
-    # AGENT_TIMEOUT_S (app/checks/params.py, raised to 300s alongside this).
-    # Env-overridable; tighten with a real llm_calls query (exact SQL in
-    # docs/PROGRESS.md) once more history exists.
-    agent_request_timeout_ms: int = 60_000
+    # Per-purpose HTTP timeouts for agent calls (app/llm.py's
+    # generate_structured/run_tool_loop) — milliseconds. Split per purpose
+    # 2026-10-08 from the full acceptance run's own llm_calls (201 calls,
+    # both runs combined; docs/PROGRESS.md):
+    #
+    #   purpose             n    p50 (ms)  p95 (ms)  max (ms)
+    #   agent_hypothesis    22   25,098    57,483    60,027
+    #   agent_critic_tools  158  1,371     8,746     58,286
+    #   agent_critic_final  20   4,841     8,655     10,092
+    #   agent_revision      1    4,770     4,770     4,770
+    #
+    # agent_hypothesis has by far the widest spread (p95 57.5s, close to
+    # the old shared 60s timeout) — given generous headroom so a genuine
+    # slow-but-fine call doesn't get cut off. The other three purposes are
+    # tightly clustered well under 10s even at p95 — given a tighter 30s
+    # floor instead, so a genuine stall (the ~118s-class backend stall
+    # diagnosed on agent_critic_tools in the fifth canary, before this
+    # split existed) is cut short faster, not slower. Each value is a
+    # multiple of that purpose's own observed p95, not one shared number.
+    # Still fail-fast-and-retry (app/llm.py's _AGENT_MAX_ATTEMPTS=3) within
+    # the unchanged 300s run deadline (app/checks/params.py's
+    # AGENT_TIMEOUT_S). Env-overridable; tighten further once more history
+    # exists (same llm_calls query as before, in docs/PROGRESS.md).
+    agent_hypothesis_timeout_ms: int = 120_000  # ~2.1x observed p95 (57.5s)
+    agent_critic_tools_timeout_ms: int = 30_000  # ~3.4x observed p95 (8.7s)
+    agent_critic_final_timeout_ms: int = 30_000  # ~3.5x observed p95 (8.7s)
+    agent_revision_timeout_ms: int = 30_000  # only 1 sample (4.8s); same floor
 
     # Per-request HTTP timeout for extract() (app/ingest/extract.py) —
     # milliseconds. No local extraction-latency history was available

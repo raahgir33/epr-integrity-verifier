@@ -79,8 +79,9 @@ AGENT_MAX_TOOL_CALLS = 8
 # through just the Hypothesis+Critic tool-loop phase was 282.2s in the run
 # that hit an intermittent ~120s-class backend stall on agent_critic_tools
 # (confirmed server-side — see app/llm.py/app/config.py). Paired with the
-# fail-fast approach (agent_request_timeout_ms=60_000, _AGENT_MAX_ATTEMPTS=3
-# in app/llm.py) rather than simply waiting longer per attempt.
+# fail-fast approach (app/config.py's per-purpose agent_*_timeout_ms
+# settings, _AGENT_MAX_ATTEMPTS=3 in app/llm.py) rather than simply
+# waiting longer per attempt.
 AGENT_TIMEOUT_S = 300
 
 # F7 (energy implausibility seeding) — ASSUMPTION. The generator's F7

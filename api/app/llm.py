@@ -58,8 +58,26 @@ _AGENT_MAX_ATTEMPTS = 3
 _FORBIDDEN_THINKING_LEVELS = {"minimal"}
 
 # Per-request HTTP timeouts now live in app/config.py's Settings
-# (agent_request_timeout_ms, extract_request_timeout_ms) — see there for
-# how each value was derived and env-override them if needed.
+# (agent_hypothesis_timeout_ms/agent_critic_tools_timeout_ms/
+# agent_critic_final_timeout_ms/agent_revision_timeout_ms,
+# extract_request_timeout_ms) — see there for how each value was derived
+# and env-override them if needed.
+
+# Fallback for any purpose string outside the four named agent purposes
+# above — currently only app/agents/scorer.py's generate_narrative(),
+# purpose="narrative" by default, which is defined but not yet called from
+# the pipeline. Same floor as the critic_final/revision purposes, not a
+# guess at a different number for an untested call shape.
+_DEFAULT_AGENT_TIMEOUT_MS = 30_000
+
+
+def _agent_timeout_ms(purpose: str) -> int:
+    return {
+        "agent_hypothesis": settings.agent_hypothesis_timeout_ms,
+        "agent_critic_tools": settings.agent_critic_tools_timeout_ms,
+        "agent_critic_final": settings.agent_critic_final_timeout_ms,
+        "agent_revision": settings.agent_revision_timeout_ms,
+    }.get(purpose, _DEFAULT_AGENT_TIMEOUT_MS)
 
 
 class LLMClient(Protocol):
@@ -205,14 +223,14 @@ class GeminiClient:
         purpose: str,
         thinking_level: str | None = None,
     ) -> T:
-        """Temperature 0.2 (CLAUDE.md §6: "0.2 for agents") — used for the
-        Hypothesis calls, the Critic's final no-tools call, and the
+        """Temperature 0.2 (project conventions: "0.2 for agents") — used for
+        the Hypothesis calls, the Critic's final no-tools call, and the
         Hypothesis revision. Not for extraction (use extract(), temp 0)."""
         config_kwargs = {
             "response_mime_type": "application/json",
             "response_schema": schema,
             "temperature": 0.2,
-            "http_options": types.HttpOptions(timeout=settings.agent_request_timeout_ms),
+            "http_options": types.HttpOptions(timeout=_agent_timeout_ms(purpose)),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
@@ -261,7 +279,7 @@ class GeminiClient:
                 function_calling_config=types.FunctionCallingConfig(mode="AUTO")
             ),
             "temperature": 0.2,
-            "http_options": types.HttpOptions(timeout=settings.agent_request_timeout_ms),
+            "http_options": types.HttpOptions(timeout=_agent_timeout_ms(purpose)),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
