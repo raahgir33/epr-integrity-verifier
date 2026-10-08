@@ -275,15 +275,95 @@ def _fy_label_numbers(as_of_month: str) -> set[float]:
     }
 
 
+# HSN reference facts given to the agents (docs/DATA_SPEC.md §1, cited
+# sources, not invented): 3915 = waste, parings and scrap of plastics;
+# 3901 = polymers of ethylene in primary forms (virgin resin). Both are
+# domain facts the Hypothesis/Critic prompts already cite — allowing a
+# memo to repeat one isn't trusting the model's arithmetic, it's letting
+# it restate a fact it was given (docs/PROGRESS.md 2026-10-09: PWP-05's
+# real finding cited HSN 3901 to explain why "virgin LDPE granules"
+# under HSN 3915 is a contradiction).
+_HSN_REFERENCE_CODES = (3915.0, 3901.0)
+
+
+def _relevant_months(
+    as_of_month: str, certificates: list[dict], shipments_by_id: dict[str, dict]
+) -> set[str]:
+    months = {as_of_month}
+    months.update(c.get("period_month") for c in certificates if c.get("period_month"))
+    months.update(s.get("month") for s in shipments_by_id.values() if s.get("month"))
+    return {m for m in months if m}
+
+
+def _period_identifiers(
+    as_of_month: str, certificates: list[dict], shipments_by_id: dict[str, dict]
+) -> set[str]:
+    """Period/date-label strings ("2025-07", the FY label "2025-26") are
+    stripped as identifiers, never registered as allowed numbers — a
+    month label isn't a quantity, and stripping it avoids _extract_
+    numbers' hyphen-as-minus-sign ambiguity for this whole class of
+    string entirely (a check explanation naming a DIFFERENT month than
+    as_of_month, e.g. C7's own "(period 2025-07)", hit this in the
+    first real-data run — docs/PROGRESS.md 2026-10-09 — the same
+    ambiguity a prior fix only covered for as_of_month itself)."""
+    months = _relevant_months(as_of_month, certificates, shipments_by_id)
+    fy_start = fy_start_month(as_of_month)
+    fy_start_year = fy_start.split("-")[0]
+    fy_label = f"{fy_start_year}-{(int(fy_start_year) + 1) % 100:02d}"
+    return months | {fy_label}
+
+
+def _monthly_certified_t(certificates: list[dict]) -> dict[str, float]:
+    totals: dict[str, float] = {}
+    for c in certificates:
+        month = c.get("period_month")
+        if month:
+            totals[month] = totals.get(month, 0.0) + (c.get("quantity_t") or 0.0)
+    return totals
+
+
+def _monthly_verified_inbound_t(shipments_by_id: dict[str, dict]) -> dict[str, float]:
+    """Raw matched-shipment total per month — code-computed from raw
+    shipment data, zero agent involvement, so it's trustworthy the same
+    way a deterministic check's own measured/threshold is. Does not
+    apply any finding's exclusion (see the deductible-finding loop in
+    _allowed_numbers, which subtracts a specific month's excluded
+    shipments on top of this)."""
+    totals: dict[str, float] = {}
+    for shipment in shipments_by_id.values():
+        if shipment.get("match_status") != "matched":
+            continue
+        month = shipment.get("month")
+        net_t = shipment.get("weighbridge_net_t")
+        if month and net_t is not None:
+            totals[month] = totals.get(month, 0.0) + net_t
+    return totals
+
+
 def _allowed_numbers(
     assessment: dict,
     check_results: list[dict],
     findings: list[dict],
     shipments_by_id: dict[str, dict],
     documents_by_id: dict[str, dict],
+    certificates: list[dict],
     as_of_month: str,
     observations: list[ImprovementObservation],
+    known_identifiers: frozenset[str],
 ) -> frozenset[float]:
+    """known_identifiers is needed here because of the check-explanation
+    scan below: every number literally present in a check_result's own
+    `explanation` string is allowed, since that string is code-generated
+    (app/checks/*.py) and already shown to the model verbatim. Agent
+    FINDING explanations are deliberately NOT scanned the same way —
+    that free text is Gemini's own unguarded prose from an earlier run,
+    so blanket-trusting its numbers would be laundering un-vetted model
+    arithmetic into the allow-list (docs/PROGRESS.md 2026-10-09: the
+    first version of this fix did exactly that; tightened after review).
+    What a finding's own numbers need is instead reconstructed here from
+    data the finding could legitimately be referring to: monthly
+    certified/verified-inbound totals and cited shipments' own tonnage —
+    all code-computed, never read out of the finding's prose."""
     numbers: set[float] = set()
     for field in (
         "certified_t",
@@ -300,17 +380,54 @@ def _allowed_numbers(
             value = c.get(field)
             if value is not None:
                 numbers.add(round(value, 2))
+        explanation = c.get("explanation")
+        if explanation:
+            stripped = _strip_known_identifiers(explanation, known_identifiers)
+            numbers.update(_extract_numbers_with_sign_variants(stripped))
+
     cited_shipment_ids = {sid for f in findings for sid in (f.get("cited_shipment_ids") or [])}
     for sid in cited_shipment_ids:
         net_t = (shipments_by_id.get(sid) or {}).get("weighbridge_net_t")
         if net_t is not None:
             numbers.add(round(net_t, 2))
+
+    monthly_certified = _monthly_certified_t(certificates)
+    monthly_verified = _monthly_verified_inbound_t(shipments_by_id)
+    numbers.update(round(v, 2) for v in monthly_certified.values())
+    numbers.update(round(v, 2) for v in monthly_verified.values())
+    # Dedup by shipment_id per month BEFORE summing — two separate
+    # deductible findings can cite the SAME shipment (PWP-02's real data
+    # did exactly this), and summing per-finding would double-subtract
+    # it, landing on the wrong "after exclusion" total.
+    deductible_shipment_ids_by_month: dict[str, set[str]] = {}
+    for f in findings:
+        if f.get("classification") != "deductible":
+            continue
+        for sid in f.get("cited_shipment_ids") or []:
+            month = (shipments_by_id.get(sid) or {}).get("month")
+            if month:
+                deductible_shipment_ids_by_month.setdefault(month, set()).add(sid)
+    for month, sids in deductible_shipment_ids_by_month.items():
+        excluded = sum(
+            (shipments_by_id.get(sid) or {}).get("weighbridge_net_t") or 0.0 for sid in sids
+        )
+        numbers.add(round(monthly_verified.get(month, 0.0) - excluded, 2))
+
+    # Models naturally write dates as "Month YYYY" in prose (e.g. "August
+    # 2025"), not the machine "YYYY-MM" form that's stripped as an
+    # identifier above — the bare year itself is harmless to allow (not
+    # a tonnage/compliance figure) and resolves that case without
+    # weakening anything (docs/PROGRESS.md 2026-10-09).
+    numbers.update(
+        float(m.split("-")[0]) for m in _relevant_months(as_of_month, certificates, shipments_by_id)
+    )
+
+    numbers.update(_HSN_REFERENCE_CODES)
     numbers.add(float(params.MEMO_RESPONSE_DEADLINE_DAYS))
     for doc in documents_by_id.values():
         hsn = (doc.get("fields") or {}).get("hsn")
         if hsn:
             numbers.update(round(n, 2) for n in _extract_numbers(str(hsn)))
-    numbers.update(_fy_label_numbers(as_of_month))
     for obs in observations:
         if obs.measured is not None:
             numbers.add(round(obs.measured, 2))
@@ -324,14 +441,29 @@ def _allowed_numbers(
 
 
 def _known_identifiers(
-    processor: dict, shipments_by_id: dict[str, dict], documents_by_id: dict[str, dict]
+    processor: dict,
+    shipments_by_id: dict[str, dict],
+    documents_by_id: dict[str, dict],
+    allowed_evidence_ids: frozenset[str],
+    as_of_month: str,
+    certificates: list[dict],
 ) -> frozenset[str]:
     """Includes processor_id itself, not just document/shipment IDs and
     consent/registration numbers — found via test_memo.py: a processor
     name like "PWP-08 Recyclers Pvt. Ltd." contains digits ("08") that
     the number guard would otherwise mis-flag as an unsupported number
-    every time the model (correctly) names the processor in prose."""
+    every time the model (correctly) names the processor in prose.
+
+    Also includes every evidence_id check_results/findings cite — not
+    only doc_ids/shipment_ids — because a check's evidence can be a
+    certificate_id ("EPR-CERT/617488/202504") or a site-thumbnail
+    storage path ("seed-42/site/PWP-09.png"), neither a doc_id; both
+    leaked digits into the number guard in the first real-data run
+    (docs/PROGRESS.md 2026-10-09). And every period/date-label string
+    (see _period_identifiers) — a month label isn't a quantity."""
     identifiers: set[str] = set(documents_by_id.keys()) | set(shipments_by_id.keys())
+    identifiers |= set(allowed_evidence_ids)
+    identifiers |= _period_identifiers(as_of_month, certificates, shipments_by_id)
     for key in ("processor_id", "consent_no", "registration_no"):
         value = processor.get(key)
         if value:
@@ -374,6 +506,15 @@ def build_memo_context(
     relevant_findings = (
         _memo_worthy_findings(findings) if doc_type == "clarification_memo" else (findings or [])
     )
+    allowed_evidence_ids = _allowed_evidence_ids(check_results, relevant_findings)
+    known_identifiers = _known_identifiers(
+        processor,
+        shipments_by_id,
+        documents_by_id,
+        allowed_evidence_ids,
+        as_of_month,
+        certificates,
+    )
     return {
         "processor": processor,
         "assessment": assessment,
@@ -386,17 +527,19 @@ def build_memo_context(
         "doc_type": doc_type,
         "observations": observations,
         "documents_examined": len(documents_by_id),
-        "allowed_evidence_ids": _allowed_evidence_ids(check_results, relevant_findings),
+        "allowed_evidence_ids": allowed_evidence_ids,
         "allowed_numbers": _allowed_numbers(
             assessment,
             check_results,
             relevant_findings,
             shipments_by_id,
             documents_by_id,
+            certificates,
             as_of_month,
             observations,
+            known_identifiers,
         ),
-        "known_identifiers": _known_identifiers(processor, shipments_by_id, documents_by_id),
+        "known_identifiers": known_identifiers,
     }
 
 
@@ -458,14 +601,38 @@ def _extract_numbers(text: str) -> list[float]:
     return numbers
 
 
+def _extract_numbers_with_sign_variants(text: str) -> set[float]:
+    """_extract_numbers' regex treats a hyphen directly between two
+    numbers as a minus sign, so a genuine range like "150-1200 kWh/t"
+    extracts as [150.0, -1200.0], not [150.0, 1200.0] (docs/PROGRESS.md
+    2026-10-09: C7's own explanation hit exactly this). Only used when
+    pulling numbers out of TRUSTED source text (a check's own
+    explanation) for the allow-list — registering both signs here never
+    loosens what the model's own output must match against, it only
+    widens what's allowed to compensate for our own extraction's
+    ambiguity on text we wrote ourselves."""
+    numbers = {round(n, 2) for n in _extract_numbers(text)}
+    return numbers | {-n for n in numbers}
+
+
+def _unsupported_numbers(
+    text: str, known_identifiers: frozenset[str], allowed_numbers: frozenset[float]
+) -> list[float]:
+    """The actual offending numbers, not just a bool — _numbers_ok below
+    is this with an empty-check; diagnose_text_guards (for
+    scripts/probe_memo_guards.py) needs the real values to report."""
+    stripped = _strip_known_identifiers(text, known_identifiers)
+    return [
+        n
+        for n in _extract_numbers(stripped)
+        if not any(abs(n - a) <= _NUMBER_TOLERANCE for a in allowed_numbers)
+    ]
+
+
 def _numbers_ok(
     text: str, known_identifiers: frozenset[str], allowed_numbers: frozenset[float]
 ) -> bool:
-    stripped = _strip_known_identifiers(text, known_identifiers)
-    return all(
-        any(abs(n - a) <= _NUMBER_TOLERANCE for a in allowed_numbers)
-        for n in _extract_numbers(stripped)
-    )
+    return not _unsupported_numbers(text, known_identifiers, allowed_numbers)
 
 
 def _forbidden_word_hit(text: str) -> str | None:
@@ -490,29 +657,104 @@ def _internal_label_hit(text: str) -> str | None:
     return None
 
 
-def _corrective_note(failures: list[str]) -> str:
+def corrective_note(issues: list[dict]) -> str:
+    """issues: diagnose_text_guards/diagnose_memo/diagnose_statement's
+    structured output — the single source of truth for what went wrong,
+    shared with the diagnostic path (scripts/probe_memo_guards.py)."""
     notes: dict[str, None] = {}
-    if "empty" in failures:
+    guards_present = {issue["guard"] for issue in issues}
+    if "empty" in guards_present:
         notes[
             "Every item must cite at least one of the evidence IDs given to you for that "
             "observation."
         ] = None
-    if "number" in failures:
+    if "number" in guards_present:
         notes[
             "Every number you write must already appear in the information provided above — "
             "do not invent, compute or restate any other number."
         ] = None
-    for f in failures:
-        if f.startswith("forbidden_word:"):
-            word = f.split(":", 1)[1]
-            notes[f"Do not use the word '{word}' or its equivalents."] = None
-        elif f.startswith("internal_label:"):
-            label = f.split(":", 1)[1]
+    for issue in issues:
+        if issue["guard"] == "forbidden_word":
+            notes[f"Do not use the word '{issue['offending']}' or its equivalents."] = None
+        elif issue["guard"] == "internal_label":
             notes[
-                f"Do not use the internal label or code '{label}' — describe it in plain "
-                "language instead."
+                f"Do not use the internal label or code '{issue['offending']}' — describe it "
+                "in plain language instead."
             ] = None
     return " ".join(notes)
+
+
+def diagnose_text_guards(
+    field: str, text: str, known_identifiers: frozenset[str], allowed_numbers: frozenset[float]
+) -> list[dict]:
+    """One entry per guard that actually tripped on this field, with the
+    real offending token(s), not just a category label — the single
+    source of truth both corrective_note (what to tell the model on
+    retry) and scripts/probe_memo_guards.py (what to show the developer
+    when a real response falls back to template) read from."""
+    issues: list[dict] = []
+    unsupported = _unsupported_numbers(text, known_identifiers, allowed_numbers)
+    if unsupported:
+        issues.append({"field": field, "guard": "number", "offending": unsupported, "text": text})
+    word_hit = _forbidden_word_hit(text)
+    if word_hit:
+        issues.append(
+            {"field": field, "guard": "forbidden_word", "offending": word_hit, "text": text}
+        )
+    label_hit = _internal_label_hit(text)
+    if label_hit:
+        issues.append(
+            {"field": field, "guard": "internal_label", "offending": label_hit, "text": text}
+        )
+    return issues
+
+
+def diagnose_memo(
+    memo: ClarificationMemo, known_identifiers: frozenset[str], allowed_numbers: frozenset[float]
+) -> list[dict]:
+    """Same field set _memo_guard_text_fields checks, labelled per
+    field/item index so a diagnosis table can point at exactly which
+    sentence tripped which guard."""
+    issues = diagnose_text_guards(
+        "opening_paragraph", memo.opening_paragraph, known_identifiers, allowed_numbers
+    )
+    issues += diagnose_text_guards(
+        "closing_paragraph", memo.closing_paragraph, known_identifiers, allowed_numbers
+    )
+    for i, item in enumerate(memo.items):
+        issues += diagnose_text_guards(
+            f"items[{i}].what_we_observed",
+            item.what_we_observed,
+            known_identifiers,
+            allowed_numbers,
+        )
+        issues += diagnose_text_guards(
+            f"items[{i}].what_we_request", item.what_we_request, known_identifiers, allowed_numbers
+        )
+    if not memo.items:
+        issues.append({"field": "items", "guard": "empty", "offending": None, "text": None})
+    return issues
+
+
+def diagnose_statement(
+    statement: VerificationStatement,
+    known_identifiers: frozenset[str],
+    allowed_numbers: frozenset[float],
+) -> list[dict]:
+    issues = diagnose_text_guards(
+        "part_a_paragraph", statement.part_a_paragraph, known_identifiers, allowed_numbers
+    )
+    issues += diagnose_text_guards(
+        "closing_paragraph", statement.closing_paragraph, known_identifiers, allowed_numbers
+    )
+    for i, obs in enumerate(statement.observations):
+        issues += diagnose_text_guards(
+            f"observations[{i}].recommendation",
+            obs.recommendation,
+            known_identifiers,
+            allowed_numbers,
+        )
+    return issues
 
 
 # ---------- clarification memo ----------
@@ -528,32 +770,6 @@ def _filter_memo_items(
             continue
         filtered.append(item.model_copy(update={"evidence_ids": evidence_ids}))
     return filtered
-
-
-def _memo_guard_text_fields(memo: ClarificationMemo) -> list[str]:
-    fields = [memo.opening_paragraph, memo.closing_paragraph]
-    for item in memo.items:
-        fields.append(item.what_we_observed)
-        fields.append(item.what_we_request)
-    return fields
-
-
-def _memo_passes_guards(
-    memo: ClarificationMemo, known_identifiers: frozenset[str], allowed_numbers: frozenset[float]
-) -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not memo.items:
-        failures.append("empty")
-    for text in _memo_guard_text_fields(memo):
-        if not _numbers_ok(text, known_identifiers, allowed_numbers):
-            failures.append("number")
-        hit = _forbidden_word_hit(text)
-        if hit:
-            failures.append(f"forbidden_word:{hit}")
-        hit = _internal_label_hit(text)
-        if hit:
-            failures.append(f"internal_label:{hit}")
-    return (not failures, failures)
 
 
 def _cited_shipment_tonnes(finding: dict, shipments_by_id: dict[str, dict]) -> dict[str, float]:
@@ -660,68 +876,51 @@ def _template_clarification_memo(memo_context: dict) -> ClarificationMemo:
     )
 
 
-def generate_clarification_memo(
-    memo_context: dict, llm_client: LLMClient
-) -> tuple[ClarificationMemo, GuardStatus]:
+def attempt_clarification_memo(
+    memo_context: dict, llm_client: LLMClient, corrective: str | None = None
+) -> tuple[ClarificationMemo, list[dict]]:
+    """One generation attempt — no regenerate/template-fallback logic.
+    Returns the finalised candidate (evidence-filtered, deadline fixed
+    to the real constant) and diagnose_memo's issues (empty = guard-
+    clean). Exposed publicly so scripts/probe_memo_guards.py can inspect
+    a real response's exact failure reasons using the same prompt-
+    building generate_clarification_memo itself uses, not a second copy
+    of it."""
     known_identifiers = memo_context["known_identifiers"]
     allowed_numbers = memo_context["allowed_numbers"]
     allowed_evidence_ids = memo_context["allowed_evidence_ids"]
     payload_json = json.dumps(_memo_context_payload(memo_context), default=str)
+    prompt = MEMO_CLARIFICATION_PROMPT + payload_json
+    if corrective:
+        prompt += "\n\n" + corrective
 
-    def _prompt(corrective: str | None) -> str:
-        base = MEMO_CLARIFICATION_PROMPT + payload_json
-        return base if corrective is None else base + "\n\n" + corrective
+    raw = llm_client.generate_structured([prompt], ClarificationMemo, purpose="agent_memo")
+    candidate = raw.model_copy(
+        update={
+            "items": _filter_memo_items(raw.items, allowed_evidence_ids),
+            "response_deadline_days": params.MEMO_RESPONSE_DEADLINE_DAYS,
+        }
+    )
+    return candidate, diagnose_memo(candidate, known_identifiers, allowed_numbers)
 
-    def _finalize(raw: ClarificationMemo) -> ClarificationMemo:
-        return raw.model_copy(
-            update={
-                "items": _filter_memo_items(raw.items, allowed_evidence_ids),
-                "response_deadline_days": params.MEMO_RESPONSE_DEADLINE_DAYS,
-            }
-        )
 
-    raw = llm_client.generate_structured([_prompt(None)], ClarificationMemo, purpose="agent_memo")
-    candidate = _finalize(raw)
-    ok, failures = _memo_passes_guards(candidate, known_identifiers, allowed_numbers)
-    if ok:
+def generate_clarification_memo(
+    memo_context: dict, llm_client: LLMClient
+) -> tuple[ClarificationMemo, GuardStatus]:
+    candidate, issues = attempt_clarification_memo(memo_context, llm_client)
+    if not issues:
         return candidate, "ok"
 
-    raw2 = llm_client.generate_structured(
-        [_prompt(_corrective_note(failures))], ClarificationMemo, purpose="agent_memo"
+    candidate2, issues2 = attempt_clarification_memo(
+        memo_context, llm_client, corrective=corrective_note(issues)
     )
-    candidate2 = _finalize(raw2)
-    ok2, _ = _memo_passes_guards(candidate2, known_identifiers, allowed_numbers)
-    if ok2:
+    if not issues2:
         return candidate2, "regenerated"
 
     return _template_clarification_memo(memo_context), "template_fallback"
 
 
 # ---------- verification statement ----------
-
-
-def _statement_guard_text_fields(statement: VerificationStatement) -> list[str]:
-    fields = [statement.part_a_paragraph, statement.closing_paragraph]
-    fields.extend(o.recommendation for o in statement.observations)
-    return fields
-
-
-def _statement_passes_guards(
-    statement: VerificationStatement,
-    known_identifiers: frozenset[str],
-    allowed_numbers: frozenset[float],
-) -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    for text in _statement_guard_text_fields(statement):
-        if not _numbers_ok(text, known_identifiers, allowed_numbers):
-            failures.append("number")
-        hit = _forbidden_word_hit(text)
-        if hit:
-            failures.append(f"forbidden_word:{hit}")
-        hit = _internal_label_hit(text)
-        if hit:
-            failures.append(f"internal_label:{hit}")
-    return (not failures, failures)
 
 
 def _template_recommendation(obs: ImprovementObservation) -> str:
@@ -824,32 +1023,36 @@ def _template_verification_statement(memo_context: dict) -> VerificationStatemen
     )
 
 
-def generate_verification_statement(
-    memo_context: dict, llm_client: LLMClient
-) -> tuple[VerificationStatement, GuardStatus]:
+def attempt_verification_statement(
+    memo_context: dict, llm_client: LLMClient, corrective: str | None = None
+) -> tuple[VerificationStatement, list[dict]]:
+    """One generation attempt — see attempt_clarification_memo's
+    docstring; same shape, exposed for the same reason."""
     known_identifiers = memo_context["known_identifiers"]
     allowed_numbers = memo_context["allowed_numbers"]
     code_observations = memo_context.get("observations") or []
-    payload_json = json.dumps(_statement_context_payload(memo_context), default=str)
-
-    def _prompt(corrective: str | None) -> str:
-        base = MEMO_VERIFICATION_STATEMENT_PROMPT + payload_json
-        return base if corrective is None else base + "\n\n" + corrective
-
-    raw = llm_client.generate_structured(
-        [_prompt(None)], VerificationStatement, purpose="agent_memo"
+    prompt = MEMO_VERIFICATION_STATEMENT_PROMPT + json.dumps(
+        _statement_context_payload(memo_context), default=str
     )
+    if corrective:
+        prompt += "\n\n" + corrective
+
+    raw = llm_client.generate_structured([prompt], VerificationStatement, purpose="agent_memo")
     candidate = _reconcile_statement(raw, code_observations)
-    ok, failures = _statement_passes_guards(candidate, known_identifiers, allowed_numbers)
-    if ok:
+    return candidate, diagnose_statement(candidate, known_identifiers, allowed_numbers)
+
+
+def generate_verification_statement(
+    memo_context: dict, llm_client: LLMClient
+) -> tuple[VerificationStatement, GuardStatus]:
+    candidate, issues = attempt_verification_statement(memo_context, llm_client)
+    if not issues:
         return candidate, "ok"
 
-    raw2 = llm_client.generate_structured(
-        [_prompt(_corrective_note(failures))], VerificationStatement, purpose="agent_memo"
+    candidate2, issues2 = attempt_verification_statement(
+        memo_context, llm_client, corrective=corrective_note(issues)
     )
-    candidate2 = _reconcile_statement(raw2, code_observations)
-    ok2, _ = _statement_passes_guards(candidate2, known_identifiers, allowed_numbers)
-    if ok2:
+    if not issues2:
         return candidate2, "regenerated"
 
     return _template_verification_statement(memo_context), "template_fallback"

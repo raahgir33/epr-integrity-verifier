@@ -6,11 +6,18 @@ internal-label leaks, and the Hindi translation guard (including Devanagari
 digit normalisation).
 """
 
+import json
+from pathlib import Path
+
+import pytest
+
 import app.agents.memo as memo_module
 from app.agents.memo import (
+    attempt_clarification_memo,
     build_memo_context,
     decide_doc_type,
     derive_improvement_observations,
+    diagnose_memo,
     generate_clarification_memo,
     generate_hindi_memo,
     generate_verification_statement,
@@ -538,3 +545,114 @@ def test_hindi_evidence_id_mismatch_returns_none():
     result, guard_status = generate_hindi_memo("clarification_memo", english, fake)
     assert result is None
     assert guard_status is None
+
+
+# ---------- structured diagnosis (scripts/probe_memo_guards.py's dependency) ----------
+
+
+def test_diagnose_memo_reports_offending_number_with_field_label():
+    memo = _clean_memo_response()
+    memo.items[0].what_we_observed += " A follow-up audit found 999 additional tonnes at risk."
+    issues = diagnose_memo(memo, frozenset(), frozenset({18.40, 15.0, 3915.0}))
+    number_issues = [i for i in issues if i["guard"] == "number"]
+    assert len(number_issues) == 1
+    assert number_issues[0]["field"] == "items[0].what_we_observed"
+    assert 999.0 in number_issues[0]["offending"]
+
+
+def test_diagnose_memo_empty_items_reports_empty_guard():
+    memo = _clean_memo_response()
+    memo.items = []
+    issues = diagnose_memo(memo, frozenset(), frozenset())
+    assert any(i["guard"] == "empty" for i in issues)
+
+
+def test_diagnose_memo_clean_response_has_no_issues():
+    memo_context = _memo_context([_PASSING_CHECK], [_F8_FINDING])
+    memo = _clean_memo_response()
+    issues = diagnose_memo(memo, memo_context["known_identifiers"], memo_context["allowed_numbers"])
+    assert issues == []
+
+
+def test_attempt_clarification_memo_exposes_issues_without_regenerating():
+    memo_context = _memo_context([_PASSING_CHECK], [_F8_FINDING])
+    bad = _clean_memo_response()
+    bad.items[0].what_we_observed += " 999 extra tonnes."
+    fake = _FakeLLMClient([bad])
+    candidate, issues = attempt_clarification_memo(memo_context, fake)
+    assert len(fake.purposes_called) == 1  # exactly one call, no regenerate
+    assert any(i["guard"] == "number" and 999.0 in i["offending"] for i in issues)
+    assert candidate.items  # the raw candidate is still returned, not discarded
+
+
+def test_a_number_invented_in_a_finding_explanation_is_not_trusted():
+    # The tightening this fix made deliberate: a number appearing ONLY in
+    # an agent finding's own (unguarded, Gemini-written) explanation text
+    # must NOT be treated as supplied — only deterministic check
+    # explanations get that trust. If the memo-drafting model repeats a
+    # number from finding.explanation that isn't independently
+    # reconstructable from code-computed data, the guard must still
+    # reject it, proving the earlier (reverted) "scan finding text too"
+    # design really would have laundered unvetted model arithmetic.
+    finding_with_invented_number = {
+        **_F8_FINDING,
+        "explanation": (
+            "Invoice PWP-08-INBOUND_INVOICE-024 describes the material as virgin LDPE "
+            "granules under HSN 3915, and cross-referencing supplier records suggests an "
+            "additional 742.5 t of undeclared diversion this quarter."
+        ),
+    }
+    memo_context = _memo_context([_PASSING_CHECK], [finding_with_invented_number])
+    response = _clean_memo_response()
+    response.items[0].what_we_observed += " This points to roughly 742.5 t of diversion."
+    issues = diagnose_memo(
+        response, memo_context["known_identifiers"], memo_context["allowed_numbers"]
+    )
+    assert any(i["guard"] == "number" and 742.5 in i["offending"] for i in issues)
+
+
+# ---------- real-data regression fixtures (2026-10-09) ----------
+#
+# The five processors whose first real --stage memo run fell back to
+# template (docs/PROGRESS.md): PWP-02 (the F9 showcase), PWP-05, PWP-06,
+# PWP-07, PWP-09. scripts/probe_memo_guards.py captured each one's real
+# inputs and real Gemini attempt-1 response to
+# data/synthetic/seed-42/memo_probe_runs/<pid>_extracted.json (committed,
+# same convention as data/synthetic/seed-42/agent_probe_runs/*.json) —
+# replaying that real response through the fixed guard, with no new live
+# call, is what proves the fix actually works, not just the hand-built
+# fixtures above.
+
+_MEMO_PROBE_RUNS_DIR = (
+    Path(__file__).resolve().parents[2] / "data" / "synthetic" / "seed-42" / "memo_probe_runs"
+)
+
+
+def _load_memo_probe_fixture(processor_id: str) -> dict:
+    path = _MEMO_PROBE_RUNS_DIR / f"{processor_id}_extracted.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("processor_id", ["PWP-02", "PWP-05", "PWP-06", "PWP-07", "PWP-09"])
+def test_real_fallback_processor_now_passes_on_attempt_one(processor_id):
+    fixture = _load_memo_probe_fixture(processor_id)
+    inputs = fixture["inputs"]
+    memo_context = build_memo_context(
+        processor=inputs["processor"],
+        assessment=inputs["assessment"],
+        check_results=inputs["check_results"],
+        findings=inputs["findings"],
+        shipments_by_id=inputs["shipments_by_id"],
+        documents_by_id=inputs["documents_by_id"],
+        certificates=inputs["certificates"],
+        as_of_month=inputs["as_of_month"],
+    )
+    assert memo_context["doc_type"] == fixture["doc_type"]
+
+    real_attempt_one = ClarificationMemo.model_validate(fixture["attempts"][0]["raw_response"])
+    fake = _FakeLLMClient([real_attempt_one])
+
+    _, guard_status = generate_clarification_memo(memo_context, fake)
+
+    assert guard_status == "ok", f"{processor_id} should pass on the real attempt 1 alone"
+    assert len(fake.purposes_called) == 1  # confirms no regenerate call was needed

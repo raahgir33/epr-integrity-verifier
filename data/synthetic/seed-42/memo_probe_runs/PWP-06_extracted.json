@@ -1,0 +1,1739 @@
+{
+  "processor_id": "PWP-06",
+  "doc_type": "clarification_memo",
+  "seed": 42,
+  "facts_source": "extracted",
+  "inputs": {
+    "processor": {
+      "processor_id": "PWP-06",
+      "capacity_t_per_year": 166.4,
+      "permitted_categories": [
+        "I",
+        "II"
+      ],
+      "consent_valid_from": "01/04/2022",
+      "consent_valid_to": "31/03/2028"
+    },
+    "assessment": {
+      "processor_id": "PWP-06",
+      "stage": "full",
+      "certified_t": 216.36,
+      "verified_inbound_t": 105.65,
+      "capacity_limit_t": 166.40000000000006,
+      "verifiable_t": 105.65,
+      "unverifiable_t": 110.71000000000001,
+      "risk_band": "High",
+      "agent_status": "ok"
+    },
+    "check_results": [
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C3a",
+        "status": "pass",
+        "severity": "hard",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "All evaluable shipments transited at or below 55 km/h (14 shipment(s) evaluated for PWP-06)."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C3b",
+        "status": "pass",
+        "severity": "hard",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "All evaluable shipments arrived within the e-way bill's valid-until (14 shipment(s) evaluated for PWP-06)."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C4",
+        "status": "fail",
+        "severity": "hard",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 6.1,
+        "evidence_ids": [
+          "PWP-06-INBOUND_INVOICE-009",
+          "PWP-06-EWAY_BILL-010",
+          "PWP-06-WEIGHBRIDGE_SLIP-011"
+        ],
+        "explanation": "1 shipment(s) for PWP-06 have weighbridge net more than 2% below invoice quantity."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C5",
+        "status": "pass",
+        "severity": "hard",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "No duplicate e-way bill numbers, weighbridge ticket numbers or (invoice number, supplier GSTIN) pairs."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C6",
+        "status": "pass",
+        "severity": "hard",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "All 12 certificate(s) for PWP-06 are within consent validity and permitted categories."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C7",
+        "status": "pass",
+        "severity": "soft",
+        "measured": null,
+        "threshold": null,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "All 12 evaluable month(s) for PWP-06 fall within 150-1200 kWh/t."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C8",
+        "status": "pass",
+        "severity": "soft",
+        "measured": 0.0058192044351394,
+        "threshold": 10.0,
+        "affected_tonnes": null,
+        "evidence_ids": [
+          "seed-42/site/PWP-06.png"
+        ],
+        "explanation": "PWP-06: claimed capacity is 0.01 t per m\u00b2 of building footprint (ceiling 10 t/m\u00b2)."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C2b",
+        "status": "pass",
+        "severity": "soft",
+        "measured": 96.04,
+        "threshold": 100.3675,
+        "affected_tonnes": 0.0,
+        "evidence_ids": [],
+        "explanation": "PWP-06: recycled output sold (96.04 t) does not exceed 95% of verified inbound tonnes (100.37 t)."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C1",
+        "status": "fail",
+        "severity": "hard",
+        "measured": 216.36,
+        "threshold": 166.4,
+        "affected_tonnes": 49.96000000000001,
+        "evidence_ids": [],
+        "explanation": "PWP-06: FY-to-date certified tonnes (216.36 t) exceed CTO capacity to date (166.40 t, 12 month(s) elapsed) by 49.96 t."
+      },
+      {
+        "processor_id": "PWP-06",
+        "check_id": "C2a",
+        "status": "fail",
+        "severity": "hard",
+        "measured": 216.36,
+        "threshold": 105.65,
+        "affected_tonnes": 110.71000000000001,
+        "evidence_ids": [],
+        "explanation": "PWP-06: certified tonnes (216.36 t) vs verified inbound tonnes (105.65 t) \u2014 shortfall 110.71 t (51.17%), tolerance 2%."
+      }
+    ],
+    "findings": [],
+    "shipments_by_id": {
+      "PWP-06-EXT-SHP-002": {
+        "shipment_id": "PWP-06-EXT-SHP-002",
+        "processor_id": "PWP-06",
+        "month": "2025-05",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-006",
+        "eway_doc_id": "PWP-06-EWAY_BILL-007",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-008",
+        "invoice_qty_t": 8.27,
+        "weighbridge_net_t": 8.2,
+        "match_status": "matched",
+        "ewb_no": "649483918537",
+        "vehicle_no": "HR20AB3526",
+        "distance_km": 34.5,
+        "eway_generated_at": "2025-05-10T03:02:00+00:00",
+        "eway_valid_until": "2025-05-11T18:29:00+00:00",
+        "weighbridge_in_time": "2025-05-10T04:00:00+00:00",
+        "invoice_no": "HST/25-26/0001",
+        "supplier_gstin": "36CVHMD9399B2ZH",
+        "weighbridge_ticket_no": "TG-WB-4598-00001"
+      },
+      "PWP-06-EXT-SHP-006": {
+        "shipment_id": "PWP-06-EXT-SHP-006",
+        "processor_id": "PWP-06",
+        "month": "2025-05",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-018",
+        "eway_doc_id": "PWP-06-EWAY_BILL-019",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-020",
+        "invoice_qty_t": 7.1,
+        "weighbridge_net_t": 7.05,
+        "match_status": "matched",
+        "ewb_no": "649483924805",
+        "vehicle_no": "TN46AB6123",
+        "distance_km": 38.4,
+        "eway_generated_at": "2025-05-15T04:22:00+00:00",
+        "eway_valid_until": "2025-05-16T18:29:00+00:00",
+        "weighbridge_in_time": "2025-05-15T05:23:00+00:00",
+        "invoice_no": "HST/25-26/0002",
+        "supplier_gstin": "36CVHMD9399B2ZH",
+        "weighbridge_ticket_no": "TG-WB-4598-00002"
+      },
+      "PWP-06-EXT-SHP-010": {
+        "shipment_id": "PWP-06-EXT-SHP-010",
+        "processor_id": "PWP-06",
+        "month": "2025-12",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-030",
+        "eway_doc_id": "PWP-06-EWAY_BILL-031",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-032",
+        "invoice_qty_t": 8.02,
+        "weighbridge_net_t": 7.95,
+        "match_status": "matched",
+        "ewb_no": "649484176256",
+        "vehicle_no": "TG43AB8487",
+        "distance_km": 34.0,
+        "eway_generated_at": "2025-12-12T05:21:00+00:00",
+        "eway_valid_until": "2025-12-13T18:29:00+00:00",
+        "weighbridge_in_time": "2025-12-12T06:23:00+00:00",
+        "invoice_no": "HST/25-26/0003",
+        "supplier_gstin": "36CVHMD9399B2ZH",
+        "weighbridge_ticket_no": "TG-WB-4598-00009"
+      },
+      "PWP-06-EXT-SHP-001": {
+        "shipment_id": "PWP-06-EXT-SHP-001",
+        "processor_id": "PWP-06",
+        "month": "2026-01",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-003",
+        "eway_doc_id": "PWP-06-EWAY_BILL-004",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-005",
+        "invoice_qty_t": 8.82,
+        "weighbridge_net_t": 8.79,
+        "match_status": "matched",
+        "ewb_no": "649484247470",
+        "vehicle_no": "TN55AB4694",
+        "distance_km": 34.5,
+        "eway_generated_at": "2026-01-25T03:40:00+00:00",
+        "eway_valid_until": "2026-01-26T18:29:00+00:00",
+        "weighbridge_in_time": "2026-01-25T04:43:00+00:00",
+        "invoice_no": "HST/25-26/0004",
+        "supplier_gstin": "36CVHMD9399B2ZH",
+        "weighbridge_ticket_no": "TG-WB-4598-00012"
+      },
+      "PWP-06-EXT-SHP-005": {
+        "shipment_id": "PWP-06-EXT-SHP-005",
+        "processor_id": "PWP-06",
+        "month": "2026-02",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-015",
+        "eway_doc_id": "PWP-06-EWAY_BILL-016",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-017",
+        "invoice_qty_t": 8.44,
+        "weighbridge_net_t": 8.4,
+        "match_status": "matched",
+        "ewb_no": "649484261720",
+        "vehicle_no": "TN42AB2739",
+        "distance_km": 38.4,
+        "eway_generated_at": "2026-02-11T04:18:00+00:00",
+        "eway_valid_until": "2026-02-12T18:29:00+00:00",
+        "weighbridge_in_time": "2026-02-11T05:06:00+00:00",
+        "invoice_no": "HST/25-26/0005",
+        "supplier_gstin": "36CVHMD9399B2ZH",
+        "weighbridge_ticket_no": "TG-WB-4598-00013"
+      },
+      "PWP-06-EXT-SHP-009": {
+        "shipment_id": "PWP-06-EXT-SHP-009",
+        "processor_id": "PWP-06",
+        "month": "2026-02",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-027",
+        "eway_doc_id": "PWP-06-EWAY_BILL-028",
+        "weighbridge_doc_id": null,
+        "invoice_qty_t": 8.01,
+        "weighbridge_net_t": null,
+        "match_status": "unmatched",
+        "ewb_no": "649484265288",
+        "vehicle_no": "MH35AB7114",
+        "distance_km": 199.4,
+        "eway_generated_at": "2026-02-12T02:38:00+00:00",
+        "eway_valid_until": "2026-02-13T18:29:00+00:00",
+        "weighbridge_in_time": null,
+        "invoice_no": "WRPL/25-26/0009",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": null
+      },
+      "PWP-06-EXT-SHP-012": {
+        "shipment_id": "PWP-06-EXT-SHP-012",
+        "processor_id": "PWP-06",
+        "month": "2025-06",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-036",
+        "eway_doc_id": "PWP-06-EWAY_BILL-037",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-038",
+        "invoice_qty_t": 8.59,
+        "weighbridge_net_t": 8.64,
+        "match_status": "matched",
+        "ewb_no": "649483935786",
+        "vehicle_no": "HR59AB4728",
+        "distance_km": 211.7,
+        "eway_generated_at": "2025-06-04T05:46:00+00:00",
+        "eway_valid_until": "2025-06-06T18:29:00+00:00",
+        "weighbridge_in_time": "2025-06-04T12:42:00+00:00",
+        "invoice_no": "WRPL/25-26/0001",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00003"
+      },
+      "PWP-06-EXT-SHP-003": {
+        "shipment_id": "PWP-06-EXT-SHP-003",
+        "processor_id": "PWP-06",
+        "month": "2025-06",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-009",
+        "eway_doc_id": "PWP-06-EWAY_BILL-010",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-011",
+        "invoice_qty_t": 8.13,
+        "weighbridge_net_t": 6.1,
+        "match_status": "matched",
+        "ewb_no": "649483948080",
+        "vehicle_no": "GJ59AB7825",
+        "distance_km": 191.8,
+        "eway_generated_at": "2025-06-20T05:11:00+00:00",
+        "eway_valid_until": "2025-06-21T18:29:00+00:00",
+        "weighbridge_in_time": "2025-06-20T11:24:00+00:00",
+        "invoice_no": "WRPL/25-26/0002",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00004"
+      },
+      "PWP-06-EXT-SHP-011": {
+        "shipment_id": "PWP-06-EXT-SHP-011",
+        "processor_id": "PWP-06",
+        "month": "2025-09",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-033",
+        "eway_doc_id": "PWP-06-EWAY_BILL-034",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-035",
+        "invoice_qty_t": 8.98,
+        "weighbridge_net_t": 9.05,
+        "match_status": "matched",
+        "ewb_no": "649484054227",
+        "vehicle_no": "MP29AB8780",
+        "distance_km": 200.0,
+        "eway_generated_at": "2025-09-11T06:15:00+00:00",
+        "eway_valid_until": "2025-09-12T18:29:00+00:00",
+        "weighbridge_in_time": "2025-09-11T11:47:00+00:00",
+        "invoice_no": "WRPL/25-26/0003",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00005"
+      },
+      "PWP-06-EXT-SHP-004": {
+        "shipment_id": "PWP-06-EXT-SHP-004",
+        "processor_id": "PWP-06",
+        "month": "2025-09",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-012",
+        "eway_doc_id": "PWP-06-EWAY_BILL-013",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-014",
+        "invoice_qty_t": 7.6,
+        "weighbridge_net_t": 7.59,
+        "match_status": "matched",
+        "ewb_no": "649484072915",
+        "vehicle_no": "HR13AB3589",
+        "distance_km": 215.3,
+        "eway_generated_at": "2025-09-16T05:34:00+00:00",
+        "eway_valid_until": "2025-09-18T18:29:00+00:00",
+        "weighbridge_in_time": "2025-09-16T11:20:00+00:00",
+        "invoice_no": "WRPL/25-26/0004",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00006"
+      },
+      "PWP-06-EXT-SHP-007": {
+        "shipment_id": "PWP-06-EXT-SHP-007",
+        "processor_id": "PWP-06",
+        "month": "2025-11",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-021",
+        "eway_doc_id": "PWP-06-EWAY_BILL-022",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-023",
+        "invoice_qty_t": 7.99,
+        "weighbridge_net_t": 7.9,
+        "match_status": "matched",
+        "ewb_no": "649484144070",
+        "vehicle_no": "MP32AB1797",
+        "distance_km": 202.8,
+        "eway_generated_at": "2025-11-15T03:43:00+00:00",
+        "eway_valid_until": "2025-11-17T18:29:00+00:00",
+        "weighbridge_in_time": "2025-11-15T09:01:00+00:00",
+        "invoice_no": "WRPL/25-26/0005",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00007"
+      },
+      "PWP-06-EXT-SHP-008": {
+        "shipment_id": "PWP-06-EXT-SHP-008",
+        "processor_id": "PWP-06",
+        "month": "2025-11",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-024",
+        "eway_doc_id": "PWP-06-EWAY_BILL-025",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-026",
+        "invoice_qty_t": 7.02,
+        "weighbridge_net_t": 7.0,
+        "match_status": "matched",
+        "ewb_no": "649484160447",
+        "vehicle_no": "TG33AB1741",
+        "distance_km": 195.0,
+        "eway_generated_at": "2025-11-21T05:18:00+00:00",
+        "eway_valid_until": "2025-11-22T18:29:00+00:00",
+        "weighbridge_in_time": "2025-11-21T10:54:00+00:00",
+        "invoice_no": "WRPL/25-26/0006",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00008"
+      },
+      "PWP-06-EXT-SHP-013": {
+        "shipment_id": "PWP-06-EXT-SHP-013",
+        "processor_id": "PWP-06",
+        "month": "2025-12",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-039",
+        "eway_doc_id": "PWP-06-EWAY_BILL-040",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-041",
+        "invoice_qty_t": 8.36,
+        "weighbridge_net_t": 8.34,
+        "match_status": "matched",
+        "ewb_no": "649484191276",
+        "vehicle_no": "TN36AB3481",
+        "distance_km": 219.6,
+        "eway_generated_at": "2025-12-17T02:58:00+00:00",
+        "eway_valid_until": "2025-12-19T18:29:00+00:00",
+        "weighbridge_in_time": "2025-12-17T09:50:00+00:00",
+        "invoice_no": "WRPL/25-26/0007",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00010"
+      },
+      "PWP-06-EXT-SHP-015": {
+        "shipment_id": "PWP-06-EXT-SHP-015",
+        "processor_id": "PWP-06",
+        "month": "2026-01",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-045",
+        "eway_doc_id": "PWP-06-EWAY_BILL-046",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-047",
+        "invoice_qty_t": 8.35,
+        "weighbridge_net_t": 8.31,
+        "match_status": "matched",
+        "ewb_no": "649484218351",
+        "vehicle_no": "TG22AB5038",
+        "distance_km": 211.5,
+        "eway_generated_at": "2026-01-18T05:09:00+00:00",
+        "eway_valid_until": "2026-01-20T18:29:00+00:00",
+        "weighbridge_in_time": "2026-01-18T09:54:00+00:00",
+        "invoice_no": "WRPL/25-26/0008",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00011"
+      },
+      "PWP-06-EXT-SHP-014": {
+        "shipment_id": "PWP-06-EXT-SHP-014",
+        "processor_id": "PWP-06",
+        "month": "2026-02",
+        "invoice_doc_id": "PWP-06-INBOUND_INVOICE-042",
+        "eway_doc_id": "PWP-06-EWAY_BILL-043",
+        "weighbridge_doc_id": "PWP-06-WEIGHBRIDGE_SLIP-044",
+        "invoice_qty_t": 8.47,
+        "weighbridge_net_t": 8.43,
+        "match_status": "matched",
+        "ewb_no": "649484287404",
+        "vehicle_no": "TG43AB7173",
+        "distance_km": 195.1,
+        "eway_generated_at": "2026-02-25T05:12:00+00:00",
+        "eway_valid_until": "2026-02-26T18:29:00+00:00",
+        "weighbridge_in_time": "2026-02-25T10:59:00+00:00",
+        "invoice_no": "WRPL/25-26/0010",
+        "supplier_gstin": "36KIGVW5346E5ZB",
+        "weighbridge_ticket_no": "TG-WB-4598-00015"
+      }
+    },
+    "documents_by_id": {
+      "PWP-06-CTO-001": {
+        "doc_id": "PWP-06-CTO-001",
+        "processor_id": "PWP-06",
+        "doc_type": "cto",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-CTO-001.pdf",
+        "fields": {
+          "consent_no": "CTO/TG/835911",
+          "processor_name": "Manjira Recycling Industries",
+          "address": "Plot 164, Industrial Area, Telangana",
+          "permitted_categories": "I, II",
+          "capacity_t_per_year": "166",
+          "valid_from": "01/04/2022",
+          "valid_to": "31/03/2028"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-054": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-054",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-054.pdf",
+        "fields": {
+          "billing_month": "2025-04",
+          "units_consumed_kwh": "6,423.10",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-055": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-055",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-055.pdf",
+        "fields": {
+          "billing_month": "2025-05",
+          "units_consumed_kwh": "8,892.50",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-056": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-056",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-056.pdf",
+        "fields": {
+          "billing_month": "2025-06",
+          "units_consumed_kwh": "6,523.00",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-057": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-057",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-057.pdf",
+        "fields": {
+          "billing_month": "2025-07",
+          "units_consumed_kwh": "8,807.90",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-058": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-058",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-058.pdf",
+        "fields": {
+          "billing_month": "2025-08",
+          "units_consumed_kwh": "8,083.10",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-059": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-059",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-059.pdf",
+        "fields": {
+          "billing_month": "2025-09",
+          "units_consumed_kwh": "8,330.10",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-060": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-060",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-060.pdf",
+        "fields": {
+          "billing_month": "2025-10",
+          "units_consumed_kwh": "6,888.00",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-061": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-061",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-061.pdf",
+        "fields": {
+          "billing_month": "2025-11",
+          "units_consumed_kwh": "8,548.10",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-062": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-062",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-062.pdf",
+        "fields": {
+          "billing_month": "2025-12",
+          "units_consumed_kwh": "7,042.50",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-063": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-063",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-063.pdf",
+        "fields": {
+          "billing_month": "2026-01",
+          "units_consumed_kwh": "7,829.00",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-064": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-064",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-064.pdf",
+        "fields": {
+          "billing_month": "2026-02",
+          "units_consumed_kwh": "7,043.80",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-ELECTRICITY_BILL-065": {
+        "doc_id": "PWP-06-ELECTRICITY_BILL-065",
+        "processor_id": "PWP-06",
+        "doc_type": "electricity_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-ELECTRICITY_BILL-065.pdf",
+        "fields": {
+          "billing_month": "2026-03",
+          "units_consumed_kwh": "6,604.70",
+          "connected_load_kw": "16.60"
+        }
+      },
+      "PWP-06-EPR_REGISTRATION-002": {
+        "doc_id": "PWP-06-EPR_REGISTRATION-002",
+        "processor_id": "PWP-06",
+        "doc_type": "epr_registration",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EPR_REGISTRATION-002.pdf",
+        "fields": {
+          "registration_no": "EPR-REG/TG/816751",
+          "processor_type": "recycler",
+          "categories": "I, II",
+          "capacity_t_per_year": "166"
+        }
+      },
+      "PWP-06-EWAY_BILL-004": {
+        "doc_id": "PWP-06-EWAY_BILL-004",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-004.pdf",
+        "fields": {
+          "ewb_no": "649484247470",
+          "generated_at": "25-01-2026 09:10",
+          "valid_until": "26-01-2026 23:59",
+          "from_gstin": "36CVHMD9399B2ZH",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "500529",
+          "to_pin": "500804",
+          "distance_km": "34.5",
+          "vehicle_no": "TN55AB4694",
+          "hsn": "3915",
+          "quantity_t": "8.82",
+          "value": "75,411.00",
+          "invoice_no": "HST/25-26/0004"
+        }
+      },
+      "PWP-06-EWAY_BILL-007": {
+        "doc_id": "PWP-06-EWAY_BILL-007",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-007.pdf",
+        "fields": {
+          "ewb_no": "649483918537",
+          "generated_at": "10-05-2025 08:32",
+          "valid_until": "11-05-2025 23:59",
+          "from_gstin": "36CVHMD9399B2ZH",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "500529",
+          "to_pin": "500804",
+          "distance_km": "34.5",
+          "vehicle_no": "HR20AB3526",
+          "hsn": "3915",
+          "quantity_t": "8.27",
+          "value": "1,11,727.70",
+          "invoice_no": "HST/25-26/0001"
+        }
+      },
+      "PWP-06-EWAY_BILL-010": {
+        "doc_id": "PWP-06-EWAY_BILL-010",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-010.pdf",
+        "fields": {
+          "ewb_no": "649483948080",
+          "generated_at": "20-06-2025 10:41",
+          "valid_until": "21-06-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "191.8",
+          "vehicle_no": "GJ59AB7825",
+          "hsn": "3915",
+          "quantity_t": "8.13",
+          "value": "1,32,112.50",
+          "invoice_no": "WRPL/25-26/0002"
+        }
+      },
+      "PWP-06-EWAY_BILL-013": {
+        "doc_id": "PWP-06-EWAY_BILL-013",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-013.pdf",
+        "fields": {
+          "ewb_no": "649484072915",
+          "generated_at": "16-09-2025 11:04",
+          "valid_until": "18-09-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "215.3",
+          "vehicle_no": "HR13AB3589",
+          "hsn": "3915",
+          "quantity_t": "7.60",
+          "value": "79,420.00",
+          "invoice_no": "WRPL/25-26/0004"
+        }
+      },
+      "PWP-06-EWAY_BILL-016": {
+        "doc_id": "PWP-06-EWAY_BILL-016",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-016.pdf",
+        "fields": {
+          "ewb_no": "649484261720",
+          "generated_at": "11-02-2026 09:48",
+          "valid_until": "12-02-2026 23:59",
+          "from_gstin": "36CVHMD9399B2ZH",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "500529",
+          "to_pin": "500804",
+          "distance_km": "38.4",
+          "vehicle_no": "TN42AB2739",
+          "hsn": "3915",
+          "quantity_t": "8.44",
+          "value": "1,29,469.60",
+          "invoice_no": "HST/25-26/0005"
+        }
+      },
+      "PWP-06-EWAY_BILL-019": {
+        "doc_id": "PWP-06-EWAY_BILL-019",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-019.pdf",
+        "fields": {
+          "ewb_no": "649483924805",
+          "generated_at": "15-05-2025 09:52",
+          "valid_until": "16-05-2025 23:59",
+          "from_gstin": "36CVHMD9399B2ZH",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "500529",
+          "to_pin": "500804",
+          "distance_km": "38.4",
+          "vehicle_no": "TN46AB6123",
+          "hsn": "3915",
+          "quantity_t": "7.10",
+          "value": "1,23,895.00",
+          "invoice_no": "HST/25-26/0002"
+        }
+      },
+      "PWP-06-EWAY_BILL-022": {
+        "doc_id": "PWP-06-EWAY_BILL-022",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-022.pdf",
+        "fields": {
+          "ewb_no": "649484144070",
+          "generated_at": "15-11-2025 09:13",
+          "valid_until": "17-11-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "202.8",
+          "vehicle_no": "MP32AB1797",
+          "hsn": "3915",
+          "quantity_t": "7.99",
+          "value": "71,111.00",
+          "invoice_no": "WRPL/25-26/0005"
+        }
+      },
+      "PWP-06-EWAY_BILL-025": {
+        "doc_id": "PWP-06-EWAY_BILL-025",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-025.pdf",
+        "fields": {
+          "ewb_no": "649484160447",
+          "generated_at": "21-11-2025 10:48",
+          "valid_until": "22-11-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "195.0",
+          "vehicle_no": "TG33AB1741",
+          "hsn": "3915",
+          "quantity_t": "7.02",
+          "value": "63,671.40",
+          "invoice_no": "WRPL/25-26/0006"
+        }
+      },
+      "PWP-06-EWAY_BILL-028": {
+        "doc_id": "PWP-06-EWAY_BILL-028",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-028.pdf",
+        "fields": {
+          "ewb_no": "649484265288",
+          "generated_at": "12-02-2026 08:08",
+          "valid_until": "13-02-2026 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "199.4",
+          "vehicle_no": "MH35AB7114",
+          "hsn": "3915",
+          "quantity_t": "8.01",
+          "value": "1,25,276.40",
+          "invoice_no": "WRPL/25-26/0009"
+        }
+      },
+      "PWP-06-EWAY_BILL-031": {
+        "doc_id": "PWP-06-EWAY_BILL-031",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-031.pdf",
+        "fields": {
+          "ewb_no": "649484176256",
+          "generated_at": "12-12-2025 10:51",
+          "valid_until": "13-12-2025 23:59",
+          "from_gstin": "36CVHMD9399B2ZH",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "500529",
+          "to_pin": "500804",
+          "distance_km": "34.0",
+          "vehicle_no": "TG43AB8487",
+          "hsn": "3915",
+          "quantity_t": "8.02",
+          "value": "1,04,260.00",
+          "invoice_no": "HST/25-26/0003"
+        }
+      },
+      "PWP-06-EWAY_BILL-034": {
+        "doc_id": "PWP-06-EWAY_BILL-034",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-034.pdf",
+        "fields": {
+          "ewb_no": "649484054227",
+          "generated_at": "11-09-2025 11:45",
+          "valid_until": "12-09-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "200.0",
+          "vehicle_no": "MP29AB8780",
+          "hsn": "3915",
+          "quantity_t": "8.98",
+          "value": "1,38,202.20",
+          "invoice_no": "WRPL/25-26/0003"
+        }
+      },
+      "PWP-06-EWAY_BILL-037": {
+        "doc_id": "PWP-06-EWAY_BILL-037",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-037.pdf",
+        "fields": {
+          "ewb_no": "649483935786",
+          "generated_at": "04-06-2025 11:16",
+          "valid_until": "06-06-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "211.7",
+          "vehicle_no": "HR59AB4728",
+          "hsn": "3915",
+          "quantity_t": "8.59",
+          "value": "1,30,997.50",
+          "invoice_no": "WRPL/25-26/0001"
+        }
+      },
+      "PWP-06-EWAY_BILL-040": {
+        "doc_id": "PWP-06-EWAY_BILL-040",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-040.pdf",
+        "fields": {
+          "ewb_no": "649484191276",
+          "generated_at": "17-12-2025 08:28",
+          "valid_until": "19-12-2025 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "219.6",
+          "vehicle_no": "TN36AB3481",
+          "hsn": "3915",
+          "quantity_t": "8.36",
+          "value": "69,555.20",
+          "invoice_no": "WRPL/25-26/0007"
+        }
+      },
+      "PWP-06-EWAY_BILL-043": {
+        "doc_id": "PWP-06-EWAY_BILL-043",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-043.pdf",
+        "fields": {
+          "ewb_no": "649484287404",
+          "generated_at": "25-02-2026 10:42",
+          "valid_until": "26-02-2026 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "195.1",
+          "vehicle_no": "TG43AB7173",
+          "hsn": "3915",
+          "quantity_t": "8.47",
+          "value": "73,011.40",
+          "invoice_no": "WRPL/25-26/0010"
+        }
+      },
+      "PWP-06-EWAY_BILL-046": {
+        "doc_id": "PWP-06-EWAY_BILL-046",
+        "processor_id": "PWP-06",
+        "doc_type": "eway_bill",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-EWAY_BILL-046.pdf",
+        "fields": {
+          "ewb_no": "649484218351",
+          "generated_at": "18-01-2026 10:39",
+          "valid_until": "20-01-2026 23:59",
+          "from_gstin": "36KIGVW5346E5ZB",
+          "to_gstin": "36UCTUF8327M5Z0",
+          "from_pin": "506568",
+          "to_pin": "500804",
+          "distance_km": "211.5",
+          "vehicle_no": "TG22AB5038",
+          "hsn": "3915",
+          "quantity_t": "8.35",
+          "value": "1,39,278.00",
+          "invoice_no": "WRPL/25-26/0008"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-003": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-003",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-003.pdf",
+        "fields": {
+          "invoice_no": "HST/25-26/0004",
+          "date": "25/01/2026",
+          "supplier_gstin": "36CVHMD9399B2ZH",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.82",
+          "rate": "8.55",
+          "value": "75,411.00"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-006": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-006",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-006.pdf",
+        "fields": {
+          "invoice_no": "HST/25-26/0001",
+          "date": "10/05/2025",
+          "supplier_gstin": "36CVHMD9399B2ZH",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.27",
+          "rate": "13.51",
+          "value": "1,11,727.70"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-009": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-009",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-009.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0002",
+          "date": "20/06/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.13",
+          "rate": "16.25",
+          "value": "1,32,112.50"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-012": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-012",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-012.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0004",
+          "date": "16/09/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "7.60",
+          "rate": "10.45",
+          "value": "79,420.00"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-015": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-015",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-015.pdf",
+        "fields": {
+          "invoice_no": "HST/25-26/0005",
+          "date": "11/02/2026",
+          "supplier_gstin": "36CVHMD9399B2ZH",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.44",
+          "rate": "15.34",
+          "value": "1,29,469.60"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-018": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-018",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-018.pdf",
+        "fields": {
+          "invoice_no": "HST/25-26/0002",
+          "date": "15/05/2025",
+          "supplier_gstin": "36CVHMD9399B2ZH",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "7.10",
+          "rate": "17.45",
+          "value": "1,23,895.00"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-021": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-021",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-021.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0005",
+          "date": "15/11/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "7.99",
+          "rate": "8.90",
+          "value": "71,111.00"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-024": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-024",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-024.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0006",
+          "date": "21/11/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "7.02",
+          "rate": "9.07",
+          "value": "63,671.40"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-027": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-027",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-027.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0009",
+          "date": "12/02/2026",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.01",
+          "rate": "15.64",
+          "value": "1,25,276.40"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-030": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-030",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-030.pdf",
+        "fields": {
+          "invoice_no": "HST/25-26/0003",
+          "date": "12/12/2025",
+          "supplier_gstin": "36CVHMD9399B2ZH",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.02",
+          "rate": "13.00",
+          "value": "1,04,260.00"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-033": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-033",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-033.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0003",
+          "date": "11/09/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.98",
+          "rate": "15.39",
+          "value": "1,38,202.20"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-036": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-036",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-036.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0001",
+          "date": "04/06/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.59",
+          "rate": "15.25",
+          "value": "1,30,997.50"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-039": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-039",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-039.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0007",
+          "date": "17/12/2025",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.36",
+          "rate": "8.32",
+          "value": "69,555.20"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-042": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-042",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-042.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0010",
+          "date": "25/02/2026",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.47",
+          "rate": "8.62",
+          "value": "73,011.40"
+        }
+      },
+      "PWP-06-INBOUND_INVOICE-045": {
+        "doc_id": "PWP-06-INBOUND_INVOICE-045",
+        "processor_id": "PWP-06",
+        "doc_type": "inbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-INBOUND_INVOICE-045.pdf",
+        "fields": {
+          "invoice_no": "WRPL/25-26/0008",
+          "date": "18/01/2026",
+          "supplier_gstin": "36KIGVW5346E5ZB",
+          "buyer_gstin": "36UCTUF8327M5Z0",
+          "item_description": "Post-consumer plastic waste, mixed PE/PP",
+          "hsn": "3915",
+          "quantity_t": "8.35",
+          "rate": "16.68",
+          "value": "1,39,278.00"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-048": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-048",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-048.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0001",
+          "date": "24/07/2025",
+          "buyer": "Fictional Buyer 1",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "14.96"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-049": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-049",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-049.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0002",
+          "date": "24/08/2025",
+          "buyer": "Fictional Buyer 2",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "16.33"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-050": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-050",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-050.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0003",
+          "date": "17/09/2025",
+          "buyer": "Fictional Buyer 3",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "16.18"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-051": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-051",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-051.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0004",
+          "date": "19/09/2025",
+          "buyer": "Fictional Buyer 4",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "17.87"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-052": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-052",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-052.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0005",
+          "date": "10/03/2026",
+          "buyer": "Fictional Buyer 5",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "15.47"
+        }
+      },
+      "PWP-06-OUTBOUND_INVOICE-053": {
+        "doc_id": "PWP-06-OUTBOUND_INVOICE-053",
+        "processor_id": "PWP-06",
+        "doc_type": "outbound_invoice",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-OUTBOUND_INVOICE-053.pdf",
+        "fields": {
+          "invoice_no": "MRI/25-26/0006",
+          "date": "17/03/2026",
+          "buyer": "Fictional Buyer 6",
+          "item_description": "Recycled PE/PP granules",
+          "hsn": "3915",
+          "quantity_t": "15.23"
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-005": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-005",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-005.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00012",
+          "vehicle_no": "TN55AB4694",
+          "gross_kg": "14,672",
+          "tare_kg": "5,882",
+          "net_kg": "8,790",
+          "in_time": "25-01-2026 10:13",
+          "out_time": "25-01-2026 10:56",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-008": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-008",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-008.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00001",
+          "vehicle_no": "HR20AB3526",
+          "gross_kg": "13,449",
+          "tare_kg": "5,249",
+          "net_kg": "8,200",
+          "in_time": "10-05-2025 09:30",
+          "out_time": "10-05-2025 10:13",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-011": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-011",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-011.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00004",
+          "vehicle_no": "GJ59AB7825",
+          "gross_kg": "11,336",
+          "tare_kg": "5,236",
+          "net_kg": "6,100",
+          "in_time": "20-06-2025 16:54",
+          "out_time": "20-06-2025 17:09",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-014": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-014",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-014.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00006",
+          "vehicle_no": "HR13AB3589",
+          "gross_kg": "12,559",
+          "tare_kg": "4,969",
+          "net_kg": "7,590",
+          "in_time": "16-09-2025 16:50",
+          "out_time": "16-09-2025 17:11",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-017": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-017",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-017.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00013",
+          "vehicle_no": "TN42AB2739",
+          "gross_kg": "13,333",
+          "tare_kg": "4,933",
+          "net_kg": "8,400",
+          "in_time": "11-02-2026 10:36",
+          "out_time": "11-02-2026 10:59",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-020": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-020",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-020.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00002",
+          "vehicle_no": "TN46AB6123",
+          "gross_kg": "11,369",
+          "tare_kg": "4,319",
+          "net_kg": "7,050",
+          "in_time": "15-05-2025 10:53",
+          "out_time": "15-05-2025 11:24",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-023": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-023",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-023.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00007",
+          "vehicle_no": "MP32AB1797",
+          "gross_kg": "12,890",
+          "tare_kg": "4,990",
+          "net_kg": "7,900",
+          "in_time": "15-11-2025 14:31",
+          "out_time": "15-11-2025 15:14",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-026": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-026",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-026.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00008",
+          "vehicle_no": "TG33AB1741",
+          "gross_kg": "12,141",
+          "tare_kg": "5,141",
+          "net_kg": "7,000",
+          "in_time": "21-11-2025 16:24",
+          "out_time": "21-11-2025 16:45",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-029": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-029",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-029.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00014",
+          "vehicle_no": "MH35AB37114",
+          "gross_kg": "12,748",
+          "tare_kg": "4,678",
+          "net_kg": "8,070",
+          "in_time": "12-02-2026 12:18",
+          "out_time": "12-02-2026 13:03",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-032": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-032",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-032.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00009",
+          "vehicle_no": "TG43AB8487",
+          "gross_kg": "13,736",
+          "tare_kg": "5,786",
+          "net_kg": "7,950",
+          "in_time": "12-12-2025 11:53",
+          "out_time": "12-12-2025 12:12",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-035": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-035",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-035.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00005",
+          "vehicle_no": "MP29AB8780",
+          "gross_kg": "13,787",
+          "tare_kg": "4,737",
+          "net_kg": "9,050",
+          "in_time": "11-09-2025 17:17",
+          "out_time": "11-09-2025 17:53",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-038": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-038",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-038.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00003",
+          "vehicle_no": "HR59AB4728",
+          "gross_kg": "13,807",
+          "tare_kg": "5,167",
+          "net_kg": "8,640",
+          "in_time": "04-06-2025 18:12",
+          "out_time": "04-06-2025 18:32",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-041": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-041",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-041.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00010",
+          "vehicle_no": "TN36AB3481",
+          "gross_kg": "12,748",
+          "tare_kg": "4,408",
+          "net_kg": "8,340",
+          "in_time": "17-12-2025 15:20",
+          "out_time": "17-12-2025 15:51",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-044": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-044",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-044.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00015",
+          "vehicle_no": "TG43AB7173",
+          "gross_kg": "12,776",
+          "tare_kg": "4,346",
+          "net_kg": "8,430",
+          "in_time": "25-02-2026 16:29",
+          "out_time": "25-02-2026 17:13",
+          "remarks": ""
+        }
+      },
+      "PWP-06-WEIGHBRIDGE_SLIP-047": {
+        "doc_id": "PWP-06-WEIGHBRIDGE_SLIP-047",
+        "processor_id": "PWP-06",
+        "doc_type": "weighbridge_slip",
+        "lang": "en",
+        "gcs_path": "gs://epr-integrity-epr-dossiers/seed-42/documents/PWP-06/PWP-06-WEIGHBRIDGE_SLIP-047.png",
+        "fields": {
+          "ticket_no": "TG-WB-4598-00011",
+          "vehicle_no": "TG22AB5038",
+          "gross_kg": "12,907",
+          "tare_kg": "4,597",
+          "net_kg": "8,310",
+          "in_time": "18-01-2026 15:24",
+          "out_time": "18-01-2026 16:09",
+          "remarks": ""
+        }
+      }
+    },
+    "certificates": [
+      {
+        "certificate_id": "EPR-CERT/816751/202504",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-04",
+        "generation_date": "30/04/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202507",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-07",
+        "generation_date": "31/07/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202510",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-10",
+        "generation_date": "31/10/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202601",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2026-01",
+        "generation_date": "31/01/2026"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202505",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-05",
+        "generation_date": "31/05/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202508",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-08",
+        "generation_date": "31/08/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202511",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-11",
+        "generation_date": "30/11/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202602",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2026-02",
+        "generation_date": "28/02/2026"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202506",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-06",
+        "generation_date": "30/06/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202509",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-09",
+        "generation_date": "30/09/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202512",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2025-12",
+        "generation_date": "31/12/2025"
+      },
+      {
+        "certificate_id": "EPR-CERT/816751/202603",
+        "processor_id": "PWP-06",
+        "category": "I",
+        "quantity_t": 18.03,
+        "period_month": "2026-03",
+        "generation_date": "31/03/2026"
+      }
+    ],
+    "as_of_month": "2026-03"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "corrective": null,
+      "raw_response": {
+        "subject": "Request for Clarification Regarding EPR Certificates and Supporting Documentation",
+        "salutation": "Dear Plastic Waste Processor,",
+        "opening_paragraph": "We are writing to request clarification and supporting documentation regarding the EPR certificates issued for your operations. During our routine compliance review, we noted a few areas where the documented quantities require further reconciliation. We appreciate your cooperation in helping us ensure accurate reporting.",
+        "items": [
+          {
+            "heading": "Discrepancy in Inbound Shipment Quantities",
+            "what_we_observed": "We observed that for one inbound shipment, the net weight recorded on the weighbridge slip is more than 2% below the quantity stated on the corresponding invoice.",
+            "evidence_ids": [
+              "PWP-06-INBOUND_INVOICE-009",
+              "PWP-06-EWAY_BILL-010",
+              "PWP-06-WEIGHBRIDGE_SLIP-011"
+            ],
+            "what_we_request": "Please provide clarification regarding this weight difference and any additional documentation, such as receiving reports or correspondence with the transporter, to explain the variance."
+          }
+        ],
+        "response_deadline_days": 15,
+        "closing_paragraph": "Please submit the requested clarifications and supporting documents within 15 days of receiving this letter. Thank you for your prompt attention to this matter and your continued commitment to compliance."
+      },
+      "issues": [
+        {
+          "field": "items[0].what_we_observed",
+          "guard": "number",
+          "offending": [
+            2.0
+          ],
+          "text": "We observed that for one inbound shipment, the net weight recorded on the weighbridge slip is more than 2% below the quantity stated on the corresponding invoice."
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "corrective": "Every number you write must already appear in the information provided above \u2014 do not invent, compute or restate any other number.",
+      "raw_response": {
+        "subject": "Clarification Request: EPR Certificate Verification",
+        "salutation": "Dear Partner,",
+        "opening_paragraph": "We are writing to request clarification and supporting documentation regarding the EPR certificates issued. During our routine compliance review, we noted a few areas where additional information is required to align the records.",
+        "items": [
+          {
+            "heading": "Discrepancy in Shipment Weight Records",
+            "what_we_observed": "We observed that 1 shipment has a weighbridge net weight that is more than 2% below the invoice quantity, as documented in the inbound invoice, e-way bill, and weighbridge slip.",
+            "evidence_ids": [
+              "PWP-06-INBOUND_INVOICE-009",
+              "PWP-06-EWAY_BILL-010",
+              "PWP-06-WEIGHBRIDGE_SLIP-011"
+            ],
+            "what_we_request": "Please provide clarification regarding this weight discrepancy and submit any supporting documentation to reconcile the invoice quantity with the weighbridge net weight."
+          }
+        ],
+        "response_deadline_days": 15,
+        "closing_paragraph": "Please review these items and provide the requested clarifications and supporting documents within 15 days of this letter. Thank you for your cooperation in maintaining compliance standards."
+      },
+      "issues": [
+        {
+          "field": "items[0].what_we_observed",
+          "guard": "number",
+          "offending": [
+            1.0,
+            2.0
+          ],
+          "text": "We observed that 1 shipment has a weighbridge net weight that is more than 2% below the invoice quantity, as documented in the inbound invoice, e-way bill, and weighbridge slip."
+        }
+      ]
+    }
+  ],
+  "final_guard_status": "template_fallback"
+}

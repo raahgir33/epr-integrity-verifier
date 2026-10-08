@@ -817,32 +817,18 @@ def _tokens_since(llm_client: GeminiClient, start_index: int) -> tuple[int | Non
     )
 
 
-def run_memo(
-    seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
-) -> None:
-    """Drafts a clarification memo (flagged processors) or verification
-    statement (clean ones) per processor — app/agents/memo.py's guarded
-    generation, built on the same fetch_agent_inputs() shape --stage
-    agents already uses (certificates/shipments/check_results/documents,
-    both --facts-source truth and extracted, no restriction — same
-    reasoning as --stage agents' own facts_source support). Confirmed
-    agent findings are reconstructed from the stored agent_runs trail
-    (app/agents/orchestrator.py's reconstruct_agent_findings) rather than
-    re-run through Gemini — no new agent-loop call happens here.
-
-    A processor with no assessment yet (neither "checks_only" nor "full"
-    — --stage checks hasn't run) is skipped, not guessed at; its memos
-    row (if any from a previous run) is left untouched, since there's
-    nothing new to replace it with.
-    """
-    bq_client = bq.get_client()
-    inputs = fetch_agent_inputs(bq_client, seed, facts_source, processor_filter)
-    if inputs is None:
-        return
-    processors = inputs["processors"]
-    if as_of_month is None:
-        as_of_month = inputs["as_of_month"]
-
+def fetch_memo_extras(
+    bq_client, seed: int, facts_source: str, processor_filter: str | None
+) -> tuple[dict[str, dict[str, dict]], dict[str, list[dict]]]:
+    """The two queries --stage memo needs beyond fetch_agent_inputs()'s
+    own shape: each processor's assessment stages (checks_only/full) and
+    its agent_runs trail, already narrowed to the latest attempt (same
+    "which attempt wins" rule app/store/cache.py's get_agent_trail uses
+    for the read path). Returns (assessments_by_processor, trail_by_
+    processor); a processor absent from trail_by_processor has no agent
+    run yet. Factored out of run_memo() so scripts/probe_memo_guards.py
+    can build the exact same memo_context without a second, divergent
+    copy of this fetch logic."""
     assessment_rows = _fetch_bq_rows(
         bq_client,
         "assessments",
@@ -872,6 +858,96 @@ def run_memo(
             (r for r in rows if (r["attempt"] or 1) == latest_attempt),
             key=lambda r: r["step_index"],
         )
+    return assessments_by_processor, trail_by_processor
+
+
+def build_memo_context_for_processor(
+    processor: dict, inputs: dict, assessments_by_processor: dict, trail_by_processor: dict
+) -> dict | None:
+    """One processor's app/agents/memo.py build_memo_context(...) call,
+    assembled from fetch_agent_inputs()'s inputs plus fetch_memo_extras()'s
+    two extra tables — the exact same assembly run_memo() and
+    scripts/probe_memo_guards.py both need, factored out so neither is a
+    divergent copy of the other. Returns None if this processor has no
+    assessment yet (--stage checks hasn't run) — the caller's "skip, don't
+    guess" branch."""
+    pid = processor["processor_id"]
+    stages = assessments_by_processor.get(pid, {})
+    assessment = stages.get("full") or stages.get("checks_only")
+    if assessment is None:
+        return None
+
+    p_shipments = inputs["shipments_by_processor"].get(pid, [])
+    p_certificates = inputs["certificates_by_processor"].get(pid, [])
+    p_check_results = inputs["checks_by_processor"].get(pid, [])
+    p_documents = inputs["documents_by_processor"].get(pid, [])
+    shipments_by_id = {s["shipment_id"]: s for s in p_shipments}
+    documents_by_id = {d["doc_id"]: d for d in p_documents}
+
+    findings = None
+    trail = trail_by_processor.get(pid)
+    if trail:
+        reconstruction_context = {
+            "shipments": p_shipments,
+            "duplicate_keys": inputs["duplicate_keys"],
+            "check_results": p_check_results,
+            "documents": [{"doc_id": d["doc_id"], "doc_type": d["doc_type"]} for d in p_documents],
+        }
+        reconstructed = reconstruct_agent_findings(trail, reconstruction_context)
+        findings = [
+            {
+                "finding_type": entry["finding"].finding_type,
+                "classification": entry["classification"],
+                "effect": entry["finding"].effect,
+                "cited_shipment_ids": entry["finding"].cited_shipment_ids,
+                "evidence_ids": entry["finding"].evidence_ids,
+                "explanation": entry["finding"].explanation,
+            }
+            for entry in reconstructed["findings"]
+        ]
+
+    return memo.build_memo_context(
+        processor=processor,
+        assessment=assessment,
+        check_results=p_check_results,
+        findings=findings,
+        shipments_by_id=shipments_by_id,
+        documents_by_id=documents_by_id,
+        certificates=p_certificates,
+        as_of_month=inputs["as_of_month"],
+    )
+
+
+def run_memo(
+    seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
+) -> None:
+    """Drafts a clarification memo (flagged processors) or verification
+    statement (clean ones) per processor — app/agents/memo.py's guarded
+    generation, built on the same fetch_agent_inputs() shape --stage
+    agents already uses (certificates/shipments/check_results/documents,
+    both --facts-source truth and extracted, no restriction — same
+    reasoning as --stage agents' own facts_source support). Confirmed
+    agent findings are reconstructed from the stored agent_runs trail
+    (app/agents/orchestrator.py's reconstruct_agent_findings) rather than
+    re-run through Gemini — no new agent-loop call happens here.
+
+    A processor with no assessment yet (neither "checks_only" nor "full"
+    — --stage checks hasn't run) is skipped, not guessed at; its memos
+    row (if any from a previous run) is left untouched, since there's
+    nothing new to replace it with.
+    """
+    bq_client = bq.get_client()
+    inputs = fetch_agent_inputs(bq_client, seed, facts_source, processor_filter)
+    if inputs is None:
+        return
+    processors = inputs["processors"]
+    if as_of_month is None:
+        as_of_month = inputs["as_of_month"]
+    inputs["as_of_month"] = as_of_month
+
+    assessments_by_processor, trail_by_processor = fetch_memo_extras(
+        bq_client, seed, facts_source, processor_filter
+    )
 
     llm_client = GeminiClient()
     memo_rows: list[dict] = []
@@ -880,54 +956,13 @@ def run_memo(
     print(f"Drafting memos for {len(processors)} processor(s), as_of_month={as_of_month}...")
     for processor in processors:
         pid = processor["processor_id"]
-        stages = assessments_by_processor.get(pid, {})
-        assessment = stages.get("full") or stages.get("checks_only")
-        if assessment is None:
+        memo_context = build_memo_context_for_processor(
+            processor, inputs, assessments_by_processor, trail_by_processor
+        )
+        if memo_context is None:
             print(f"  {pid}: skipped — no assessment yet (run --stage checks first)")
             continue
         touched_processor_ids.append(pid)
-
-        p_shipments = inputs["shipments_by_processor"].get(pid, [])
-        p_certificates = inputs["certificates_by_processor"].get(pid, [])
-        p_check_results = inputs["checks_by_processor"].get(pid, [])
-        p_documents = inputs["documents_by_processor"].get(pid, [])
-        shipments_by_id = {s["shipment_id"]: s for s in p_shipments}
-        documents_by_id = {d["doc_id"]: d for d in p_documents}
-
-        findings = None
-        trail = trail_by_processor.get(pid)
-        if trail:
-            reconstruction_context = {
-                "shipments": p_shipments,
-                "duplicate_keys": inputs["duplicate_keys"],
-                "check_results": p_check_results,
-                "documents": [
-                    {"doc_id": d["doc_id"], "doc_type": d["doc_type"]} for d in p_documents
-                ],
-            }
-            reconstructed = reconstruct_agent_findings(trail, reconstruction_context)
-            findings = [
-                {
-                    "finding_type": entry["finding"].finding_type,
-                    "classification": entry["classification"],
-                    "effect": entry["finding"].effect,
-                    "cited_shipment_ids": entry["finding"].cited_shipment_ids,
-                    "evidence_ids": entry["finding"].evidence_ids,
-                    "explanation": entry["finding"].explanation,
-                }
-                for entry in reconstructed["findings"]
-            ]
-
-        memo_context = memo.build_memo_context(
-            processor=processor,
-            assessment=assessment,
-            check_results=p_check_results,
-            findings=findings,
-            shipments_by_id=shipments_by_id,
-            documents_by_id=documents_by_id,
-            certificates=p_certificates,
-            as_of_month=as_of_month,
-        )
 
         call_start = len(llm_client.call_log)
         if memo_context["doc_type"] == "clarification_memo":
