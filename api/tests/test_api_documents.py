@@ -62,8 +62,17 @@ def test_get_document_file_streams_bytes_with_cache_headers(api_client, monkeypa
     assert "immutable" in response.headers["cache-control"]
 
 
-def test_get_document_file_404_unknown_doc(api_client, monkeypatch):
+def test_get_document_file_404_unknown_doc_never_reads_gcs(api_client, monkeypatch):
+    """doc_id is validated against the documents table BEFORE any GCS
+    read (docs/BUILD_PLAN.md T11) — an unknown doc_id must 404 without
+    ever calling gcs.download_bytes, not just happen not to crash."""
     monkeypatch.setattr(cache, "get_document", lambda seed, doc_id: None)
+    monkeypatch.setattr(gcs, "get_client", lambda: object())
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("gcs.download_bytes must not be called for an unknown doc_id")
+
+    monkeypatch.setattr(gcs, "download_bytes", _fail_if_called)
 
     response = api_client.get("/documents/DOC-DOES-NOT-EXIST/file")
 

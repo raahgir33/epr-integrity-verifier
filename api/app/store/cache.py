@@ -26,10 +26,12 @@ from typing import Any
 from google.cloud import bigquery
 
 from app.agents.orchestrator import reconstruct_agent_findings
+from app.agents.scorer import score_processor
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.mass_balance import verified_inbound_tonnes
 from app.checks.params import CHECK_SOURCE_LABELS
 from app.config import settings
+from app.models.checks import CheckResult
 from app.store import bq
 
 logger = logging.getLogger(__name__)
@@ -593,6 +595,86 @@ def get_reasoning_steps(seed: int, facts_source: str, processor_id: str) -> list
             }
         )
     return steps
+
+
+def get_as_of_month(seed: int) -> str:
+    """The same run-level as_of_month scripts/run_pipeline.py defaults to
+    when scoring: the max period_month across every certificate for this
+    seed (certificates aren't facts_source-dimensioned). Not stored on the
+    assessments row itself, so the consistency check below derives it the
+    same way the pipeline did rather than guessing a different source."""
+    return max(c["period_month"] for c in _certificates(seed))
+
+
+# ---------- consistency guard ----------
+
+
+def check_consistency(seed: int, facts_source: str) -> dict:
+    """For every processor with a stored stage="full" assessment,
+    reconstructs its agent findings from the stored agent_runs trail and
+    recomputes score_processor with the resulting excluded_shipment_ids —
+    the recomputed verifiable_t must equal the stored one exactly (within
+    float rounding). A mismatch means the read-path reconstruction
+    (app/agents/orchestrator.py's reconstruct_agent_findings) has drifted
+    from what the live pipeline actually scored — logged as an error here
+    (docs/BUILD_PLAN.md T11), not just silently reported, since nothing
+    else would ever surface it.
+
+    Returns {"ok": bool, "mismatches": [{"processor_id", "stored_verifiable_t",
+    "recomputed_verifiable_t"}]}. Checked once at startup (app/main.py's
+    lifespan, after preload) and exposed via GET /health's consistency_ok;
+    callable again any time (e.g. from a test) against whatever's
+    currently cached."""
+    as_of_month = get_as_of_month(seed)
+    mismatches = []
+    for processor_id, stages in _assessments_by_processor(seed, facts_source).items():
+        full = stages.get("full")
+        if full is None:
+            continue
+        profile = get_processor_profile(seed, processor_id)
+        context = build_reconstruction_context(seed, facts_source, processor_id)
+        if profile is None or context is None:
+            continue
+        trail = get_agent_trail(seed, facts_source, processor_id)
+        reconstructed = reconstruct_agent_findings(trail, context)
+        check_result_models = [
+            CheckResult(**{k: v for k, v in c.items() if k != "source"})
+            for c in context["check_results"]
+        ]
+        score = score_processor(
+            {
+                "processor_id": processor_id,
+                "capacity_t_per_year": profile["capacity_t_per_year"],
+                "permitted_categories": profile["permitted_categories"],
+                "consent_valid_from": profile["consent_valid_from"],
+                "consent_valid_to": profile["consent_valid_to"],
+            },
+            get_certificates_for_processor(seed, processor_id),
+            context["shipments"],
+            context["duplicate_keys"],
+            check_result_models,
+            as_of_month,
+            excluded_shipment_ids=reconstructed["excluded_shipment_ids"],
+        )
+        recomputed_verifiable_t = score["verifiable_t"]
+        stored_verifiable_t = full["verifiable_t"]
+        if abs(recomputed_verifiable_t - stored_verifiable_t) > 0.01:
+            mismatches.append(
+                {
+                    "processor_id": processor_id,
+                    "stored_verifiable_t": stored_verifiable_t,
+                    "recomputed_verifiable_t": recomputed_verifiable_t,
+                }
+            )
+
+    if mismatches:
+        logger.error(
+            "consistency check failed for seed=%s facts_source=%s: %s",
+            seed,
+            facts_source,
+            mismatches,
+        )
+    return {"ok": not mismatches, "mismatches": mismatches}
 
 
 # ---------- startup preload ----------

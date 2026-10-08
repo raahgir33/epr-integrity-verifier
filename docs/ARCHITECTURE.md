@@ -138,7 +138,7 @@ The API serves exactly one configured `(seed, facts_source)` (`app/config.py`'s 
 
 | Method | Path | Returns |
 |---|---|---|
-| GET | `/health` | Status, model, region |
+| GET | `/health` | Status, model, region, `consistency_ok` (see below) |
 | GET | `/processors` | List with both assessment stages (`checks_only`, `full`) side by side, risk band, `agent_status` |
 | GET | `/processors/{id}` | Profile, monthly flow, check results (each with its `params.py` source/ASSUMPTION label), both assessment stages, agent findings |
 | GET | `/processors/{id}/documents` | Document list with types and extraction status (`"ok"` / `"failed"` / `"not_extracted"`) |
@@ -159,6 +159,8 @@ All GET endpoints serve from the in-process read cache (`store/cache.py`, TTL 60
 **Two assessment stages.** `/processors` and `/processors/{id}` both return `checks_only` and `full` (nullable — `null` until the agent stage has run for that processor) side by side, plus `agent_status` (`"ok"` / `"timeout"` / `"error"` / `null`), so the UI can show the agent's own contribution against the deterministic baseline.
 
 **Agent findings aren't stored per-finding in BigQuery — they're reconstructed.** Only each finding's *aggregate* scoring effect is persisted (`assessments`'s tonnage figures, the three synthetic `AGENT_SYSTEMIC_FINDING`/`AGENT_NO_OWN_EVIDENCE_FINDING`/`AGENT_DISPUTED_FINDING` check results) — the per-finding classification (`deductible` / `systemic` / `no_own_evidence` / `concurs_with_check` / `review_flag` / `withdrawn`), origin (`hypothesis` / `critic`), and verdict/revision detail live only in the `agent_runs` trail's raw structured output while the pipeline runs. `app/agents/orchestrator.py`'s `reconstruct_agent_findings` rebuilds the full finding list from a stored trail plus the processor's *current* `check_results`/`shipments` — the same classification logic `scripts/probe_agent_thinking.py --rescore` already runs offline, now also driving the read path, with no new Gemini call and no new BigQuery table.
+
+**Consistency guard.** Because agent findings are reconstructed rather than stored (above), `app/store/cache.py`'s `check_consistency` cross-checks that reconstruction against reality once at startup (after preload): for every processor with a stored `stage="full"` assessment, it rebuilds the finding list and recomputes `score_processor` with the resulting deduction set, and compares the recomputed `verifiable_t` to the stored one. `GET /health`'s `consistency_ok` reflects the result (`null` before the first check has run); a mismatch is also logged as an error, since nothing else would surface a drift between the reconstruction logic and what the pipeline actually scored.
 
 **Portfolio apportionment is derived, not traced.** `total_verifiable_t` is each certificate's `quantity_t` scaled by its own processor's `verifiable_t / certified_t` ratio (preferring the `full` stage, falling back to `checks_only`) and summed — scoring never happens below the processor/FY-to-date level anywhere upstream, so this is an apportionment, not a per-certificate traced figure.
 

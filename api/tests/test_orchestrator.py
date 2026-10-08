@@ -946,6 +946,7 @@ def test_reconstruct_agent_findings_classifies_deductible_finding_from_stored_tr
     assert entry["bucket"] == "confirmed"
     assert entry["classification"] == "deductible"
     assert entry["finding"].cited_shipment_ids == ["SHP-1"]
+    assert result["excluded_shipment_ids"] == frozenset({"SHP-1"})
 
 
 def test_reconstruct_agent_findings_concurs_with_check_classification():

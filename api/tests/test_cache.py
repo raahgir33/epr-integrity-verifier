@@ -329,3 +329,103 @@ def test_preload_populates_every_expected_key():
     ]
     for key in expected_prefixes:
         assert key in cache._store, f"missing cache key after preload: {key}"
+
+
+# ---------- consistency guard ----------
+#
+# check_consistency's own dependencies (build_reconstruction_context,
+# reconstruct_agent_findings, score_processor) are each tested in their
+# own module (test_orchestrator.py, test_scorer.py) — these tests isolate
+# check_consistency's own orchestration logic (which processors to check,
+# how the comparison is made, what gets returned/logged) by monkeypatching
+# those dependencies directly, rather than re-deriving a full realistic
+# agent-run scenario through _fetch_rows.
+
+
+def test_check_consistency_ok_when_recomputed_matches_stored(monkeypatch):
+    monkeypatch.setattr(
+        cache,
+        "_assessments_by_processor",
+        lambda seed, fs: {
+            "PWP-01": {"full": {"verifiable_t": 50.0, "certified_t": 100.0}},
+            "PWP-02": {},  # no "full" stage at all — must be skipped, not crash
+        },
+    )
+    monkeypatch.setattr(
+        cache,
+        "get_processor_profile",
+        lambda seed, pid: {
+            "processor_id": pid,
+            "capacity_t_per_year": 1200.0,
+            "permitted_categories": ["I"],
+            "consent_valid_from": "01/04/2022",
+            "consent_valid_to": "31/03/2028",
+        },
+    )
+    monkeypatch.setattr(
+        cache,
+        "build_reconstruction_context",
+        lambda seed, fs, pid: {"check_results": [], "shipments": [], "duplicate_keys": {}},
+    )
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: [])
+    monkeypatch.setattr(cache, "get_certificates_for_processor", lambda seed, pid: [])
+    monkeypatch.setattr(
+        cache,
+        "reconstruct_agent_findings",
+        lambda trail, ctx: {"excluded_shipment_ids": frozenset({"PWP-01-SHP-002"})},
+    )
+    monkeypatch.setattr(cache, "score_processor", lambda *args, **kwargs: {"verifiable_t": 50.0})
+
+    result = cache.check_consistency(SEED, FACTS_SOURCE)
+
+    assert result == {"ok": True, "mismatches": []}
+
+
+def test_check_consistency_detects_and_logs_a_mismatch(monkeypatch, caplog):
+    monkeypatch.setattr(
+        cache,
+        "_assessments_by_processor",
+        lambda seed, fs: {"PWP-05": {"full": {"verifiable_t": 100.0, "certified_t": 100.0}}},
+    )
+    monkeypatch.setattr(
+        cache,
+        "get_processor_profile",
+        lambda seed, pid: {
+            "processor_id": pid,
+            "capacity_t_per_year": 1200.0,
+            "permitted_categories": ["I"],
+            "consent_valid_from": "01/04/2022",
+            "consent_valid_to": "31/03/2028",
+        },
+    )
+    monkeypatch.setattr(
+        cache,
+        "build_reconstruction_context",
+        lambda seed, fs, pid: {"check_results": [], "shipments": [], "duplicate_keys": {}},
+    )
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: [])
+    monkeypatch.setattr(cache, "get_certificates_for_processor", lambda seed, pid: [])
+    monkeypatch.setattr(
+        cache,
+        "reconstruct_agent_findings",
+        lambda trail, ctx: {"excluded_shipment_ids": frozenset()},
+    )
+    # Recomputed score disagrees with the stored "full" verifiable_t (100.0).
+    monkeypatch.setattr(cache, "score_processor", lambda *args, **kwargs: {"verifiable_t": 80.0})
+
+    with caplog.at_level("ERROR"):
+        result = cache.check_consistency(SEED, FACTS_SOURCE)
+
+    assert result["ok"] is False
+    assert result["mismatches"] == [
+        {
+            "processor_id": "PWP-05",
+            "stored_verifiable_t": 100.0,
+            "recomputed_verifiable_t": 80.0,
+        }
+    ]
+    assert any("consistency check failed" in record.message for record in caplog.records)
+
+
+def test_get_as_of_month_uses_max_period_month_across_all_certificates():
+    assert cache.get_as_of_month(SEED) == "2026-01"

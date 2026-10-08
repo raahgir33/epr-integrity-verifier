@@ -25,10 +25,20 @@ from app.models.api import (
 )
 from app.store import cache, gcs
 
+# Set by the lifespan hook after preload, from cache.check_consistency() —
+# whether the reconstructed agent findings reproduce every processor's
+# stored stage="full" verifiable_t exactly (docs/BUILD_PLAN.md T11's
+# consistency guard). None until the first preload has run.
+_consistency_status: dict | None = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _consistency_status
     cache.preload(settings.default_seed, settings.default_facts_source)
+    _consistency_status = cache.check_consistency(
+        settings.default_seed, settings.default_facts_source
+    )
     yield
 
 
@@ -40,11 +50,14 @@ def _meta() -> dict:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict:
     return {
         "status": "ok",
         "model": settings.gemini_model,
         "region": settings.vertex_location,
+        # None before the first preload (e.g. a request racing startup);
+        # a dashboard/alert should treat that as "not yet known", not "ok".
+        "consistency_ok": _consistency_status["ok"] if _consistency_status else None,
     }
 
 

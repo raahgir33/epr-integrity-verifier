@@ -331,6 +331,30 @@ def test_generate_structured_uses_temperature_0_2(mock_client_cls):
 
 
 @patch("app.llm.genai.Client")
+def test_generate_structured_disables_automatic_function_calling(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    GeminiClient().generate_structured(["hello"], _DummySchema, purpose="test")
+
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert config.automatic_function_calling.disable is True
+
+
+@patch("app.llm.genai.Client")
+def test_extract_disables_automatic_function_calling(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_response('{"value": "ok"}')
+    mock_client_cls.return_value = mock_client
+
+    GeminiClient().extract(b"data", "application/pdf", "prompt", _DummySchema, purpose="test")
+
+    config = mock_client.models.generate_content.call_args.kwargs["config"]
+    assert config.automatic_function_calling.disable is True
+
+
+@patch("app.llm.genai.Client")
 def test_run_tool_loop_calls_tool_and_stops_when_model_returns_text(mock_client_cls):
     mock_client = MagicMock()
     mock_client.models.generate_content.side_effect = [
@@ -351,6 +375,35 @@ def test_run_tool_loop_calls_tool_and_stops_when_model_returns_text(mock_client_
 
     config = mock_client.models.generate_content.call_args.kwargs["config"]
     assert config.tool_config.function_calling_config.mode == types.FunctionCallingConfigMode.AUTO
+
+
+@patch("app.llm.genai.Client")
+def test_run_tool_loop_never_passes_a_raw_callable_in_tools(mock_client_cls):
+    """Removes the harmless-but-noisy AFC warning without changing
+    behavior: tools are pre-converted to real types.Tool/FunctionDeclaration
+    objects ourselves (same schema the SDK would have derived internally
+    from the same callables — google.genai._transformers.t_tool does the
+    exact same FunctionDeclaration.from_callable(..., use_json_schema=True)
+    call), never a bare Python callable, and automatic_function_calling is
+    explicitly disabled on every call."""
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_dummy_tool", {"x": 5}),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    client = GeminiClient()
+    client.run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=8, purpose="test"
+    )
+
+    config = mock_client.models.generate_content.call_args_list[0].kwargs["config"]
+    assert config.automatic_function_calling.disable is True
+    assert all(not callable(tool) for tool in config.tools)
+    assert all(isinstance(tool, types.Tool) for tool in config.tools)
+    declared_names = {fd.name for tool in config.tools for fd in (tool.function_declarations or [])}
+    assert declared_names == {"_dummy_tool"}
 
 
 @patch("app.llm.genai.Client")

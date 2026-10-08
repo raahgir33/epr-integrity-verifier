@@ -205,6 +205,13 @@ class GeminiClient:
             "response_schema": schema,
             "temperature": 0,
             "http_options": types.HttpOptions(timeout=settings.extract_request_timeout_ms),
+            # No tools on this call, but AFC defaults to ON when this isn't
+            # set at all — that's what printed the harmless-but-noisy "AFC
+            # in Models.generate_content is not recommended" warning on
+            # every extraction call (T2's smoke test; confirmed via the
+            # SDK's own should_disable_afc(), which otherwise defaults to
+            # enabling the legacy AFC loop even with zero tools present).
+            "automatic_function_calling": types.AutomaticFunctionCallingConfig(disable=True),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
@@ -231,6 +238,10 @@ class GeminiClient:
             "response_schema": schema,
             "temperature": 0.2,
             "http_options": types.HttpOptions(timeout=_agent_timeout_ms(purpose)),
+            # Same as extract() above — no tools on this call either, but
+            # AFC still defaults to ON (and prints its warning) unless
+            # explicitly disabled.
+            "automatic_function_calling": types.AutomaticFunctionCallingConfig(disable=True),
         }
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
@@ -242,6 +253,24 @@ class GeminiClient:
             config=types.GenerateContentConfig(**config_kwargs),
         )
         return schema.model_validate_json(response.text)
+
+    def _tool_declarations(self, tools: list[Callable]) -> list[types.Tool]:
+        """Converts our Python callables to FunctionDeclaration schemas
+        ourselves, and passes real types.Tool objects in `tools=` instead
+        — never a raw callable. Confirmed via the SDK's own source
+        (google.genai._transformers.t_tool/t_tools) that this produces the
+        EXACT same thing the SDK would build internally from the same
+        callables: one types.FunctionDeclaration per callable (via
+        FunctionDeclaration.from_callable(..., use_json_schema=True), the
+        same call t_tool makes), all merged into a single types.Tool. No
+        schema or behavior change — only who builds it."""
+        declarations = [
+            types.FunctionDeclaration.from_callable(
+                client=self._client._api_client, callable=fn, use_json_schema=True
+            )
+            for fn in tools
+        ]
+        return [types.Tool(function_declarations=declarations)]
 
     def run_tool_loop(
         self,
@@ -273,7 +302,7 @@ class GeminiClient:
         rare once the model sees the "already returned" response.
         """
         config_kwargs = {
-            "tools": tools,
+            "tools": self._tool_declarations(tools),
             "automatic_function_calling": types.AutomaticFunctionCallingConfig(disable=True),
             "tool_config": types.ToolConfig(
                 function_calling_config=types.FunctionCallingConfig(mode="AUTO")
@@ -284,6 +313,8 @@ class GeminiClient:
         if thinking_level is not None:
             config_kwargs["thinking_config"] = self._thinking_config(thinking_level)
 
+        # Dispatch is by name against the ORIGINAL callables — unchanged;
+        # only what's sent to the model (tools= above) is pre-converted.
         tools_by_name = {fn.__name__: fn for fn in tools}
         conversation = list(contents)
         seen_calls: dict[tuple[str, str], int] = {}

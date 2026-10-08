@@ -695,10 +695,15 @@ def reconstruct_agent_findings(trail: list[dict], processor_context: dict) -> di
     defaults to review flag" philosophy as the live loop).
 
     Returns {findings: [{finding: Objection, origin, bucket, verdict,
-    revision, classification}], tool_cap_reached: bool}. classification is
+    revision, classification}], tool_cap_reached: bool,
+    excluded_shipment_ids: frozenset[str]}. classification is
     "deductible"/"systemic"/"no_own_evidence"/"concurs_with_check" for the
     confirmed bucket (sub-classified by classify_confirmed_findings), or
-    the bucket name itself ("review_flag"/"withdrawn") otherwise."""
+    the bucket name itself ("review_flag"/"withdrawn") otherwise.
+    excluded_shipment_ids is classify_confirmed_findings's own deduction
+    set — the ready-made input to app/agents/scorer.py's score_processor,
+    for a caller that wants to recompute the score from this
+    reconstruction (docs/BUILD_PLAN.md T11's consistency guard)."""
     conclusions_data = _trail_step_output(trail, "hypothesis") or {}
     conclusions_response = ConclusionsResponse.model_validate(conclusions_data)
     critic_final_data = _trail_step_output(trail, "critic_final") or {}
@@ -758,7 +763,11 @@ def reconstruct_agent_findings(trail: list[dict], processor_context: dict) -> di
         entry["classification"] = classification_by_id.get(id(entry["finding"]), entry["bucket"])
 
     tool_cap_reached = any(step.get("step_type") == "tool_cap_reached" for step in trail)
-    return {"findings": enriched, "tool_cap_reached": tool_cap_reached}
+    return {
+        "findings": enriched,
+        "tool_cap_reached": tool_cap_reached,
+        "excluded_shipment_ids": classified["excluded_shipment_ids"],
+    }
 
 
 def run_agent_loop(
