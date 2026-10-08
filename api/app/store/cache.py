@@ -275,6 +275,31 @@ def _agent_runs(seed: int, facts_source: str) -> list[dict]:
     return get_or_load(f"agent_runs:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
 
 
+def _memos(seed: int, facts_source: str) -> list[dict]:
+    """Whole-table loader for the clarification memo / verification
+    statement feature (app/agents/memo.py) — same shape as
+    _site_assessments: one query for every processor+lang row, filtered
+    per call by get_memo below."""
+
+    def load() -> list[dict]:
+        return _fetch_rows(
+            bq.get_client(),
+            "memos",
+            "processor_id, doc_type, lang, memo_json, guard_status, generated_at",
+            seed,
+            facts_source=facts_source,
+        )
+
+    return get_or_load(f"memos:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
+
+
+def get_memo(seed: int, facts_source: str, processor_id: str, lang: str) -> dict | None:
+    for row in _memos(seed, facts_source):
+        if row["processor_id"] == processor_id and row["lang"] == lang:
+            return row
+    return None
+
+
 def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dict]:
     """Raw agent_runs rows for one processor, ordered by step_index — the
     shape app/agents/orchestrator.py's reconstruct_agent_findings expects.
@@ -995,6 +1020,7 @@ def preload(seed: int, facts_source: str) -> None:
     _extracted_facts(seed)
     _extraction_results(seed)
     _agent_runs(seed, facts_source)
+    _memos(seed, facts_source)
 
     for p in processors:
         pid = p["processor_id"]

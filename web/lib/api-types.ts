@@ -196,6 +196,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/processors/{processor_id}/memo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Processor Memo
+         * @description app/agents/memo.py's clarification memo (flagged processors) or
+         *     verification statement (clean ones) — exactly one document type per
+         *     processor, written by scripts/run_pipeline.py's --stage memo. A
+         *     Hindi ("hi") row only exists when generate_hindi_memo's guards
+         *     passed; has_hindi tells the caller whether to offer the toggle even
+         *     when they requested "en".
+         */
+        get: operations["get_processor_memo_processors__processor_id__memo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/processors/{processor_id}/reasoning": {
         parameters: {
             query?: never;
@@ -303,6 +328,35 @@ export interface components {
             /** Threshold */
             threshold: number | null;
         };
+        /**
+         * ClarificationMemo
+         * @description A neutral clarification-request letter drafted for a flagged
+         *     processor (docs/ARCHITECTURE.md's generative-deliverable feature,
+         *     app/agents/memo.py). The model fills every field here; every number
+         *     it writes is checked against a code-supplied allow-list before use
+         *     (the number guard) and every evidence_ids entry is checked against a
+         *     code-supplied allow-list (the evidence-ID subset guard) — see
+         *     app/agents/memo.py's docstring for the full guard sequence.
+         *     sender_line/doc_type/lang/guard_status are NOT part of this schema —
+         *     they're bookkeeping the API/pipeline attach outside the Gemini call.
+         */
+        ClarificationMemo: {
+            /** Closing Paragraph */
+            closing_paragraph: string;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["MemoItem"][];
+            /** Opening Paragraph */
+            opening_paragraph: string;
+            /** Response Deadline Days */
+            response_deadline_days: number;
+            /** Salutation */
+            salutation: string;
+            /** Subject */
+            subject: string;
+        };
         /** DocumentFactsResponse */
         DocumentFactsResponse: {
             /** Doc Id */
@@ -399,6 +453,97 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ImprovementObservation
+         * @description One observation in a VerificationStatement's Part B (app/agents/
+         *     memo.py). kind/measured/threshold/evidence_ids are set by code from
+         *     measured data only; recommendation is the only model-written field,
+         *     one sentence, no new fact or number beyond what's given.
+         */
+        ImprovementObservation: {
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "near_threshold" | "documentation_gap" | "consent_expiry" | "soft_note";
+            /** Measured */
+            measured?: number | null;
+            /** Recommendation */
+            recommendation: string;
+            /** Threshold */
+            threshold?: number | null;
+        };
+        /**
+         * MemoItem
+         * @description One item in a ClarificationMemo (app/agents/memo.py). evidence_ids
+         *     is filtered to a code-supplied allow-list after the call (the
+         *     evidence-ID subset guard) — an item left with none is dropped.
+         */
+        MemoItem: {
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /** Heading */
+            heading: string;
+            /** What We Observed */
+            what_we_observed: string;
+            /** What We Request */
+            what_we_request: string;
+        };
+        /**
+         * MemoResponse
+         * @description GET /processors/{id}/memo?lang=en|hi (app/agents/memo.py). memo is
+         *     whichever of ClarificationMemo/VerificationStatement doc_type names —
+         *     the one deliberate exception to "flat schemas only" in this codebase
+         *     (CLAUDE.md §6's constraint is on what's sent to Gemini as a
+         *     response_schema; this Union only exists at the FastAPI/OpenAPI
+         *     response layer, never passed to Gemini). sender_line/drafted_by are
+         *     code-set, never written by Gemini — see app/agents/memo.py's module
+         *     docstring.
+         */
+        MemoResponse: {
+            /**
+             * Doc Type
+             * @enum {string}
+             */
+            doc_type: "clarification_memo" | "verification_statement";
+            /**
+             * Drafted By
+             * @default Gemini — review before sending
+             */
+            drafted_by: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Guard Status */
+            guard_status: string;
+            /** Has Hindi */
+            has_hindi: boolean;
+            /**
+             * Lang
+             * @enum {string}
+             */
+            lang: "en" | "hi";
+            /** Memo */
+            memo: components["schemas"]["ClarificationMemo"] | components["schemas"]["VerificationStatement"];
+            meta: components["schemas"]["Meta"];
+            /** Processor Id */
+            processor_id: string;
+            /**
+             * Sender Line
+             * @default Compliance team, [Brand]
+             */
+            sender_line: string;
         };
         /** Meta */
         Meta: {
@@ -651,6 +796,35 @@ export interface components {
              * @enum {string}
              */
             verdict: "upheld" | "disputed";
+        };
+        /**
+         * VerificationStatement
+         * @description A verification statement & improvement roadmap for a clean
+         *     processor (app/agents/memo.py) — the complement to ClarificationMemo;
+         *     every processor resolves to exactly one of the two documents. Part A
+         *     is part_a_paragraph (model-written, number-guarded, around code-
+         *     computed figures passed in the prompt); Part B is observations
+         *     (code-derived, model writes only each recommendation sentence) or
+         *     no_items_note (set by code, never requested from Gemini, when
+         *     observations is empty — nothing for the model to hallucinate into
+         *     existence).
+         */
+        VerificationStatement: {
+            /** Closing Paragraph */
+            closing_paragraph: string;
+            /** No Items Note */
+            no_items_note?: string | null;
+            /**
+             * Observations
+             * @default []
+             */
+            observations: components["schemas"]["ImprovementObservation"][];
+            /** Part A Paragraph */
+            part_a_paragraph: string;
+            /** Salutation */
+            salutation: string;
+            /** Subject */
+            subject: string;
         };
     };
     responses: never;
@@ -905,6 +1079,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_processor_memo_processors__processor_id__memo_get: {
+        parameters: {
+            query?: {
+                lang?: string;
+            };
+            header?: never;
+            path: {
+                processor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoResponse"];
                 };
             };
             /** @description Validation Error */

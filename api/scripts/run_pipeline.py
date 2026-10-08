@@ -1,8 +1,8 @@
-"""Precompute pipeline: extract -> normalize -> checks -> site -> agents.
-All five stages are implemented, both --facts-source truth and extracted
-(the full 714-document extraction run completed 2026-10-08 — see
-docs/PROGRESS.md — so --stage agents --facts-source extracted is now
-supported; the agent reads extracted_facts/documents through the same
+"""Precompute pipeline: extract -> normalize -> checks -> site -> agents ->
+memo. All six stages are implemented, both --facts-source truth and
+extracted (the full 714-document extraction run completed 2026-10-08 —
+see docs/PROGRESS.md — so --stage agents/memo --facts-source extracted is
+supported; both read extracted_facts/documents through the same
 fetch_agent_inputs()/build_processor_context() shape truth mode already
 used, never ground_truth.json).
 
@@ -17,6 +17,8 @@ Usage: uv run python scripts/run_pipeline.py --seed 42 --stage extract
        uv run python scripts/run_pipeline.py --seed 42 --stage site
        uv run python scripts/run_pipeline.py --seed 42 --stage agents --facts-source truth
        uv run python scripts/run_pipeline.py --seed 42 --stage agents --facts-source extracted
+       uv run python scripts/run_pipeline.py --seed 42 --stage memo --facts-source truth
+       uv run python scripts/run_pipeline.py --seed 42 --stage memo --facts-source extracted
 """
 
 import argparse
@@ -26,7 +28,8 @@ from pathlib import Path
 
 from google.cloud import bigquery
 
-from app.agents.orchestrator import run_agent_loop_with_retry
+from app.agents import memo
+from app.agents.orchestrator import reconstruct_agent_findings, run_agent_loop_with_retry
 from app.agents.scorer import (
     build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
@@ -798,11 +801,210 @@ def run_agents(
     print(f"\nAgent loop (seed {seed}, {facts_source}) done: {len(processors)} processor(s).")
 
 
+def _tokens_since(llm_client: GeminiClient, start_index: int) -> tuple[int | None, int | None]:
+    """Aggregates input/output tokens across every successful call made
+    since start_index — a memo generation can be 1 call ("ok") or 2
+    ("regenerated"), and the user's spec wants the memos row itself to
+    carry a token total, not just app/llm.py's own llm_calls log (which
+    already has per-call detail via flush_call_log, unaffected by this —
+    GeminiClient.call_log is a non-destructive snapshot)."""
+    records = [r for r in llm_client.call_log[start_index:] if r.get("success")]
+    if not records:
+        return None, None
+    return (
+        sum(r.get("input_tokens") or 0 for r in records),
+        sum(r.get("output_tokens") or 0 for r in records),
+    )
+
+
+def run_memo(
+    seed: int, facts_source: str, processor_filter: str | None, as_of_month: str | None
+) -> None:
+    """Drafts a clarification memo (flagged processors) or verification
+    statement (clean ones) per processor — app/agents/memo.py's guarded
+    generation, built on the same fetch_agent_inputs() shape --stage
+    agents already uses (certificates/shipments/check_results/documents,
+    both --facts-source truth and extracted, no restriction — same
+    reasoning as --stage agents' own facts_source support). Confirmed
+    agent findings are reconstructed from the stored agent_runs trail
+    (app/agents/orchestrator.py's reconstruct_agent_findings) rather than
+    re-run through Gemini — no new agent-loop call happens here.
+
+    A processor with no assessment yet (neither "checks_only" nor "full"
+    — --stage checks hasn't run) is skipped, not guessed at; its memos
+    row (if any from a previous run) is left untouched, since there's
+    nothing new to replace it with.
+    """
+    bq_client = bq.get_client()
+    inputs = fetch_agent_inputs(bq_client, seed, facts_source, processor_filter)
+    if inputs is None:
+        return
+    processors = inputs["processors"]
+    if as_of_month is None:
+        as_of_month = inputs["as_of_month"]
+
+    assessment_rows = _fetch_bq_rows(
+        bq_client,
+        "assessments",
+        "processor_id, stage, certified_t, verified_inbound_t, capacity_limit_t, "
+        "verifiable_t, unverifiable_t, risk_band, agent_status",
+        seed,
+        processor_filter,
+        facts_source=facts_source,
+    )
+    assessments_by_processor: dict[str, dict[str, dict]] = {}
+    for row in assessment_rows:
+        assessments_by_processor.setdefault(row["processor_id"], {})[row["stage"]] = row
+
+    agent_run_rows = _fetch_bq_rows(
+        bq_client,
+        "agent_runs",
+        "processor_id, attempt, step_index, step_type, tool_name, tool_args_json, "
+        "input_summary, output_json",
+        seed,
+        processor_filter,
+        facts_source=facts_source,
+    )
+    trail_by_processor: dict[str, list[dict]] = {}
+    for pid, rows in _group_by_processor(agent_run_rows).items():
+        latest_attempt = max(r["attempt"] or 1 for r in rows)
+        trail_by_processor[pid] = sorted(
+            (r for r in rows if (r["attempt"] or 1) == latest_attempt),
+            key=lambda r: r["step_index"],
+        )
+
+    llm_client = GeminiClient()
+    memo_rows: list[dict] = []
+    touched_processor_ids: list[str] = []
+
+    print(f"Drafting memos for {len(processors)} processor(s), as_of_month={as_of_month}...")
+    for processor in processors:
+        pid = processor["processor_id"]
+        stages = assessments_by_processor.get(pid, {})
+        assessment = stages.get("full") or stages.get("checks_only")
+        if assessment is None:
+            print(f"  {pid}: skipped — no assessment yet (run --stage checks first)")
+            continue
+        touched_processor_ids.append(pid)
+
+        p_shipments = inputs["shipments_by_processor"].get(pid, [])
+        p_certificates = inputs["certificates_by_processor"].get(pid, [])
+        p_check_results = inputs["checks_by_processor"].get(pid, [])
+        p_documents = inputs["documents_by_processor"].get(pid, [])
+        shipments_by_id = {s["shipment_id"]: s for s in p_shipments}
+        documents_by_id = {d["doc_id"]: d for d in p_documents}
+
+        findings = None
+        trail = trail_by_processor.get(pid)
+        if trail:
+            reconstruction_context = {
+                "shipments": p_shipments,
+                "duplicate_keys": inputs["duplicate_keys"],
+                "check_results": p_check_results,
+                "documents": [
+                    {"doc_id": d["doc_id"], "doc_type": d["doc_type"]} for d in p_documents
+                ],
+            }
+            reconstructed = reconstruct_agent_findings(trail, reconstruction_context)
+            findings = [
+                {
+                    "finding_type": entry["finding"].finding_type,
+                    "classification": entry["classification"],
+                    "effect": entry["finding"].effect,
+                    "cited_shipment_ids": entry["finding"].cited_shipment_ids,
+                    "evidence_ids": entry["finding"].evidence_ids,
+                    "explanation": entry["finding"].explanation,
+                }
+                for entry in reconstructed["findings"]
+            ]
+
+        memo_context = memo.build_memo_context(
+            processor=processor,
+            assessment=assessment,
+            check_results=p_check_results,
+            findings=findings,
+            shipments_by_id=shipments_by_id,
+            documents_by_id=documents_by_id,
+            certificates=p_certificates,
+            as_of_month=as_of_month,
+        )
+
+        call_start = len(llm_client.call_log)
+        if memo_context["doc_type"] == "clarification_memo":
+            english_doc, guard_status = memo.generate_clarification_memo(memo_context, llm_client)
+        else:
+            english_doc, guard_status = memo.generate_verification_statement(
+                memo_context, llm_client
+            )
+        input_tokens, output_tokens = _tokens_since(llm_client, call_start)
+
+        generated_at = datetime.now(UTC).isoformat()
+        memo_rows.append(
+            {
+                "seed": seed,
+                "facts_source": facts_source,
+                "processor_id": pid,
+                "doc_type": memo_context["doc_type"],
+                "lang": "en",
+                "memo_json": english_doc.model_dump_json(),
+                "guard_status": guard_status,
+                "model": settings.gemini_model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "generated_at": generated_at,
+            }
+        )
+
+        has_hindi = False
+        if guard_status != "template_fallback":
+            call_start = len(llm_client.call_log)
+            hindi_doc, hindi_guard_status = memo.generate_hindi_memo(
+                memo_context["doc_type"], english_doc, llm_client
+            )
+            if hindi_doc is not None:
+                has_hindi = True
+                hi_input_tokens, hi_output_tokens = _tokens_since(llm_client, call_start)
+                memo_rows.append(
+                    {
+                        "seed": seed,
+                        "facts_source": facts_source,
+                        "processor_id": pid,
+                        "doc_type": memo_context["doc_type"],
+                        "lang": "hi",
+                        "memo_json": hindi_doc.model_dump_json(),
+                        "guard_status": hindi_guard_status,
+                        "model": settings.gemini_model,
+                        "input_tokens": hi_input_tokens,
+                        "output_tokens": hi_output_tokens,
+                        "generated_at": generated_at,
+                    }
+                )
+
+        print(
+            f"  {pid}: doc_type={memo_context['doc_type']} guard_status={guard_status} "
+            f"has_hindi={has_hindi}"
+        )
+
+    for pid in touched_processor_ids:
+        bq.delete_memos_by_processor(bq_client, seed, facts_source, pid)
+    bq.load_rows(bq_client, "memos", memo_rows)
+
+    call_log = [{"seed": seed, **record} for record in llm_client.flush_call_log()]
+    bq.load_rows(bq_client, "llm_calls", call_log)
+
+    print(
+        f"\nMemo drafting (seed {seed}, {facts_source}) done: "
+        f"{len(touched_processor_ids)} processor(s)."
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run precompute pipeline stages.")
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument(
-        "--stage", choices=["extract", "normalize", "checks", "site", "agents"], required=True
+        "--stage",
+        choices=["extract", "normalize", "checks", "site", "agents", "memo"],
+        required=True,
     )
     parser.add_argument("--processor", help="Only process this processor_id (e.g. PWP-01)")
     parser.add_argument(
@@ -828,6 +1030,8 @@ def main() -> None:
         run_site(args.seed, args.processor)
     elif args.stage == "agents":
         run_agents(args.seed, args.facts_source, args.processor, args.as_of_month)
+    elif args.stage == "memo":
+        run_memo(args.seed, args.facts_source, args.processor, args.as_of_month)
 
 
 if __name__ == "__main__":

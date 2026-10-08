@@ -105,6 +105,21 @@ F7_KWH_PER_T_MAX = 110
 # per-shipment deduction — see app/agents/orchestrator.py.
 SYSTEMIC_FINDING_SHARE_THRESHOLD = 0.5
 
+# Clarification memo (app/agents/memo.py) — ASSUMPTION. No regulatory
+# deadline governs this administrative step; 15 days is a reasonable
+# response window, developer-set.
+MEMO_RESPONSE_DEADLINE_DAYS = 15
+
+# Verification statement, Part B (app/agents/memo.py) — ASSUMPTION. A
+# passed hard check within this fraction of its own threshold is
+# surfaced as an early-warning observation, not a finding.
+IMPROVEMENT_NEAR_THRESHOLD_MARGIN = 0.10
+
+# Verification statement, Part B (app/agents/memo.py) — ASSUMPTION. A
+# CTO/EPR registration expiring within this many months of the
+# assessment month is surfaced as a consent-expiry observation.
+CONSENT_EXPIRY_WARNING_MONTHS = 6
+
 # T11 (API): one short source label per check, for the UI's
 # "Measured X · Tolerance Y (assumption)" line. Mirrors each check's own
 # threshold comment above, not a new judgement — C1/C5/C6 have no tunable

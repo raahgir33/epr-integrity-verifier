@@ -27,3 +27,11 @@ HYPOTHESIS_PROMPT = _read("hypothesis.txt") + "\n" + _RED_FLAGS
 CRITIC_TOOLS_PROMPT = _read("critic_tools.txt") + "\n" + _RED_FLAGS
 CRITIC_FINAL_PROMPT = _read("critic_final.txt")
 REVISION_PROMPT = _read("revision.txt")
+
+# app/agents/memo.py — the clarification memo / verification statement
+# feature. Same discipline as above: reviewed in full before any real
+# call, never the F1-F9/H1-H5 taxonomy, no processor/shipment ID baked
+# into the static text (those are appended as dynamic context).
+MEMO_CLARIFICATION_PROMPT = _read("memo_clarification.txt")
+MEMO_VERIFICATION_STATEMENT_PROMPT = _read("memo_verification_statement.txt")
+MEMO_HINDI_PROMPT = _read("memo_hindi.txt")

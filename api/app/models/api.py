@@ -3,9 +3,12 @@
 rows; app/main.py's routes just call cache and return the result.
 """
 
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel
+
+from app.models.agent import ClarificationMemo, VerificationStatement
 
 
 class Meta(BaseModel):
@@ -153,6 +156,31 @@ class ReasoningResponse(BaseModel):
     tool_cap_reached: bool
     steps: list[ReasoningStepOut]
     findings: list[FindingOut]
+
+
+# ---------- clarification memo / verification statement ----------
+
+
+class MemoResponse(BaseModel):
+    """GET /processors/{id}/memo?lang=en|hi (app/agents/memo.py). memo is
+    whichever of ClarificationMemo/VerificationStatement doc_type names —
+    the one deliberate exception to "flat schemas only" in this codebase
+    (CLAUDE.md §6's constraint is on what's sent to Gemini as a
+    response_schema; this Union only exists at the FastAPI/OpenAPI
+    response layer, never passed to Gemini). sender_line/drafted_by are
+    code-set, never written by Gemini — see app/agents/memo.py's module
+    docstring."""
+
+    meta: Meta
+    processor_id: str
+    doc_type: Literal["clarification_memo", "verification_statement"]
+    lang: Literal["en", "hi"]
+    sender_line: str = "Compliance team, [Brand]"
+    memo: ClarificationMemo | VerificationStatement
+    guard_status: str
+    generated_at: datetime
+    drafted_by: str = "Gemini — review before sending"
+    has_hindi: bool
 
 
 # ---------- site ----------

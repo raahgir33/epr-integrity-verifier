@@ -6,6 +6,7 @@ live event path (POST /demo/certificate-batch, GET /runs/{run_id},
 POST /events/certificate-batch) is T13's, not built here.
 """
 
+import json
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -20,6 +21,7 @@ from app.models.api import (
     DocumentFactsResponse,
     DocumentsResponse,
     EvaluationResponse,
+    MemoResponse,
     PortfolioResponse,
     ProcessorDetailResponse,
     ProcessorListResponse,
@@ -157,6 +159,34 @@ def get_processor_reasoning(processor_id: str) -> dict:
         "tool_cap_reached": any(s["step_type"] == "tool_cap_reached" for s in steps),
         "steps": steps,
         "findings": cache.get_findings(seed, facts_source, processor_id),
+    }
+
+
+@app.get("/processors/{processor_id}/memo", response_model=MemoResponse)
+def get_processor_memo(processor_id: str, lang: str = "en") -> dict:
+    """app/agents/memo.py's clarification memo (flagged processors) or
+    verification statement (clean ones) — exactly one document type per
+    processor, written by scripts/run_pipeline.py's --stage memo. A
+    Hindi ("hi") row only exists when generate_hindi_memo's guards
+    passed; has_hindi tells the caller whether to offer the toggle even
+    when they requested "en"."""
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    if cache.get_processor_profile(seed, processor_id) is None:
+        raise HTTPException(status_code=404, detail="processor not found")
+    if lang not in ("en", "hi"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'hi'")
+    row = cache.get_memo(seed, facts_source, processor_id, lang)
+    if row is None:
+        raise HTTPException(status_code=404, detail="memo not available for this processor/lang")
+    return {
+        "meta": _meta(),
+        "processor_id": processor_id,
+        "doc_type": row["doc_type"],
+        "lang": row["lang"],
+        "memo": json.loads(row["memo_json"]),
+        "guard_status": row["guard_status"],
+        "generated_at": row["generated_at"],
+        "has_hindi": cache.get_memo(seed, facts_source, processor_id, "hi") is not None,
     }
 
 

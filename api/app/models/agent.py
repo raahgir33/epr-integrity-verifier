@@ -116,3 +116,65 @@ class NarrativeSummary(BaseModel):
     fill in itself."""
 
     summary: str
+
+
+class MemoItem(BaseModel):
+    """One item in a ClarificationMemo (app/agents/memo.py). evidence_ids
+    is filtered to a code-supplied allow-list after the call (the
+    evidence-ID subset guard) — an item left with none is dropped."""
+
+    heading: str
+    what_we_observed: str
+    evidence_ids: list[str] = []
+    what_we_request: str
+
+
+class ClarificationMemo(BaseModel):
+    """A neutral clarification-request letter drafted for a flagged
+    processor (docs/ARCHITECTURE.md's generative-deliverable feature,
+    app/agents/memo.py). The model fills every field here; every number
+    it writes is checked against a code-supplied allow-list before use
+    (the number guard) and every evidence_ids entry is checked against a
+    code-supplied allow-list (the evidence-ID subset guard) — see
+    app/agents/memo.py's docstring for the full guard sequence.
+    sender_line/doc_type/lang/guard_status are NOT part of this schema —
+    they're bookkeeping the API/pipeline attach outside the Gemini call."""
+
+    subject: str
+    salutation: str
+    opening_paragraph: str
+    items: list[MemoItem] = []
+    response_deadline_days: int
+    closing_paragraph: str
+
+
+class ImprovementObservation(BaseModel):
+    """One observation in a VerificationStatement's Part B (app/agents/
+    memo.py). kind/measured/threshold/evidence_ids are set by code from
+    measured data only; recommendation is the only model-written field,
+    one sentence, no new fact or number beyond what's given."""
+
+    kind: Literal["near_threshold", "documentation_gap", "consent_expiry", "soft_note"]
+    measured: float | None = None
+    threshold: float | None = None
+    evidence_ids: list[str] = []
+    recommendation: str
+
+
+class VerificationStatement(BaseModel):
+    """A verification statement & improvement roadmap for a clean
+    processor (app/agents/memo.py) — the complement to ClarificationMemo;
+    every processor resolves to exactly one of the two documents. Part A
+    is part_a_paragraph (model-written, number-guarded, around code-
+    computed figures passed in the prompt); Part B is observations
+    (code-derived, model writes only each recommendation sentence) or
+    no_items_note (set by code, never requested from Gemini, when
+    observations is empty — nothing for the model to hallucinate into
+    existence)."""
+
+    subject: str
+    salutation: str
+    part_a_paragraph: str
+    observations: list[ImprovementObservation] = []
+    no_items_note: str | None = None
+    closing_paragraph: str

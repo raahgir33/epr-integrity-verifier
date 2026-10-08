@@ -258,6 +258,35 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("thinking_tokens", "INTEGER"),
         bigquery.SchemaField("computed_at", "TIMESTAMP"),
     ],
+    # Clarification memo / verification statement feature
+    # (app/agents/memo.py). Keyed one level finer than shipments/
+    # check_results/agent_runs — (seed, facts_source, processor_id) via
+    # delete_memos_by_processor — because scripts/run_pipeline.py's
+    # --stage memo --processor PID must regenerate only that processor's
+    # row(s) without wiping every other processor's memo for this (seed,
+    # facts_source), unlike run_agents()'s existing delete_by_seed_and_
+    # source call (which wipes the whole scope regardless of --processor
+    # — a real gap noted during this feature's planning, deliberately
+    # not copied here). doc_type: "clarification_memo" |
+    # "verification_statement" (app/agents/memo.py's DocType). lang:
+    # "en" | "hi" — a Hindi row only exists when generate_hindi_memo
+    # succeeded; "en" always exists for a processor that's been through
+    # --stage memo. memo_json is ClarificationMemo/VerificationStatement's
+    # model_dump_json() — the API re-validates it into whichever schema
+    # doc_type names (app/main.py).
+    "memos": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("doc_type", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("lang", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("memo_json", "STRING"),
+        bigquery.SchemaField("guard_status", "STRING"),
+        bigquery.SchemaField("model", "STRING"),
+        bigquery.SchemaField("input_tokens", "INTEGER"),
+        bigquery.SchemaField("output_tokens", "INTEGER"),
+        bigquery.SchemaField("generated_at", "TIMESTAMP"),
+    ],
 }
 
 
@@ -333,6 +362,30 @@ def delete_assessments_by_stage(
             bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
             bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
             bigquery.ScalarQueryParameter("stage", "STRING", stage),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_memos_by_processor(
+    client: bigquery.Client, seed: int, facts_source: str, processor_id: str
+) -> None:
+    """memos' idempotency key is one level finer than delete_by_seed_and_
+    source (seed+facts_source+processor_id, not just seed+facts_source) —
+    see the "memos" schema comment above for why: a --stage memo
+    --processor PID rerun must only ever touch that one processor's
+    row(s) (en + an optional hi), never every processor's."""
+    table_ref = _table_ref("memos")
+    query = (
+        f"DELETE FROM `{table_ref}` "
+        "WHERE seed = @seed AND facts_source = @facts_source AND processor_id = @processor_id"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+            bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id),
         ]
     )
     job = client.query(query, job_config=job_config, location=settings.vertex_location)

@@ -24,6 +24,7 @@ export type AlertsResponse = components["schemas"]["AlertsResponse"];
 export type FindingOut = components["schemas"]["FindingOut"];
 export type CheckResultOut = components["schemas"]["CheckResultOut"];
 export type StageAssessment = components["schemas"]["StageAssessment"];
+export type MemoResponse = components["schemas"]["MemoResponse"];
 
 export class ApiError extends Error {
   status: number;
@@ -71,6 +72,19 @@ export function getProcessorReasoning(id: string): Promise<ReasoningResponse> {
 
 export function getProcessorSite(id: string): Promise<SiteResponse> {
   return getJson<SiteResponse>(`/processors/${encodeURIComponent(id)}/site`);
+}
+
+/** Returns null (never throws) on a 404 — a processor with no memo/
+ * statement yet (precompute pipeline hasn't reached --stage memo) is a
+ * normal, expected state, not an error. Other failures still propagate,
+ * same as every other fetch here (surfaced via app/error.tsx). */
+export async function getProcessorMemo(id: string, lang: "en" | "hi"): Promise<MemoResponse | null> {
+  try {
+    return await getJson<MemoResponse>(`/processors/${encodeURIComponent(id)}/memo?lang=${lang}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }
 
 export function getBrands(): Promise<BrandsResponse> {

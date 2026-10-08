@@ -4,6 +4,8 @@ import { CheckResultRow } from "@/components/CheckResultRow";
 import { DocumentsTable } from "@/components/DocumentsTable";
 import { EmptyState } from "@/components/EmptyState";
 import { FindingCard } from "@/components/FindingCard";
+import { ClarificationMemoLetter } from "@/components/memo/ClarificationMemoLetter";
+import { VerificationStatementLetter } from "@/components/memo/VerificationStatementLetter";
 import { MonthlyFlowChart } from "@/components/MonthlyFlowChart";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { RiskBadge } from "@/components/RiskBadge";
@@ -14,6 +16,7 @@ import {
   getDocumentFacts,
   getProcessor,
   getProcessorDocuments,
+  getProcessorMemo,
   getProcessorReasoning,
   getProcessorSite,
   type DocumentFactsResponse,
@@ -23,13 +26,14 @@ import { isDisplayedFinding } from "@/lib/findings";
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let processor, documents, reasoning, site;
+  let processor, documents, reasoning, site, memoEn;
   try {
-    [processor, documents, reasoning, site] = await Promise.all([
+    [processor, documents, reasoning, site, memoEn] = await Promise.all([
       getProcessor(id),
       getProcessorDocuments(id),
       getProcessorReasoning(id),
       getProcessorSite(id),
+      getProcessorMemo(id, "en"),
     ]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
@@ -37,6 +41,7 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
     }
     throw error; // anything else (API unreachable, 5xx) surfaces via app/error.tsx
   }
+  const memoHi = memoEn?.has_hindi ? await getProcessorMemo(id, "hi") : null;
 
   const facts = await Promise.all(
     documents.documents.map((d) => getDocumentFacts(d.doc_id).catch(() => null)),
@@ -103,14 +108,41 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">4. Reasoning trail</h2>
+        <h2 className="font-display text-lg font-semibold text-slate-900">
+          4.{" "}
+          {memoEn === null
+            ? "Draft clarification request"
+            : memoEn.doc_type === "clarification_memo"
+              ? "Draft clarification request"
+              : "Verification statement & improvement roadmap"}
+        </h2>
+        <div className="mt-3">
+          {memoEn === null ? (
+            <EmptyState
+              title="No draft available yet"
+              message="The memo-drafting stage has not run for this processor yet."
+            />
+          ) : memoEn.doc_type === "clarification_memo" ? (
+            <ClarificationMemoLetter memoEn={memoEn} memoHi={memoHi} knownDocIds={knownDocIds} />
+          ) : (
+            <VerificationStatementLetter
+              memoEn={memoEn}
+              memoHi={memoHi}
+              knownDocIds={knownDocIds}
+            />
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-lg font-semibold text-slate-900">5. Reasoning trail</h2>
         <div className="mt-3">
           <ReasoningTimeline steps={reasoning.steps} knownDocIds={knownDocIds} />
         </div>
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">5. Checks</h2>
+        <h2 className="font-display text-lg font-semibold text-slate-900">6. Checks</h2>
         <ul className="mt-3">
           {processor.check_results.map((check) => (
             <CheckResultRow key={check.check_id} check={check} knownDocIds={knownDocIds} />
@@ -119,14 +151,14 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">6. Site</h2>
+        <h2 className="font-display text-lg font-semibold text-slate-900">7. Site</h2>
         <div className="mt-3">
           <SitePanel site={site} processorId={id} />
         </div>
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">7. Documents</h2>
+        <h2 className="font-display text-lg font-semibold text-slate-900">8. Documents</h2>
         <div className="mt-3">
           <DocumentsTable documents={documents.documents} facts={factsByDocId} />
         </div>

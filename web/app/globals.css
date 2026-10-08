@@ -23,3 +23,31 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+
+/* Clarification memo / verification statement print view: "Print / Save
+   as PDF" (web/components/memo/) shows only the letter itself — nav,
+   every other page section, and in-page buttons are hidden, and the
+   card's own border/background are stripped so it reads as a plain
+   printed letter rather than a web card. */
+@media print {
+  nav,
+  footer {
+    display: none !important;
+  }
+  body :not(.memo-print-area):not(.memo-print-area *) {
+    visibility: hidden;
+  }
+  .memo-print-area {
+    visibility: visible;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .memo-print-area * {
+    visibility: visible;
+  }
+}

@@ -183,6 +183,38 @@ FAKE_DB = {
     "extracted_facts": [],
     "extraction_results": [],
     "agent_runs": [],
+    # app/agents/memo.py's output is guard-clean before it's ever written
+    # (tests/test_memo.py covers the generation-time guards directly) —
+    # these rows exercise the ROUTE's other fields (meta, doc_type,
+    # sender_line, has_hindi) against the same wide fake processor
+    # context every other endpoint here is tested against, not a second
+    # copy of memo.py's own guard tests.
+    "memos": [
+        {
+            "processor_id": "PWP-08",
+            "doc_type": "clarification_memo",
+            "lang": "en",
+            "memo_json": (
+                '{"subject": "Request for clarification", "salutation": "Dear Sir/Madam,", '
+                '"opening_paragraph": "...", "items": [], "response_deadline_days": 15, '
+                '"closing_paragraph": "..."}'
+            ),
+            "guard_status": "ok",
+            "generated_at": datetime.datetime(2026, 10, 8, tzinfo=datetime.UTC),
+        },
+        {
+            "processor_id": "PWP-08",
+            "doc_type": "clarification_memo",
+            "lang": "hi",
+            "memo_json": (
+                '{"subject": "स्पष्टीकरण का अनुरोध", "salutation": "महोदय,", '
+                '"opening_paragraph": "...", "items": [], "response_deadline_days": 15, '
+                '"closing_paragraph": "..."}'
+            ),
+            "guard_status": "ok",
+            "generated_at": datetime.datetime(2026, 10, 8, tzinfo=datetime.UTC),
+        },
+    ],
 }
 
 
@@ -202,6 +234,8 @@ def test_no_endpoint_leaks_ground_truth_only_fields(monkeypatch):
             client.get("/processors/PWP-09"),
             client.get("/processors/PWP-08/documents"),
             client.get("/processors/PWP-08/reasoning"),
+            client.get("/processors/PWP-08/memo"),
+            client.get("/processors/PWP-08/memo?lang=hi"),
             client.get("/processors/PWP-09/site"),
             client.get("/portfolio/BR-01"),
             client.get("/evaluation"),
