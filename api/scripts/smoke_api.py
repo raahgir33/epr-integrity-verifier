@@ -11,10 +11,13 @@ then, from another terminal:
 
 Hits every GET endpoint twice (cold = first request this script makes to
 that path, warm = second), prints per-endpoint timings, and checks the
-acceptance-run's own expected shape (docs/PROGRESS.md's T10 closing entry):
-F8 caught (deductible) on PWP-05/PWP-08 citing their own SHP-001; PWP-06/
-PWP-10 concurring with a deterministic check; PWP-07/PWP-09 as review
-flags; PWP-01 through PWP-04 clean (no findings); and GET /health's
+expected shape of the BigQuery-stored no_thinking_run2 acceptance run
+(docs/PROGRESS.md's T10 closing entry and the --rescore write that landed
+it): F8 caught (deductible) on PWP-05/PWP-08 citing their own SHP-001;
+PWP-06/PWP-07/PWP-09 concurring with a deterministic check (C4/F7/F6 —
+same evidence those checks already cited, by design, so no separate
+soft-signal bump); PWP-01 through PWP-04 and PWP-10 clean (no findings —
+run 2's own PWP-10 had no agent finding at all); and GET /health's
 consistency_ok true — the one assertion that stands in for "every
 processor's full-stage verifiable_t matches what app/store/cache.py's
 check_consistency recomputes from the stored agent_runs trail," since the
@@ -36,9 +39,8 @@ DEFAULT_BASE_URL = "http://localhost:8080"
 DEFAULT_BRAND_ID = "BRAND-01"
 
 _F8_DEDUCTIBLE = ["PWP-05", "PWP-08"]
-_CONCURS_WITH_CHECK = ["PWP-06", "PWP-10"]
-_REVIEW_FLAG = ["PWP-07", "PWP-09"]
-_CLEAN_NO_FINDINGS = ["PWP-01", "PWP-02", "PWP-03", "PWP-04"]
+_CONCURS_WITH_CHECK = ["PWP-06", "PWP-07", "PWP-09"]
+_CLEAN_NO_FINDINGS = ["PWP-01", "PWP-02", "PWP-03", "PWP-04", "PWP-10"]
 
 
 class Report:
@@ -198,14 +200,6 @@ def main() -> None:
         report.check(
             f"{pid}: has a concurs_with_check finding",
             "concurs_with_check" in classifications,
-            f"classifications found: {classifications}",
-        )
-
-    for pid in _REVIEW_FLAG:
-        classifications = _finding_classifications(findings_by_processor.get(pid, []))
-        report.check(
-            f"{pid}: has a review_flag finding",
-            "review_flag" in classifications,
             f"classifications found: {classifications}",
         )
 

@@ -763,6 +763,7 @@
         "type": "object"
       },
       "ReasoningStepOut": {
+        "description": "step_type=\"critic_tool\" is a single merged step for what used to be\na critic_tool_call + critic_tool_result pair (and, for read_document,\na trailing attachment row too) \u2014 tool_name/tool_args/result/\nresult_summary are populated only for this step type; output is\npopulated for every other step type (hypothesis/critic_final/\nrevision/critic_model_turn/tool_cap_reached/score). result is the\ntool's own parsed return value \u2014 a list or dict for every real tool,\noccasionally a bare string for the \"already returned in call N\"\ndedup-hit message, which isn't valid JSON to parse back into an\nobject (docs/BUILD_PLAN.md A2).",
         "properties": {
           "dedup_hit": {
             "title": "Dedup Hit",
@@ -790,6 +791,26 @@
               }
             ],
             "title": "Output"
+          },
+          "result": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "result_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Summary"
           },
           "step_index": {
             "title": "Step Index",
@@ -841,6 +862,8 @@
           "tool_name",
           "tool_args",
           "output",
+          "result",
+          "result_summary",
           "latency_ms",
           "tokens",
           "dedup_hit"
@@ -1140,7 +1163,7 @@
     },
     "/documents/{doc_id}/file": {
       "get": {
-        "description": "doc_id is validated against the documents table for the configured\nseed before any GCS read (docs/BUILD_PLAN.md T11) \u2014 no arbitrary\npaths; the GCS blob path always comes from the row we looked up, never\nfrom the request.",
+        "description": "doc_id is validated against the documents table for the configured\nseed before any GCS read (docs/BUILD_PLAN.md T11) \u2014 no arbitrary\npaths; the GCS blob path always comes from the row we looked up, never\nfrom the request. Served from an LRU in-memory cache after the first\nrequest for a given doc_id (app/store/cache.py's get_document_file,\nA2) \u2014 Cache-Control below also tells the browser not to ask again.",
         "operationId": "get_document_file_documents__doc_id__file_get",
         "parameters": [
           {
@@ -1203,9 +1226,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": true,
                   "title": "Response Health Health Get",
                   "type": "object"
                 }
@@ -1432,7 +1453,7 @@
     },
     "/site-images/{processor_id}": {
       "get": {
-        "description": "Same validation-before-read pattern as /documents/{doc_id}/file \u2014\nthe GCS blob path always comes from the looked-up row.",
+        "description": "Same validation-before-read pattern as /documents/{doc_id}/file \u2014\nthe GCS blob path always comes from the looked-up row. All ten of\nseed 42's thumbnails are preloaded into memory at startup\n(app/store/cache.py's get_site_image_bytes, A2), so this never hits\nGCS at request time in practice.",
         "operationId": "get_site_image_site_images__processor_id__get",
         "parameters": [
           {

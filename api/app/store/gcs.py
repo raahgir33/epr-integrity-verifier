@@ -4,15 +4,25 @@ No signed URLs — they need extra IAM permissions on Cloud Run. The API
 streams file bytes through its own route instead.
 """
 
+import threading
 from pathlib import Path
 
 from google.cloud import storage
 
 from app.config import settings
 
+_client: storage.Client | None = None
+_client_lock = threading.Lock()
+
 
 def get_client() -> storage.Client:
-    return storage.Client(project=settings.gcp_project)
+    """Memoized, same reasoning as app/store/bq.py's get_client()."""
+    global _client
+    if _client is None:
+        with _client_lock:
+            if _client is None:
+                _client = storage.Client(project=settings.gcp_project)
+    return _client
 
 
 def upload_file(client: storage.Client, bucket_name: str, blob_path: str, local_path: Path) -> None:

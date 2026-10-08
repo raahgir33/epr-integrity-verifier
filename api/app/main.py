@@ -6,6 +6,8 @@ live event path (POST /demo/certificate-batch, GET /runs/{run_id},
 POST /events/certificate-batch) is T13's, not built here.
 """
 
+import logging
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response
@@ -23,7 +25,9 @@ from app.models.api import (
     ReasoningResponse,
     SiteResponse,
 )
-from app.store import cache, gcs
+from app.store import cache
+
+logger = logging.getLogger(__name__)
 
 # Set by the lifespan hook after preload, from cache.check_consistency() —
 # whether the reconstructed agent findings reproduce every processor's
@@ -35,10 +39,16 @@ _consistency_status: dict | None = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _consistency_status
+    start = time.monotonic()
     cache.preload(settings.default_seed, settings.default_facts_source)
     _consistency_status = cache.check_consistency(
         settings.default_seed, settings.default_facts_source
     )
+    # A2 (docs/PROGRESS.md): report this when restarting the server — the
+    # app isn't ready for traffic until this log line, by design (both
+    # calls above are plain synchronous functions, not awaited
+    # coroutines, so uvicorn blocks on them before accepting connections).
+    logger.info("startup complete in %.2fs (preload + consistency check)", time.monotonic() - start)
     yield
 
 
@@ -110,14 +120,16 @@ def get_document_file(doc_id: str) -> Response:
     """doc_id is validated against the documents table for the configured
     seed before any GCS read (docs/BUILD_PLAN.md T11) — no arbitrary
     paths; the GCS blob path always comes from the row we looked up, never
-    from the request."""
-    doc = cache.get_document(settings.default_seed, doc_id)
-    if doc is None:
+    from the request. Served from an LRU in-memory cache after the first
+    request for a given doc_id (app/store/cache.py's get_document_file,
+    A2) — Cache-Control below also tells the browser not to ask again."""
+    result = cache.get_document_file(settings.default_seed, doc_id)
+    if result is None:
         raise HTTPException(status_code=404, detail="document not found")
-    data = gcs.download_bytes(gcs.get_client(), settings.dossier_bucket, doc["gcs_path"])
+    data, mime_type = result
     return Response(
         content=data,
-        media_type=doc["mime_type"],
+        media_type=mime_type,
         headers={"Cache-Control": "public, max-age=86400, immutable"},
     )
 
@@ -181,13 +193,13 @@ def get_processor_site(processor_id: str) -> dict:
 @app.get("/site-images/{processor_id}")
 def get_site_image(processor_id: str) -> Response:
     """Same validation-before-read pattern as /documents/{doc_id}/file —
-    the GCS blob path always comes from the looked-up row."""
-    site = cache.get_site_assessment(settings.default_seed, processor_id)
-    if site is None or not site.get("thumbnail_gcs_path"):
+    the GCS blob path always comes from the looked-up row. All ten of
+    seed 42's thumbnails are preloaded into memory at startup
+    (app/store/cache.py's get_site_image_bytes, A2), so this never hits
+    GCS at request time in practice."""
+    data = cache.get_site_image_bytes(settings.default_seed, processor_id)
+    if data is None:
         raise HTTPException(status_code=404, detail="site thumbnail not available")
-    data = gcs.download_bytes(
-        gcs.get_client(), settings.artifact_bucket, site["thumbnail_gcs_path"]
-    )
     return Response(
         content=data,
         media_type="image/png",

@@ -7,6 +7,7 @@ back (datetime.date/datetime for DATE/TIMESTAMP columns).
 
 import copy
 import datetime
+import json
 
 import pytest
 
@@ -19,10 +20,18 @@ FACTS_SOURCE = "truth"
 @pytest.fixture(autouse=True)
 def _clear_cache():
     """The cache is module-level global state — never let one test's
-    cached values leak into the next."""
+    cached values leak into the next. Includes A2's file caches
+    (get_document_file's LRU, get_site_image_bytes' eager dict), which
+    live outside _store."""
     cache.invalidate()
+    cache._document_file_cache.clear()
+    cache._document_file_cache_bytes = 0
+    cache._site_image_cache.clear()
     yield
     cache.invalidate()
+    cache._document_file_cache.clear()
+    cache._document_file_cache_bytes = 0
+    cache._site_image_cache.clear()
 
 
 FAKE_DB = {
@@ -172,6 +181,17 @@ def _fake_fetch_rows(monkeypatch):
 
     monkeypatch.setattr(cache, "_fetch_rows", fake)
     monkeypatch.setattr(cache.bq, "get_client", lambda: object())
+    # Standing rule: never hit real GCP. preload() (A2) now also calls
+    # get_site_image_bytes for every processor, which — without this —
+    # would call the REAL gcs.download_bytes against this environment's
+    # real configured bucket (this .env has genuine GCP settings) on
+    # every test that exercises preload(). Found and fixed before this
+    # went unnoticed: a local run of test_preload_populates_every_
+    # expected_key actually reached storage.googleapis.com.
+    monkeypatch.setattr(cache.gcs, "get_client", lambda: object())
+    monkeypatch.setattr(
+        cache.gcs, "download_bytes", lambda client, bucket, path: b"\x89PNG-fake-from-test"
+    )
 
 
 # ---------- generic TTL cache ----------
@@ -198,6 +218,24 @@ def test_get_or_load_reloads_after_ttl_expiry():
 
     assert cache.get_or_load("k2", loader, ttl=0) == 1
     assert cache.get_or_load("k2", loader, ttl=0) == 2
+
+
+def test_get_or_load_with_no_expiry_never_reloads(monkeypatch):
+    """A2: every preload-populated key uses ttl=cache.NO_EXPIRY so a
+    later read — however long after startup — never re-triggers a live
+    BigQuery query just because wall-clock time has passed."""
+    calls = []
+
+    def loader():
+        calls.append(1)
+        return len(calls)
+
+    assert cache.get_or_load("k2b", loader, ttl=cache.NO_EXPIRY) == 1
+    # Simulate a huge amount of elapsed time by moving the stored
+    # timestamp far into the past — still must not reload.
+    monkeypatch.setattr(cache.time, "monotonic", lambda: 10**9)
+    assert cache.get_or_load("k2b", loader, ttl=cache.NO_EXPIRY) == 1
+    assert len(calls) == 1
 
 
 def test_invalidate_specific_key():
@@ -429,3 +467,275 @@ def test_check_consistency_detects_and_logs_a_mismatch(monkeypatch, caplog):
 
 def test_get_as_of_month_uses_max_period_month_across_all_certificates():
     assert cache.get_as_of_month(SEED) == "2026-01"
+
+
+# ---------- A2: document file LRU cache ----------
+
+
+def test_get_document_file_caches_after_first_fetch(monkeypatch):
+    monkeypatch.setattr(
+        cache,
+        "get_document",
+        lambda seed, doc_id: {
+            "doc_id": doc_id,
+            "gcs_path": f"{doc_id}.pdf",
+            "mime_type": "application/pdf",
+        },
+    )
+    calls = []
+
+    def fake_download(client, bucket, path):
+        calls.append(path)
+        return b"fake-bytes"
+
+    monkeypatch.setattr(cache.gcs, "download_bytes", fake_download)
+    monkeypatch.setattr(cache.gcs, "get_client", lambda: object())
+
+    first = cache.get_document_file(SEED, "DOC-A")
+    second = cache.get_document_file(SEED, "DOC-A")
+
+    assert first == second == (b"fake-bytes", "application/pdf")
+    assert calls == ["DOC-A.pdf"]  # only one real download
+
+
+def test_get_document_file_returns_none_for_unknown_doc_without_calling_gcs(monkeypatch):
+    monkeypatch.setattr(cache, "get_document", lambda seed, doc_id: None)
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("must not call gcs.download_bytes for an unknown doc_id")
+
+    monkeypatch.setattr(cache.gcs, "download_bytes", _fail_if_called)
+
+    assert cache.get_document_file(SEED, "DOC-DOES-NOT-EXIST") is None
+
+
+def test_get_document_file_lru_evicts_least_recently_used_over_cap(monkeypatch):
+    monkeypatch.setattr(cache, "_DOCUMENT_FILE_CACHE_MAX_BYTES", 10)
+    monkeypatch.setattr(
+        cache,
+        "get_document",
+        lambda seed, doc_id: {
+            "doc_id": doc_id,
+            "gcs_path": f"{doc_id}.pdf",
+            "mime_type": "application/pdf",
+        },
+    )
+    calls = []
+    monkeypatch.setattr(
+        cache.gcs,
+        "download_bytes",
+        lambda client, bucket, path: (calls.append(path), b"1234567")[1],
+    )
+    monkeypatch.setattr(cache.gcs, "get_client", lambda: object())
+
+    cache.get_document_file(SEED, "DOC-A")  # 7 bytes — within the 10-byte cap
+    cache.get_document_file(SEED, "DOC-B")  # 7+7=14 > 10 — evicts DOC-A (least recently used)
+
+    assert "DOC-A" not in cache._document_file_cache
+    assert "DOC-B" in cache._document_file_cache
+
+    cache.get_document_file(SEED, "DOC-A")  # evicted — must re-download
+    assert calls.count("DOC-A.pdf") == 2
+
+
+def test_get_document_file_lru_touches_entry_on_cache_hit(monkeypatch):
+    """A re-accessed entry moves to the back of the LRU, so it survives
+    an eviction that an untouched entry of the same age wouldn't."""
+    monkeypatch.setattr(cache, "_DOCUMENT_FILE_CACHE_MAX_BYTES", 14)
+    monkeypatch.setattr(
+        cache,
+        "get_document",
+        lambda seed, doc_id: {
+            "doc_id": doc_id,
+            "gcs_path": f"{doc_id}.pdf",
+            "mime_type": "application/pdf",
+        },
+    )
+    monkeypatch.setattr(cache.gcs, "download_bytes", lambda client, bucket, path: b"1234567")
+    monkeypatch.setattr(cache.gcs, "get_client", lambda: object())
+
+    cache.get_document_file(SEED, "DOC-A")  # 7 bytes
+    cache.get_document_file(SEED, "DOC-B")  # 14 bytes total — exactly at cap, no eviction yet
+    cache.get_document_file(SEED, "DOC-A")  # cache hit — touches DOC-A, moves it to the back
+    cache.get_document_file(SEED, "DOC-C")  # 21 bytes > 14 — evicts the LEAST recently used: DOC-B
+
+    assert "DOC-B" not in cache._document_file_cache
+    assert "DOC-A" in cache._document_file_cache
+    assert "DOC-C" in cache._document_file_cache
+
+
+# ---------- A2: eager site-image cache ----------
+
+
+def test_get_site_image_bytes_caches_after_first_fetch(monkeypatch):
+    monkeypatch.setattr(
+        cache,
+        "get_site_assessment",
+        lambda seed, pid: {"thumbnail_gcs_path": "seed-42/site/PWP-01.png"},
+    )
+    calls = []
+    monkeypatch.setattr(
+        cache.gcs,
+        "download_bytes",
+        lambda client, bucket, path: (calls.append(path), b"\x89PNG-fake")[1],
+    )
+    monkeypatch.setattr(cache.gcs, "get_client", lambda: object())
+
+    first = cache.get_site_image_bytes(SEED, "PWP-01")
+    second = cache.get_site_image_bytes(SEED, "PWP-01")
+
+    assert first == second == b"\x89PNG-fake"
+    assert len(calls) == 1
+
+
+def test_get_site_image_bytes_none_when_no_thumbnail(monkeypatch):
+    monkeypatch.setattr(cache, "get_site_assessment", lambda seed, pid: None)
+
+    assert cache.get_site_image_bytes(SEED, "PWP-99") is None
+
+
+# ---------- A2: reasoning trail reshape ----------
+
+
+def _trail_row(step_index, step_type, tool_name=None, tool_args_json=None, output_json=None):
+    return {
+        "step_index": step_index,
+        "step_type": step_type,
+        "tool_name": tool_name,
+        "tool_args_json": tool_args_json,
+        "output_json": output_json,
+        "latency_ms": None,
+        "input_tokens": None,
+        "output_tokens": None,
+        "thinking_tokens": None,
+    }
+
+
+def test_compute_reasoning_steps_merges_tool_call_and_strips_internal_paths(monkeypatch):
+    trail = [
+        _trail_row(0, "hypothesis", output_json=json.dumps({"conclusions": []})),
+        _trail_row(1, "critic_tool_call", tool_name="get_site_assessment", tool_args_json="{}"),
+        _trail_row(
+            2,
+            "critic_tool_result",
+            output_json=json.dumps(
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "function_response": {
+                                "result": json.dumps(
+                                    {
+                                        "status": "pass",
+                                        "thumbnail_gcs_path": "seed-42/site/PWP-09.png",
+                                    }
+                                )
+                            }
+                        }
+                    ],
+                }
+            ),
+        ),
+        _trail_row(
+            3,
+            "critic_model_turn",
+            output_json=json.dumps({"role": "model", "parts": [{"text": "done"}]}),
+        ),
+        _trail_row(4, "critic_final", output_json=json.dumps({"verdicts": [], "objections": []})),
+    ]
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: trail)
+    monkeypatch.setattr(cache, "get_processor_assessments", lambda seed, fs, pid: None)
+
+    steps = cache.get_reasoning_steps(SEED, FACTS_SOURCE, "PWP-09")
+
+    assert [s["step_type"] for s in steps] == [
+        "hypothesis",
+        "critic_tool",
+        "critic_model_turn",
+        "critic_final",
+        "revision",
+    ]
+
+    tool_step = steps[1]
+    assert tool_step["tool_name"] == "get_site_assessment"
+    assert tool_step["result"] == {"status": "pass"}  # thumbnail_gcs_path stripped
+    assert "thumbnail_gcs_path" not in tool_step["result_summary"]
+    assert tool_step["dedup_hit"] is False
+
+    revision_step = steps[-1]
+    assert "not needed" in revision_step["output"]["note"]
+
+
+def test_compute_reasoning_steps_detects_dedup_hit(monkeypatch):
+    dedup_message = "Already returned in call 1 — see that result, do not call this again."
+    trail = [
+        _trail_row(0, "critic_tool_call", tool_name="get_shipments", tool_args_json="{}"),
+        _trail_row(
+            1,
+            "critic_tool_result",
+            output_json=json.dumps(
+                {
+                    "role": "user",
+                    "parts": [{"function_response": {"result": dedup_message}}],
+                }
+            ),
+        ),
+    ]
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: trail)
+    monkeypatch.setattr(cache, "get_processor_assessments", lambda seed, fs, pid: None)
+
+    steps = cache.get_reasoning_steps(SEED, FACTS_SOURCE, "PWP-07")
+
+    assert steps[0]["dedup_hit"] is True
+    assert steps[0]["result"] == dedup_message
+
+
+def test_compute_reasoning_steps_appends_score_step_with_deducted_shipments(monkeypatch):
+    trail = [
+        _trail_row(0, "hypothesis", output_json="{}"),
+        _trail_row(1, "revision", output_json=json.dumps({"revisions": []})),
+    ]
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: trail)
+    monkeypatch.setattr(
+        cache,
+        "get_processor_assessments",
+        lambda seed, fs, pid: {
+            "checks_only": {"verifiable_t": 100.0, "risk_band": "Low"},
+            "full": {"verifiable_t": 90.0, "risk_band": "Medium"},
+        },
+    )
+    monkeypatch.setattr(
+        cache,
+        "build_reconstruction_context",
+        lambda seed, fs, pid: {
+            "shipments": [{"shipment_id": "PWP-09-SHP-001", "weighbridge_net_t": 10.0}]
+        },
+    )
+    monkeypatch.setattr(
+        cache,
+        "reconstruct_agent_findings",
+        lambda trail, ctx: {"excluded_shipment_ids": frozenset({"PWP-09-SHP-001"})},
+    )
+
+    steps = cache.get_reasoning_steps(SEED, FACTS_SOURCE, "PWP-09")
+
+    assert [s["step_type"] for s in steps] == ["hypothesis", "revision", "score"]
+    score = steps[-1]["output"]
+    assert score == {
+        "checks_only_verifiable_t": 100.0,
+        "full_verifiable_t": 90.0,
+        "deducted_shipments": [{"shipment_id": "PWP-09-SHP-001", "weighbridge_net_t": 10.0}],
+        "risk_band_before": "Low",
+        "risk_band_after": "Medium",
+    }
+
+
+def test_compute_reasoning_steps_no_score_step_without_an_agent_run(monkeypatch):
+    """A processor with no "full" assessment at all (agent loop never ran)
+    gets no score step — nothing to report."""
+    monkeypatch.setattr(cache, "get_agent_trail", lambda seed, fs, pid: [])
+    monkeypatch.setattr(cache, "get_processor_assessments", lambda seed, fs, pid: None)
+
+    steps = cache.get_reasoning_steps(SEED, FACTS_SOURCE, "PWP-01")
+
+    assert steps == []

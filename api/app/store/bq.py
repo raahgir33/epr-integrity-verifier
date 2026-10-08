@@ -10,6 +10,8 @@ brands, documents, certificates). Later tasks add their own tables to this
 same registry as the code that populates them is built.
 """
 
+import threading
+
 from google.cloud import bigquery
 
 from app.config import settings
@@ -248,8 +250,23 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
 }
 
 
+_client: bigquery.Client | None = None
+_client_lock = threading.Lock()
+
+
 def get_client() -> bigquery.Client:
-    return bigquery.Client(project=settings.gcp_project)
+    """Memoized: constructing bigquery.Client involves credential
+    discovery and isn't free (A2's measured cold-path latency includes
+    this), and the client is documented as safe to reuse across calls —
+    one per process, not one per query. Lock-protected since FastAPI's
+    sync `def` routes run in a thread pool; worst case on a race is two
+    clients briefly constructed, never a correctness issue."""
+    global _client
+    if _client is None:
+        with _client_lock:
+            if _client is None:
+                _client = bigquery.Client(project=settings.gcp_project)
+    return _client
 
 
 def _table_ref(table_name: str) -> str:

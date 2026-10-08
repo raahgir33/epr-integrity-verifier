@@ -3,7 +3,7 @@
 rows; app/main.py's routes just call cache and return the result.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -123,11 +123,24 @@ class ProcessorDetailResponse(BaseModel):
 
 
 class ReasoningStepOut(BaseModel):
+    """step_type="critic_tool" is a single merged step for what used to be
+    a critic_tool_call + critic_tool_result pair (and, for read_document,
+    a trailing attachment row too) — tool_name/tool_args/result/
+    result_summary are populated only for this step type; output is
+    populated for every other step type (hypothesis/critic_final/
+    revision/critic_model_turn/tool_cap_reached/score). result is the
+    tool's own parsed return value — a list or dict for every real tool,
+    occasionally a bare string for the "already returned in call N"
+    dedup-hit message, which isn't valid JSON to parse back into an
+    object (docs/BUILD_PLAN.md A2)."""
+
     step_index: int
     step_type: str
     tool_name: str | None
     tool_args: dict | None
     output: dict | None
+    result: Any | None
+    result_summary: str | None
     latency_ms: float | None
     tokens: dict | None
     dedup_hit: bool

@@ -22,18 +22,22 @@ _STEPS = [
         "tool_name": None,
         "tool_args": None,
         "output": {"conclusions": []},
+        "result": None,
+        "result_summary": None,
         "latency_ms": 25000.0,
         "tokens": {"input": 1000, "output": 200, "thinking": None},
         "dedup_hit": False,
     },
     {
         "step_index": 1,
-        "step_type": "critic_tool_call",
+        "step_type": "critic_tool",
         "tool_name": "get_shipments",
         "tool_args": {"month": "2026-01"},
         "output": None,
+        "result": [{"shipment_id": "PWP-05-SHP-001", "match_status": "matched"}],
+        "result_summary": '[{"shipment_id": "PWP-05-SHP-001", "match_status": "matched"}]',
         "latency_ms": None,
-        "tokens": None,
+        "tokens": {"input": None, "output": None, "thinking": None},
         "dedup_hit": False,
     },
 ]
@@ -53,7 +57,8 @@ def test_reasoning_happy_path(api_client, monkeypatch):
     body = response.json()
     assert body["agent_status"] == "ok"
     assert body["tool_cap_reached"] is False
-    assert [s["step_type"] for s in body["steps"]] == ["hypothesis", "critic_tool_call"]
+    assert [s["step_type"] for s in body["steps"]] == ["hypothesis", "critic_tool"]
+    assert body["steps"][1]["result"][0]["shipment_id"] == "PWP-05-SHP-001"
     assert body["findings"][0]["classification"] == "deductible"
 
 
@@ -73,8 +78,10 @@ def test_reasoning_detects_tool_cap_reached(api_client, monkeypatch):
                 "tool_name": None,
                 "tool_args": None,
                 "output": {"tool_cap_reached": True},
+                "result": None,
+                "result_summary": None,
                 "latency_ms": None,
-                "tokens": None,
+                "tokens": {"input": None, "output": None, "thinking": None},
                 "dedup_hit": False,
             },
         ],

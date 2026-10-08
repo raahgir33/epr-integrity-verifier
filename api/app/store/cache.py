@@ -16,6 +16,7 @@ as per-processor queries, and lets every per-processor read share one
 cached fetch instead of one query each.
 """
 
+import collections
 import json
 import logging
 import threading
@@ -32,9 +33,20 @@ from app.checks.mass_balance import verified_inbound_tonnes
 from app.checks.params import CHECK_SOURCE_LABELS
 from app.config import settings
 from app.models.checks import CheckResult
-from app.store import bq
+from app.store import bq, gcs
 
 logger = logging.getLogger(__name__)
+
+# A2 (docs/PROGRESS.md): every preload-populated key uses this instead of
+# settings.cache_ttl_seconds — a short wall-clock TTL was silently
+# undermining "preload once, stay warm," since any read made more than
+# cache_ttl_seconds after startup re-triggered a live BigQuery query
+# regardless of preload having already run (the measured cause of a
+# 10.9s "cold" /processors/{id} request well after boot). Nothing in
+# this dataset changes during the process's lifetime except through an
+# explicit invalidate() call (T13's live event path) — wall-clock
+# staleness was never the right trigger for this data.
+NO_EXPIRY = float("inf")
 
 _store: dict[str, tuple[float, Any]] = {}
 _lock = threading.Lock()
@@ -114,6 +126,7 @@ def _processors(seed: int) -> list[dict]:
             "address, lat, lon",
             seed,
         ),
+        ttl=NO_EXPIRY,
     )
 
 
@@ -121,6 +134,7 @@ def _brands(seed: int) -> list[dict]:
     return get_or_load(
         f"brands:{seed}",
         lambda: _fetch_rows(bq.get_client(), "brands", "brand_id, name", seed),
+        ttl=NO_EXPIRY,
     )
 
 
@@ -137,7 +151,7 @@ def _certificates(seed: int) -> list[dict]:
             row["generation_date"] = _row_date_to_ddmmyyyy(row["generation_date"])
         return rows
 
-    return get_or_load(f"certificates:{seed}", load)
+    return get_or_load(f"certificates:{seed}", load, ttl=NO_EXPIRY)
 
 
 def get_all_shipments(seed: int, facts_source: str) -> list[dict]:
@@ -165,7 +179,7 @@ def get_all_shipments(seed: int, facts_source: str) -> list[dict]:
             row["weighbridge_in_time"] = _row_timestamp_to_iso(row["weighbridge_in_time"])
         return rows
 
-    return get_or_load(f"shipments:{seed}:{facts_source}", load)
+    return get_or_load(f"shipments:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
 
 
 def _check_results(seed: int, facts_source: str) -> list[dict]:
@@ -179,7 +193,7 @@ def _check_results(seed: int, facts_source: str) -> list[dict]:
             facts_source=facts_source,
         )
 
-    return get_or_load(f"check_results:{seed}:{facts_source}", load)
+    return get_or_load(f"check_results:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
 
 
 def _assessments(seed: int, facts_source: str) -> list[dict]:
@@ -193,7 +207,7 @@ def _assessments(seed: int, facts_source: str) -> list[dict]:
             facts_source=facts_source,
         )
 
-    return get_or_load(f"assessments:{seed}:{facts_source}", load)
+    return get_or_load(f"assessments:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
 
 
 def _site_assessments(seed: int) -> list[dict]:
@@ -207,7 +221,7 @@ def _site_assessments(seed: int) -> list[dict]:
             seed,
         )
 
-    return get_or_load(f"site_assessments:{seed}", load)
+    return get_or_load(f"site_assessments:{seed}", load, ttl=NO_EXPIRY)
 
 
 def _documents(seed: int) -> list[dict]:
@@ -219,6 +233,7 @@ def _documents(seed: int) -> list[dict]:
             "doc_id, processor_id, doc_type, lang, gcs_path, mime_type",
             seed,
         ),
+        ttl=NO_EXPIRY,
     )
 
 
@@ -231,6 +246,7 @@ def _extracted_facts(seed: int) -> list[dict]:
             "doc_id, field_name, printed_value, confidence, page",
             seed,
         ),
+        ttl=NO_EXPIRY,
     )
 
 
@@ -240,17 +256,13 @@ def _extraction_results(seed: int) -> list[dict]:
         lambda: _fetch_rows(
             bq.get_client(), "extraction_results", "doc_id, status, error_message", seed
         ),
+        ttl=NO_EXPIRY,
     )
 
 
-def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dict]:
-    """Raw agent_runs rows for one processor, ordered by step_index — the
-    shape app/agents/orchestrator.py's reconstruct_agent_findings expects.
-    All processors are fetched and cached in one query (the table is
-    small); filtering/sorting happens here per call."""
-
-    def load_all() -> list[dict]:
-        rows = _fetch_rows(
+def _agent_runs(seed: int, facts_source: str) -> list[dict]:
+    def load() -> list[dict]:
+        return _fetch_rows(
             bq.get_client(),
             "agent_runs",
             "processor_id, step_index, step_type, tool_name, tool_args_json, "
@@ -259,9 +271,16 @@ def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dic
             seed,
             facts_source=facts_source,
         )
-        return rows
 
-    all_rows = get_or_load(f"agent_runs:{seed}:{facts_source}", load_all)
+    return get_or_load(f"agent_runs:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
+
+
+def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dict]:
+    """Raw agent_runs rows for one processor, ordered by step_index — the
+    shape app/agents/orchestrator.py's reconstruct_agent_findings expects.
+    All processors are fetched and cached in one query (the table is
+    small); filtering/sorting happens here per call."""
+    all_rows = _agent_runs(seed, facts_source)
     return sorted(
         (r for r in all_rows if r["processor_id"] == processor_id), key=lambda r: r["step_index"]
     )
@@ -432,6 +451,46 @@ def get_document(seed: int, doc_id: str) -> dict | None:
     return None
 
 
+# A2: document file bytes, LRU-cached (not eagerly preloaded in full —
+# ~496 documents is too large to assume will always fit comfortably in
+# memory, unlike the ten site thumbnails below). Bounded by total bytes,
+# not entry count, since a weighbridge PNG and an invoice PDF differ
+# widely in size.
+_DOCUMENT_FILE_CACHE_MAX_BYTES = 200 * 1024 * 1024  # 200 MB
+_document_file_cache: collections.OrderedDict[str, tuple[bytes, str]] = collections.OrderedDict()
+_document_file_cache_bytes = 0
+_document_file_cache_lock = threading.Lock()
+
+
+def get_document_file(seed: int, doc_id: str) -> tuple[bytes, str] | None:
+    """Returns (data, mime_type), or None if doc_id doesn't exist for this
+    seed — doc_id is validated against the documents table (get_document)
+    before any GCS read, cache hit or not, so an unknown doc_id never
+    reaches gcs.download_bytes (docs/BUILD_PLAN.md T11's no-arbitrary-
+    paths guarantee, unchanged by adding this cache in front of it)."""
+    global _document_file_cache_bytes
+    with _document_file_cache_lock:
+        cached = _document_file_cache.get(doc_id)
+        if cached is not None:
+            _document_file_cache.move_to_end(doc_id)
+            return cached
+
+    doc = get_document(seed, doc_id)
+    if doc is None:
+        return None
+    data = gcs.download_bytes(gcs.get_client(), settings.dossier_bucket, doc["gcs_path"])
+    result = (data, doc["mime_type"])
+
+    with _document_file_cache_lock:
+        _document_file_cache[doc_id] = result
+        _document_file_cache.move_to_end(doc_id)
+        _document_file_cache_bytes += len(data)
+        while _document_file_cache_bytes > _DOCUMENT_FILE_CACHE_MAX_BYTES and _document_file_cache:
+            _, (evicted_data, _) = _document_file_cache.popitem(last=False)
+            _document_file_cache_bytes -= len(evicted_data)
+    return result
+
+
 def get_document_facts(seed: int, doc_id: str) -> dict:
     """Independent of facts_source — extraction is the same regardless of
     which mode normalize.py used. Empty fields / "not_extracted" if no
@@ -466,6 +525,33 @@ def get_site_assessment(seed: int, processor_id: str) -> dict | None:
         if row["processor_id"] == processor_id:
             return row
     return None
+
+
+# A2: site thumbnail bytes, eagerly cached in full at startup (preload) —
+# unlike documents above, there's only one per processor (ten total for
+# seed 42), small enough to always keep in memory rather than bound by an
+# LRU. Lazily fills itself too (not just on a cache miss from preload
+# never having run for this processor_id — e.g. a processor added after
+# startup), so this never depends on preload having already run.
+_site_image_cache: dict[str, bytes] = {}
+_site_image_cache_lock = threading.Lock()
+
+
+def get_site_image_bytes(seed: int, processor_id: str) -> bytes | None:
+    with _site_image_cache_lock:
+        cached = _site_image_cache.get(processor_id)
+    if cached is not None:
+        return cached
+
+    site = get_site_assessment(seed, processor_id)
+    if site is None or not site.get("thumbnail_gcs_path"):
+        return None
+    data = gcs.download_bytes(
+        gcs.get_client(), settings.artifact_bucket, site["thumbnail_gcs_path"]
+    )
+    with _site_image_cache_lock:
+        _site_image_cache[processor_id] = data
+    return data
 
 
 def get_brand(seed: int, brand_id: str) -> dict | None:
@@ -517,7 +603,19 @@ def get_findings(seed: int, facts_source: str, processor_id: str) -> list[dict]:
     """Rebuilds the full agent finding list + classification for this
     processor from its stored agent_runs trail (docs/BUILD_PLAN.md T11 —
     classification was never persisted, only its aggregate scoring
-    effect). Returns [] if no agent run exists for this processor yet."""
+    effect). Returns [] if no agent run exists for this processor yet.
+    Cached (A2) — this reconstruction is cheap but non-trivial (JSON
+    parsing + classification logic), and "every cache the endpoints use
+    is filled" at preload means this result itself, not just the raw
+    tables it's built from."""
+    return get_or_load(
+        f"findings:{seed}:{facts_source}:{processor_id}",
+        lambda: _compute_findings(seed, facts_source, processor_id),
+        ttl=NO_EXPIRY,
+    )
+
+
+def _compute_findings(seed: int, facts_source: str, processor_id: str) -> list[dict]:
     trail = get_agent_trail(seed, facts_source, processor_id)
     if not trail:
         return []
@@ -562,38 +660,215 @@ def get_findings(seed: int, facts_source: str, processor_id: str) -> list[dict]:
 
 def get_reasoning_steps(seed: int, facts_source: str, processor_id: str) -> list[dict]:
     """The step-by-step trail for the reasoning-trail UI (docs/
-    ARCHITECTURE.md §4's "step-by-step timeline"). dedup_hit marks a
-    critic_tool_call step whose tool result text matches the "already
-    returned" cache-hit message app/llm.py's run_tool_loop emits for a
-    repeated call — a marker for the UI, not re-derived logic."""
-    trail = get_agent_trail(seed, facts_source, processor_id)
-    steps = []
-    for row in trail:
-        output = json.loads(row["output_json"]) if row.get("output_json") else None
+    ARCHITECTURE.md §4's "step-by-step timeline"). Cached (A2), same
+    reasoning as get_findings above."""
+    return get_or_load(
+        f"reasoning_steps:{seed}:{facts_source}:{processor_id}",
+        lambda: _compute_reasoning_steps(seed, facts_source, processor_id),
+        ttl=NO_EXPIRY,
+    )
+
+
+# A2: internal GCS/doc-id storage paths that must never reach an API
+# response — found in practice on get_site_assessment's tool result
+# (the stored site_assessments row, including thumbnail_gcs_path, is
+# exactly what the live agent run saw and so is exactly what's baked
+# into that step's stored output_json).
+_INTERNAL_PATH_KEYS = {"thumbnail_gcs_path", "gcs_path"}
+
+
+def _strip_internal_paths(value):
+    if isinstance(value, dict):
+        return {
+            k: _strip_internal_paths(v) for k, v in value.items() if k not in _INTERNAL_PATH_KEYS
+        }
+    if isinstance(value, list):
+        return [_strip_internal_paths(v) for v in value]
+    return value
+
+
+def _parse_tool_result_text(text: str):
+    """A tool's result is always a JSON-encoded string today (app/agents/
+    tools.py's _cap() always json.dumps()s it) — except the "already
+    returned in call N" dedup-hit message (app/llm.py's run_tool_loop),
+    which is plain text, and a _cap()-truncated result, which is no
+    longer valid JSON. Both fall back to the raw string rather than
+    raising or being silently dropped."""
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        return text
+
+
+def _one_line_summary(value) -> str:
+    text = value if isinstance(value, str) else json.dumps(value, default=str)
+    return text if len(text) <= 160 else text[:160] + "..."
+
+
+def _step_tokens(row: dict) -> dict:
+    return {
+        "input": row.get("input_tokens"),
+        "output": row.get("output_tokens"),
+        "thinking": row.get("thinking_tokens"),
+    }
+
+
+def _reasoning_step(step_index: int, step_type: str, **fields) -> dict:
+    base = {
+        "step_index": step_index,
+        "step_type": step_type,
+        "tool_name": None,
+        "tool_args": None,
+        "output": None,
+        "result": None,
+        "result_summary": None,
+        "latency_ms": None,
+        "tokens": {"input": None, "output": None, "thinking": None},
+        "dedup_hit": False,
+    }
+    base.update(fields)
+    return base
+
+
+def _merge_tool_steps(trail: list[dict]) -> list[dict]:
+    """Merges each critic_tool_call row with its following critic_tool_
+    result row(s) into one step_type="critic_tool" step (docs/
+    BUILD_PLAN.md A2): {tool_name, tool_args, result (the tool's own
+    parsed return value, internal storage paths stripped), result_summary
+    (one line), dedup_hit}. A read_document call's attachment Content
+    also lands as a SECOND critic_tool_result row (inline_data, no
+    function_response) immediately after the first — folded into the
+    same merged step silently, since read_document's own text summary
+    already says "document attached"; it would otherwise become an
+    orphan step with no tool_name. Every other step_type passes through
+    with its existing output_json parsed into `output`."""
+    steps: list[dict] = []
+    i = 0
+    while i < len(trail):
+        row = trail[i]
+        if row["step_type"] != "critic_tool_call":
+            output = json.loads(row["output_json"]) if row.get("output_json") else None
+            steps.append(
+                _reasoning_step(
+                    row["step_index"],
+                    row["step_type"],
+                    output=output,
+                    latency_ms=row.get("latency_ms"),
+                    tokens=_step_tokens(row),
+                )
+            )
+            i += 1
+            continue
+
         tool_args = json.loads(row["tool_args_json"]) if row.get("tool_args_json") else None
+        result = None
+        result_summary = None
         dedup_hit = False
-        if row["step_type"] == "critic_tool_result" and isinstance(output, dict):
-            parts = output.get("parts") or []
-            for part in parts:
-                response = part.get("function_response")
-                if isinstance(response, dict) and "Already returned in call" in str(response):
-                    dedup_hit = True
+        j = i + 1
+        consumed = False
+        while j < len(trail) and trail[j]["step_type"] == "critic_tool_result":
+            output = json.loads(trail[j]["output_json"]) if trail[j].get("output_json") else None
+            parts = (output or {}).get("parts") or []
+            function_response = next(
+                (
+                    p.get("function_response")
+                    for p in parts
+                    if isinstance(p, dict) and "function_response" in p
+                ),
+                None,
+            )
+            if function_response is not None and not consumed:
+                raw = function_response.get("result")
+                if isinstance(raw, str):
+                    dedup_hit = "Already returned in call" in raw
+                    parsed = _parse_tool_result_text(raw)
+                else:
+                    parsed = raw
+                result = _strip_internal_paths(parsed)
+                result_summary = _one_line_summary(result)
+                consumed = True
+            j += 1
+
         steps.append(
-            {
-                "step_index": row["step_index"],
-                "step_type": row["step_type"],
-                "tool_name": row["tool_name"],
-                "tool_args": tool_args,
-                "output": output,
-                "latency_ms": row["latency_ms"],
-                "tokens": {
-                    "input": row["input_tokens"],
-                    "output": row["output_tokens"],
-                    "thinking": row["thinking_tokens"],
-                },
-                "dedup_hit": dedup_hit,
-            }
+            _reasoning_step(
+                row["step_index"],
+                "critic_tool",
+                tool_name=row.get("tool_name"),
+                tool_args=tool_args,
+                result=result,
+                result_summary=result_summary,
+                dedup_hit=dedup_hit,
+                latency_ms=row.get("latency_ms"),
+                tokens=_step_tokens(row),
+            )
         )
+        i = j
+    return steps
+
+
+def _compute_reasoning_steps(seed: int, facts_source: str, processor_id: str) -> list[dict]:
+    trail = get_agent_trail(seed, facts_source, processor_id)
+    steps = _merge_tool_steps(trail)
+    next_index = max((s["step_index"] for s in steps), default=-1) + 1
+
+    # A2: a run with nothing to revise (no disputed Hypothesis findings,
+    # no new Critic objections) never calls the revision round at all —
+    # app/agents/orchestrator.py's run_agent_loop skips it entirely, so
+    # no "revision" trail row exists. Make that explicit rather than
+    # leaving a silent gap in the timeline.
+    if trail and not any(s["step_type"] == "revision" for s in steps):
+        steps.append(
+            _reasoning_step(
+                next_index,
+                "revision",
+                output={
+                    "note": (
+                        "not needed — no disputed findings or new Critic "
+                        "objections required a revision round"
+                    )
+                },
+            )
+        )
+        next_index += 1
+
+    # A2: a final "score" step from the stored assessments — checks_only
+    # vs full verifiable_t, exactly which shipments were deducted (with
+    # their own tonnage) and why, and the risk band before/after the
+    # agent stage. Only added once an agent run has actually happened for
+    # this processor (a "full" assessment stage exists).
+    assessments = get_processor_assessments(seed, facts_source, processor_id)
+    if assessments is not None:
+        context = build_reconstruction_context(seed, facts_source, processor_id)
+        excluded_ids: frozenset[str] = frozenset()
+        if trail and context is not None:
+            excluded_ids = reconstruct_agent_findings(trail, context)["excluded_shipment_ids"]
+        shipments_by_id = {s["shipment_id"]: s for s in (context["shipments"] if context else [])}
+        deducted_shipments = [
+            {
+                "shipment_id": shipment_id,
+                "weighbridge_net_t": shipments_by_id[shipment_id].get("weighbridge_net_t"),
+            }
+            for shipment_id in sorted(excluded_ids)
+            if shipment_id in shipments_by_id
+        ]
+        checks_only = assessments.get("checks_only")
+        full = assessments.get("full")
+        steps.append(
+            _reasoning_step(
+                next_index,
+                "score",
+                output={
+                    "checks_only_verifiable_t": checks_only["verifiable_t"]
+                    if checks_only
+                    else None,
+                    "full_verifiable_t": full["verifiable_t"] if full else None,
+                    "deducted_shipments": deducted_shipments,
+                    "risk_band_before": checks_only["risk_band"] if checks_only else None,
+                    "risk_band_after": (full or checks_only or {}).get("risk_band"),
+                },
+            )
+        )
+
     return steps
 
 
@@ -681,11 +956,17 @@ def check_consistency(seed: int, facts_source: str) -> dict:
 
 
 def preload(seed: int, facts_source: str) -> None:
-    """Populates every cache key this module's read functions use, for the
-    one configured (seed, facts_source) — called once from app/main.py's
-    startup hook so every request after boot is a cache hit."""
+    """True eager preload (A2): every cache key app/main.py's routes
+    actually read — not just the raw tables, but every per-processor
+    derived result built from them (findings reconstruction, reasoning
+    steps, monthly flow, etc.) and every file (site images in full;
+    documents are an LRU, populated on demand — see get_document_file) —
+    is filled here, before app/main.py's lifespan reports the app ready.
+    Logs total elapsed time; report this when restarting the server."""
+    start = time.monotonic()
     logger.info("preloading cache for seed=%s facts_source=%s", seed, facts_source)
-    _processors(seed)
+
+    processors = _processors(seed)
     _brands(seed)
     _certificates(seed)
     get_all_shipments(seed, facts_source)
@@ -695,16 +976,18 @@ def preload(seed: int, facts_source: str) -> None:
     _documents(seed)
     _extracted_facts(seed)
     _extraction_results(seed)
-    get_or_load(
-        f"agent_runs:{seed}:{facts_source}",
-        lambda: _fetch_rows(
-            bq.get_client(),
-            "agent_runs",
-            "processor_id, step_index, step_type, tool_name, tool_args_json, "
-            "input_summary, output_json, latency_ms, input_tokens, output_tokens, "
-            "thinking_tokens",
-            seed,
-            facts_source=facts_source,
-        ),
-    )
-    logger.info("cache preload done")
+    _agent_runs(seed, facts_source)
+
+    for p in processors:
+        pid = p["processor_id"]
+        get_processor_profile(seed, pid)
+        get_processor_assessments(seed, facts_source, pid)
+        get_monthly_flow(seed, facts_source, pid)
+        get_check_results(seed, facts_source, pid)
+        get_documents_for_processor(seed, pid)
+        get_findings(seed, facts_source, pid)
+        get_reasoning_steps(seed, facts_source, pid)
+        get_site_image_bytes(seed, pid)
+
+    elapsed = time.monotonic() - start
+    logger.info("cache preload done in %.2fs", elapsed)

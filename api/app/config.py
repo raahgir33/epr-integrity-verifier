@@ -65,6 +65,14 @@ class Settings(BaseSettings):
     # "extracted" once the full 496-document extraction run has happened.
     default_seed: int = 42
     default_facts_source: str = "truth"
+    # Not actually used by any key app/store/cache.py's preload() fills —
+    # those all pass ttl=cache.NO_EXPIRY (A2, docs/PROGRESS.md), since a
+    # short wall-clock TTL was undermining "preload once, stay warm" (any
+    # read made more than this many seconds after startup re-triggered a
+    # live BigQuery query). Left as the get_or_load() default for any
+    # future lazy (non-preloaded) key — none exist today — and reserved
+    # for T13, which may want real TTL-based staleness once live writes
+    # exist; invalidate() is the correct trigger for everything preloaded.
     cache_ttl_seconds: int = 60
 
 
