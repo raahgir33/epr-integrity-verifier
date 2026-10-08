@@ -60,15 +60,18 @@ def compute_processor_truth(processor: Processor, dossier: Dossier) -> dict:
     verified_checks_only = round(
         sum(s["weighbridge_net_t"] or 0 for s in dossier.shipments if s.get("verified")), 2
     )
-    f8_tonnes = round(
+    # F8 and F9 are both agent-only — no deterministic check sees either,
+    # so "verified" (checks-only) stays true for their shipments; only the
+    # full/agent system subtracts them.
+    agent_only_tonnes = round(
         sum(
             s["weighbridge_net_t"] or 0
             for s in dossier.shipments
-            if s.get("verified") and s.get("is_f8")
+            if s.get("verified") and (s.get("is_f8") or s.get("is_f9"))
         ),
         2,
     )
-    verified_full_system = round(verified_checks_only - f8_tonnes, 2)
+    verified_full_system = round(verified_checks_only - agent_only_tonnes, 2)
 
     capacity_limit_t = processor.capacity_t_per_year
 

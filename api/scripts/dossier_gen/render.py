@@ -11,12 +11,16 @@ import random
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 from playwright.sync_api import sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 FONT_PATH = REPO_ROOT / "assets" / "fonts" / "NotoSansDevanagari-Regular.ttf"
+# Kalam (Google Fonts, OFL, Devanagari-capable, cursive/handwriting style) —
+# used only for the F9/H5 handwritten-remark overlay below, never for any
+# typed/template text (which stays Noto Sans Devanagari, FONT_PATH above).
+HANDWRITING_FONT_PATH = REPO_ROOT / "assets" / "fonts" / "Kalam-Regular.ttf"
 
 # field key -> {"en": ..., "hi": ...}, per document type.
 LABELS: dict[str, dict[str, dict[str, str]]] = {
@@ -118,6 +122,48 @@ def degrade_photo(path: Path, rng: random.Random) -> None:
     image.save(path)
 
 
+_HANDWRITING_INK_RGB = (20, 20, 125)  # pen-blue, distinct from the red watermark
+_HANDWRITING_FONT_SIZE = 32
+
+
+def overlay_handwritten_remark(path: Path, text: str, rng: random.Random) -> None:
+    """Draws `text` onto an already-rendered weighbridge photo as a
+    handwritten annotation (Kalam, see HANDWRITING_FONT_PATH above),
+    rather than through the typed template — real weighbridge remarks
+    are handwritten, not typed, and the F9/H5 seeded patterns
+    specifically test whether a photo-reading agent catches a remark
+    that only exists on the image (docs/DATA_SPEC.md §5). Every other
+    printed field, net weight included, is untouched by this.
+
+    Drawn with ONE call to draw.text for the whole string — never
+    per-character — so Devanagari shaping (conjuncts, matras) is
+    handled correctly by the font's own layout engine; the same trap
+    CLAUDE.md §9 documents for ReportLab generalizes to any manual
+    glyph-by-glyph drawing. Called before degrade_photo so the overlay
+    picks up the same photographic noise/rotation/brightness as the
+    rest of the slip, not a cleaner image than the typed fields.
+    """
+    base = Image.open(path).convert("RGBA")
+    font = ImageFont.truetype(str(HANDWRITING_FONT_PATH), _HANDWRITING_FONT_SIZE)
+
+    layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    # Blank strip below the printed table (table + header occupy roughly
+    # the top 60-65% of the 700x500 viewport), clear of the watermark
+    # (top 38%, left 8%, per _base.html).
+    x, y = round(base.width * 0.08), round(base.height * 0.78)
+    draw.text((x, y), text, font=font, fill=(*_HANDWRITING_INK_RGB, 235))
+
+    bbox = draw.textbbox((x, y), text, font=font)
+    pivot = ((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
+    angle = rng.uniform(-6, 6)
+    layer = layer.rotate(angle, resample=Image.BICUBIC, center=pivot)
+    layer = layer.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.3, 0.7)))
+
+    composed = Image.alpha_composite(base, layer).convert("RGB")
+    composed.save(path)
+
+
 class Renderer:
     def __init__(self):
         self.env = Environment(
@@ -161,4 +207,7 @@ class Renderer:
         self._page.set_content(html)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         self._page.screenshot(path=str(output_path))
+        remarks = (fields.get("remarks") or {}).get("printed") or ""
+        if remarks:
+            overlay_handwritten_remark(output_path, remarks, rng)
         degrade_photo(output_path, rng)

@@ -663,14 +663,17 @@ def run_agents(
                     "tool_args_json": step["tool_args_json"],
                     "input_summary": step["input_summary"],
                     "output_json": step["output_json"],
-                    # Per-step latency/token usage isn't captured here —
-                    # the authoritative call-level accounting is
-                    # llm_calls (flushed below), keyed by purpose, not by
-                    # trail step.
-                    "latency_ms": None,
-                    "input_tokens": None,
-                    "output_tokens": None,
-                    "thinking_tokens": None,
+                    # Populated by app/agents/orchestrator.py's run_agent_
+                    # loop from GeminiClient.call_log (docs/PROGRESS.md) —
+                    # None for steps with no underlying Gemini call
+                    # (critic_tool_result, tool_cap_reached). llm_calls
+                    # (flushed below) remains the authoritative call-level
+                    # accounting; this is the same data, joined to the
+                    # specific trail step that caused it.
+                    "latency_ms": step.get("latency_ms"),
+                    "input_tokens": step.get("input_tokens"),
+                    "output_tokens": step.get("output_tokens"),
+                    "thinking_tokens": step.get("thinking_tokens"),
                 }
             )
 

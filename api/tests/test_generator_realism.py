@@ -41,18 +41,24 @@ def _is_deliberately_divergent(shipment: dict) -> bool:
     return not shipment.get("verified", True)
 
 
+# A matched shipment's weighbridge net_t is the invoice quantity (drawn
+# from a vehicle class's net_t range) times a small noise multiplier
+# (0.988-1.012 normally, 0.985 for H3) — so the realized net_t can land
+# slightly outside the class's own boundary. A qty_t drawn at a class's
+# own ceiling times the max noise multiplier (1.012) gives up to +0.3t
+# over that ceiling (e.g. heavy: 25.0*1.012=25.3; light: 9.0*1.012=9.108,
+# rounds up to +0.3t headroom too) — applied consistently to BOTH the
+# class-membership check and the GVW-ceiling check below, since they're
+# the same tolerance: a shipment inside this band by net_t must also be
+# inside it by gross_kg (seeds 5/15/20 each hit a different class/field
+# combination of this same edge).
+_NET_T_CLASS_TOLERANCE = 0.3
+
+
 def _vehicle_class_for(net_t: float) -> str | None:
-    """A matched shipment's weighbridge net_t is the invoice quantity
-    (drawn from a vehicle class's net_t range) times a small noise
-    multiplier (0.988-1.012 normally, 0.985 for H3) — so the realized
-    net_t can land slightly outside the class's own boundary. A qty_t
-    drawn at the heavy class's own ceiling (25.0) times the max noise
-    multiplier (1.012) gives net_t=25.3, so the tolerance must cover at
-    least 0.3 t on the upper side (seeds 15/20 hit exactly this)."""
-    tolerance_t = 0.3
     for name, spec in _VEHICLE_CLASSES.items():
         low, high = spec["net_t"]
-        if low - tolerance_t <= net_t <= high + tolerance_t:
+        if low - _NET_T_CLASS_TOLERANCE <= net_t <= high + _NET_T_CLASS_TOLERANCE:
             return name
     return None
 
@@ -148,7 +154,7 @@ def test_every_clean_and_hard_negative_shipment_is_realistic(seed):
                 )
                 _, net_high = _VEHICLE_CLASSES[vehicle_class]["net_t"]
                 _, tare_high = _VEHICLE_CLASSES[vehicle_class]["tare_kg"]
-                max_gvw = net_high * 1000 + tare_high
+                max_gvw = (net_high + _NET_T_CLASS_TOLERANCE) * 1000 + tare_high
                 assert gross_kg <= max_gvw, (
                     f"seed {seed}/{sid}: gross_kg={gross_kg} exceeds {vehicle_class}'s "
                     f"legal GVW ceiling {max_gvw}"

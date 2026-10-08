@@ -28,6 +28,7 @@ _PROCESSORS = json.loads((_SEED_DIR / "processors.json").read_text(encoding="utf
 # serialized output, not just top-level dict keys.
 _LEAK_MARKERS = [
     "is_f8",
+    "is_f9",
     '"verified"',
     "issue_types",
     "hard_negatives",
@@ -106,7 +107,7 @@ def test_tools_exclude_ground_truth_only_fields():
             assert marker not in output, f"leak guard failed: {marker!r} found in tool output"
 
 
-def test_shipments_from_truth_strips_is_f8_and_verified():
+def test_shipments_from_truth_strips_is_f8_is_f9_and_verified():
     # Direct check of the T7 boundary this guard relies on: the
     # production shipment shape never carries the generator's own
     # per-shipment evaluation labels, for every processor, not just PWP-08.
@@ -119,6 +120,7 @@ def test_shipments_from_truth_strips_is_f8_and_verified():
         )
         for s in shipments:
             assert "is_f8" not in s
+            assert "is_f9" not in s
             assert "verified" not in s
 
 

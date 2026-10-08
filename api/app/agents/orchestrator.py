@@ -320,6 +320,32 @@ def _summarize_content(content) -> dict:
     return {"role": _get(content, "role"), "parts": summarized_parts}
 
 
+def _last_successful_call(llm_client, start_index: int) -> dict | None:
+    """The most recent success=True record logged since start_index — a
+    single generate_structured()/extract() call retries internally on
+    429/5xx, so 0+ success=False records may precede the one success
+    (or none at all, if every attempt failed and the call raised before
+    reaching here)."""
+    for record in reversed(llm_client.call_log[start_index:]):
+        if record.get("success"):
+            return record
+    return None
+
+
+def _call_fields(record: dict | None) -> dict:
+    """latency_ms/input_tokens/output_tokens/thinking_tokens from a
+    GeminiClient call-log record, as _trail_step kwargs — {} (so
+    _trail_step's own None defaults apply) if no record is available."""
+    if record is None:
+        return {}
+    return {
+        "latency_ms": record.get("latency_ms"),
+        "input_tokens": record.get("input_tokens"),
+        "output_tokens": record.get("output_tokens"),
+        "thinking_tokens": record.get("thinking_tokens"),
+    }
+
+
 def _trail_step(step_index: int, step_type: str, **fields) -> dict:
     row = {
         "step_index": step_index,
@@ -835,6 +861,7 @@ def run_agent_loop(
         )
 
         # 1. Hypothesis — batch-level conclusions AND its own proposed findings.
+        _call_start = len(llm_client.call_log)
         conclusions_response = llm_client.generate_structured(
             [HYPOTHESIS_PROMPT, context_json],
             ConclusionsResponse,
@@ -847,6 +874,7 @@ def run_agent_loop(
                 "hypothesis",
                 input_summary=HYPOTHESIS_PROMPT[:200],
                 output_json=conclusions_response.model_dump_json(),
+                **_call_fields(_last_successful_call(llm_client, _call_start)),
             )
         )
         step_index += 1
@@ -899,6 +927,7 @@ def run_agent_loop(
             f"Hypothesis conclusions:\n{conclusions_only_json}",
             f"Hypothesis's proposed findings:\n{hypothesis_findings_json}",
         ]
+        _call_start = len(llm_client.call_log)
         conversation, tool_cap_reached = llm_client.run_tool_loop(
             contents=critic_seed,
             tools=tools,
@@ -906,29 +935,61 @@ def run_agent_loop(
             purpose="agent_critic_tools",
             thinking_level=thinking_level,
         )
+        # Each round of the internal tool-calling loop is exactly one real
+        # Gemini call, producing exactly one model-turn Content — i.e. one
+        # "critic_tool_call" (has a function_call) or "critic_model_turn"
+        # (the terminal round, plain text) step below, in the same order
+        # these calls were logged. "critic_tool_result" steps are a tool's
+        # local Python execution, never a Gemini call, so they consume no
+        # record (docs/PROGRESS.md).
+        tool_call_records = [r for r in llm_client.call_log[_call_start:] if r.get("success")]
+        tool_call_record_idx = 0
         for content in conversation[len(critic_seed) :]:
             parts = _get(content, "parts") or []
             function_call = next(
                 (_get(p, "function_call") for p in parts if _get(p, "function_call")), None
             )
             if function_call is not None:
+                record = (
+                    tool_call_records[tool_call_record_idx]
+                    if tool_call_record_idx < len(tool_call_records)
+                    else None
+                )
+                tool_call_record_idx += 1
                 trail.append(
                     _trail_step(
                         step_index,
                         "critic_tool_call",
                         tool_name=_get(function_call, "name"),
                         tool_args_json=json.dumps(_get(function_call, "args") or {}, default=str),
+                        **_call_fields(record),
                     )
                 )
             else:
                 role = _get(content, "role")
-                trail.append(
-                    _trail_step(
-                        step_index,
-                        "critic_tool_result" if role == "user" else "critic_model_turn",
-                        output_json=json.dumps(_summarize_content(content), default=str),
+                if role == "user":
+                    trail.append(
+                        _trail_step(
+                            step_index,
+                            "critic_tool_result",
+                            output_json=json.dumps(_summarize_content(content), default=str),
+                        )
                     )
-                )
+                else:
+                    record = (
+                        tool_call_records[tool_call_record_idx]
+                        if tool_call_record_idx < len(tool_call_records)
+                        else None
+                    )
+                    tool_call_record_idx += 1
+                    trail.append(
+                        _trail_step(
+                            step_index,
+                            "critic_model_turn",
+                            output_json=json.dumps(_summarize_content(content), default=str),
+                            **_call_fields(record),
+                        )
+                    )
             step_index += 1
         if tool_cap_reached:
             trail.append(
@@ -951,6 +1012,7 @@ def run_agent_loop(
 
         # 2b. Critic phase 2: final structured call, no tools — a verdict
         # on every Hypothesis finding, plus any new findings of its own.
+        _call_start = len(llm_client.call_log)
         objections_response = llm_client.generate_structured(
             [*conversation, CRITIC_FINAL_PROMPT],
             ObjectionsResponse,
@@ -963,6 +1025,7 @@ def run_agent_loop(
                 "critic_final",
                 input_summary=CRITIC_FINAL_PROMPT[:200],
                 output_json=objections_response.model_dump_json(),
+                **_call_fields(_last_successful_call(llm_client, _call_start)),
             )
         )
         step_index += 1
@@ -1025,6 +1088,7 @@ def run_agent_loop(
                 default=str,
             )
             objections_json = json.dumps([o.model_dump() for o in objections], default=str)
+            _call_start = len(llm_client.call_log)
             revisions_response = llm_client.generate_structured(
                 [
                     REVISION_PROMPT,
@@ -1043,6 +1107,7 @@ def run_agent_loop(
                     "revision",
                     input_summary=REVISION_PROMPT[:200],
                     output_json=revisions_response.model_dump_json(),
+                    **_call_fields(_last_successful_call(llm_client, _call_start)),
                 )
             )
             step_index += 1

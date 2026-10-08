@@ -8,7 +8,7 @@ detected (with the right shipments cited) on the two seeded F8
 processors, confirms no false findings appear elsewhere, and reports the
 real token/cost totals from llm_calls.
 
-Reads ground_truth.json only for scoring (is_f8 / true_verifiable_t) —
+Reads ground_truth.json only for scoring (is_f8 / is_f9 / true_verifiable_t) —
 never for building what the agents themselves see; that boundary is
 scripts/run_pipeline.py's fetch_agent_inputs()/build_processor_context(),
 reused here unchanged (see tests/test_agent_leak_guard.py).
@@ -60,9 +60,14 @@ def _ground_truth_processor(ground_truth: dict, processor_id: str) -> dict:
     return next(p for p in ground_truth["processors"] if p["processor_id"] == processor_id)
 
 
-def _ground_truth_f8_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
+def _ground_truth_true_positive_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
+    """F8 and F9 are both agent-only (no deterministic check sees either),
+    so both count as true positives for this shipment-citation metric —
+    H5's shipment carries neither flag, so it falls out as a false
+    citation through the same cited-minus-true-positive arithmetic
+    H1-H4 already rely on, with no extra special-casing needed."""
     gt_processor = _ground_truth_processor(ground_truth, processor_id)
-    return {s["shipment_id"] for s in gt_processor["shipments"] if s.get("is_f8")}
+    return {s["shipment_id"] for s in gt_processor["shipments"] if s.get("is_f8") or s.get("is_f9")}
 
 
 def _cited_shipment_ids(processor_record: dict) -> set[str]:
@@ -234,11 +239,11 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
     f5_processor_ids = _f5_processor_ids(ground_truth)
 
     for pid, record in run_record["processors"].items():
-        true_f8 = _ground_truth_f8_shipment_ids(ground_truth, pid)
+        true_positive_ids = _ground_truth_true_positive_shipment_ids(ground_truth, pid)
         cited = _cited_shipment_ids(record)
         f7_neutral = _f7_neutral_shipment_ids(ground_truth, pid)
         cited_for_metric = cited - f7_neutral
-        pr = _precision_recall_f1(cited_for_metric, true_f8)
+        pr = _precision_recall_f1(cited_for_metric, true_positive_ids)
         true_verifiable_t = _ground_truth_processor(ground_truth, pid)["true_verifiable_t"]
         abs_error = abs(record["score"]["verifiable_t"] - true_verifiable_t)
         excluded_from_f8_metric = pid in f5_processor_ids
@@ -246,7 +251,7 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
         per_processor[pid] = {
             "cited_shipment_ids": sorted(cited),
             "f7_neutral_shipment_ids": sorted(f7_neutral),
-            "true_f8_shipment_ids": sorted(true_f8),
+            "true_f8_shipment_ids": sorted(true_positive_ids),
             **pr,
             "excluded_from_f8_metric": excluded_from_f8_metric,
             "verifiable_t": record["score"]["verifiable_t"],
@@ -260,7 +265,7 @@ def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
             agg_fn += pr["fn"]
             false_citations.extend(
                 {"processor_id": pid, "shipment_id": sid}
-                for sid in sorted(cited_for_metric - true_f8)
+                for sid in sorted(cited_for_metric - true_positive_ids)
             )
 
     overall_precision = agg_tp / (agg_tp + agg_fp) if (agg_tp + agg_fp) else 1.0
@@ -338,10 +343,13 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
                     "tool_args_json": step["tool_args_json"],
                     "input_summary": step["input_summary"],
                     "output_json": step["output_json"],
-                    "latency_ms": None,
-                    "input_tokens": None,
-                    "output_tokens": None,
-                    "thinking_tokens": None,
+                    # Populated by run_agent_loop from GeminiClient.call_log
+                    # (docs/PROGRESS.md) — None for steps with no
+                    # underlying Gemini call.
+                    "latency_ms": step.get("latency_ms"),
+                    "input_tokens": step.get("input_tokens"),
+                    "output_tokens": step.get("output_tokens"),
+                    "thinking_tokens": step.get("thinking_tokens"),
                 }
             )
         assessment_rows.append(

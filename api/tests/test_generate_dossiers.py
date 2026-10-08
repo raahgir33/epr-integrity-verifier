@@ -50,9 +50,9 @@ def test_two_runs_produce_byte_identical_manifests():
     assert csv1 == csv2
 
 
-def test_every_f1_through_f8_appears_at_least_once(processors_by_id):
+def test_every_f1_through_f9_appears_at_least_once(processors_by_id):
     all_issue_types = {t for p in processors_by_id.values() for t in p.issue_types}
-    for f in [f"F{i}" for i in range(1, 9)]:
+    for f in [f"F{i}" for i in range(1, 10)]:
         assert f in all_issue_types, f"{f} is not assigned to any processor"
 
 
@@ -71,6 +71,16 @@ def test_exactly_one_processor_is_f8_only(processors_by_id):
     assert f8_only == ["PWP-08"]
 
 
+def test_f9_appears_on_exactly_one_processor(processors_by_id):
+    carriers = [pid for pid, p in processors_by_id.items() if "F9" in p.issue_types]
+    assert len(carriers) == 1
+
+
+def test_exactly_one_processor_is_f9_only(processors_by_id):
+    f9_only = [pid for pid, p in processors_by_id.items() if p.issue_types == ["F9"]]
+    assert f9_only == ["PWP-02"]
+
+
 def test_at_least_one_f8_instance_uses_the_hindi_description(pipeline):
     f8_docs = [
         doc
@@ -80,6 +90,61 @@ def test_at_least_one_f8_instance_uses_the_hindi_description(pipeline):
         and doc["fields"]["item_description"]["printed"] in {"प्राइम ग्रेड दाना"}
     ]
     assert f8_docs, "no F8 invoice uses the Hindi semantic-contradiction wording"
+
+
+def test_f9_instance_has_the_handwritten_remark_text(pipeline):
+    f9_remarks = [
+        doc["fields"]["remarks"]["printed"]
+        for dossier in pipeline["dossiers"].values()
+        for doc in dossier.documents
+        if doc["doc_type"] == "weighbridge_slip"
+    ]
+    assert "माल वापस भेजा" in f9_remarks, "no weighbridge slip carries the F9 remark text"
+
+
+def test_h5_instance_has_the_benign_remark_text(pipeline):
+    h5_remarks = [
+        doc["fields"]["remarks"]["printed"]
+        for dossier in pipeline["dossiers"].values()
+        for doc in dossier.documents
+        if doc["doc_type"] == "weighbridge_slip"
+    ]
+    assert "तिरपाल फटा" in h5_remarks, "no weighbridge slip carries the H5 remark text"
+
+
+def test_f9_shipment_is_flagged_and_normal_weight(pipeline):
+    pwp02 = next(p for p in pipeline["ground_truth"]["processors"] if p["processor_id"] == "PWP-02")
+    f9_shipments = [s for s in pwp02["shipments"] if s.get("is_f9")]
+    assert len(f9_shipments) == 1
+    shipment = f9_shipments[0]
+    assert shipment["verified"] is True, "F9 isn't caught by any deterministic check"
+    ratio = shipment["weighbridge_net_t"] / shipment["invoice_qty_t"]
+    assert 0.98 <= ratio <= 1.02, f"F9 shipment's net weight looks abnormal (ratio={ratio:.3f})"
+
+
+def test_h5_shipment_on_pwp04_is_not_the_h3_shipment(pipeline):
+    # Regression guard for the seeded-random index reservation (docs/
+    # PROGRESS.md): H3 (fixed index, ratio ~0.985 — just outside the
+    # normal 0.988-1.012 noise band) and H5 both land on PWP-04 and must
+    # never be the same shipment. No is_h3/is_h5 flag exists, so this
+    # checks it indirectly via the weighbridge-net/invoice-qty ratio: if
+    # the H5-remark shipment's ratio is inside the normal band, it can't
+    # be the one H3's reduced-ratio formula produced.
+    pwp04 = next(p for p in pipeline["ground_truth"]["processors"] if p["processor_id"] == "PWP-04")
+    docs_by_id = {d["doc_id"]: d for d in pipeline["ground_truth"]["documents"]}
+    h5_shipments = [
+        s
+        for s in pwp04["shipments"]
+        if s.get("weighbridge_doc_id")
+        and docs_by_id[s["weighbridge_doc_id"]]["fields"]["remarks"]["printed"] == "तिरपाल फटा"
+    ]
+    assert len(h5_shipments) == 1
+    shipment = h5_shipments[0]
+    ratio = shipment["weighbridge_net_t"] / shipment["invoice_qty_t"]
+    assert 0.988 <= ratio <= 1.012, (
+        f"H5 shipment's ratio ({ratio:.4f}) looks like H3's reduced-ratio shipment — "
+        "index reservation may have collided"
+    )
 
 
 def test_every_f5_carrier_also_carries_a_hard_issue_type(processors_by_id):
@@ -96,9 +161,9 @@ def test_f7_and_h4_only_land_on_recyclers(processors_by_id):
             assert p.type == "recycler", f"{pid} carries F7/H4 but is type {p.type}"
 
 
-def test_all_h1_through_h4_are_assigned(processors_by_id):
+def test_all_h1_through_h5_are_assigned(processors_by_id):
     all_hard_negatives = {h for p in processors_by_id.values() for h in p.hard_negatives}
-    for h in ["H1", "H2", "H3", "H4"]:
+    for h in ["H1", "H2", "H3", "H4", "H5"]:
         assert h in all_hard_negatives
 
 
@@ -106,11 +171,12 @@ def test_f4_original_holder_pwp01_stays_clean(processors_by_id):
     assert processors_by_id["PWP-01"].issue_types == []
 
 
-def test_four_clean_and_six_issue_processors(processors_by_id):
+def test_three_clean_and_seven_issue_processors(processors_by_id):
+    # F9 (added to PWP-02, previously clean) brings this to 3/7 (was 4/6).
     clean = [pid for pid, p in processors_by_id.items() if not p.issue_types]
     issues = [pid for pid, p in processors_by_id.items() if p.issue_types]
-    assert len(clean) == 4
-    assert len(issues) == 6
+    assert len(clean) == 3
+    assert len(issues) == 7
 
 
 def test_eight_recyclers_two_end_of_life(processors_by_id):

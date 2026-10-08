@@ -404,3 +404,15 @@ class GeminiClient:
         with self._lock:
             records, self._call_log = self._call_log, []
         return records
+
+    @property
+    def call_log(self) -> list[dict]:
+        """Non-destructive snapshot of the call log so far — unlike
+        flush_call_log(), never clears the buffer. Lets a caller (the
+        agent orchestrator) correlate the specific calls it just made
+        with their latency/token usage — e.g. snapshot len(call_log)
+        before a call, then slice call_log[start:] after — while
+        flush_call_log() remains the sole, once-per-pipeline-stage drain
+        feeding the llm_calls BigQuery table, unaffected by reads here."""
+        with self._lock:
+            return list(self._call_log)

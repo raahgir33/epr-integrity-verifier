@@ -31,6 +31,7 @@ _PROCESSORS = json.loads((_SEED_DIR / "processors.json").read_text(encoding="utf
 
 _LEAK_MARKERS = [
     "is_f8",
+    "is_f9",
     "issue_types",
     "hard_negatives",
     "site_validated",
@@ -43,8 +44,10 @@ _LEAK_MARKERS = [
 # Whole-word only — a real finding_type/explanation string could
 # coincidentally contain "H1"/"F8" as a substring of an unrelated word;
 # none of this codebase's real prompts ever emit the F/H taxonomy (T10),
-# so this is a belt-and-suspenders check, not an expected hit.
-_TAXONOMY_CODE_RE = re.compile(r"\b[FH][1-8]\b")
+# so this is a belt-and-suspenders check, not an expected hit. [1-9]
+# covers F9 and H5-H9 (only F1-F9/H1-H5 are real codes today, but a
+# tighter per-letter range isn't worth the extra regex complexity).
+_TAXONOMY_CODE_RE = re.compile(r"\b[FH][1-9]\b")
 
 
 def _parse_ddmmyyyy(printed: str) -> datetime.date:
@@ -87,9 +90,10 @@ _SHIPMENT = {
     "supplier_gstin": "27BBBBB0000B1Z5",
     "weighbridge_ticket_no": "WB-08-00001",
     # Ground-truth-only evaluation knowledge — never a real BigQuery
-    # shipments column (app/store/bq.py's SCHEMAS has no is_f8/verified),
-    # injected here anyway as a defense-in-depth check.
+    # shipments column (app/store/bq.py's SCHEMAS has no is_f8/is_f9/
+    # verified), injected here anyway as a defense-in-depth check.
     "is_f8": True,
+    "is_f9": True,
     "verified": True,
 }
 

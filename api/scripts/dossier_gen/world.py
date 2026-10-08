@@ -63,7 +63,15 @@ class Brand:
 # This is the fixed assignment from docs/DATA_SPEC.md §5.
 _PROCESSOR_CATALOG = [
     ("PWP-01", "Sahyadri Green Recyclers Pvt. Ltd.", "recycler", ["I", "II"], 6000, [], []),
-    ("PWP-02", "Sabarmati Polymer Recovery Pvt. Ltd.", "recycler", ["I", "II"], 7200, [], []),
+    (
+        "PWP-02",
+        "Sabarmati Polymer Recovery Pvt. Ltd.",
+        "recycler",
+        ["I", "II"],
+        7200,
+        ["F9"],
+        [],
+    ),
     (
         "PWP-03",
         "Vishwamitri Plastics Recycling Co.",
@@ -73,7 +81,15 @@ _PROCESSOR_CATALOG = [
         [],
         ["H1", "H2"],
     ),
-    ("PWP-04", "Palar Valley Recyclers Pvt. Ltd.", "recycler", ["I", "II"], 8000, [], ["H3", "H4"]),
+    (
+        "PWP-04",
+        "Palar Valley Recyclers Pvt. Ltd.",
+        "recycler",
+        ["I", "II"],
+        8000,
+        [],
+        ["H3", "H4", "H5"],
+    ),
     ("PWP-05", "Ponnaiyar Polymer Works", "recycler", ["I", "II"], 4800, ["F1", "F8"], []),
     ("PWP-06", "Manjira Recycling Industries", "recycler", ["I", "II"], 5200, ["F1", "F3"], []),
     (

@@ -50,7 +50,9 @@ def _run_record(pwp01_cited, pwp01_verifiable_t, concurs_with_check_cited=None):
     }
 
 
-def _ground_truth(pwp01_is_f8_shipment_ids, true_verifiable_t, issue_types=None):
+def _ground_truth(
+    pwp01_is_f8_shipment_ids, true_verifiable_t, issue_types=None, pwp01_is_f9_shipment_ids=()
+):
     return {
         "processors": [
             {
@@ -59,7 +61,8 @@ def _ground_truth(pwp01_is_f8_shipment_ids, true_verifiable_t, issue_types=None)
                 "issue_types": issue_types or [],
                 "shipments": [
                     {"shipment_id": sid, "is_f8": True} for sid in pwp01_is_f8_shipment_ids
-                ],
+                ]
+                + [{"shipment_id": sid, "is_f9": True} for sid in pwp01_is_f9_shipment_ids],
             }
         ]
     }
@@ -75,6 +78,19 @@ def test_compute_run_metrics_correct_citation_and_accurate_verifiable_t():
     assert metrics["mean_verifiable_t_abs_error"] == 0.0
     assert metrics["false_citations"] == []
     assert metrics["agent_status_counts"] == {"ok": 1}
+
+
+def test_compute_run_metrics_f9_citation_is_a_true_positive():
+    # F9 (agent-only, like F8 — docs/DATA_SPEC.md §5) must count as a true
+    # positive for this metric exactly like is_f8 does, with no separate
+    # code path.
+    run_record = _run_record(["SHP-1"], 900.0)
+    ground_truth = _ground_truth([], 900.0, pwp01_is_f9_shipment_ids=["SHP-1"])
+
+    metrics = compute_run_metrics(run_record, ground_truth)
+
+    assert metrics["overall_f1"] == 1.0
+    assert metrics["false_citations"] == []
 
 
 def test_compute_run_metrics_flags_false_citation():

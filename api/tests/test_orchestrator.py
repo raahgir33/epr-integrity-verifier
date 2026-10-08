@@ -24,6 +24,12 @@ from app.models.agent import (
 )
 
 
+def _fake_get(obj, key):
+    if isinstance(obj, dict):
+        return obj.get(key)
+    return getattr(obj, key, None)
+
+
 class _FakeLLMClient:
     def __init__(self, structured_responses, tool_loop_side_effect=None, raise_on_call=None):
         self._structured_responses = list(structured_responses)
@@ -34,6 +40,24 @@ class _FakeLLMClient:
         self.generate_structured_calls = []
         self.run_tool_loop_calls = []
         self.thinking_levels_seen = []
+        # Mirrors GeminiClient.call_log — distinguishable per-call
+        # latency/tokens, so orchestrator tests can assert each trail
+        # step picked up the right record (docs/PROGRESS.md).
+        self.call_log: list[dict] = []
+        self._call_seq = 0
+
+    def _record_call(self, purpose: str) -> None:
+        self._call_seq += 1
+        self.call_log.append(
+            {
+                "purpose": purpose,
+                "success": True,
+                "latency_ms": float(self._call_seq * 100),
+                "input_tokens": self._call_seq * 10,
+                "output_tokens": self._call_seq * 20,
+                "thinking_tokens": self._call_seq,
+            }
+        )
 
     def extract(self, *args, **kwargs):
         raise NotImplementedError
@@ -43,6 +67,7 @@ class _FakeLLMClient:
         self.thinking_levels_seen.append(thinking_level)
         if self._raise_on_call == purpose:
             raise RuntimeError("boom")
+        self._record_call(purpose)
         response = self._structured_responses.pop(0)
         assert isinstance(response, schema)
         return response
@@ -50,7 +75,19 @@ class _FakeLLMClient:
     def run_tool_loop(self, contents, tools, max_tool_calls, purpose, thinking_level=None):
         self.run_tool_loop_calls.append(purpose)
         self.thinking_levels_seen.append(thinking_level)
-        return self._tool_loop_side_effect(contents, tools, max_tool_calls)
+        conversation, tool_cap_reached = self._tool_loop_side_effect(
+            contents, tools, max_tool_calls
+        )
+        # One record per model-turn-producing Content beyond the seed —
+        # the same critic_tool_call/critic_model_turn-vs-critic_tool_result
+        # distinction app/agents/orchestrator.py's run_agent_loop makes.
+        for content in conversation[len(contents) :]:
+            parts = _fake_get(content, "parts") or []
+            has_function_call = any(_fake_get(p, "function_call") for p in parts)
+            role = _fake_get(content, "role")
+            if has_function_call or role != "user":
+                self._record_call(purpose)
+        return conversation, tool_cap_reached
 
 
 def _processor_context(**overrides):
@@ -122,6 +159,56 @@ def _processor_context(**overrides):
 def _text_turn_side_effect(contents, tools, max_tool_calls):
     model_turn = {"role": "model", "parts": [{"text": "no further evidence needed"}]}
     return [*contents, model_turn], False
+
+
+def _tool_call_then_text_side_effect(contents, tools, max_tool_calls):
+    """Two rounds: a function-call round, then a final plain-text round —
+    exercises both call-consuming step types (critic_tool_call,
+    critic_model_turn) and the non-call one (critic_tool_result)."""
+    call_turn = {
+        "role": "model",
+        "parts": [
+            {"function_call": {"name": "get_shipments", "args": {"shipment_ids": ["SHP-1"]}}}
+        ],
+    }
+    result_turn = {
+        "role": "user",
+        "parts": [{"function_response": {"name": "get_shipments", "response": {"result": "ok"}}}],
+    }
+    final_turn = {"role": "model", "parts": [{"text": "no further evidence needed"}]}
+    return [*contents, call_turn, result_turn, final_turn], False
+
+
+def test_trail_steps_carry_per_call_latency_and_tokens():
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(objections=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections], tool_loop_side_effect=_tool_call_then_text_side_effect
+    )
+
+    result = run_agent_loop(_processor_context(), fake, deadline=time.monotonic() + 60)
+
+    steps_by_type = {s["step_type"]: s for s in result["trail"]}
+    assert [s["step_type"] for s in result["trail"]] == [
+        "hypothesis",
+        "critic_tool_call",
+        "critic_tool_result",
+        "critic_model_turn",
+        "critic_final",
+    ]
+    # _FakeLLMClient's _call_seq increments once per real call, in call
+    # order: hypothesis=1, critic_tool_call=2, critic_model_turn=3,
+    # critic_final=4 — critic_tool_result consumes no call at all.
+    assert steps_by_type["hypothesis"]["latency_ms"] == 100.0
+    assert steps_by_type["hypothesis"]["input_tokens"] == 10
+    assert steps_by_type["critic_tool_call"]["latency_ms"] == 200.0
+    assert steps_by_type["critic_tool_call"]["output_tokens"] == 40
+    assert steps_by_type["critic_model_turn"]["latency_ms"] == 300.0
+    assert steps_by_type["critic_final"]["latency_ms"] == 400.0
+    assert steps_by_type["critic_final"]["thinking_tokens"] == 4
+    # Never a real Gemini call — stays unset (None via dict.get).
+    assert steps_by_type["critic_tool_result"].get("latency_ms") is None
+    assert steps_by_type["critic_tool_result"].get("input_tokens") is None
 
 
 def test_happy_path_confirms_accepted_objection_and_cites_shipment():

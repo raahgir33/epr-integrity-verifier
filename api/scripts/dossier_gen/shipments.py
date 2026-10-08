@@ -56,6 +56,17 @@ _EOL_DESCRIPTIONS_HI = [
 _F8_DESCRIPTIONS_EN = ["Virgin LDPE granules", "Fresh film rolls, unused"]
 _F8_DESCRIPTIONS_HI = ["प्राइम ग्रेड दाना"]
 
+# F9 (agent-only, like F8): a weighbridge slip's handwritten remark says
+# the load was sent back / never unloaded, while every printed field
+# (net weight included) looks normal — only a photo-reading agent can
+# catch it, no deterministic check sees a remarks field. H5: a benign
+# handwritten remark on an otherwise-clean shipment, to confirm the
+# agent doesn't over-fire on ordinary handwriting. Both rendered as a
+# Pillow handwriting-style overlay (scripts/dossier_gen/render.py), not
+# through the typed template — see docs/DATA_SPEC.md §5.
+_F9_REMARK_HI = "माल वापस भेजा"
+_H5_REMARK_HI = "तिरपाल फटा"
+
 # Vehicle classes (ASSUMPTION: approximate Indian commercial goods-vehicle
 # GVW/payload bands for scrap/waste road transport — not cited to a
 # specific dated regulatory source, since legal GVW limits are tiered by
@@ -260,18 +271,44 @@ def build_dossier(
     for m in month_for_shipment:
         month_counts[m] = month_counts.get(m, 0) + 1
 
-    # Special-case indices, chosen deterministically after the month layout exists.
-    f3_index = 0 if "F3" in processor.issue_types else None
+    # Special-case indices, chosen deterministically after the month layout
+    # exists. F2/H2/H3/H4/F7 stay fixed at their original positions — no
+    # processor combines more than one of them with each other. F3/F8/F9/H5
+    # are instead drawn from the seeded rng, each excluding any index
+    # another issue on this SAME processor already reserved (T10-F9 realism
+    # fix, docs/PROGRESS.md) — PWP-04 is the motivating case: H3 (fixed,
+    # below) and H5 both need a shipment on the same processor and must
+    # never land on the same one.
     f2_indices = {0, 1} if "F2" in processor.issue_types else set()
     f7_target_month = None
     if "F7" in processor.issue_types:
         f7_target_month = max(month_counts, key=lambda m: month_counts[m])
     h3_index = 0 if "H3" in processor.hard_negatives else None
     h2_index = 0 if "H2" in processor.hard_negatives else None
-    f8_index = 0 if "F8" in processor.issue_types else None
     h4_month = None
     if "H4" in processor.hard_negatives:
         h4_month = FY_MONTHS[8]  # December 2025: a quiet shutdown month
+
+    _reserved_indices: set[int] = set(f2_indices)
+    if h2_index is not None:
+        _reserved_indices.add(h2_index)
+    if h3_index is not None:
+        _reserved_indices.add(h3_index)
+
+    def _reserve_random_index(tag: str) -> int:
+        available = [i for i in range(total_inbound) if i not in _reserved_indices]
+        assert available, (
+            f"{processor.processor_id}: no shipment index left to assign {tag} "
+            f"(total_inbound={total_inbound}, reserved={_reserved_indices})"
+        )
+        index = rng.choice(available)
+        _reserved_indices.add(index)
+        return index
+
+    f3_index = _reserve_random_index("F3") if "F3" in processor.issue_types else None
+    f8_index = _reserve_random_index("F8") if "F8" in processor.issue_types else None
+    f9_index = _reserve_random_index("F9") if "F9" in processor.issue_types else None
+    h5_index = _reserve_random_index("H5") if "H5" in processor.hard_negatives else None
 
     # H2 (long-haul, ~900 km) gets a specific real supplier (Alwar) whose
     # great-circle distance to this processor's site, times ROAD_FACTOR,
@@ -449,6 +486,15 @@ def build_dossier(
             net_kg = net_t * 1000
             gross_kg = net_kg + tare_kg
             out_time = weighbridge_in + datetime.timedelta(minutes=rng.randint(15, 45))
+            # F9/H5: a handwritten remark, rendered as a Pillow overlay on
+            # the photo (render.py) rather than the typed template — every
+            # other printed field (net weight included) stays normal.
+            if i == f9_index:
+                remark_text = _F9_REMARK_HI
+            elif i == h5_index:
+                remark_text = _H5_REMARK_HI
+            else:
+                remark_text = ""
             weighbridge_doc_id = dossier.add_document(
                 "weighbridge_slip",
                 lang,
@@ -463,7 +509,7 @@ def build_dossier(
                     "net_kg": pc(format_indian_number(net_kg, 0), net_kg),
                     "in_time": pc(fmt_datetime(weighbridge_in), weighbridge_in.isoformat()),
                     "out_time": pc(fmt_datetime(out_time), out_time.isoformat()),
-                    "remarks": pc("", ""),
+                    "remarks": pc(remark_text, remark_text),
                 },
             )
             weighbridge_entries.append(
@@ -481,6 +527,7 @@ def build_dossier(
                 "weighbridge_net_t": net_t if weighbridge_doc_id else None,
                 "match_status": "matched" if weighbridge_doc_id else "unmatched",
                 "is_f8": is_f8,
+                "is_f9": i == f9_index,
                 "ewb_no": ewb_no,
                 "vehicle_no": vehicle_no,
                 "distance_km": distance_km,
