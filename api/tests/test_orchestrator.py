@@ -551,6 +551,63 @@ def test_finding_with_full_own_evidence_for_every_cited_shipment_is_deducted():
     assert result["excluded_shipment_ids"] == frozenset({"SHP-1", "SHP-2"})
 
 
+def test_finding_citing_shipment_already_failing_a_check_concurs_with_check():
+    """A finding whose evidence is the same documents a failed/warned
+    deterministic check already cited (docs/PROGRESS.md's concurs-with-
+    check rule) is neutral: shown in the trail, never deducted, never an
+    extra soft-signal bump. SHP-1 fails C4 (weighbridge net far below
+    invoice quantity) — not in verified_inbound_shipment_ids, so
+    cited-ID validation (now filtered to verified shipments, not merely
+    "exists") strips it from cited_shipment_ids; the finding's evidence
+    (that same shipment's invoice/eway/weighbridge docs) still overlaps
+    C4's own evidence_ids, which is what actually triggers the gate."""
+    context = _multi_shipment_context(4)
+    context["shipments"][0]["weighbridge_net_t"] = 50.0  # invoice_qty_t stays 100.0
+    context["check_results"] = [
+        {
+            "check_id": "C4",
+            "status": "fail",
+            "severity": "hard",
+            "evidence_ids": ["DOC-INV-1", "DOC-EWB-1", "DOC-WB-1"],
+            "explanation": "SHP-1 weighbridge net materially below invoice quantity",
+        }
+    ]
+
+    result = _run_with_one_objection(
+        context, ["SHP-1"], evidence_ids=["DOC-INV-1", "DOC-EWB-1", "DOC-WB-1"]
+    )
+
+    assert len(result["confirmed_findings"]) == 1
+    assert result["confirmed_findings"][0].cited_shipment_ids == []
+    assert len(result["concurs_with_check_findings"]) == 1
+    assert result["deductible_findings"] == []
+    assert result["systemic_findings"] == []
+    assert result["no_evidence_findings"] == []
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
+def test_cited_id_validation_filters_to_verified_shipments_not_merely_matched():
+    """A shipment that's matched but fails a hard check (C4) was never
+    counted in verified_inbound tonnes to begin with — citing it can't
+    mean anything for deduction, so it must not survive ID validation
+    into cited_shipment_ids at all, even when the finding's (otherwise
+    valid) evidence doesn't happen to overlap any check's own
+    evidence_ids — SHP-2's own invoice here is real evidence, but unlike
+    the concurs-with-check test above, no check_results entry cites it,
+    so this exercises cited-ID filtering in isolation from that rule."""
+    context = _multi_shipment_context(4)
+    context["shipments"][0]["weighbridge_net_t"] = 50.0  # SHP-1 now fails C4
+
+    result = _run_with_one_objection(context, ["SHP-1"], evidence_ids=["DOC-INV-2"])
+
+    assert len(result["objections"]) == 1
+    assert result["objections"][0].cited_shipment_ids == []
+    assert len(result["confirmed_findings"]) == 1
+    assert result["concurs_with_check_findings"] == []
+    assert len(result["no_evidence_findings"]) == 1
+    assert result["excluded_shipment_ids"] == frozenset()
+
+
 def _hypothesis_finding(**overrides) -> Objection:
     base = {
         "finding_type": "x",

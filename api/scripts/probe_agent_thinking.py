@@ -33,7 +33,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from app.agents.orchestrator import run_agent_loop
+from app.agents.orchestrator import classify_confirmed_findings, run_agent_loop
 from app.agents.scorer import (
     build_disputed_finding_check_result,
     build_no_own_evidence_finding_check_result,
@@ -43,6 +43,8 @@ from app.agents.scorer import (
 from app.checks import params
 from app.ingest.normalize import TRUTH
 from app.llm import GeminiClient
+from app.models.agent import Objection
+from app.models.checks import CheckResult
 from app.store import bq, gcs
 from scripts.cost_report import estimate_cost_usd
 from scripts.run_pipeline import build_processor_context, fetch_agent_inputs, load_ground_truth
@@ -64,9 +66,17 @@ def _ground_truth_f8_shipment_ids(ground_truth: dict, processor_id: str) -> set[
 
 
 def _cited_shipment_ids(processor_record: dict) -> set[str]:
+    """Shipments cited by a confirmed finding, for the F8 precision/
+    recall metric — excluding concurs_with_check_findings (docs/
+    PROGRESS.md): a finding that only restates what a deterministic check
+    already caught is neutral for this metric, neither a true nor a
+    false F8 citation, the same treatment F5/F7 neutrality already gets
+    elsewhere in this module."""
+    concurs_with_check = processor_record["concurs_with_check_findings"]
     return {
         sid
         for finding in processor_record["confirmed_findings"]
+        if finding not in concurs_with_check
         for sid in finding["cited_shipment_ids"]
     }
 
@@ -151,6 +161,9 @@ def run_one(
             "deductible_findings": [f.model_dump() for f in loop_result["deductible_findings"]],
             "systemic_findings": [f.model_dump() for f in loop_result["systemic_findings"]],
             "no_evidence_findings": [f.model_dump() for f in loop_result["no_evidence_findings"]],
+            "concurs_with_check_findings": [
+                f.model_dump() for f in loop_result["concurs_with_check_findings"]
+            ],
             "trail": loop_result["trail"],
             "score": score,
         }
@@ -160,6 +173,7 @@ def run_one(
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "
             f"no_evidence={len(loop_result['no_evidence_findings'])}, "
+            f"concurs_with_check={len(loop_result['concurs_with_check_findings'])}, "
             f"review_flag={len(loop_result['review_flag_findings'])}, "
             f"withdrawn={len(loop_result['withdrawn_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t risk={score['risk_band']}"
@@ -376,8 +390,11 @@ def _print_every_finding(all_runs: list[dict]) -> None:
             print(f"{run_record['config_name']} run {run_record['run_index']} / {pid}:")
             systemic_findings = record["systemic_findings"]
             no_evidence_findings = record["no_evidence_findings"]
+            concurs_with_check_findings = record["concurs_with_check_findings"]
             for f in record["confirmed_findings"]:
-                if f in no_evidence_findings:
+                if f in concurs_with_check_findings:
+                    label = "confirmed, concurs with check (not deducted, no additional bump)"
+                elif f in no_evidence_findings:
                     label = "confirmed, no own evidence (not deducted)"
                 elif f in systemic_findings:
                     label = "confirmed, systemic (not deducted)"
@@ -388,6 +405,76 @@ def _print_every_finding(all_runs: list[dict]) -> None:
                 _print_finding(f, "review flag (agents disagreed, not deducted)")
             for f in record["withdrawn_findings"]:
                 _print_finding(f, "withdrawn (trail only, no scoring effect)")
+
+
+def rescore_and_write(run_path: Path, inputs: dict, gcs_client, bq_client) -> dict:
+    """Re-applies classify_confirmed_findings (a scoring-rule change —
+    docs/PROGRESS.md's concurs-with-check rule) to an already-saved run's
+    confirmed_findings, against this processor's CURRENT check_results —
+    no Gemini call, no re-running the agent loop at all. Overwrites
+    run_path with the corrected record (trail/conclusions/objections/etc.
+    untouched — only the classification buckets, excluded_shipment_ids
+    and score change) and writes it to BigQuery as stage="full", the
+    same write _write_run_to_bigquery always does. Used once, by hand,
+    to land a scoring-rule fix without burning a second ~$3 Gemini run."""
+    run_record = json.loads(run_path.read_text(encoding="utf-8"))
+    processors_by_id = {p["processor_id"]: p for p in inputs["processors"]}
+
+    for pid, record in run_record["processors"].items():
+        processor_context, _ = build_processor_context(inputs, processors_by_id[pid], gcs_client)
+        confirmed_findings = [Objection(**d) for d in record["confirmed_findings"]]
+        classified = classify_confirmed_findings(confirmed_findings, processor_context)
+
+        score_check_results = list(
+            CheckResult(**{k: v for k, v in c.items() if k != "processor_id"})
+            for c in processor_context["check_results"]
+        )
+        if classified["systemic_findings"]:
+            score_check_results.append(
+                build_systemic_finding_check_result(classified["systemic_findings"])
+            )
+        if classified["no_evidence_findings"]:
+            score_check_results.append(
+                build_no_own_evidence_finding_check_result(classified["no_evidence_findings"])
+            )
+        review_flag = [Objection(**d) for d in record["review_flag_findings"]]
+        if review_flag:
+            score_check_results.append(build_disputed_finding_check_result(review_flag))
+
+        score = score_processor(
+            processors_by_id[pid],
+            processor_context["certificates"],
+            processor_context["shipments"],
+            processor_context["duplicate_keys"],
+            score_check_results,
+            inputs["as_of_month"],
+            excluded_shipment_ids=classified["excluded_shipment_ids"],
+        )
+
+        record["deductible_findings"] = [f.model_dump() for f in classified["deductible_findings"]]
+        record["systemic_findings"] = [f.model_dump() for f in classified["systemic_findings"]]
+        record["no_evidence_findings"] = [
+            f.model_dump() for f in classified["no_evidence_findings"]
+        ]
+        record["concurs_with_check_findings"] = [
+            f.model_dump() for f in classified["concurs_with_check_findings"]
+        ]
+        record["score"] = score
+        print(
+            f"  {pid}: rescored — deductible={len(classified['deductible_findings'])} "
+            f"systemic={len(classified['systemic_findings'])} "
+            f"no_evidence={len(classified['no_evidence_findings'])} "
+            f"concurs_with_check={len(classified['concurs_with_check_findings'])} "
+            f"verifiable={score['verifiable_t']:.2f}t risk={score['risk_band']}"
+        )
+
+    run_record["computed_at"] = datetime.now(UTC).isoformat()
+    run_record["metrics"] = compute_run_metrics(run_record, load_ground_truth(SEED))
+    run_path.write_text(json.dumps(run_record, indent=2, default=str), encoding="utf-8")
+    print(f"Rescored, saved: {run_path}")
+    _write_run_to_bigquery(bq_client, run_record)
+    print("Written to BigQuery as stage='full'.")
+    return run_record
 
 
 def main() -> None:
@@ -410,19 +497,31 @@ def main() -> None:
         "should pass 1 — the decision/winner step is skipped whenever fewer than both "
         "configs x 2 runs are present.",
     )
+    parser.add_argument(
+        "--rescore",
+        help="Path to an already-saved agent_probe_runs/*.json to re-classify under the "
+        "CURRENT code (e.g. after a scoring-rule change) and write to BigQuery as "
+        "stage='full' — no Gemini call at all, just a local reclassify + a BigQuery write. "
+        "Mutually exclusive with running new probes.",
+    )
     args = parser.parse_args()
 
     configs = [c for c in CONFIGS if c[0] in args.configs.split(",")]
     runs_per_config = args.runs_per_config
     requested_processors = set(args.processors.split(",")) if args.processors else None
 
-    ground_truth = load_ground_truth(SEED)
     bq_client = bq.get_client()
     gcs_client = gcs.get_client()
     inputs = fetch_agent_inputs(bq_client, SEED, TRUTH, processor_filter=None)
     if inputs is None:
         print("Nothing to probe — run --stage normalize/checks/site first.")
         return
+
+    if args.rescore:
+        rescore_and_write(Path(args.rescore), inputs, gcs_client, bq_client)
+        return
+
+    ground_truth = load_ground_truth(SEED)
     if requested_processors is not None:
         inputs["processors"] = [
             p for p in inputs["processors"] if p["processor_id"] in requested_processors

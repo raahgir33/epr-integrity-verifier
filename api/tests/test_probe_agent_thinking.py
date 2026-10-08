@@ -33,12 +33,17 @@ def _finding(cited_shipment_ids):
     return {"cited_shipment_ids": cited_shipment_ids}
 
 
-def _run_record(pwp01_cited, pwp01_verifiable_t):
+def _run_record(pwp01_cited, pwp01_verifiable_t, concurs_with_check_cited=None):
+    findings = [_finding(pwp01_cited)] if pwp01_cited else []
+    concurs_with_check_findings = (
+        [_finding(concurs_with_check_cited)] if concurs_with_check_cited else []
+    )
     return {
         "processors": {
             "PWP-01": {
                 "agent_status": "ok",
-                "confirmed_findings": [_finding(pwp01_cited)] if pwp01_cited else [],
+                "confirmed_findings": findings + concurs_with_check_findings,
+                "concurs_with_check_findings": concurs_with_check_findings,
                 "score": {"verifiable_t": pwp01_verifiable_t},
             }
         }
@@ -97,6 +102,22 @@ def test_compute_run_metrics_f5_processor_citations_are_excluded_not_false():
     assert metrics["per_processor"]["PWP-01"]["excluded_from_f8_metric"] is True
     # Tonnage accuracy is unaffected by the exclusion.
     assert metrics["mean_verifiable_t_abs_error"] == 900.0
+
+
+def test_compute_run_metrics_concurs_with_check_citation_is_excluded_not_false():
+    # A finding that only restates what a deterministic check already
+    # caught (docs/PROGRESS.md's concurs-with-check rule) must not count
+    # as a false F8 citation — it's scoring-neutral, same treatment as
+    # the F5/F7 exclusions above.
+    run_record = _run_record([], 900.0, concurs_with_check_cited=["SHP-1"])
+    ground_truth = _ground_truth([], 900.0)
+
+    metrics = compute_run_metrics(run_record, ground_truth)
+
+    assert metrics["false_citations"] == []
+    assert metrics["overall_precision"] == 1.0
+    assert metrics["overall_recall"] == 1.0
+    assert metrics["per_processor"]["PWP-01"]["cited_shipment_ids"] == []
 
 
 def test_compute_run_metrics_measures_verifiable_t_error():

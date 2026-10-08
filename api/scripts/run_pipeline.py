@@ -684,7 +684,11 @@ def run_agents(
         # no_evidence_findings and review_flag_findings are all kept
         # (visible in agent_runs/the UI) and instead ride a synthetic
         # soft-signal check result into score_processor's existing
-        # one-step risk-band bump.
+        # one-step risk-band bump. concurs_with_check_findings is also
+        # kept visible but deliberately gets no synthetic check result at
+        # all — it only restates what a deterministic check already
+        # flagged, so it rides that check's own scoring impact rather than
+        # adding a second one.
         score_check_results = list(p_check_results)
         if loop_result["systemic_findings"]:
             score_check_results.append(
@@ -723,6 +727,7 @@ def run_agents(
             f"(deductible={len(loop_result['deductible_findings'])}, "
             f"systemic={len(loop_result['systemic_findings'])}, "
             f"no_evidence={len(loop_result['no_evidence_findings'])}, "
+            f"concurs_with_check={len(loop_result['concurs_with_check_findings'])}, "
             f"review_flag={len(loop_result['review_flag_findings'])}, "
             f"withdrawn={len(loop_result['withdrawn_findings'])}) "
             f"verifiable={score['verifiable_t']:.2f}t unverifiable={score['unverifiable_t']:.2f}t "

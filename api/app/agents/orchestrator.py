@@ -233,23 +233,27 @@ def _valid_evidence_ids(processor_context: dict) -> set[str]:
     return doc_ids | check_evidence
 
 
-def _valid_shipment_ids(processor_context: dict) -> set[str]:
-    return {s["shipment_id"] for s in processor_context["shipments"]}
-
-
-def _filter_objection(objection: Objection, processor_context: dict) -> Objection | None:
+def _filter_objection(
+    objection: Objection, processor_context: dict, verified_shipment_ids: frozenset[str]
+) -> Objection | None:
     """Code-level ID validation (docs/ARCHITECTURE.md §4: "a finding
     without at least one valid evidence ID is discarded") — never trusted
     from the model. Returns None if no valid evidence survives filtering;
     an invented shipment ID is dropped from cited_shipment_ids without
-    discarding the whole finding, since the evidence may still be real."""
+    discarding the whole finding, since the evidence may still be real.
+
+    cited_shipment_ids is filtered against verified_shipment_ids (matched
+    AND passing C3a/C3b/C4/C5 — mass_balance.verified_inbound_shipment_ids),
+    not merely "exists in this processor's data" (docs/PROGRESS.md): a
+    shipment that's unmatched or already failing a hard check was never
+    counted in verified inbound tonnes to begin with, so citing it can't
+    mean anything for deduction and shouldn't survive into a scored
+    finding's cited_shipment_ids."""
     valid_evidence = _valid_evidence_ids(processor_context)
     evidence_ids = [e for e in objection.evidence_ids if e in valid_evidence]
     if not evidence_ids:
         return None
-    cited_shipment_ids = [
-        s for s in objection.cited_shipment_ids if s in _valid_shipment_ids(processor_context)
-    ]
+    cited_shipment_ids = [s for s in objection.cited_shipment_ids if s in verified_shipment_ids]
     return objection.model_copy(
         update={"evidence_ids": evidence_ids, "cited_shipment_ids": cited_shipment_ids}
     )
@@ -340,6 +344,7 @@ def _result(
     deductible_findings=None,
     systemic_findings=None,
     no_evidence_findings=None,
+    concurs_with_check_findings=None,
     excluded_shipment_ids=None,
     trail=None,
     tool_cap_reached=False,
@@ -357,6 +362,7 @@ def _result(
         "deductible_findings": deductible_findings or [],
         "systemic_findings": systemic_findings or [],
         "no_evidence_findings": no_evidence_findings or [],
+        "concurs_with_check_findings": concurs_with_check_findings or [],
         "excluded_shipment_ids": excluded_shipment_ids or frozenset(),
         "trail": trail or [],
         "tool_cap_reached": tool_cap_reached,
@@ -424,15 +430,60 @@ def _evidenced_shipment_ids(
     return frozenset(finding.cited_shipment_ids)
 
 
+_CONCERNING_CHECK_STATUSES = {"fail", "warn"}
+
+
+def _failed_or_warned_check_evidence_ids(check_results: list[dict]) -> frozenset[str]:
+    """Evidence already surfaced by a deterministic check that failed
+    (hard) or warned (soft) — C4/C5 fails, C7/C8 warns, etc. (docs/
+    PROGRESS.md's concurs-with-check rule)."""
+    return frozenset(
+        eid
+        for r in check_results
+        if r.get("status") in _CONCERNING_CHECK_STATUSES
+        for eid in r.get("evidence_ids", [])
+    )
+
+
+def _concurs_with_check(
+    finding: Objection,
+    verified_shipment_ids: frozenset[str],
+    failed_or_warned_evidence: frozenset[str],
+) -> bool:
+    """A confirmed finding adds nothing beyond what a deterministic check
+    already flagged if either: every shipment it cites is already
+    excluded from verified_inbound_shipment_ids by a hard check (mostly
+    moot now that _filter_objection's cited-ID validation only admits
+    verified shipment IDs in the first place — kept as a defense-in-depth
+    guard matching the rule as specified, in case a finding is ever built
+    from an unfiltered cited_shipment_ids list); or its evidence_ids
+    overlap with a failed/warned check's own evidence — the same
+    documents a check already cited. Neutral, not a new signal: shown in
+    the trail, never deducted, never an extra soft-signal risk-band bump
+    (docs/PROGRESS.md)."""
+    if finding.cited_shipment_ids and all(
+        sid not in verified_shipment_ids for sid in finding.cited_shipment_ids
+    ):
+        return True
+    return bool(set(finding.evidence_ids) & failed_or_warned_evidence)
+
+
 def _classify_findings(
     confirmed_findings: list[Objection],
     verified_shipment_ids: frozenset[str],
     shipments_by_id: dict[str, dict],
     documents_by_id: dict[str, dict],
-) -> tuple[list[Objection], list[Objection], list[Objection], frozenset[str]]:
-    """Two guards against over-broad deduction, applied in order, per
-    finding (docs/PROGRESS.md):
+    check_results: list[dict],
+) -> tuple[list[Objection], list[Objection], list[Objection], list[Objection], frozenset[str]]:
+    """Three guards against over-broad or redundant deduction, applied in
+    order, per finding (docs/PROGRESS.md):
 
+    0. Concurs-with-check: a finding that only restates what a
+       deterministic check already caught (see _concurs_with_check) is
+       neutral — kept as a finding (shown in the UI/trail) but moved to
+       concurs_with_check_findings, never deducted and never contributing
+       a soft-signal bump of its own (the check it concurs with already
+       did whatever scoring work was warranted).
     1. Own-evidence rule: a finding whose evidence isn't shipment-level
        only, or doesn't cover every one of its cited shipments (see
        _evidenced_shipment_ids), can't deduct anything — it's kept as a
@@ -445,13 +496,14 @@ def _classify_findings(
        one finding zero out most of the processor's verifiable tonnage.
        Moved to systemic_findings instead of deductible_findings.
 
-    Both app/agents/scorer.py's build_no_own_evidence_finding_check_result
-    and build_systemic_finding_check_result turn their respective
-    non-empty list into a soft-signal risk-band bump instead of a tonnage
-    deduction. excluded_shipment_ids is the union of deductible findings'
-    (full) cited_shipment_ids — computed once here, the single source of
-    truth callers use for the actual deduction, rather than each caller
-    re-deriving it.
+    app/agents/scorer.py's build_no_own_evidence_finding_check_result and
+    build_systemic_finding_check_result turn their respective non-empty
+    list into a soft-signal risk-band bump instead of a tonnage
+    deduction; concurs_with_check_findings gets no such synthetic check
+    result — it is deliberately scoring-neutral. excluded_shipment_ids is
+    the union of deductible findings' (full) cited_shipment_ids —
+    computed once here, the single source of truth callers use for the
+    actual deduction, rather than each caller re-deriving it.
 
     With zero verified shipments, "cites more than half of them" has no
     meaningful denominator — every evidenced finding is deductible in
@@ -460,8 +512,13 @@ def _classify_findings(
     deductible: list[Objection] = []
     systemic: list[Objection] = []
     no_evidence: list[Objection] = []
+    concurs_with_check: list[Objection] = []
     excluded_shipment_ids: set[str] = set()
+    failed_or_warned_evidence = _failed_or_warned_check_evidence_ids(check_results)
     for finding in confirmed_findings:
+        if _concurs_with_check(finding, verified_shipment_ids, failed_or_warned_evidence):
+            concurs_with_check.append(finding)
+            continue
         evidenced = _evidenced_shipment_ids(finding, shipments_by_id, documents_by_id)
         if not evidenced:
             no_evidence.append(finding)
@@ -475,7 +532,49 @@ def _classify_findings(
         else:
             deductible.append(finding)
             excluded_shipment_ids |= evidenced
-    return deductible, systemic, no_evidence, frozenset(excluded_shipment_ids)
+    return deductible, systemic, no_evidence, concurs_with_check, frozenset(excluded_shipment_ids)
+
+
+def classify_confirmed_findings(
+    confirmed_findings: list[Objection], processor_context: dict
+) -> dict:
+    """Public entry point to _classify_findings, for callers that already
+    have a set of confirmed_findings (an agreement outcome a real
+    run_agent_loop call produced) and want to re-run ONLY the
+    deductible/systemic/no_evidence/concurs-with-check classification —
+    e.g. after a scoring-rule change, against a processor's current
+    check_results, without re-calling Gemini at all (docs/PROGRESS.md's
+    concurs-with-check rule rollout; scripts/probe_agent_thinking.py's
+    --rescore mode). run_agent_loop itself also calls this, so the real
+    live path and any offline re-score use the exact same logic.
+
+    Returns {deductible_findings, systemic_findings, no_evidence_findings,
+    concurs_with_check_findings, excluded_shipment_ids}."""
+    verified_shipment_ids = verified_inbound_shipment_ids(
+        processor_context["shipments"], processor_context["duplicate_keys"]
+    )
+    shipments_by_id = {s["shipment_id"]: s for s in processor_context["shipments"]}
+    documents_by_id = {d["doc_id"]: d for d in processor_context["documents"]}
+    (
+        deductible_findings,
+        systemic_findings,
+        no_evidence_findings,
+        concurs_with_check_findings,
+        excluded_shipment_ids,
+    ) = _classify_findings(
+        confirmed_findings,
+        verified_shipment_ids,
+        shipments_by_id,
+        documents_by_id,
+        processor_context["check_results"],
+    )
+    return {
+        "deductible_findings": deductible_findings,
+        "systemic_findings": systemic_findings,
+        "no_evidence_findings": no_evidence_findings,
+        "concurs_with_check_findings": concurs_with_check_findings,
+        "excluded_shipment_ids": excluded_shipment_ids,
+    }
 
 
 def run_agent_loop(
@@ -487,8 +586,8 @@ def run_agent_loop(
     """Returns {conclusions, hypothesis_findings, verdicts, objections,
     revisions, hypothesis_finding_responses, confirmed_findings,
     review_flag_findings, withdrawn_findings, deductible_findings,
-    systemic_findings, no_evidence_findings, excluded_shipment_ids, trail,
-    tool_cap_reached, agent_status}.
+    systemic_findings, no_evidence_findings, concurs_with_check_findings,
+    excluded_shipment_ids, trail, tool_cap_reached, agent_status}.
 
     docs/PROGRESS.md's Hypothesis-findings restructure: the Hypothesis now
     proposes findings of its own (hypothesis_findings, same Objection
@@ -534,6 +633,14 @@ def run_agent_loop(
         context_pack = build_context_pack(processor_context)
         context_json = json.dumps(context_pack, default=str)
 
+        # Computed once, up front: the universe a finding may validly cite
+        # (docs/PROGRESS.md — "verified", not merely "exists in this
+        # processor's data"). Used both by ID-validation below and by
+        # _classify_findings at the end.
+        verified_shipment_ids = verified_inbound_shipment_ids(
+            processor_context["shipments"], processor_context["duplicate_keys"]
+        )
+
         # 1. Hypothesis — batch-level conclusions AND its own proposed findings.
         conclusions_response = llm_client.generate_structured(
             [HYPOTHESIS_PROMPT, context_json],
@@ -561,7 +668,8 @@ def run_agent_loop(
             filtered
             for f in conclusions_response.findings
             if f.effect == "raises_concern"
-            and (filtered := _filter_objection(f, processor_context)) is not None
+            and (filtered := _filter_objection(f, processor_context, verified_shipment_ids))
+            is not None
         ]
 
         if _deadline_exceeded():
@@ -676,7 +784,8 @@ def run_agent_loop(
             filtered
             for o in objections_response.objections
             if o.effect == "raises_concern"
-            and (filtered := _filter_objection(o, processor_context)) is not None
+            and (filtered := _filter_objection(o, processor_context, verified_shipment_ids))
+            is not None
         ]
         # Verdicts on Hypothesis findings — index-validated the same way
         # as any other model-supplied ID. Silence (no verdict at all) is
@@ -785,16 +894,12 @@ def run_agent_loop(
         confirmed_findings = agreed_hypothesis_findings + agreed_critic_findings
         review_flag_findings = review_flag_hypothesis_findings + rejected_critic_findings
 
-        verified_shipment_ids = verified_inbound_shipment_ids(
-            processor_context["shipments"], processor_context["duplicate_keys"]
-        )
-        shipments_by_id = {s["shipment_id"]: s for s in processor_context["shipments"]}
-        documents_by_id = {d["doc_id"]: d for d in processor_context["documents"]}
-        deductible_findings, systemic_findings, no_evidence_findings, excluded_shipment_ids = (
-            _classify_findings(
-                confirmed_findings, verified_shipment_ids, shipments_by_id, documents_by_id
-            )
-        )
+        classified = classify_confirmed_findings(confirmed_findings, processor_context)
+        deductible_findings = classified["deductible_findings"]
+        systemic_findings = classified["systemic_findings"]
+        no_evidence_findings = classified["no_evidence_findings"]
+        concurs_with_check_findings = classified["concurs_with_check_findings"]
+        excluded_shipment_ids = classified["excluded_shipment_ids"]
 
         return _result(
             "ok",
@@ -810,6 +915,7 @@ def run_agent_loop(
             deductible_findings=deductible_findings,
             systemic_findings=systemic_findings,
             no_evidence_findings=no_evidence_findings,
+            concurs_with_check_findings=concurs_with_check_findings,
             excluded_shipment_ids=excluded_shipment_ids,
             trail=trail,
             tool_cap_reached=tool_cap_reached,
