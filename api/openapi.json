@@ -1,0 +1,1472 @@
+{
+  "components": {
+    "schemas": {
+      "AlertsResponse": {
+        "properties": {
+          "alerts": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta"
+        ],
+        "title": "AlertsResponse",
+        "type": "object"
+      },
+      "CheckResultOut": {
+        "properties": {
+          "affected_tonnes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Tonnes"
+          },
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "measured": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "severity",
+          "measured",
+          "threshold",
+          "affected_tonnes",
+          "evidence_ids",
+          "explanation",
+          "source"
+        ],
+        "title": "CheckResultOut",
+        "type": "object"
+      },
+      "DocumentFactsResponse": {
+        "properties": {
+          "doc_id": {
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "extraction_status": {
+            "enum": [
+              "ok",
+              "failed",
+              "not_extracted"
+            ],
+            "title": "Extraction Status",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedFieldOut"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta",
+          "doc_id",
+          "extraction_status",
+          "error_message",
+          "fields"
+        ],
+        "title": "DocumentFactsResponse",
+        "type": "object"
+      },
+      "DocumentListItem": {
+        "properties": {
+          "doc_id": {
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "doc_type": {
+            "title": "Doc Type",
+            "type": "string"
+          },
+          "extraction_status": {
+            "enum": [
+              "ok",
+              "failed",
+              "not_extracted"
+            ],
+            "title": "Extraction Status",
+            "type": "string"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          }
+        },
+        "required": [
+          "doc_id",
+          "doc_type",
+          "lang",
+          "extraction_status"
+        ],
+        "title": "DocumentListItem",
+        "type": "object"
+      },
+      "DocumentsResponse": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentListItem"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meta",
+          "processor_id",
+          "documents"
+        ],
+        "title": "DocumentsResponse",
+        "type": "object"
+      },
+      "EvaluationResponse": {
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "message": {
+            "default": "Evaluation metrics are not yet available \u2014 see docs/BUILD_PLAN.md T14.",
+            "title": "Message",
+            "type": "string"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta"
+        ],
+        "title": "EvaluationResponse",
+        "type": "object"
+      },
+      "ExtractedFieldOut": {
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "field_name": {
+            "title": "Field Name",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "printed_value": {
+            "title": "Printed Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field_name",
+          "printed_value",
+          "confidence",
+          "page"
+        ],
+        "title": "ExtractedFieldOut",
+        "type": "object"
+      },
+      "FindingOut": {
+        "properties": {
+          "cited_shipment_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cited Shipment Ids",
+            "type": "array"
+          },
+          "classification": {
+            "enum": [
+              "deductible",
+              "systemic",
+              "no_own_evidence",
+              "concurs_with_check",
+              "review_flag",
+              "withdrawn"
+            ],
+            "title": "Classification",
+            "type": "string"
+          },
+          "disputed_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effect": {
+            "title": "Effect",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "finding_type": {
+            "title": "Finding Type",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "hypothesis",
+              "critic"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "proposed_by": {
+            "enum": [
+              "hypothesis",
+              "critic"
+            ],
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "finding_type",
+          "classification",
+          "effect",
+          "cited_shipment_ids",
+          "evidence_ids",
+          "explanation",
+          "origin",
+          "proposed_by",
+          "verdict",
+          "disputed_by"
+        ],
+        "title": "FindingOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "facts_source": {
+            "title": "Facts Source",
+            "type": "string"
+          },
+          "seed": {
+            "title": "Seed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seed",
+          "facts_source"
+        ],
+        "title": "Meta",
+        "type": "object"
+      },
+      "MonthlyFlowRow": {
+        "properties": {
+          "certified_t": {
+            "title": "Certified T",
+            "type": "number"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "verified_inbound_t": {
+            "title": "Verified Inbound T",
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "certified_t",
+          "verified_inbound_t"
+        ],
+        "title": "MonthlyFlowRow",
+        "type": "object"
+      },
+      "PortfolioCertificateRow": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "certificate_id": {
+            "title": "Certificate Id",
+            "type": "string"
+          },
+          "period_month": {
+            "title": "Period Month",
+            "type": "string"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "processor_risk_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processor Risk Band"
+          },
+          "quantity_t": {
+            "title": "Quantity T",
+            "type": "number"
+          }
+        },
+        "required": [
+          "certificate_id",
+          "processor_id",
+          "category",
+          "quantity_t",
+          "period_month",
+          "processor_risk_band"
+        ],
+        "title": "PortfolioCertificateRow",
+        "type": "object"
+      },
+      "PortfolioResponse": {
+        "properties": {
+          "brand_id": {
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "brand_name": {
+            "title": "Brand Name",
+            "type": "string"
+          },
+          "certificates": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioCertificateRow"
+            },
+            "title": "Certificates",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "total_certified_t": {
+            "title": "Total Certified T",
+            "type": "number"
+          },
+          "total_verifiable_t": {
+            "title": "Total Verifiable T",
+            "type": "number"
+          }
+        },
+        "required": [
+          "meta",
+          "brand_id",
+          "brand_name",
+          "total_certified_t",
+          "total_verifiable_t",
+          "certificates"
+        ],
+        "title": "PortfolioResponse",
+        "type": "object"
+      },
+      "ProcessorDetailResponse": {
+        "properties": {
+          "agent_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Status"
+          },
+          "check_results": {
+            "items": {
+              "$ref": "#/components/schemas/CheckResultOut"
+            },
+            "title": "Check Results",
+            "type": "array"
+          },
+          "checks_only": {
+            "$ref": "#/components/schemas/StageAssessment"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "full": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StageAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "monthly_flow": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyFlowRow"
+            },
+            "title": "Monthly Flow",
+            "type": "array"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProcessorProfile"
+          }
+        },
+        "required": [
+          "meta",
+          "profile",
+          "monthly_flow",
+          "check_results",
+          "checks_only",
+          "full",
+          "agent_status",
+          "findings"
+        ],
+        "title": "ProcessorDetailResponse",
+        "type": "object"
+      },
+      "ProcessorListResponse": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "processors": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessorSummary"
+            },
+            "title": "Processors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "meta",
+          "processors"
+        ],
+        "title": "ProcessorListResponse",
+        "type": "object"
+      },
+      "ProcessorProfile": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "capacity_t_per_year": {
+            "title": "Capacity T Per Year",
+            "type": "number"
+          },
+          "consent_no": {
+            "title": "Consent No",
+            "type": "string"
+          },
+          "consent_valid_from": {
+            "title": "Consent Valid From",
+            "type": "string"
+          },
+          "consent_valid_to": {
+            "title": "Consent Valid To",
+            "type": "string"
+          },
+          "gstin": {
+            "title": "Gstin",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permitted_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permitted Categories",
+            "type": "array"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "registration_no": {
+            "title": "Registration No",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "processor_id",
+          "name",
+          "type",
+          "capacity_t_per_year",
+          "permitted_categories",
+          "consent_no",
+          "consent_valid_from",
+          "consent_valid_to",
+          "registration_no",
+          "gstin",
+          "address",
+          "lat",
+          "lon"
+        ],
+        "title": "ProcessorProfile",
+        "type": "object"
+      },
+      "ProcessorSummary": {
+        "properties": {
+          "agent_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Status"
+          },
+          "checks_only": {
+            "$ref": "#/components/schemas/StageAssessment"
+          },
+          "full": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StageAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "processor_id",
+          "name",
+          "type",
+          "checks_only",
+          "full",
+          "agent_status"
+        ],
+        "title": "ProcessorSummary",
+        "type": "object"
+      },
+      "ReasoningResponse": {
+        "properties": {
+          "agent_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Status"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ReasoningStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "tool_cap_reached": {
+            "title": "Tool Cap Reached",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "meta",
+          "processor_id",
+          "agent_status",
+          "tool_cap_reached",
+          "steps",
+          "findings"
+        ],
+        "title": "ReasoningResponse",
+        "type": "object"
+      },
+      "ReasoningStepOut": {
+        "properties": {
+          "dedup_hit": {
+            "title": "Dedup Hit",
+            "type": "boolean"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output"
+          },
+          "step_index": {
+            "title": "Step Index",
+            "type": "integer"
+          },
+          "step_type": {
+            "title": "Step Type",
+            "type": "string"
+          },
+          "tokens": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens"
+          },
+          "tool_args": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Args"
+          },
+          "tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Name"
+          }
+        },
+        "required": [
+          "step_index",
+          "step_type",
+          "tool_name",
+          "tool_args",
+          "output",
+          "latency_ms",
+          "tokens",
+          "dedup_hit"
+        ],
+        "title": "ReasoningStepOut",
+        "type": "object"
+      },
+      "RevisionOut": {
+        "properties": {
+          "by": {
+            "const": "hypothesis",
+            "title": "By",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "by",
+          "decision",
+          "explanation"
+        ],
+        "title": "RevisionOut",
+        "type": "object"
+      },
+      "SiteResponse": {
+        "properties": {
+          "building_count": {
+            "title": "Building Count",
+            "type": "integer"
+          },
+          "disclaimer": {
+            "default": "Locations are illustrative and rounded; this is synthetic demo data.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "measured": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "open_buildings_attribution": {
+            "title": "Open Buildings Attribution",
+            "type": "string"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "sentinel_attribution": {
+            "title": "Sentinel Attribution",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "thumb_bbox": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Thumb Bbox",
+            "type": "array"
+          },
+          "thumb_crs": {
+            "title": "Thumb Crs",
+            "type": "string"
+          },
+          "total_footprint_m2": {
+            "title": "Total Footprint M2",
+            "type": "number"
+          }
+        },
+        "required": [
+          "meta",
+          "processor_id",
+          "status",
+          "severity",
+          "measured",
+          "threshold",
+          "building_count",
+          "total_footprint_m2",
+          "thumb_bbox",
+          "thumb_crs",
+          "explanation",
+          "sentinel_attribution",
+          "open_buildings_attribution"
+        ],
+        "title": "SiteResponse",
+        "type": "object"
+      },
+      "StageAssessment": {
+        "properties": {
+          "capacity_limit_t": {
+            "title": "Capacity Limit T",
+            "type": "number"
+          },
+          "certified_t": {
+            "title": "Certified T",
+            "type": "number"
+          },
+          "risk_band": {
+            "title": "Risk Band",
+            "type": "string"
+          },
+          "unverifiable_t": {
+            "title": "Unverifiable T",
+            "type": "number"
+          },
+          "verifiable_t": {
+            "title": "Verifiable T",
+            "type": "number"
+          },
+          "verified_inbound_t": {
+            "title": "Verified Inbound T",
+            "type": "number"
+          }
+        },
+        "required": [
+          "certified_t",
+          "verified_inbound_t",
+          "capacity_limit_t",
+          "verifiable_t",
+          "unverifiable_t",
+          "risk_band"
+        ],
+        "title": "StageAssessment",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerdictOut": {
+        "properties": {
+          "by": {
+            "const": "critic",
+            "default": "critic",
+            "title": "By",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "upheld",
+              "disputed"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "reason"
+        ],
+        "title": "VerdictOut",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "epr-api",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/alerts": {
+      "get": {
+        "description": "The alerts table doesn't exist yet (T13 creates it) \u2014 same reasoning\nas /evaluation above.",
+        "operationId": "get_alerts_alerts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Alerts"
+      }
+    },
+    "/documents/{doc_id}/facts": {
+      "get": {
+        "operationId": "get_document_facts_documents__doc_id__facts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFactsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Document Facts"
+      }
+    },
+    "/documents/{doc_id}/file": {
+      "get": {
+        "description": "doc_id is validated against the documents table for the configured\nseed before any GCS read (docs/BUILD_PLAN.md T11) \u2014 no arbitrary\npaths; the GCS blob path always comes from the row we looked up, never\nfrom the request.",
+        "operationId": "get_document_file_documents__doc_id__file_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "doc_id",
+            "required": true,
+            "schema": {
+              "title": "Doc Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Document File"
+      }
+    },
+    "/evaluation": {
+      "get": {
+        "description": "eval_results isn't in app/store/bq.py's SCHEMAS yet (T14 adds it) \u2014\nthis never queries BigQuery at all, so there's no table-not-found\nfailure mode to handle.",
+        "operationId": "get_evaluation_evaluation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Evaluation"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/portfolio/{brand_id}": {
+      "get": {
+        "operationId": "get_portfolio_portfolio__brand_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "title": "Brand Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Portfolio"
+      }
+    },
+    "/processors": {
+      "get": {
+        "operationId": "list_processors_processors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessorListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Processors"
+      }
+    },
+    "/processors/{processor_id}": {
+      "get": {
+        "operationId": "get_processor_processors__processor_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "processor_id",
+            "required": true,
+            "schema": {
+              "title": "Processor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessorDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Processor"
+      }
+    },
+    "/processors/{processor_id}/documents": {
+      "get": {
+        "operationId": "get_processor_documents_processors__processor_id__documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "processor_id",
+            "required": true,
+            "schema": {
+              "title": "Processor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Processor Documents"
+      }
+    },
+    "/processors/{processor_id}/reasoning": {
+      "get": {
+        "operationId": "get_processor_reasoning_processors__processor_id__reasoning_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "processor_id",
+            "required": true,
+            "schema": {
+              "title": "Processor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Processor Reasoning"
+      }
+    },
+    "/processors/{processor_id}/site": {
+      "get": {
+        "operationId": "get_processor_site_processors__processor_id__site_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "processor_id",
+            "required": true,
+            "schema": {
+              "title": "Processor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Processor Site"
+      }
+    },
+    "/site-images/{processor_id}": {
+      "get": {
+        "description": "Same validation-before-read pattern as /documents/{doc_id}/file \u2014\nthe GCS blob path always comes from the looked-up row.",
+        "operationId": "get_site_image_site_images__processor_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "processor_id",
+            "required": true,
+            "schema": {
+              "title": "Processor Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Site Image"
+      }
+    }
+  }
+}

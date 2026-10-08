@@ -40,7 +40,10 @@ from app.checks.mass_balance import verified_inbound_shipment_ids, verified_inbo
 from app.llm import LLMClient
 from app.models.agent import (
     ConclusionsResponse,
+    CriticVerdict,
     HypothesisConclusion,
+    HypothesisFindingResponse,
+    HypothesisRevision,
     Objection,
     ObjectionsResponse,
     RevisionsResponse,
@@ -577,6 +580,187 @@ def classify_confirmed_findings(
     }
 
 
+def reconstruct_findings(
+    hypothesis_findings: list[Objection],
+    verdicts: list[CriticVerdict],
+    objections: list[Objection],
+    revisions: list[HypothesisRevision],
+    hypothesis_finding_responses: list[HypothesisFindingResponse],
+) -> list[dict]:
+    """The Hypothesis/Critic agreement-merge (docs/PROGRESS.md's
+    Hypothesis-findings restructure) — one entry per finding from either
+    origin, with the verdict/revision metadata that produced its bucket:
+    {finding: Objection, origin: "hypothesis"|"critic",
+    bucket: "confirmed"|"review_flag"|"withdrawn",
+    verdict: CriticVerdict|None, revision: HypothesisRevision|
+    HypothesisFindingResponse|None}.
+
+    Pulled out of run_agent_loop's own step 4 (same index logic, unchanged)
+    so a read-path reconstruction (reconstruct_agent_findings, below) can
+    run the exact same agreement rules against a stored trail — T11's API
+    needs to rebuild per-finding classification that was never persisted
+    to BigQuery, only its aggregate scoring effect — without duplicating
+    this logic a second time.
+
+    Inputs are assumed already index-validated (run_agent_loop and
+    reconstruct_agent_findings both bound-check verdicts/revisions/
+    hypothesis_finding_responses before calling this)."""
+    verdict_by_index = {v.hypothesis_finding_index: v for v in verdicts}
+    upheld_indices = {i for i, v in verdict_by_index.items() if v.verdict == "upheld"}
+    needs_hypothesis_response_indices = set(range(len(hypothesis_findings))) - upheld_indices
+
+    withdrawn_indices = {
+        r.hypothesis_finding_index for r in hypothesis_finding_responses if r.decision == "withdraw"
+    }
+    review_flag_indices = needs_hypothesis_response_indices - withdrawn_indices
+    response_by_hypothesis_index = {
+        r.hypothesis_finding_index: r for r in hypothesis_finding_responses
+    }
+
+    rejected_indices = {r.objection_index for r in revisions if not r.accepted}
+    revision_by_objection_index = {r.objection_index: r for r in revisions}
+
+    enriched: list[dict] = []
+    for i in sorted(upheld_indices):
+        enriched.append(
+            {
+                "finding": hypothesis_findings[i],
+                "origin": "hypothesis",
+                "bucket": "confirmed",
+                "verdict": verdict_by_index.get(i),
+                "revision": None,
+            }
+        )
+    for i in sorted(review_flag_indices):
+        enriched.append(
+            {
+                "finding": hypothesis_findings[i],
+                "origin": "hypothesis",
+                "bucket": "review_flag",
+                "verdict": verdict_by_index.get(i),
+                "revision": response_by_hypothesis_index.get(i),
+            }
+        )
+    for i in sorted(withdrawn_indices):
+        enriched.append(
+            {
+                "finding": hypothesis_findings[i],
+                "origin": "hypothesis",
+                "bucket": "withdrawn",
+                "verdict": verdict_by_index.get(i),
+                "revision": response_by_hypothesis_index.get(i),
+            }
+        )
+    for i, o in enumerate(objections):
+        enriched.append(
+            {
+                "finding": o,
+                "origin": "critic",
+                "bucket": "review_flag" if i in rejected_indices else "confirmed",
+                "verdict": None,
+                "revision": revision_by_objection_index.get(i),
+            }
+        )
+    return enriched
+
+
+def _trail_step_output(trail: list[dict], step_type: str) -> dict | None:
+    """The parsed output_json of the first trail row matching step_type, or
+    None if no such step is in the trail (a timeout/error run can be
+    missing critic_final/revision — never the Hypothesis step, since a
+    deadline check happens right after it logs)."""
+    for step in trail:
+        if step.get("step_type") == step_type and step.get("output_json"):
+            return json.loads(step["output_json"])
+    return None
+
+
+def reconstruct_agent_findings(trail: list[dict], processor_context: dict) -> dict:
+    """Read-path entry point: rebuilds the full finding list + per-finding
+    classification from a STORED agent_runs trail (raw rows: step_type,
+    output_json as a JSON string — step_index order doesn't matter here,
+    every lookup is by step_type) and CURRENT BigQuery data — no Gemini
+    call. processor_context is the same shape run_agent_loop takes
+    (processor/shipments/duplicate_keys/check_results/documents), built
+    fresh by the caller from today's tables, so a finding's classification
+    always reflects today's check_results — the same property
+    scripts/probe_agent_thinking.py's --rescore already relies on
+    (classify_confirmed_findings exists for exactly this kind of reuse).
+
+    Missing steps (a timed-out or errored run can lack critic_final/
+    revision) fall back to that response model's own empty defaults —
+    whatever findings exist simply can't be upheld/revised past that
+    point, which correctly lands them as review flags rather than
+    crashing or silently confirming them (same "disputed-or-unaddressed
+    defaults to review flag" philosophy as the live loop).
+
+    Returns {findings: [{finding: Objection, origin, bucket, verdict,
+    revision, classification}], tool_cap_reached: bool}. classification is
+    "deductible"/"systemic"/"no_own_evidence"/"concurs_with_check" for the
+    confirmed bucket (sub-classified by classify_confirmed_findings), or
+    the bucket name itself ("review_flag"/"withdrawn") otherwise."""
+    conclusions_data = _trail_step_output(trail, "hypothesis") or {}
+    conclusions_response = ConclusionsResponse.model_validate(conclusions_data)
+    critic_final_data = _trail_step_output(trail, "critic_final") or {}
+    objections_response = ObjectionsResponse.model_validate(critic_final_data)
+    revision_data = _trail_step_output(trail, "revision") or {}
+    revisions_response = RevisionsResponse.model_validate(revision_data)
+
+    verified_shipment_ids = verified_inbound_shipment_ids(
+        processor_context["shipments"], processor_context["duplicate_keys"]
+    )
+    hypothesis_findings = [
+        filtered
+        for f in conclusions_response.findings
+        if f.effect == "raises_concern"
+        and (filtered := _filter_objection(f, processor_context, verified_shipment_ids)) is not None
+    ]
+    objections = [
+        filtered
+        for o in objections_response.objections
+        if o.effect == "raises_concern"
+        and (filtered := _filter_objection(o, processor_context, verified_shipment_ids)) is not None
+    ]
+    verdicts = [
+        v
+        for v in objections_response.verdicts
+        if 0 <= v.hypothesis_finding_index < len(hypothesis_findings)
+    ]
+    revisions = [
+        r for r in revisions_response.revisions if 0 <= r.objection_index < len(objections)
+    ]
+    # Bound-checked against hypothesis_findings only (not re-intersected
+    # with "needs a response" the way run_agent_loop's own pre-step-4
+    # filter does) — reconstruct_findings only ever consults a response for
+    # a non-upheld index anyway, so a response for an already-upheld
+    # finding is simply unused, not incorrectly applied.
+    hypothesis_finding_responses = [
+        r
+        for r in revisions_response.hypothesis_finding_responses
+        if 0 <= r.hypothesis_finding_index < len(hypothesis_findings)
+    ]
+
+    enriched = reconstruct_findings(
+        hypothesis_findings, verdicts, objections, revisions, hypothesis_finding_responses
+    )
+    confirmed_findings = [e["finding"] for e in enriched if e["bucket"] == "confirmed"]
+    classified = classify_confirmed_findings(confirmed_findings, processor_context)
+    classification_by_id = {id(f): "deductible" for f in classified["deductible_findings"]}
+    classification_by_id.update({id(f): "systemic" for f in classified["systemic_findings"]})
+    classification_by_id.update(
+        {id(f): "no_own_evidence" for f in classified["no_evidence_findings"]}
+    )
+    classification_by_id.update(
+        {id(f): "concurs_with_check" for f in classified["concurs_with_check_findings"]}
+    )
+
+    for entry in enriched:
+        entry["classification"] = classification_by_id.get(id(entry["finding"]), entry["bucket"])
+
+    tool_cap_reached = any(step.get("step_type") == "tool_cap_reached" for step in trail)
+    return {"findings": enriched, "tool_cap_reached": tool_cap_reached}
+
+
 def run_agent_loop(
     processor_context: dict,
     llm_client: LLMClient,
@@ -862,37 +1046,22 @@ def run_agent_loop(
                 if r.hypothesis_finding_index in needs_hypothesis_response_indices
             ]
 
-        # 4. Merge agreement outcomes from both origins.
-        #
-        # Critic-raised findings (objections): confirmed unless explicitly
-        # rejected (silence = accepted — unchanged default; the Critic's
-        # skepticism is the check here, and not using the one chance to
-        # push back means the finding stands).
-        rejected_indices = {r.objection_index for r in revisions if not r.accepted}
-        agreed_critic_findings = [o for i, o in enumerate(objections) if i not in rejected_indices]
-        rejected_critic_findings = [o for i, o in enumerate(objections) if i in rejected_indices]
-
-        # Hypothesis's own findings: confirmed only if the Critic actively
-        # upheld it (silence is NOT agreement here — see verdicts above).
-        # A disputed-or-unaddressed finding only vanishes entirely if the
-        # Hypothesis EXPLICITLY withdrew it; anything else (maintained, or
-        # the Hypothesis itself never responded) stays a visible review
-        # flag rather than being silently dropped or silently confirmed.
-        withdrawn_indices = {
-            r.hypothesis_finding_index
-            for r in hypothesis_finding_responses
-            if r.decision == "withdraw"
-        }
-        review_flag_indices = needs_hypothesis_response_indices - withdrawn_indices
-
-        agreed_hypothesis_findings = [hypothesis_findings[i] for i in sorted(upheld_indices)]
-        review_flag_hypothesis_findings = [
-            hypothesis_findings[i] for i in sorted(review_flag_indices)
+        # 4. Merge agreement outcomes from both origins — the actual
+        # agreement logic lives in reconstruct_findings (docs/PROGRESS.md),
+        # shared with the read-path reconstruction (reconstruct_agent_
+        # findings) so both use one implementation. Ordering matches the
+        # pre-refactor code exactly: hypothesis-origin findings (upheld,
+        # then review-flagged, then withdrawn) followed by critic-origin
+        # findings in their original order — confirmed_findings below is
+        # byte-for-byte the same list the inline version used to build.
+        enriched_findings = reconstruct_findings(
+            hypothesis_findings, verdicts, objections, revisions, hypothesis_finding_responses
+        )
+        confirmed_findings = [e["finding"] for e in enriched_findings if e["bucket"] == "confirmed"]
+        review_flag_findings = [
+            e["finding"] for e in enriched_findings if e["bucket"] == "review_flag"
         ]
-        withdrawn_findings = [hypothesis_findings[i] for i in sorted(withdrawn_indices)]
-
-        confirmed_findings = agreed_hypothesis_findings + agreed_critic_findings
-        review_flag_findings = review_flag_hypothesis_findings + rejected_critic_findings
+        withdrawn_findings = [e["finding"] for e in enriched_findings if e["bucket"] == "withdrawn"]
 
         classified = classify_confirmed_findings(confirmed_findings, processor_context)
         deductible_findings = classified["deductible_findings"]

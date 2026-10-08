@@ -99,3 +99,27 @@ F7_KWH_PER_T_MAX = 110
 # shipments is treated as a systemic/UI-review flag rather than a normal
 # per-shipment deduction — see app/agents/orchestrator.py.
 SYSTEMIC_FINDING_SHARE_THRESHOLD = 0.5
+
+# T11 (API): one short source label per check, for the UI's
+# "Measured X · Tolerance Y (assumption)" line. Mirrors each check's own
+# threshold comment above, not a new judgement — C1/C5/C6 have no tunable
+# threshold constant at all (C1's limit is a processor fact, not a
+# params.py value; C5/C6 are rule-only, no tolerance), so their label says
+# that explicitly rather than pointing at a constant that doesn't exist.
+CHECK_SOURCE_LABELS: dict[str, str] = {
+    "C1": "Consented capacity (processor-specific fact, not a tunable threshold)",
+    "C2a": "ASSUMPTION (C2A_SHORTFALL_TOL)",
+    "C2b": "ASSUMPTION (MAX_YIELD_RECYCLER)",
+    "C3a": "ASSUMPTION (MAX_AVG_SPEED_KMPH, ROAD_FACTOR)",
+    "C3b": "Rule-derived — GST e-way bill rule (EWB_KM_PER_DAY)",
+    "C4": "ASSUMPTION (QTY_TOL_DOC, QTY_TOL_WEIGHBRIDGE)",
+    "C5": "Rule-derived — document/ticket uniqueness, no tolerance",
+    "C6": "Rule-derived — CTO consent dates and permitted categories, no tolerance",
+    "C7": "ASSUMPTION (KWH_PER_T_MIN, KWH_PER_T_MAX)",
+    "C8": "ASSUMPTION (SITE_RADIUS_M, MIN_BUILDING_CONFIDENCE, MAX_TPA_PER_M2)",
+    # Synthetic soft-signal check results the agent loop appends
+    # (app/agents/scorer.py) — not one of the deterministic C1-C8 checks.
+    "AGENT_SYSTEMIC_FINDING": "ASSUMPTION (SYSTEMIC_FINDING_SHARE_THRESHOLD)",
+    "AGENT_NO_OWN_EVIDENCE_FINDING": "Rule-derived — own-evidence rule, no tolerance",
+    "AGENT_DISPUTED_FINDING": "Rule-derived — Hypothesis/Critic agreement rule, no tolerance",
+}

@@ -134,25 +134,35 @@ Not used: Vertex AI predictive model training (a model trained only on synthetic
 
 ## 7. API surface (`epr-api`)
 
+The API serves exactly one configured `(seed, facts_source)` (`app/config.py`'s `default_seed`/`default_facts_source` — `42`/`"truth"` until the full extraction run, then `"extracted"`). Every response's `meta` field echoes both; a response never mixes the two.
+
 | Method | Path | Returns |
 |---|---|---|
 | GET | `/health` | Status, model, region |
-| GET | `/processors` | List with certified, verifiable, unverifiable tonnes, risk band |
-| GET | `/processors/{id}` | Profile, monthly flow, check results, latest assessment |
-| GET | `/processors/{id}/documents` | Document list with types and extraction status |
-| GET | `/documents/{doc_id}/file` | Streams the file from Cloud Storage |
-| GET | `/documents/{doc_id}/facts` | Extracted fields with confidence |
-| GET | `/processors/{id}/reasoning` | Agent run trail |
-| GET | `/processors/{id}/site` | Site assessment and thumbnail reference |
-| GET | `/site-images/{id}` | Streams the thumbnail |
-| GET | `/portfolio/{brand_id}` | A brand's certificates across processors and how much is verifiable |
-| GET | `/evaluation` | Latest metrics |
-| GET | `/alerts` | Recent alerts |
-| POST | `/demo/certificate-batch` | Creates a run, publishes the scripted batch event, returns `run_id` |
-| GET | `/runs/{run_id}` | Run status: queued, checking, reasoning, done, failed |
-| POST | `/events/certificate-batch` | Pub/Sub push endpoint (token-protected) |
+| GET | `/processors` | List with both assessment stages (`checks_only`, `full`) side by side, risk band, `agent_status` |
+| GET | `/processors/{id}` | Profile, monthly flow, check results (each with its `params.py` source/ASSUMPTION label), both assessment stages, agent findings |
+| GET | `/processors/{id}/documents` | Document list with types and extraction status (`"ok"` / `"failed"` / `"not_extracted"`) |
+| GET | `/documents/{doc_id}/file` | Streams the file from Cloud Storage; `doc_id` validated against `documents` for the configured seed first |
+| GET | `/documents/{doc_id}/facts` | Extracted fields with confidence and page, independent of `facts_source` |
+| GET | `/processors/{id}/reasoning` | Agent run trail (Hypothesis → Critic tool calls → verdicts → revision), plus the same agent findings as `/processors/{id}` |
+| GET | `/processors/{id}/site` | Site assessment, thumbnail reference, attribution strings, synthetic-data disclaimer |
+| GET | `/site-images/{id}` | Streams the thumbnail; validated against `site_assessments` first |
+| GET | `/portfolio/{brand_id}` | A brand's certificates across processors and an apportioned verifiable share (see note below) |
+| GET | `/evaluation` | Explicit `available: false` stub — `eval_results` doesn't exist until T14 |
+| GET | `/alerts` | Explicit empty list — `alerts` doesn't exist until T13 |
+| POST | `/demo/certificate-batch` | Creates a run, publishes the scripted batch event, returns `run_id` (T13) |
+| GET | `/runs/{run_id}` | Run status: queued, checking, reasoning, done, failed (T13) |
+| POST | `/events/certificate-batch` | Pub/Sub push endpoint (token-protected) (T13) |
 
-All GET endpoints serve from the in-process read cache (`store/cache.py`, TTL 60 s, invalidated on new assessments). BigQuery is queried only on a cache miss.
+All GET endpoints serve from the in-process read cache (`store/cache.py`, TTL 60 s). The configured `(seed, facts_source)`'s tables are preloaded into the cache once at startup (every table is small — 10 processors, ~150 shipments, ~700 documents — so this costs one request's worth of BigQuery queries total, not per request); a lazy `get_or_load` with the same TTL serves anything not preloaded (e.g. one document's extracted facts). `invalidate()` exists for T13's live event path to call after writing a new assessment — not used by anything in T11.
+
+**Two assessment stages.** `/processors` and `/processors/{id}` both return `checks_only` and `full` (nullable — `null` until the agent stage has run for that processor) side by side, plus `agent_status` (`"ok"` / `"timeout"` / `"error"` / `null`), so the UI can show the agent's own contribution against the deterministic baseline.
+
+**Agent findings aren't stored per-finding in BigQuery — they're reconstructed.** Only each finding's *aggregate* scoring effect is persisted (`assessments`'s tonnage figures, the three synthetic `AGENT_SYSTEMIC_FINDING`/`AGENT_NO_OWN_EVIDENCE_FINDING`/`AGENT_DISPUTED_FINDING` check results) — the per-finding classification (`deductible` / `systemic` / `no_own_evidence` / `concurs_with_check` / `review_flag` / `withdrawn`), origin (`hypothesis` / `critic`), and verdict/revision detail live only in the `agent_runs` trail's raw structured output while the pipeline runs. `app/agents/orchestrator.py`'s `reconstruct_agent_findings` rebuilds the full finding list from a stored trail plus the processor's *current* `check_results`/`shipments` — the same classification logic `scripts/probe_agent_thinking.py --rescore` already runs offline, now also driving the read path, with no new Gemini call and no new BigQuery table.
+
+**Portfolio apportionment is derived, not traced.** `total_verifiable_t` is each certificate's `quantity_t` scaled by its own processor's `verifiable_t / certified_t` ratio (preferring the `full` stage, falling back to `checks_only`) and summed — scoring never happens below the processor/FY-to-date level anywhere upstream, so this is an apportionment, not a per-certificate traced figure.
+
+OpenAPI schema: `uv run python scripts/export_openapi.py` writes `api/openapi.json`, which T12 generates TypeScript types from.
 
 ## 7a. Data write policy
 

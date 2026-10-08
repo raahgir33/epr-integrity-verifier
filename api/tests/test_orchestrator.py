@@ -6,7 +6,12 @@ can't be overruled, the tool-cap and timeout/error paths never raise.
 
 import time
 
-from app.agents.orchestrator import build_context_pack, run_agent_loop
+from app.agents.orchestrator import (
+    build_context_pack,
+    reconstruct_agent_findings,
+    reconstruct_findings,
+    run_agent_loop,
+)
 from app.models.agent import (
     ConclusionsResponse,
     CriticVerdict,
@@ -795,3 +800,229 @@ def test_unhandled_error_returns_error_status_without_raising():
     assert result["agent_status"] == "error"
     assert result["conclusions"] == []
     assert result["confirmed_findings"] == []
+
+
+# ---------- reconstruct_findings (T11's agreement-merge extraction) ----------
+
+
+def _finding(label: str) -> Objection:
+    return Objection(
+        finding_type=label,
+        effect="raises_concern",
+        cited_shipment_ids=[],
+        evidence_ids=[],
+        explanation=f"explanation for {label}",
+    )
+
+
+def test_reconstruct_findings_covers_every_bucket_both_origins():
+    h0, h1, h2 = _finding("h0"), _finding("h1"), _finding("h2")
+    o0, o1 = _finding("o0"), _finding("o1")
+
+    verdicts = [
+        CriticVerdict(hypothesis_finding_index=0, verdict="upheld", reason="agrees"),
+        CriticVerdict(hypothesis_finding_index=1, verdict="disputed", reason="disagrees"),
+        # h2 gets no verdict at all — silence is not agreement.
+    ]
+    hypothesis_finding_responses = [
+        HypothesisFindingResponse(
+            hypothesis_finding_index=1, decision="maintain", explanation="e1"
+        ),
+        # h2 gets no response either.
+    ]
+    revisions = [HypothesisRevision(objection_index=0, accepted=False, explanation="rejected")]
+    # o1 gets no revision entry at all — silence = accepted (unchanged default).
+
+    enriched = reconstruct_findings(
+        [h0, h1, h2], verdicts, [o0, o1], revisions, hypothesis_finding_responses
+    )
+
+    by_label = {e["finding"].finding_type: e for e in enriched}
+    assert by_label["h0"]["origin"] == "hypothesis"
+    assert by_label["h0"]["bucket"] == "confirmed"
+    assert by_label["h0"]["verdict"].verdict == "upheld"
+    assert by_label["h0"]["revision"] is None
+
+    assert by_label["h1"]["bucket"] == "review_flag"
+    assert by_label["h1"]["verdict"].verdict == "disputed"
+    assert by_label["h1"]["revision"].decision == "maintain"
+
+    assert by_label["h2"]["bucket"] == "review_flag"  # no verdict, no response: still a review flag
+    assert by_label["h2"]["verdict"] is None
+    assert by_label["h2"]["revision"] is None
+
+    assert by_label["o0"]["origin"] == "critic"
+    assert by_label["o0"]["bucket"] == "review_flag"  # explicitly rejected
+    assert by_label["o0"]["revision"].accepted is False
+
+    assert by_label["o1"]["bucket"] == "confirmed"  # silence = accepted
+    assert by_label["o1"]["revision"] is None
+
+    # Ordering matches the pre-refactor inline code exactly: hypothesis
+    # (upheld, review_flag, withdrawn) then critic (original order).
+    assert [e["finding"].finding_type for e in enriched] == ["h0", "h1", "h2", "o0", "o1"]
+
+
+def test_reconstruct_findings_explicit_withdrawal_vanishes_from_live_buckets():
+    h0 = _finding("h0")
+    verdicts = [CriticVerdict(hypothesis_finding_index=0, verdict="disputed", reason="no")]
+    responses = [
+        HypothesisFindingResponse(hypothesis_finding_index=0, decision="withdraw", explanation="ok")
+    ]
+
+    enriched = reconstruct_findings([h0], verdicts, [], [], responses)
+
+    assert len(enriched) == 1
+    assert enriched[0]["bucket"] == "withdrawn"
+    assert enriched[0]["revision"].decision == "withdraw"
+
+
+# ---------- reconstruct_agent_findings (T11's read-path reconstruction) ----------
+
+
+def _agent_run_row(step_index: int, step_type: str, output_model=None) -> dict:
+    return {
+        "step_index": step_index,
+        "step_type": step_type,
+        "tool_name": None,
+        "tool_args_json": None,
+        "input_summary": None,
+        "output_json": output_model.model_dump_json() if output_model is not None else None,
+    }
+
+
+def _processor_context_with_extra_clean_shipments() -> dict:
+    """Two additional matched, uncited shipments so that citing SHP-1 alone
+    is a minority of verified shipments (1/3) — otherwise the systemic-
+    finding guard (>50% of verified shipments) would reclassify a
+    single-shipment citation as "systemic" purely because the fixture has
+    only one shipment total, not because the finding is actually broad."""
+    base = _processor_context()
+    extra = [
+        {
+            **base["shipments"][0],
+            "shipment_id": "SHP-2",
+            "invoice_doc_id": None,
+            "eway_doc_id": None,
+            "weighbridge_doc_id": None,
+        },
+        {
+            **base["shipments"][0],
+            "shipment_id": "SHP-3",
+            "invoice_doc_id": None,
+            "eway_doc_id": None,
+            "weighbridge_doc_id": None,
+        },
+    ]
+    return {**base, "shipments": [*base["shipments"], *extra]}
+
+
+def test_reconstruct_agent_findings_classifies_deductible_finding_from_stored_trail():
+    conclusions = ConclusionsResponse(
+        findings=[
+            Objection(
+                finding_type="virgin material wording",
+                effect="raises_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="HSN 3915 but description reads as virgin granules",
+            )
+        ]
+    )
+    objections = ObjectionsResponse(
+        verdicts=[CriticVerdict(hypothesis_finding_index=0, verdict="upheld", reason="confirmed")]
+    )
+    trail = [
+        _agent_run_row(0, "hypothesis", conclusions),
+        _agent_run_row(1, "critic_final", objections),
+    ]
+
+    result = reconstruct_agent_findings(trail, _processor_context_with_extra_clean_shipments())
+
+    assert result["tool_cap_reached"] is False
+    assert len(result["findings"]) == 1
+    entry = result["findings"][0]
+    assert entry["origin"] == "hypothesis"
+    assert entry["bucket"] == "confirmed"
+    assert entry["classification"] == "deductible"
+    assert entry["finding"].cited_shipment_ids == ["SHP-1"]
+
+
+def test_reconstruct_agent_findings_concurs_with_check_classification():
+    failing_check_results = [
+        {
+            "check_id": "C4",
+            "status": "fail",
+            "severity": "hard",
+            "evidence_ids": ["DOC-INV-1"],
+            "explanation": "weighbridge net below invoice quantity",
+        }
+    ]
+    conclusions = ConclusionsResponse(
+        findings=[
+            Objection(
+                finding_type="weight shortfall",
+                effect="raises_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="same shortfall C4 already caught",
+            )
+        ]
+    )
+    objections = ObjectionsResponse(
+        verdicts=[CriticVerdict(hypothesis_finding_index=0, verdict="upheld", reason="confirmed")]
+    )
+    trail = [
+        _agent_run_row(0, "hypothesis", conclusions),
+        _agent_run_row(1, "critic_final", objections),
+    ]
+
+    result = reconstruct_agent_findings(
+        trail, _processor_context(check_results=failing_check_results)
+    )
+
+    assert len(result["findings"]) == 1
+    assert result["findings"][0]["classification"] == "concurs_with_check"
+
+
+def test_reconstruct_agent_findings_missing_critic_final_defaults_to_review_flag():
+    """A timed-out run can be missing critic_final/revision entirely — the
+    Hypothesis's own finding never got a verdict, so it must land as a
+    review flag, never silently confirmed or dropped."""
+    conclusions = ConclusionsResponse(
+        findings=[
+            Objection(
+                finding_type="virgin material wording",
+                effect="raises_concern",
+                cited_shipment_ids=["SHP-1"],
+                evidence_ids=["DOC-INV-1"],
+                explanation="unresolved — run timed out before a verdict",
+            )
+        ]
+    )
+    trail = [_agent_run_row(0, "hypothesis", conclusions)]
+
+    result = reconstruct_agent_findings(trail, _processor_context())
+
+    assert len(result["findings"]) == 1
+    assert result["findings"][0]["bucket"] == "review_flag"
+    assert result["findings"][0]["classification"] == "review_flag"
+
+
+def test_reconstruct_agent_findings_detects_tool_cap_reached_marker():
+    trail = [
+        _agent_run_row(0, "hypothesis", ConclusionsResponse()),
+        {
+            "step_index": 1,
+            "step_type": "tool_cap_reached",
+            "tool_name": None,
+            "tool_args_json": None,
+            "input_summary": None,
+            "output_json": '{"tool_cap_reached": true}',
+        },
+    ]
+
+    result = reconstruct_agent_findings(trail, _processor_context())
+
+    assert result["tool_cap_reached"] is True
+    assert result["findings"] == []

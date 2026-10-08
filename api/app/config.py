@@ -60,5 +60,12 @@ class Settings(BaseSettings):
     # latency from llm_calls, whichever is larger, once that data exists.
     extract_request_timeout_ms: int = 120_000
 
+    # T11 (API): the API serves exactly one (seed, facts_source) — never
+    # mixed in a response (docs/BUILD_PLAN.md). facts_source switches to
+    # "extracted" once the full 496-document extraction run has happened.
+    default_seed: int = 42
+    default_facts_source: str = "truth"
+    cache_ttl_seconds: int = 60
+
 
 settings = Settings()
