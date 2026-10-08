@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-heading), ui-serif, Georgia, "Times New Roman", serif;
+
+  --color-risk-low: #15803d;
+  --color-risk-medium: #b45309;
+  --color-risk-high: #b91c1c;
+  --color-risk-unknown: #475569;
+}
+
+/* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
+   regardless of the viewer's OS/device fonts, applied only where the API
+   marks content lang="hi" — English body copy keeps --font-sans. */
+:lang(hi) {
+  font-family: var(--font-devanagari), "Noto Sans Devanagari", sans-serif;
+}
+
+/* Amendment 9 (T12 plan): tabular numerals + right-aligned numeric columns
+   in every table. */
+.num-cell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

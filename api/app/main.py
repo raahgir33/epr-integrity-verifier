@@ -16,6 +16,7 @@ from app.config import settings
 from app.geo import site as geo_site
 from app.models.api import (
     AlertsResponse,
+    BrandsResponse,
     DocumentFactsResponse,
     DocumentsResponse,
     EvaluationResponse,
@@ -205,6 +206,14 @@ def get_site_image(processor_id: str) -> Response:
         media_type="image/png",
         headers={"Cache-Control": "public, max-age=86400, immutable"},
     )
+
+
+@app.get("/brands", response_model=BrandsResponse)
+def list_brands() -> dict:
+    """T12: lets the web app offer a brand picker for /portfolio, which
+    otherwise only has GET /portfolio/{brand_id} (needs an ID already in
+    hand)."""
+    return {"meta": _meta(), "brands": cache.list_brands(settings.default_seed)}
 
 
 @app.get("/portfolio/{brand_id}", response_model=PortfolioResponse)

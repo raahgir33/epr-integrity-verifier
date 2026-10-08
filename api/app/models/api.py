@@ -206,6 +206,19 @@ class DocumentFactsResponse(BaseModel):
     fields: list[ExtractedFieldOut]
 
 
+# ---------- brands ----------
+
+
+class BrandListItem(BaseModel):
+    brand_id: str
+    name: str
+
+
+class BrandsResponse(BaseModel):
+    meta: Meta
+    brands: list[BrandListItem]
+
+
 # ---------- portfolio ----------
 
 

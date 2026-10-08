@@ -561,6 +561,12 @@ def get_brand(seed: int, brand_id: str) -> dict | None:
     return None
 
 
+def list_brands(seed: int) -> list[dict]:
+    """T12: lets /portfolio offer a brand picker without an ID already in
+    hand. Sorted by brand_id for a stable listing order."""
+    return sorted(_brands(seed), key=lambda b: b["brand_id"])
+
+
 def get_certificates_for_brand(seed: int, brand_id: str) -> list[dict]:
     return [c for c in _certificates(seed) if c["brand_id"] == brand_id]
 

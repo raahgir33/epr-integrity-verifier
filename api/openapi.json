@@ -22,6 +22,44 @@
         "title": "AlertsResponse",
         "type": "object"
       },
+      "BrandListItem": {
+        "properties": {
+          "brand_id": {
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brand_id",
+          "name"
+        ],
+        "title": "BrandListItem",
+        "type": "object"
+      },
+      "BrandsResponse": {
+        "properties": {
+          "brands": {
+            "items": {
+              "$ref": "#/components/schemas/BrandListItem"
+            },
+            "title": "Brands",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta",
+          "brands"
+        ],
+        "title": "BrandsResponse",
+        "type": "object"
+      },
       "CheckResultOut": {
         "properties": {
           "affected_tonnes": {
@@ -1120,6 +1158,25 @@
           }
         },
         "summary": "Get Alerts"
+      }
+    },
+    "/brands": {
+      "get": {
+        "description": "T12: lets the web app offer a brand picker for /portfolio, which\notherwise only has GET /portfolio/{brand_id} (needs an ID already in\nhand).",
+        "operationId": "list_brands_brands_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Brands"
       }
     },
     "/documents/{doc_id}/facts": {

@@ -1,0 +1,26 @@
+// Proxies GET /site-images/{processorId} so the site panel's <img> loads
+// same-origin and API_BASE_URL stays server-side (same reasoning as
+// app/files/[docId]/route.ts).
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ processorId: string }> },
+): Promise<Response> {
+  const { processorId } = await params;
+  const baseUrl = process.env.API_BASE_URL ?? "http://localhost:8080";
+  const response = await fetch(`${baseUrl}/site-images/${encodeURIComponent(processorId)}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok || !response.body) {
+    return new Response(null, { status: response.status });
+  }
+
+  const headers = new Headers();
+  const contentType = response.headers.get("content-type");
+  if (contentType) headers.set("content-type", contentType);
+  const cacheControl = response.headers.get("cache-control");
+  if (cacheControl) headers.set("cache-control", cacheControl);
+
+  return new Response(response.body, { status: response.status, headers });
+}
