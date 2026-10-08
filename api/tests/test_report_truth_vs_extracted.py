@@ -72,8 +72,12 @@ def test_diff_check_results_flags_check_present_on_only_one_side():
     assert diffs[0]["extracted_status"] == "missing"
 
 
-def _finding(finding_type, cited):
-    return {"finding_type": finding_type, "cited_shipment_ids": cited}
+def _finding(finding_type, cited, classification="deductible"):
+    return {
+        "finding_type": finding_type,
+        "cited_shipment_ids": cited,
+        "classification": classification,
+    }
 
 
 def test_diff_findings_same_type_and_shipments_is_no_diff():
@@ -97,4 +101,41 @@ def test_diff_findings_flags_finding_only_on_one_side():
     extracted = []
     only_truth, only_extracted = diff_findings(truth, extracted)
     assert len(only_truth) == 1
+    assert only_extracted == []
+
+
+def test_diff_findings_different_wording_same_shipments_and_classification_is_no_diff():
+    # Matching is by (shipment set, classification), never free-text
+    # finding_type — the model can describe the same underlying finding
+    # differently between a truth-mode and an extracted-mode run.
+    truth = [_finding("Virgin material described on invoice", ["SHP-1"])]
+    extracted = [_finding("Inbound material description mismatch", ["SHP-1"])]
+    only_truth, only_extracted = diff_findings(truth, extracted)
+    assert only_truth == []
+    assert only_extracted == []
+
+
+def test_diff_findings_same_shipments_different_classification_is_a_diff():
+    truth = [_finding("F8", ["SHP-1"], classification="deductible")]
+    extracted = [_finding("F8", ["SHP-1"], classification="review_flag")]
+    only_truth, only_extracted = diff_findings(truth, extracted)
+    assert len(only_truth) == 1
+    assert len(only_extracted) == 1
+
+
+def test_diff_findings_normalizes_extracted_mode_shipment_ids():
+    # Extracted-mode shipment_ids carry an "EXT-" segment truth mode's
+    # own IDs don't — the exact bug the first real comparison hit.
+    truth = [_finding("F8", ["PWP-06-SHP-003"])]
+    extracted = [_finding("F8", ["PWP-06-EXT-SHP-003"])]
+    only_truth, only_extracted = diff_findings(truth, extracted)
+    assert only_truth == []
+    assert only_extracted == []
+
+
+def test_diff_findings_normalizes_multiple_shipment_ids_regardless_of_order():
+    truth = [_finding("F2", ["PWP-07-SHP-002", "PWP-07-SHP-005"])]
+    extracted = [_finding("F2", ["PWP-07-EXT-SHP-005", "PWP-07-EXT-SHP-002"])]
+    only_truth, only_extracted = diff_findings(truth, extracted)
+    assert only_truth == []
     assert only_extracted == []

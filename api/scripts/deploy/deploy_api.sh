@@ -56,7 +56,8 @@ EXTRACT_REQUEST_TIMEOUT_MS=120000
 # once the full 496-document extraction run has happened (see
 # docs/PROGRESS.md's Deferred Items ledger).
 DEFAULT_SEED=42
-DEFAULT_FACTS_SOURCE=truth
+# DEFAULT_FACTS_SOURCE=truth
+DEFAULT_FACTS_SOURCE=extracted
 
 ENV_VARS="GCP_PROJECT=${GCP_PROJECT}"
 ENV_VARS+=",VERTEX_LOCATION=${VERTEX_LOCATION}"

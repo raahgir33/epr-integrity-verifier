@@ -84,17 +84,48 @@ def diff_check_results(truth_checks: list[dict], extracted_checks: list[dict]) -
     return diffs
 
 
+def _normalize_shipment_id(shipment_id: str) -> str:
+    """Extracted-mode shipment_ids carry an extra "EXT-" segment
+    (app/ingest/normalize.py's match_shipments_from_extracted:
+    f"{processor_id}-EXT-SHP-{i:03d}") that truth-mode's own
+    f"{processor_id}-SHP-{i:03d}" (shipments_from_truth, copied straight
+    from ground_truth.json) doesn't carry — both modes enumerate a
+    processor's inbound invoices 1-indexed in the same order, so
+    stripping "EXT-" makes the two sides' IDs directly comparable.
+    Without this, EVERY finding looked like it only existed on one
+    side, since "PWP-06-EXT-SHP-003" and "PWP-06-SHP-003" never
+    compared equal — confirmed as the dominant source of noise in the
+    first real --facts-source extracted comparison (2026-10-09)."""
+    return shipment_id.replace("EXT-", "", 1)
+
+
+# Only "deductible" findings (docs/DATA_SPEC.md §4a) subtract tonnage from
+# verified_inbound_t — systemic/no_own_evidence/concurs_with_check/
+# review_flag/withdrawn are all kept visible but never deducted. A
+# finding-only-on-one-side diff in any of those classifications is real
+# (the agent genuinely raised something the other side didn't) but can
+# never be the driver of a verifiable_t delta, so the report labels it
+# as such rather than leaving the reader to chase a non-existent
+# tonnage effect.
+_DEDUCTIBLE_CLASSIFICATIONS = {"deductible"}
+
+
 def _finding_signature(finding: dict) -> tuple:
-    return (finding["finding_type"], tuple(sorted(finding["cited_shipment_ids"])))
+    """(normalised cited-shipment set, classification) — not
+    finding_type, which is free text the model writes itself and can
+    describe the same underlying finding differently between a
+    truth-mode and an extracted-mode run (docs/PROGRESS.md: confirmed
+    as the second dominant source of false "only on one side" diffs in
+    the first real comparison, 2026-10-09)."""
+    normalized = frozenset(_normalize_shipment_id(s) for s in finding["cited_shipment_ids"])
+    return (normalized, finding["classification"])
 
 
 def diff_findings(truth_findings: list[dict], extracted_findings: list[dict]) -> tuple[list, list]:
     """truth_findings/extracted_findings: get_findings() rows for one
     processor. Returns (only_in_truth, only_in_extracted), matched by
-    (finding_type, cited_shipment_ids) — the same finding re-raised with
-    different wording on each side is still "the same" by this
-    signature, which is the comparison that matters (does one source
-    produce a finding the other doesn't). Pure — no I/O."""
+    (normalised cited_shipment_ids, classification) — see
+    _finding_signature/_normalize_shipment_id. Pure — no I/O."""
     truth_by_sig = {_finding_signature(f): f for f in truth_findings}
     extracted_by_sig = {_finding_signature(f): f for f in extracted_findings}
     only_truth = [f for sig, f in truth_by_sig.items() if sig not in extracted_by_sig]
@@ -140,15 +171,28 @@ def _print_processor_diff(
     )
     for f in only_truth:
         had_any_diff = True
+        effect = (
+            ""
+            if f["classification"] in _DEDUCTIBLE_CLASSIFICATIONS
+            else " (no tonnage effect — classification doesn't deduct)"
+        )
         print(
-            f"  finding only in truth: {f['finding_type']} cited={f['cited_shipment_ids']} "
+            f"  finding only in truth: {f['finding_type']} classification={f['classification']} "
+            f"cited={f['cited_shipment_ids']}{effect} "
             "-- cause: the agent's own reasoning over this source's evidence didn't confirm "
             "(or wasn't reached on) the matching extracted-mode shipment/document"
         )
     for f in only_extracted:
         had_any_diff = True
+        effect = (
+            ""
+            if f["classification"] in _DEDUCTIBLE_CLASSIFICATIONS
+            else " (no tonnage effect — classification doesn't deduct)"
+        )
         print(
-            f"  finding only in extracted: {f['finding_type']} cited={f['cited_shipment_ids']} "
+            f"  finding only in extracted: {f['finding_type']} "
+            f"classification={f['classification']} "
+            f"cited={f['cited_shipment_ids']}{effect} "
             "-- cause: only surfaced when reasoning over Gemini's own extraction "
             "(e.g. an OCR/extraction artifact, or a real document detail truth mode's "
             "ground-truth shortcut never exercises)"
