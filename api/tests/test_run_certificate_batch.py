@@ -100,6 +100,14 @@ def fake_env(monkeypatch):
         return list(fake_db.get(table, []))
 
     def fake_load_rows(client, table, rows):
+        # Mirrors google.cloud.bigquery.Client.load_table_from_json's own
+        # internal json.dumps(item) per row — a real live bug (2026-10-09,
+        # docs/PROGRESS.md) let a raw datetime slip through get_run's
+        # result and back into a load_rows call, which only fails this
+        # way in production; a fake that just records the dicts as-is
+        # would never have caught it.
+        for row in rows:
+            json.dumps(row)
         loaded.append((table, [dict(r) for r in rows]))
         if table == "runs" and rows:
             runs_table[:] = [rows[0]]

@@ -90,9 +90,28 @@ def get_run(bq_client, run_id: str) -> dict | None:
     batch), so a run_id lookup never needs a second seed parameter. Goes
     through bq.fetch_rows (same as every other read in this module)
     rather than a bespoke query, so tests only ever need to fake one
-    function."""
+    function.
+
+    created_at/updated_at are converted to ISO strings immediately —
+    BigQuery TIMESTAMP columns come back as python datetime objects
+    (same reason _row_timestamp_to_iso exists for shipments elsewhere),
+    and run_certificate_batch holds onto this same dict and writes it
+    straight back to BigQuery at every stage transition (_write_run);
+    a raw datetime there breaks load_table_from_json's own JSON
+    serialization client-side (confirmed live, 2026-10-09 — see
+    docs/PROGRESS.md), which happens *before* the delete-then-load's
+    load half ever reaches BigQuery, so the row's prior delete still
+    goes through — a failure here silently deletes the run row with no
+    replacement, exactly what produced the stuck 404 that surfaced this."""
     rows = bq.fetch_rows(bq_client, "runs", "*", settings.default_seed)
-    return next((r for r in rows if r["run_id"] == run_id), None)
+    row = next((r for r in rows if r["run_id"] == run_id), None)
+    if row is None:
+        return None
+    return {
+        **row,
+        "created_at": _row_timestamp_to_iso(row["created_at"]),
+        "updated_at": _row_timestamp_to_iso(row["updated_at"]),
+    }
 
 
 def _write_run(bq_client, run_row: dict) -> None:
