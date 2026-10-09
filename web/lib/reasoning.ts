@@ -4,6 +4,8 @@
 // loose object (it varies by step_type), so these are hand-written to match
 // the real backend shapes, not generated.
 
+import type { ReasoningStepOut } from "@/lib/api";
+
 export type HypothesisConclusion = {
   certificate_batch: string;
   status: "supported" | "partly_supported" | "unsupported";
@@ -60,3 +62,69 @@ export type ScoreOutput = {
   risk_band_before: string | null;
   risk_band_after: string | null;
 };
+
+// ---------- T13.5b plan, Part 4: reasoning log panel ----------
+
+/** The log panel's agent tag — the brief names exactly Hypothesis/Critic/
+ * Revision/Tool, but `score` is deterministic Python (CLAUDE.md's "the
+ * language model never does arithmetic that matters"), not agent output —
+ * folding it into "Revision" would misattribute a computed number to an
+ * agent, so it gets its own neutral "Score" tag instead. `tool_cap_reached`
+ * folds into "Tool" (it's a tool-loop meta-event, not a new agent). */
+export type StepTag = "Hypothesis" | "Critic" | "Revision" | "Tool" | "Score";
+
+const STEP_TAG: Record<string, StepTag> = {
+  hypothesis: "Hypothesis",
+  critic_tool: "Tool",
+  tool_cap_reached: "Tool",
+  critic_final: "Critic",
+  critic_model_turn: "Critic",
+  revision: "Revision",
+  score: "Score",
+};
+
+export function stepTag(step: ReasoningStepOut): StepTag {
+  return STEP_TAG[step.step_type] ?? "Tool";
+}
+
+/** One-line action description for the log's always-visible row (distinct
+ * from ReasoningTimeline's existing per-type "gist", which this reuses
+ * where it already reads as an action). */
+export function stepActionLine(step: ReasoningStepOut): string {
+  switch (step.step_type) {
+    case "hypothesis": {
+      const output = step.output as unknown as HypothesisOutput | undefined;
+      return output
+        ? `Judged ${output.conclusions.length} certificate batch(es), proposed ${output.findings.length} finding(s)`
+        : "Judged the certificate batches";
+    }
+    case "critic_tool":
+      return step.dedup_hit ? `Reused an earlier ${step.tool_name} call` : `Called ${step.tool_name}`;
+    case "tool_cap_reached":
+      return "Reached its maximum tool calls for this run";
+    case "critic_final": {
+      const output = step.output as unknown as CriticFinalOutput | undefined;
+      return output
+        ? `Issued ${output.verdicts.length} verdict(s) and ${output.objections.length} objection(s)`
+        : "Issued its final objections";
+    }
+    case "critic_model_turn":
+      return "Reasoned over the dossier before its next tool call";
+    case "revision": {
+      const output = step.output as unknown as RevisionOutput | undefined;
+      if (output && "revisions" in output) {
+        const accepted = output.revisions.filter((r) => r.accepted).length;
+        return `Accepted ${accepted} of ${output.revisions.length} Critic objection(s)`;
+      }
+      return "Revised its findings";
+    }
+    case "score": {
+      const output = step.output as unknown as ScoreOutput | undefined;
+      return output
+        ? `Computed the risk band — ${output.risk_band_before ?? "—"} → ${output.risk_band_after ?? "—"}`
+        : "Computed the risk band";
+    }
+    default:
+      return step.step_type;
+  }
+}

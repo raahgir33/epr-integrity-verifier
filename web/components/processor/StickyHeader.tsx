@@ -84,6 +84,24 @@ export function StickyHeader({
           </span>
         )}
       </div>
+
+      {/* T13.5b plan, Part 4: KeyFactsRail's "Type/Capacity/Consent
+          window" block, moved here now that the rail is retired in favor
+          of the docked reasoning panel. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted">
+        <span>
+          Type <span className="font-medium text-ink">{profile.type}</span>
+        </span>
+        <span>
+          Capacity <span className="num-cell font-medium text-ink">{formatTonnes(profile.capacity_t_per_year)}/yr</span>
+        </span>
+        <span>
+          Consent{" "}
+          <span className="font-medium text-ink">
+            {profile.consent_valid_from} – {profile.consent_valid_to}
+          </span>
+        </span>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AlertBanner } from "@/components/demo/AlertBanner";
 import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
-import { KeyFactsRail } from "@/components/processor/KeyFactsRail";
 import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
 import { StickyHeader } from "@/components/processor/StickyHeader";
 import {
@@ -82,24 +81,21 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_16rem] lg:items-start lg:gap-8">
-        <ProcessorTabs
-          processorId={id}
-          checksOnly={processor.checks_only}
-          full={processor.full}
-          agentStatus={processor.agent_status}
-          monthlyFlow={processor.monthly_flow}
-          findings={processor.findings}
-          checkResults={processor.check_results}
-          reasoningSteps={reasoning.steps}
-          documents={documents.documents}
-          factsByDocId={factsByDocId}
-          site={site}
-          memoEn={memoEn}
-          knownDocIds={knownDocIds}
-        />
-        <KeyFactsRail profile={processor.profile} findings={processor.findings} />
-      </div>
+      <ProcessorTabs
+        processorId={id}
+        checksOnly={processor.checks_only}
+        full={processor.full}
+        agentStatus={processor.agent_status}
+        monthlyFlow={processor.monthly_flow}
+        findings={processor.findings}
+        checkResults={processor.check_results}
+        reasoningSteps={reasoning.steps}
+        documents={documents.documents}
+        factsByDocId={factsByDocId}
+        site={site}
+        memoEn={memoEn}
+        knownDocIds={knownDocIds}
+      />
     </div>
   );
 }

@@ -15,9 +15,12 @@ import type {
 } from "@/lib/api";
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
+import { useIsXlUp } from "@/lib/useIsXlUp";
 import { Tabs } from "@/components/ui/Tabs";
 import { SidePanel } from "@/components/ui/SidePanel";
+import { StatTile } from "@/components/ui/StatTile";
 import { CheckCard } from "@/components/processor/CheckCard";
+import { ReasoningPanel } from "@/components/processor/ReasoningPanel";
 import { DocumentsTable } from "@/components/DocumentsTable";
 import { EmptyState } from "@/components/EmptyState";
 import { FindingCard } from "@/components/FindingCard";
@@ -27,6 +30,12 @@ import { MonthlyFlowChart } from "@/components/MonthlyFlowChart";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { SitePanel } from "@/components/SitePanel";
 import { StageComparison } from "@/components/StageComparison";
+
+// Moved from the retired KeyFactsRail (T13.5b plan, Part 4) — same
+// classification buckets, now shown as two small tiles in the Overview
+// tab instead of a standalone right-hand rail.
+const CONFIRMED_CLASSIFICATIONS = new Set(["deductible", "concurs_with_check"]);
+const REVIEW_CLASSIFICATIONS = new Set(["systemic", "no_own_evidence", "review_flag"]);
 
 const TAB_KEYS = ["overview", "checks", "reasoning", "documents", "site", "memo"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
@@ -107,6 +116,14 @@ export function ProcessorTabs({
   const openDocument = documents.find((d) => d.doc_id === openDocId) ?? null;
   const openFacts = openDocId ? factsByDocId[openDocId] : undefined;
 
+  // T13.5b plan, Part 4: at xl and above, the reasoning log docks on the
+  // right instead of living in a tab — isXlUp defaults false (both on the
+  // server and on first client render), so there's no hydration mismatch;
+  // a wide-viewport visitor sees the layout settle right after mount.
+  const isXlUp = useIsXlUp();
+  const confirmedCount = findings.filter((f) => CONFIRMED_CLASSIFICATIONS.has(f.classification)).length;
+  const reviewCount = findings.filter((f) => REVIEW_CLASSIFICATIONS.has(f.classification)).length;
+
   const items = [
     {
       value: "overview" as const,
@@ -114,6 +131,10 @@ export function ProcessorTabs({
       content: (
         <div className="space-y-6">
           <StageComparison checksOnly={checksOnly} full={full} agentStatus={agentStatus} />
+          <div className="grid grid-cols-2 gap-3 sm:w-fit sm:grid-cols-2">
+            <StatTile label="Confirmed findings" value={String(confirmedCount)} />
+            <StatTile label="Review flags" value={String(reviewCount)} />
+          </div>
           <MonthlyFlowChart rows={monthlyFlow} />
           <div>
             <h2 className="font-display text-base font-semibold text-ink">Findings</h2>
@@ -146,11 +167,17 @@ export function ProcessorTabs({
         </div>
       ),
     },
-    {
-      value: "reasoning" as const,
-      label: "Agent reasoning",
-      content: <ReasoningTimeline steps={reasoningSteps} knownDocIds={knownDocIds} />,
-    },
+    // Below xl only — at xl and up the reasoning log docks on the right
+    // instead (ReasoningPanel, rendered alongside Tabs further down).
+    ...(isXlUp
+      ? []
+      : [
+          {
+            value: "reasoning" as const,
+            label: "Agent reasoning",
+            content: <ReasoningTimeline steps={reasoningSteps} knownDocIds={knownDocIds} />,
+          },
+        ]),
     {
       value: "documents" as const,
       label: "Documents",
@@ -177,9 +204,17 @@ export function ProcessorTabs({
     },
   ];
 
+  // If the viewport crosses into xl while a narrower view had "reasoning"
+  // open, that tab no longer exists in `items` above — fall back to
+  // Overview rather than passing Tabs a value with no matching item.
+  const effectiveTab = isXlUp && tab === "reasoning" ? "overview" : tab;
+
   return (
     <DocumentPanelProvider value={setOpenDocId}>
-      <Tabs items={items} value={tab} onValueChange={handleTabChange} />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] xl:items-start xl:gap-8">
+        <Tabs items={items} value={effectiveTab} onValueChange={handleTabChange} />
+        <ReasoningPanel steps={reasoningSteps} knownDocIds={knownDocIds} />
+      </div>
 
       <SidePanel
         open={openDocument !== null}

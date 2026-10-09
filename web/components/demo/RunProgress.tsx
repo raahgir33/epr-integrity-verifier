@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
+import { ShimmerText } from "@/components/ui/ShimmerText";
 import type { RunStatusOut } from "@/lib/api";
 
 const STAGE_ORDER = ["reading_documents", "checking", "reasoning", "drafting_memo"] as const;
@@ -40,12 +41,16 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-ink-muted" />
     );
 
+  const label = STAGE_LABEL[stage] ?? stage;
+
   return (
     <li className="flex items-center gap-2 text-sm">
       {icon}
-      <span className={state === "pending" ? "text-ink-muted" : "text-ink"}>
-        {STAGE_LABEL[stage] ?? stage}
-      </span>
+      {state === "in_progress" ? (
+        <ShimmerText className="font-medium text-ink">{label}</ShimmerText>
+      ) : (
+        <span className={state === "pending" ? "text-ink-muted" : "text-ink"}>{label}</span>
+      )}
       {timing ? <span className="text-xs text-ink-muted">· {timing.duration_s.toFixed(0)}s</span> : null}
     </li>
   );
@@ -124,7 +129,11 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Reasoning trail</p>
           <div className="mt-2">
-            <ReasoningTimeline steps={run.steps} knownDocIds={new Set()} />
+            <ReasoningTimeline
+              steps={run.steps}
+              knownDocIds={new Set()}
+              isLive={run.status !== "done" && run.status !== "failed"}
+            />
           </div>
         </div>
       ) : null}

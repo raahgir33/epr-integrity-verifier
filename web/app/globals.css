@@ -205,6 +205,19 @@
   }
 }
 
+/* T13.5b plan, Part 4: ShimmerText's gradient sweep. Component only
+   applies this animation when prefers-reduced-motion is NOT set (it
+   renders plain static text instead), so the keyframe itself needs no
+   reduced-motion guard here. */
+@keyframes shimmer-text {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 /* Amendment 9 (T12 plan): tabular numerals + right-aligned numeric columns
    in every table. */
 .num-cell {
