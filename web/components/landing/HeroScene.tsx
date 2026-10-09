@@ -1,5 +1,6 @@
+import { MetricTile } from "@/components/ui/MetricTile";
 import type { LandingFigures } from "@/lib/landing";
-import { formatTonnes } from "@/lib/format";
+import { formatTonnesValue } from "@/lib/format";
 
 /** A single parallax image layer for the future hero (T13.5 plan: "Build
  * a HeroScene component now with a static fallback ... and props that
@@ -63,32 +64,33 @@ export function HeroScene({
           </a>
         </div>
 
-        <dl className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-primary-foreground/70">Processors verified</dt>
-            <dd className="num-cell mt-1 text-left font-display text-xl font-semibold tabular-nums sm:text-center">
-              {figures.processorsVerified}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-primary-foreground/70">Certified tonnes reviewed</dt>
-            <dd className="num-cell mt-1 text-left font-display text-xl font-semibold tabular-nums sm:text-center">
-              {formatTonnes(figures.certifiedTonnes)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-primary-foreground/70">Tonnes unverifiable</dt>
-            <dd className="num-cell mt-1 text-left font-display text-xl font-semibold tabular-nums sm:text-center">
-              {formatTonnes(figures.unverifiableTonnes)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-primary-foreground/70">Documents read</dt>
-            <dd className="num-cell mt-1 text-left font-display text-xl font-semibold tabular-nums sm:text-center">
-              {figures.documentsRead}
-            </dd>
-          </div>
-        </dl>
+        {/* T13.5b plan, Part 1: equal-width grid — 2 cols on phones (room
+            for labels to wrap), 4 equal columns from sm (640px) up, well
+            before the "no wrapping at >=1024px" floor; MetricTile keeps
+            value+unit on one shared baseline with the unit styled
+            separately. */}
+        <div className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
+          <MetricTile
+            tone="inverted"
+            value={figures.processorsVerified}
+            label="Processors verified"
+          />
+          <MetricTile
+            tone="inverted"
+            value={figures.certifiedTonnes}
+            formatter={formatTonnesValue}
+            unit="t"
+            label="Certified tonnes reviewed"
+          />
+          <MetricTile
+            tone="inverted"
+            value={figures.unverifiableTonnes}
+            formatter={formatTonnesValue}
+            unit="t"
+            label="Tonnes unverifiable"
+          />
+          <MetricTile tone="inverted" value={figures.documentsRead} label="Documents read" />
+        </div>
       </div>
     </div>
   );

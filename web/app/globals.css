@@ -18,9 +18,14 @@
      of the old binary 16px/18px root-font-size jump at exactly 1280px.
      --text-*--line-height stays Tailwind's own unitless ratio (theme.css)
      — unaffected by overriding the size half of the pair. */
+  /* T13.5b plan, Part 1: ceilings raised (floors unchanged) so table/UI
+     text and prose keep growing past the old 1280px cap instead of going
+     flat early on large desktop viewports — text-sm now tops out at 17px
+     (table/UI text), text-base at 20px (prose), both reached at or before
+     1536px and flat beyond it. */
   --text-xs: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
-  --text-sm: clamp(0.875rem, 0.83rem + 0.25vw, 1rem);
-  --text-base: clamp(1rem, 0.94rem + 0.35vw, 1.125rem);
+  --text-sm: clamp(0.875rem, 0.83rem + 0.25vw, 1.0625rem);
+  --text-base: clamp(1rem, 0.94rem + 0.35vw, 1.25rem);
   --text-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem);
   --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
   --text-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);

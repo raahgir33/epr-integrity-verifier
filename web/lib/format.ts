@@ -8,8 +8,15 @@ const m2Formatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
+/** The number half of formatTonnes, with no " t" suffix — for contexts
+ * (T13.5b plan, Part 1/5: MetricTile, CountUp) that style the unit as its
+ * own separate element rather than concatenating it into one string. */
+export function formatTonnesValue(value: number): string {
+  return tonnesFormatter.format(value);
+}
+
 export function formatTonnes(value: number): string {
-  return `${tonnesFormatter.format(value)} t`;
+  return `${formatTonnesValue(value)} t`;
 }
 
 export function formatSignedTonnes(value: number): string {
