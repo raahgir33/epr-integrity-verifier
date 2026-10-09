@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import { ReasoningLog } from "@/components/reasoning/ReasoningLog";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
@@ -89,20 +90,11 @@ export function ReasoningPanel({
             aria-label={collapsed ? "Expand reasoning panel" : "Collapse reasoning panel"}
             className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunk hover:text-ink"
           >
-            <svg
-              viewBox="0 0 16 16"
+            <ChevronLeft
               aria-hidden
-              className={`h-4 w-4 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
-            >
-              <path
-                d="M10 3 5 8l5 5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+              size={16}
+              className={`transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
+            />
           </button>
         </div>
         {/* hydrated gate avoids a one-frame flash of the wrong collapsed

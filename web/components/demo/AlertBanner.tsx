@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { AlertOut } from "@/lib/api";
 
 /** Shown on / (every alert) and /processors/[id] (that processor's own
@@ -29,9 +30,10 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
           </p>
           <Link
             href={`/processors/${encodeURIComponent(alert.processor_id)}`}
-            className="font-medium text-ink underline decoration-2 underline-offset-4 hover:opacity-80"
+            className="inline-flex items-center gap-1 font-medium text-ink underline decoration-2 underline-offset-4 hover:opacity-80"
           >
-            View {alert.processor_id} →
+            View {alert.processor_id}
+            <ArrowRight aria-hidden size={14} />
           </Link>
         </div>
       ))}

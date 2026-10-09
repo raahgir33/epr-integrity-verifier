@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Menu, X } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
@@ -60,9 +62,21 @@ export function Nav() {
             }}
             className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-ink"
           >
-            <span aria-hidden className="text-base leading-none">
-              {open ? "✕" : "☰"}
-            </span>
+            {/* T13.5c plan, Audit Batch 1: Lucide Menu/X, cross-faded per
+                the make-interfaces-feel-better skill's exact contextual
+                icon-animation spec — replacing the raw unicode glyphs. */}
+            <AnimatePresence initial={false} mode="popLayout">
+              <motion.span
+                key={open ? "close" : "open"}
+                initial={{ opacity: 0, scale: 0.25, filter: "blur(4px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.25, filter: "blur(4px)" }}
+                transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+                className="flex"
+              >
+                {open ? <X aria-hidden size={16} /> : <Menu aria-hidden size={16} />}
+              </motion.span>
+            </AnimatePresence>
           </button>
         </div>
       </PageContainer>

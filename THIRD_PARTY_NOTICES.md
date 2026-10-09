@@ -1,7 +1,24 @@
 # Third-Party Notices
 
-Vendored component source, not published as a package dependency. Each file
-listed here carries the same notice inline, at its top.
+## Lucide (lucide.dev)
+
+ISC License — Copyright (c) Lucide Contributors.
+
+Added as a real npm dependency (`lucide-react`, published under the
+project's standard dependency management — `web/package.json`, pinned
+via `package-lock.json`), not vendored source. Chosen in T13.5c (Audit
+Batch 1) as the single icon family for every icon in the app, replacing
+the mix of hand-drawn inline SVGs and raw unicode glyphs (`✕`/`☰`/`✓`)
+that existed before — `RiskBadge`, the Audience-tab icons, the mobile
+nav toggle, the theme toggle, every expand/collapse chevron, the side
+panel's close button, and the decorative arrows on in-page links. Icons
+are imported as React components (tree-shaken, no runtime fetching);
+`better-auth/better-icons`'s CLI (`npx better-icons search/get`) was
+used only to find exact icon names during this task, not added as a
+dependency or MCP config.
+
+Vendored component source (not published as a package dependency) is
+listed below. Each such file carries the same notice inline, at its top.
 
 ## Magic UI (magicui.design)
 
@@ -49,9 +66,13 @@ was then fetched and read in full before deciding whether to vendor it:
   next-themes"). Not vendored. Built `web/components/ui/MouseEffectCard.tsx`
   instead.
 - `spotlight-cards.json` — declares a dependency on `lucide-react`, again
-  beyond the allow-list. Not vendored. Built
+  beyond this addendum's own allow-list at the time. Not vendored. Built
   `web/components/ui/SpotlightCard.tsx` instead (two variants, per the
-  brief).
+  brief). (`lucide-react` was later added as a real dependency in T13.5c,
+  on a separate, explicit instruction naming it directly — see the
+  Lucide section above; that doesn't retroactively change this
+  decision, since `SpotlightCard.tsx` itself was deleted in that same
+  T13.5c task, per the Update note below.)
 
 No Kokonut source was copied into this repository — this section exists
 to record that the license was checked and why each component was built

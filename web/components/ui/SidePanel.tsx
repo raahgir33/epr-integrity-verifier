@@ -2,6 +2,7 @@
 
 import * as RadixDialog from "@radix-ui/react-dialog";
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 
 /** Slide-over side panel (T13.5 plan, Part 2), built on Radix Dialog —
  * used to show a document's image + extracted fields, or a finding's
@@ -33,14 +34,7 @@ export function SidePanel({
               aria-label="Close panel"
               className="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunk hover:text-ink"
             >
-              <svg viewBox="0 0 16 16" aria-hidden className="h-4 w-4">
-                <path
-                  d="M3 3l10 10M13 3 3 13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <X aria-hidden size={16} />
             </RadixDialog.Close>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>

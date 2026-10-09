@@ -4,8 +4,9 @@
 // Component and passing it across the RSC boundary reliably produced a
 // spurious "missing key" dev warning.
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { ArrowRight, BuildingComplex, Check, ChartBar, Search } from "lucide-react";
 import { RiskBadge } from "@/components/RiskBadge";
 import { STATUS_LABEL } from "@/lib/checks";
 import { classificationLabel } from "@/lib/findings";
@@ -13,49 +14,10 @@ import { formatTonnes } from "@/lib/format";
 import type { ProcessorDetailResponse } from "@/lib/api";
 import type { RealExamples } from "@/lib/landing";
 
-function BrandIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="h-6 w-6">
-      <path
-        d="M4 20V9l8-5 8 5v11M4 20h16M9 20v-6h6v6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ProcessorIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="h-6 w-6">
-      <path
-        d="M4 20V11l4 3v-3l4 3v-3l4 3V6l4-2v16H4Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function AuditorIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="h-6 w-6">
-      <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M15.2 15.2 20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 type Audience = {
   value: string;
   label: string;
-  Icon: () => ReactNode;
+  Icon: typeof BuildingComplex;
   benefits: string[];
   linkHref: string;
   linkLabel: string;
@@ -65,7 +27,7 @@ const AUDIENCES: Audience[] = [
   {
     value: "brands",
     label: "Brand owners",
-    Icon: BrandIcon,
+    Icon: BuildingComplex,
     benefits: [
       "See the share of your certified tonnes that is independently verifiable, not just purchased.",
       "Apportioned across every processor you hold certificates with, from each processor's own verifiable ratio.",
@@ -77,7 +39,7 @@ const AUDIENCES: Audience[] = [
   {
     value: "processors",
     label: "Processors",
-    Icon: ProcessorIcon,
+    Icon: ChartBar,
     benefits: [
       "Every finding comes with its evidence — see exactly what was checked and why.",
       "A finding only becomes a deduction once two independent agents agree on it.",
@@ -89,7 +51,7 @@ const AUDIENCES: Audience[] = [
   {
     value: "auditors",
     label: "Auditors & regulators",
-    Icon: AuditorIcon,
+    Icon: Search,
     benefits: [
       "Cross-processor checks against the same deterministic thresholds, every time.",
       "A full reasoning trail per certificate batch — nothing the agents concluded is hidden.",
@@ -117,7 +79,10 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
           <dt className="text-ink-muted">Verifiable</dt>
           <dd className="num-cell text-ink">{formatTonnes(stage.verifiable_t)}</dd>
         </dl>
-        <p className="mt-3 text-xs font-medium text-primary">See the full portfolio →</p>
+        <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+          See the full portfolio
+          <ArrowRight aria-hidden size={14} />
+        </p>
       </Link>
     );
   }
@@ -134,7 +99,10 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
         <p className="mt-2 text-sm font-medium text-ink">{ex.finding.finding_type}</p>
         <p className="mt-1 text-sm text-ink-muted">{ex.finding.explanation}</p>
         <p className="mt-2 text-xs font-medium text-ink-muted">{classificationLabel(ex.finding)}</p>
-        <p className="mt-3 text-xs font-medium text-primary">Open this processor →</p>
+        <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+          Open this processor
+          <ArrowRight aria-hidden size={14} />
+        </p>
       </Link>
     );
   }
@@ -149,7 +117,10 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
         <span className="text-ink-muted">{STATUS_LABEL[ex.check.status] ?? ex.check.status}</span>
       </p>
       <p className="mt-1 text-sm text-ink-muted">{ex.check.explanation}</p>
-      <p className="mt-3 text-xs font-medium text-primary">See the evaluation protocol →</p>
+      <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+        See the evaluation protocol
+        <ArrowRight aria-hidden size={14} />
+      </p>
     </Link>
   );
 }
@@ -185,7 +156,7 @@ export function AudienceTabs({
                   : "border-border bg-surface text-ink hover:bg-surface-sunk"
               }`}
             >
-              <a.Icon />
+              <a.Icon aria-hidden size={24} strokeWidth={1.5} />
               <span className="font-display text-base font-semibold">{a.label}</span>
             </button>
           );
@@ -197,25 +168,17 @@ export function AudienceTabs({
           <ul className="space-y-4">
             {active.benefits.map((benefit) => (
               <li key={benefit} className="flex gap-3 text-base text-ink">
-                <svg viewBox="0 0 16 16" aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary">
-                  <path
-                    d="M3 8.5 6.2 11.5 13 4.5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <Check aria-hidden size={16} strokeWidth={1.5} className="mt-1 shrink-0 text-primary" />
                 <span>{benefit}</span>
               </li>
             ))}
           </ul>
           <Link
             href={active.linkHref}
-            className="mt-5 inline-block text-sm font-medium text-primary underline decoration-dotted hover:opacity-80"
+            className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary underline decoration-dotted hover:opacity-80"
           >
-            {active.linkLabel} →
+            {active.linkLabel}
+            <ArrowRight aria-hidden size={16} />
           </Link>
         </div>
         <ExampleCard audience={active.value} details={details} examples={examples} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Check } from "lucide-react";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
@@ -26,7 +27,7 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
   const icon =
     state === "done" ? (
       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-risk-low/10 text-risk-low">
-        ✓
+        <Check aria-hidden size={14} />
       </span>
     ) : state === "in_progress" ? (
       <AILoadingSpinner className="h-5 w-5 shrink-0" />

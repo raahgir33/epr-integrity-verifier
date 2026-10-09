@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { AlertBanner } from "@/components/demo/AlertBanner";
 import { ProcessorLiveRun } from "@/components/processor/ProcessorLiveRun";
 import { StickyHeader } from "@/components/processor/StickyHeader";
@@ -62,8 +63,9 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <Link href="/" className="text-sm text-ink-muted hover:text-ink">
-        ← Overview
+      <Link href="/" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+        <ArrowLeft aria-hidden size={14} />
+        Overview
       </Link>
 
       <StickyHeader

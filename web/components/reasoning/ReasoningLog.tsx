@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown } from "lucide-react";
 import { AnimatedListItem } from "@/components/magicui/animated-list";
 import { StepDetail } from "@/components/reasoning/StepDetail";
 import type { ReasoningStepOut } from "@/lib/api";
@@ -62,20 +63,11 @@ function LogRowContent({
               arguments, results) are untouched. */}
           <span className="mt-0.5 block text-sm text-ink-muted">{titleCase(stepActionLine(step))}</span>
         </span>
-        <svg
-          viewBox="0 0 16 16"
+        <ChevronDown
           aria-hidden
-          className={`mt-0.5 h-4 w-4 shrink-0 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        >
-          <path
-            d="M4 6l4 4 4-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+          size={16}
+          className={`mt-0.5 shrink-0 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
       <AnimatePresence initial={false}>
         {open ? (

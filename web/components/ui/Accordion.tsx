@@ -2,6 +2,7 @@
 
 import * as RadixAccordion from "@radix-ui/react-accordion";
 import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 
 export type AccordionItemData = {
   id: string;
@@ -19,20 +20,11 @@ function AccordionItems({ items }: { items: AccordionItemData[] }) {
           <RadixAccordion.Header>
             <RadixAccordion.Trigger className={ITEM_CLASSNAME}>
               {item.trigger}
-              <svg
-                viewBox="0 0 16 16"
+              <ChevronDown
                 aria-hidden
-                className="h-4 w-4 shrink-0 text-ink-muted transition-transform duration-200 group-data-[state=open]:rotate-180"
-              >
-                <path
-                  d="M4 6l4 4 4-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+                size={16}
+                className="shrink-0 text-ink-muted transition-transform duration-200 group-data-[state=open]:rotate-180"
+              />
             </RadixAccordion.Trigger>
           </RadixAccordion.Header>
           <RadixAccordion.Content className="accordion-content text-sm text-ink-muted">
