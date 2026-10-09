@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
+import { CountUp } from "@/components/ui/CountUp";
 import type { ProcessorProfile, StageAssessment } from "@/lib/api";
 import { formatTonnes } from "@/lib/format";
 import { titleCase } from "@/lib/titleCase";
@@ -58,10 +59,11 @@ export function StickyHeader({
 
       <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         <span className="text-ink-muted">
-          Certified <span className="num-cell font-medium text-ink">{formatTonnes(certifiedT)}</span>
+          Certified <CountUp value={certifiedT} formatter={formatTonnes} className="font-medium text-ink" />
         </span>
         <span className="text-ink-muted">
-          Verifiable <span className="num-cell font-medium text-ink">{formatTonnes(stage.verifiable_t)}</span>
+          Verifiable{" "}
+          <CountUp value={stage.verifiable_t} formatter={formatTonnes} className="font-medium text-ink" />
         </span>
         {clean ? (
           <span className="inline-flex items-center gap-1 font-medium text-risk-low">
@@ -80,7 +82,11 @@ export function StickyHeader({
         ) : (
           <span className="text-ink-muted">
             Unverifiable{" "}
-            <span className="num-cell font-medium text-risk-high">{formatTonnes(stage.unverifiable_t)}</span>
+            <CountUp
+              value={stage.unverifiable_t}
+              formatter={formatTonnes}
+              className="font-medium text-risk-high"
+            />
           </span>
         )}
       </div>

@@ -84,10 +84,14 @@ const TONE_STYLES: Record<string, { bg: string; text: string; ring: string; Icon
 };
 
 export function RiskBadge({ band }: { band: string }) {
-  const tone = TONE_STYLES[riskBandTone(band)];
+  const toneName = riskBandTone(band);
+  const tone = TONE_STYLES[toneName];
+  // T13.5b plan, Part 5: the glow accent is reserved for High risk and
+  // the live-run alert only — never a default decoration on every badge.
+  const glow = toneName === "high" ? "glow-pulse" : "";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium ring-1 ring-inset ${tone.bg} ${tone.text} ${tone.ring}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium ring-1 ring-inset ${tone.bg} ${tone.text} ${tone.ring} ${glow}`}
     >
       <tone.Icon />
       {band}

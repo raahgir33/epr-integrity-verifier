@@ -10,20 +10,22 @@ import { formatTonnesValue } from "@/lib/format";
 export function ProofStrip({ figures }: { figures: LandingFigures }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <MetricTile value={figures.processorsVerified} label="Processors verified" />
+      <MetricTile countUp value={figures.processorsVerified} label="Processors verified" />
       <MetricTile
+        countUp
         value={figures.certifiedTonnes}
         formatter={formatTonnesValue}
         unit="t"
         label="Certified tonnes reviewed"
       />
       <MetricTile
+        countUp
         value={figures.unverifiableTonnes}
         formatter={formatTonnesValue}
         unit="t"
         label="Tonnes unverifiable"
       />
-      <MetricTile value={figures.documentsRead} label="Documents read" />
+      <MetricTile countUp value={figures.documentsRead} label="Documents read" />
     </div>
   );
 }

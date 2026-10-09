@@ -205,6 +205,35 @@
   }
 }
 
+/* T13.5b plan, Part 5: the luminous-green glow accent — High risk badges
+   and the live-run alert only (never a decorative default). A static
+   halo always shows; the pulsing animation itself is reduced-motion
+   gated here in CSS, not left to the component, so every future caller
+   of this class gets that for free. */
+.glow-pulse {
+  box-shadow:
+    0 0 0 1px var(--color-glow),
+    0 0 10px 1px color-mix(in srgb, var(--color-glow) 50%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glow-pulse {
+    animation: glow-pulse 2.2s ease-in-out infinite;
+  }
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px var(--color-glow),
+      0 0 10px 1px color-mix(in srgb, var(--color-glow) 50%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--color-glow),
+      0 0 18px 4px color-mix(in srgb, var(--color-glow) 70%, transparent);
+  }
+}
+
 /* T13.5b plan, Part 4: ShimmerText's gradient sweep. Component only
    applies this animation when prefers-reduced-motion is NOT set (it
    renders plain static text instead), so the keyframe itself needs no

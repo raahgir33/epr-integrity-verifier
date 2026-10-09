@@ -30,7 +30,7 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
   const timing = run.stage_timestamps[stage];
   const icon =
     state === "done" ? (
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-risk-low/10 text-risk-low">
         ✓
       </span>
     ) : state === "in_progress" ? (
@@ -98,7 +98,7 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
   }, [runId, onSettled]);
 
   if (fetchError && !run) {
-    return <p className="text-sm text-red-700">{fetchError}</p>;
+    return <p className="text-sm text-risk-high">{fetchError}</p>;
   }
   if (!run) {
     return <p className="text-sm text-ink-muted">Starting…</p>;
@@ -113,12 +113,12 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
       </ol>
 
       {run.status === "failed" ? (
-        <p className="text-sm text-red-700">Run failed: {run.error_message ?? "unknown error"}</p>
+        <p className="text-sm text-risk-high">Run failed: {run.error_message ?? "unknown error"}</p>
       ) : null}
 
       {run.status === "done" && run.alert ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Alert: {run.alert.message}
+        <p className="glow-pulse rounded-md border border-risk-medium/30 bg-risk-medium/10 px-3 py-2 text-sm text-ink">
+          <span className="font-medium text-risk-medium">Alert:</span> {run.alert.message}
         </p>
       ) : null}
       {run.status === "done" && !run.alert ? (
