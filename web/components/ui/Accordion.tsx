@@ -10,7 +10,8 @@ export type AccordionItemData = {
   content: ReactNode;
 };
 
-const ITEM_CLASSNAME = "group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink hover:text-primary";
+const ITEM_CLASSNAME =
+  "group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink outline-none transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function AccordionItems({ items }: { items: AccordionItemData[] }) {
   return (

@@ -20,7 +20,10 @@ export function PortfolioPreview({ details }: { details: ProcessorDetailResponse
             key={detail.profile.processor_id}
             className="card transition-colors duration-150 hover:border-primary"
           >
-            <Link href={`/processors/${encodeURIComponent(detail.profile.processor_id)}`} className="block p-4">
+            <Link
+              href={`/processors/${encodeURIComponent(detail.profile.processor_id)}`}
+              className="block rounded-[inherit] p-4 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-mono text-xs text-ink-muted">{detail.profile.processor_id}</p>

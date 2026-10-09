@@ -63,7 +63,10 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1 text-sm text-ink-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
         <ArrowLeft aria-hidden size={14} />
         Overview
       </Link>

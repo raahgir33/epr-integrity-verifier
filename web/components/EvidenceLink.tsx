@@ -41,7 +41,7 @@ export function EvidenceList({
               key={id}
               type="button"
               onClick={() => openDocument(id)}
-              className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk"
+              className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted outline-none after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
             >
               {resolved.label}
             </button>
@@ -53,7 +53,7 @@ export function EvidenceList({
             href={resolved.href}
             target={resolved.kind === "document" ? "_blank" : undefined}
             rel={resolved.kind === "document" ? "noopener noreferrer" : undefined}
-            className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk"
+            className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted outline-none after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           >
             {resolved.label}
           </Link>

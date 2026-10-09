@@ -75,21 +75,26 @@ export function HeroScene({
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {/* Focus rings here use a hard-coded light colour, not
+              --color-primary — this band is deliberately theme-invariant
+              (see the comment above), so its focus ring needs to contrast
+              reliably against the same fixed dark background in both
+              site themes, not a token that flips. */}
           <a
             href="#live-verification"
-            className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+            className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f4]"
           >
             {titleCase("Run live verification")}
           </a>
           <a
             href="#portfolio-preview"
-            className="rounded-md border border-[#f4f4f4]/40 px-4 py-2.5 text-sm font-medium text-[#f4f4f4] hover:bg-[#f4f4f4]/10"
+            className="rounded-md border border-[#f4f4f4]/40 px-4 py-2.5 text-sm font-medium text-[#f4f4f4] outline-none transition-colors duration-150 hover:bg-[#f4f4f4]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f4]"
           >
             {titleCase("Explore processors")}
           </a>
           <a
             href="#how-it-works"
-            className="rounded-md border border-[#f4f4f4]/40 px-4 py-2.5 text-sm font-medium text-[#f4f4f4] hover:bg-[#f4f4f4]/10"
+            className="rounded-md border border-[#f4f4f4]/40 px-4 py-2.5 text-sm font-medium text-[#f4f4f4] outline-none transition-colors duration-150 hover:bg-[#f4f4f4]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f4]"
           >
             {titleCase("How it works")}
           </a>

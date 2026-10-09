@@ -43,7 +43,7 @@ function DocumentRow({
           href={`/files/${encodeURIComponent(document.doc_id)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="relative text-xs font-medium text-ink underline decoration-dotted after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary"
+          className="relative text-xs font-medium text-ink underline decoration-dotted outline-none after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
         >
           View file
         </a>
@@ -51,7 +51,7 @@ function DocumentRow({
           <button
             type="button"
             onClick={() => openDocument(document.doc_id)}
-            className="relative text-xs font-medium text-ink underline decoration-dotted after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary"
+            className="relative text-xs font-medium text-ink underline decoration-dotted outline-none after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           >
             Open details
           </button>
@@ -59,7 +59,7 @@ function DocumentRow({
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="relative text-xs font-medium text-ink underline decoration-dotted after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary"
+            className="relative text-xs font-medium text-ink underline decoration-dotted outline-none after:absolute after:-inset-x-1.5 after:-inset-y-px after:content-[''] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           >
             {open ? "Hide extracted fields" : "Show extracted fields"}
           </button>

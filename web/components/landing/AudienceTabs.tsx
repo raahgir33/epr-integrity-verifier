@@ -68,7 +68,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
     if (!detail) return null;
     const stage = detail.full ?? detail.checks_only;
     return (
-      <Link href="/portfolio" className="card block p-4 transition-colors duration-150 hover:border-primary">
+      <Link href="/portfolio" className="card block rounded-[inherit] p-4 outline-none transition-colors duration-150 hover:border-primary focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary">
         <div className="flex items-start justify-between gap-2">
           <p className="font-mono text-xs text-ink-muted">{detail.profile.processor_id}</p>
           <RiskBadge band={stage.risk_band} />
@@ -93,7 +93,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
     return (
       <Link
         href={`/processors/${encodeURIComponent(ex.processorId)}`}
-        className="card block p-4 transition-colors duration-150 hover:border-primary"
+        className="card block rounded-[inherit] p-4 outline-none transition-colors duration-150 hover:border-primary focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary"
       >
         <p className="font-mono text-xs text-ink-muted">{ex.processorId}</p>
         <p className="mt-2 text-sm font-medium text-ink">{ex.finding.finding_type}</p>
@@ -110,7 +110,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
   const ex = examples.failingCheck;
   if (!ex) return null;
   return (
-    <Link href="/evaluation" className="card block p-4 transition-colors duration-150 hover:border-primary">
+    <Link href="/evaluation" className="card block rounded-[inherit] p-4 outline-none transition-colors duration-150 hover:border-primary focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary">
       <p className="font-mono text-xs text-ink-muted">{ex.processorId}</p>
       <p className="mt-2 text-sm">
         <span className="font-mono font-medium text-ink">{ex.check.check_id}</span>{" "}
@@ -150,7 +150,7 @@ export function AudienceTabs({
               role="tab"
               aria-selected={isActive}
               onClick={() => setValue(a.value)}
-              className={`flex items-center gap-3 rounded-md border px-5 py-4 text-left transition-colors duration-150 ${
+              className={`flex items-center gap-3 rounded-md border px-5 py-4 text-left outline-none transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 isActive
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-surface text-ink hover:bg-surface-sunk"
@@ -175,7 +175,7 @@ export function AudienceTabs({
           </ul>
           <Link
             href={active.linkHref}
-            className="relative mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary underline decoration-dotted after:absolute after:-inset-2 after:content-[''] hover:opacity-80"
+            className="relative mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary underline decoration-dotted outline-none after:absolute after:-inset-2 after:content-[''] hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {active.linkLabel}
             <ArrowRight aria-hidden size={16} />

@@ -36,19 +36,25 @@ export function Button({
   children,
   variant = "secondary",
   size = "sm",
+  // T13.5c plan, Audit Batch 7: `static` disables the press-scale for a
+  // button where it would be distracting (animations.md's own escape-
+  // hatch pattern) — no current call site needs it, but the prop costs
+  // nothing to have ready.
+  static: isStatic = false,
   className = "",
   ...rest
 }: {
   children: ReactNode;
   variant?: keyof typeof VARIANT;
   size?: keyof typeof SIZE;
+  static?: boolean;
   className?: string;
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type="button"
       {...rest}
-      className={`font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${SIZE[size]} ${VARIANT[variant]} ${className}`}
+      className={`font-medium outline-none transition-[color,background-color,border-color,scale] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${isStatic ? "" : "motion-safe:active:scale-[0.96]"} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
     >
       {typeof children === "string" ? titleCase(children) : children}
     </button>

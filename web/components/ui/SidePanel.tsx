@@ -23,7 +23,7 @@ export function SidePanel({
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="side-panel-overlay fixed inset-0 z-40 bg-ink/40" />
         <RadixDialog.Content
-          className="side-panel-content fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-overlay focus:outline-none sm:max-w-lg"
+          className="side-panel-content fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-overlay outline-none focus:-outline-offset-2 focus:outline-2 focus:outline-primary sm:max-w-lg"
           aria-describedby={undefined}
         >
           <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
@@ -32,7 +32,7 @@ export function SidePanel({
             </RadixDialog.Title>
             <RadixDialog.Close
               aria-label="Close panel"
-              className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunk hover:text-ink"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
             >
               <X aria-hidden size={16} />
             </RadixDialog.Close>

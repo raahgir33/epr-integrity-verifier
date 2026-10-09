@@ -34,7 +34,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       aria-pressed={isDark}
-      className={`flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink-muted transition-colors duration-150 hover:bg-surface-sunk hover:text-ink ${className}`}
+      className={`flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96] ${className}`}
     >
       {mounted ? (
         <AnimatePresence initial={false} mode="popLayout">

@@ -22,7 +22,10 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <PageContainer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
-        <Link href="/" className="font-display text-xl font-bold tracking-tight text-primary whitespace-nowrap">
+        <Link
+          href="/"
+          className="font-display text-xl font-bold tracking-tight text-primary whitespace-nowrap outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
           EPR Integrity Verifier
         </Link>
 
@@ -35,11 +38,11 @@ export function Nav() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={
+                  className={`outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     active
                       ? "font-medium text-primary underline decoration-2 underline-offset-4"
                       : "text-ink-muted hover:text-ink"
-                  }
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -60,7 +63,7 @@ export function Nav() {
             onKeyDown={(e) => {
               if (e.key === "Escape") setOpen(false);
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink outline-none transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
           >
             {/* T13.5c plan, Audit Batch 1: Lucide Menu/X, cross-faded per
                 the make-interfaces-feel-better skill's exact contextual
@@ -99,11 +102,11 @@ export function Nav() {
                   href={link.href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => setOpen(false)}
-                  className={
+                  className={`outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     active
                       ? "rounded px-2 py-2 font-medium text-primary bg-surface-sunk"
                       : "rounded px-2 py-2 text-ink-muted hover:bg-surface-sunk hover:text-ink"
-                  }
+                  }`}
                 >
                   {link.label}
                 </Link>
