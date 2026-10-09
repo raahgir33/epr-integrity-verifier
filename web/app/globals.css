@@ -26,6 +26,29 @@
   --text-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
   --text-3xl: clamp(1.875rem, 1.65rem + 1vw, 2.25rem);
   --text-4xl: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
+
+  /* T13.5 plan, Part 2: base palette — warm off-white / deep forest-green
+     / warm umber, replacing the flat slate-grey direction. Each one
+     generates bg-, text- and border- utilities automatically (Tailwind
+     v4). Contrast checked against WCAG AA (4.5:1, normal text) by hand: ink-on-base is
+     near-black-on-near-white (>>4.5:1); primary-foreground-on-primary is
+     ~11:1; accent-on-base is ~4.85:1; all four --color-risk-* (unchanged
+     below) are ~4.7-6:1 against the new base. --color-risk-* stay
+     reserved for status chips only — never reused as decorative color. */
+  --color-base: #faf7f1;
+  --color-surface: #ffffff;
+  --color-surface-sunk: #f1ece2;
+  --color-primary: #1e3d2f;
+  --color-primary-foreground: #faf7f1;
+  --color-accent: #9a5f2e;
+  --color-ink: #1c1b18;
+  --color-ink-muted: #5b5648;
+  --color-border: #e3dccb;
+
+  /* Motion: subtle only, 150-250ms. Components should wrap transition
+     utilities in motion-safe: (Tailwind's own prefers-reduced-motion
+     variant) rather than applying them unconditionally. */
+  --default-transition-duration: 200ms;
 }
 
 /* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
@@ -33,6 +56,94 @@
    marks content lang="hi" — English body copy keeps --font-sans. */
 :lang(hi) {
   font-family: var(--font-devanagari), "Noto Sans Devanagari", sans-serif;
+}
+
+/* T13.5 plan, Part 2: one darker rhythm band per long page. Sections
+   alternate --color-base (page default) with this sunk tone instead of
+   staying flat throughout. */
+.band {
+  background-color: var(--color-surface-sunk);
+}
+
+/* T13.5 plan, Part 2: shared card elevation — subtle, not a heavy
+   drop-shadow, so a long page of cards doesn't read as a stack of
+   separate panels. */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgb(28 27 24 / 0.04), 0 1px 1px rgb(28 27 24 / 0.03);
+}
+
+/* T13.5 plan, Part 2: Radix primitive transitions — 150-250ms, skipped
+   entirely under prefers-reduced-motion (the whole rule is gated, not
+   just the duration, so a reduced-motion viewer gets an instant
+   show/hide with no intermediate opacity frame). */
+@media (prefers-reduced-motion: no-preference) {
+  .tooltip-content {
+    animation: fade-in 150ms ease-out;
+  }
+  .tooltip-content[data-state="closed"] {
+    animation: fade-out 150ms ease-in;
+  }
+  .accordion-content {
+    overflow: hidden;
+  }
+  .accordion-content[data-state="open"] {
+    animation: accordion-open 200ms ease-out;
+  }
+  .accordion-content[data-state="closed"] {
+    animation: accordion-close 200ms ease-in;
+  }
+  .side-panel-overlay[data-state="open"] {
+    animation: fade-in 200ms ease-out;
+  }
+  .side-panel-overlay[data-state="closed"] {
+    animation: fade-out 200ms ease-in;
+  }
+  .side-panel-content[data-state="open"] {
+    animation: slide-in-right 250ms ease-out;
+  }
+  .side-panel-content[data-state="closed"] {
+    animation: slide-out-right 200ms ease-in;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes accordion-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-close {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-out-right {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* Amendment 9 (T12 plan): tabular numerals + right-aligned numeric columns

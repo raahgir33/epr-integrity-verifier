@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${devanagariFont.variable}`}>
-      <body className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+      <body className="flex min-h-screen flex-col bg-base font-sans text-ink">
         <Nav />
         <PageContainer className="flex-1 py-8">{children}</PageContainer>
         <Footer />

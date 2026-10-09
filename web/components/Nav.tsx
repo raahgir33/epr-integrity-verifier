@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -19,9 +17,9 @@ export function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <PageContainer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
-        <Link href="/" className="font-display text-lg font-semibold tracking-tight text-slate-900">
+        <Link href="/" className="font-display text-lg font-semibold tracking-tight text-primary">
           EPR Integrity Verifier
         </Link>
 
@@ -35,8 +33,8 @@ export function Nav() {
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "font-medium text-slate-900 underline decoration-2 underline-offset-4"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "font-medium text-primary underline decoration-2 underline-offset-4"
+                    : "text-ink-muted hover:text-ink"
                 }
               >
                 {link.label}
@@ -54,7 +52,7 @@ export function Nav() {
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false);
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 sm:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-ink sm:hidden"
         >
           <span aria-hidden className="text-base leading-none">
             {open ? "✕" : "☰"}
@@ -66,7 +64,7 @@ export function Nav() {
         <nav
           id="primary-nav-mobile"
           aria-label="Primary"
-          className="border-t border-slate-200 bg-white sm:hidden"
+          className="border-t border-border bg-surface sm:hidden"
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false);
           }}
@@ -82,8 +80,8 @@ export function Nav() {
                   onClick={() => setOpen(false)}
                   className={
                     active
-                      ? "rounded px-2 py-2 font-medium text-slate-900 bg-slate-50"
-                      : "rounded px-2 py-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "rounded px-2 py-2 font-medium text-primary bg-surface-sunk"
+                      : "rounded px-2 py-2 text-ink-muted hover:bg-surface-sunk hover:text-ink"
                   }
                 >
                   {link.label}
