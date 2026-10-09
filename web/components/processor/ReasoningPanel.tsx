@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ProgressiveBlur } from "@/components/magicui/progressive-blur";
 import { ReasoningLog } from "@/components/reasoning/ReasoningLog";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
@@ -9,12 +8,13 @@ import type { ReasoningStepOut } from "@/lib/api";
 
 const STORAGE_KEY = "epr:reasoningPanelCollapsed";
 
-/** Docked reasoning panel (T13.5b plan, Part 4) — only rendered at xl and
- * above (see ProcessorTabs' useIsXlUp check); below xl, ReasoningLog is
- * rendered directly as the "Agent Reasoning" tab instead, with no dock/
- * collapse chrome. Collapse state persists in localStorage so a repeat
- * visitor's choice sticks; top offset matches StickyHeader's own
- * lg:top-16, stacking directly below it rather than overlapping.
+/** Docked reasoning panel (T13.5b plan, Part 4) — only rendered at lg and
+ * above (see ProcessorTabs' useIsBreakpointUp(1024) check — moved from
+ * xl in T13.5c plan, Batch 0.9, per the developer's note); below lg,
+ * ReasoningLog is rendered directly as the "Agent Reasoning" tab instead,
+ * with no dock/collapse chrome. Collapse state persists in localStorage
+ * so a repeat visitor's choice sticks; top offset matches StickyHeader's
+ * own lg:top-16, stacking directly below it rather than overlapping.
  *
  * `currentStageLabel` (Kokonut addendum's "AI Loading" equivalent) — set
  * only while a live run is active and hasn't produced its first reasoning
@@ -78,7 +78,7 @@ export function ReasoningPanel({
   }
 
   return (
-    <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start">
+    <aside className="hidden lg:block lg:sticky lg:top-16 lg:self-start">
       <div className="card flex max-h-[calc(100vh-5rem)] flex-col p-0">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3">
           <p className="font-display text-sm font-semibold text-ink">Reasoning</p>
@@ -122,8 +122,6 @@ export function ReasoningPanel({
                 <ReasoningLog steps={steps} knownDocIds={knownDocIds} isLive={isLive} />
               )}
             </div>
-            <ProgressiveBlur position="top" height="1.5rem" className="rounded-t-lg" />
-            <ProgressiveBlur position="bottom" height="1.5rem" className="rounded-b-lg" />
           </div>
         )}
       </div>

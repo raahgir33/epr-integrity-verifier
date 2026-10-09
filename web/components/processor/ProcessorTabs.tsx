@@ -17,7 +17,7 @@ import type {
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
 import { STAGE_LABEL } from "@/lib/runStages";
-import { useIsXlUp } from "@/lib/useIsXlUp";
+import { useIsBreakpointUp } from "@/lib/useIsBreakpointUp";
 import { Tabs } from "@/components/ui/Tabs";
 import { SidePanel } from "@/components/ui/SidePanel";
 import { StatTile } from "@/components/ui/StatTile";
@@ -124,11 +124,13 @@ export function ProcessorTabs({
   const openDocument = documents.find((d) => d.doc_id === openDocId) ?? null;
   const openFacts = openDocId ? factsByDocId[openDocId] : undefined;
 
-  // T13.5b plan, Part 4: at xl and above, the reasoning log docks on the
-  // right instead of living in a tab — isXlUp defaults false (both on the
-  // server and on first client render), so there's no hydration mismatch;
-  // a wide-viewport visitor sees the layout settle right after mount.
-  const isXlUp = useIsXlUp();
+  // T13.5b plan, Part 4 (breakpoint moved xl->lg in T13.5c plan, Batch
+  // 0.9, per the developer's note): at lg and above, the reasoning log
+  // docks on the right instead of living in a tab — isLgUp defaults
+  // false (both on the server and on first client render), so there's no
+  // hydration mismatch; a wide-viewport visitor sees the layout settle
+  // right after mount.
+  const isLgUp = useIsBreakpointUp(1024);
   const confirmedCount = findings.filter((f) => CONFIRMED_CLASSIFICATIONS.has(f.classification)).length;
   const reviewCount = findings.filter((f) => REVIEW_CLASSIFICATIONS.has(f.classification)).length;
 
@@ -184,9 +186,9 @@ export function ProcessorTabs({
         </div>
       ),
     },
-    // Below xl only — at xl and up the reasoning log docks on the right
+    // Below lg only — at lg and up the reasoning log docks on the right
     // instead (ReasoningPanel, rendered alongside Tabs further down).
-    ...(isXlUp
+    ...(isLgUp
       ? []
       : [
           {
@@ -227,14 +229,14 @@ export function ProcessorTabs({
     },
   ];
 
-  // If the viewport crosses into xl while a narrower view had "reasoning"
+  // If the viewport crosses into lg while a narrower view had "reasoning"
   // open, that tab no longer exists in `items` above — fall back to
   // Overview rather than passing Tabs a value with no matching item.
-  const effectiveTab = isXlUp && tab === "reasoning" ? "overview" : tab;
+  const effectiveTab = isLgUp && tab === "reasoning" ? "overview" : tab;
 
   return (
     <DocumentPanelProvider value={setOpenDocId}>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] xl:items-start xl:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(420px,35%)] lg:items-start lg:gap-8">
         <Tabs items={items} value={effectiveTab} onValueChange={handleTabChange} />
         <ReasoningPanel
           steps={effectiveReasoningSteps}

@@ -6,6 +6,7 @@ import { AnimatedListItem } from "@/components/magicui/animated-list";
 import { StepDetail } from "@/components/reasoning/StepDetail";
 import type { ReasoningStepOut } from "@/lib/api";
 import { stepActionLine, stepTag, type StepTag } from "@/lib/reasoning";
+import { titleCase } from "@/lib/titleCase";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 /** T13.5b plan, Part 4 — a log-style reasoning panel, newest entry on
@@ -20,7 +21,7 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const TAG_DOT: Record<StepTag, string> = {
   Hypothesis: "bg-primary",
-  Critic: "bg-accent",
+  Critic: "bg-ink",
   Revision: "bg-glow",
   Tool: "bg-ink-muted",
   Score: "bg-ink-muted",
@@ -51,7 +52,15 @@ function LogRowContent({
             <span className="text-xs font-semibold uppercase tracking-wide text-ink">{tag}</span>
             <span className="text-xs text-ink-muted">Step {step.step_index + 1}</span>
           </span>
-          <span className="mt-0.5 block text-sm text-ink-muted">{stepActionLine(step)}</span>
+          {/* T13.5c plan, Batch 0.9: the developer's note explicitly asks
+              for this one-line headline in title case, overriding
+              titleCase.ts's own general "never on interpolated data"
+              guidance — checked safe against titleCase's preservation
+              rules (hyphenated/digit-bearing/mixed-case tokens like
+              document IDs or "C2a" survive untouched). Scoped to this
+              exact render site only — StepDetail/ToolStep (details, tool
+              arguments, results) are untouched. */}
+          <span className="mt-0.5 block text-sm text-ink-muted">{titleCase(stepActionLine(step))}</span>
         </span>
         <svg
           viewBox="0 0 16 16"
