@@ -6,8 +6,6 @@ import { STATUS_LABEL } from "@/lib/checks";
 import { isClarificationMemo } from "@/lib/memo";
 import type { RealExamples } from "@/lib/landing";
 import { SectionTitle } from "@/components/ui/SectionTitle";
-import { SpotlightCard } from "@/components/ui/SpotlightCard";
-import { SpotlightGroup } from "@/components/ui/SpotlightGroup";
 
 const STEPS = [
   {
@@ -100,41 +98,39 @@ export function HowItWorks({ examples }: { examples: RealExamples }) {
   const [openSteps, setOpenSteps] = useState<ReadonlySet<number>>(new Set());
 
   return (
-    <SpotlightGroup>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) => {
-          const open = openSteps.has(i);
-          return (
-            <SpotlightCard key={step.title} variant="full" index={i} className="card flex flex-col p-4">
-              <span className="text-xs font-medium uppercase tracking-wide text-accent">Step {i + 1}</span>
-              <SectionTitle as="h3" className="mt-1 text-base">
-                {step.title}
-              </SectionTitle>
-              <p className="mt-1 flex-1 text-sm text-ink-muted">{step.body}</p>
-              <button
-                type="button"
-                onClick={() =>
-                  setOpenSteps((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(i)) next.delete(i);
-                    else next.add(i);
-                    return next;
-                  })
-                }
-                aria-expanded={open}
-                className="mt-3 self-start text-xs font-medium text-primary underline decoration-dotted hover:text-accent"
-              >
-                {open ? "Hide example" : "See a real example"}
-              </button>
-              {open ? (
-                <div className="mt-3 border-t border-border pt-3">
-                  <ExampleBlock step={i} examples={examples} />
-                </div>
-              ) : null}
-            </SpotlightCard>
-          );
-        })}
-      </div>
-    </SpotlightGroup>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {STEPS.map((step, i) => {
+        const open = openSteps.has(i);
+        return (
+          <div key={step.title} className="card flex flex-col p-4">
+            <span className="text-xs font-medium uppercase tracking-wide text-primary">Step {i + 1}</span>
+            <SectionTitle as="h3" className="mt-1 text-base">
+              {step.title}
+            </SectionTitle>
+            <p className="mt-1 flex-1 text-sm text-ink-muted">{step.body}</p>
+            <button
+              type="button"
+              onClick={() =>
+                setOpenSteps((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(i)) next.delete(i);
+                  else next.add(i);
+                  return next;
+                })
+              }
+              aria-expanded={open}
+              className="mt-3 self-start text-xs font-medium text-primary underline decoration-dotted hover:opacity-80"
+            >
+              {open ? "Hide example" : "See a real example"}
+            </button>
+            {open ? (
+              <div className="mt-3 border-t border-border pt-3">
+                <ExampleBlock step={i} examples={examples} />
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }

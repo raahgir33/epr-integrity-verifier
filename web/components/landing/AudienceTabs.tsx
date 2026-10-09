@@ -7,7 +7,6 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
-import { MouseEffectCard } from "@/components/ui/MouseEffectCard";
 import { STATUS_LABEL } from "@/lib/checks";
 import { classificationLabel } from "@/lib/findings";
 import { formatTonnes } from "@/lib/format";
@@ -107,7 +106,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
     if (!detail) return null;
     const stage = detail.full ?? detail.checks_only;
     return (
-      <Link href="/portfolio" className="card block p-4 transition-shadow duration-150 hover:shadow-md">
+      <Link href="/portfolio" className="card block p-4 transition-colors duration-150 hover:border-primary">
         <div className="flex items-start justify-between gap-2">
           <p className="font-mono text-xs text-ink-muted">{detail.profile.processor_id}</p>
           <RiskBadge band={stage.risk_band} />
@@ -129,7 +128,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
     return (
       <Link
         href={`/processors/${encodeURIComponent(ex.processorId)}`}
-        className="card block p-4 transition-shadow duration-150 hover:shadow-md"
+        className="card block p-4 transition-colors duration-150 hover:border-primary"
       >
         <p className="font-mono text-xs text-ink-muted">{ex.processorId}</p>
         <p className="mt-2 text-sm font-medium text-ink">{ex.finding.finding_type}</p>
@@ -143,7 +142,7 @@ function ExampleCard({ audience, details, examples }: { audience: string; detail
   const ex = examples.failingCheck;
   if (!ex) return null;
   return (
-    <Link href="/evaluation" className="card block p-4 transition-shadow duration-150 hover:shadow-md">
+    <Link href="/evaluation" className="card block p-4 transition-colors duration-150 hover:border-primary">
       <p className="font-mono text-xs text-ink-muted">{ex.processorId}</p>
       <p className="mt-2 text-sm">
         <span className="font-mono font-medium text-ink">{ex.check.check_id}</span>{" "}
@@ -193,7 +192,7 @@ export function AudienceTabs({
         })}
       </div>
 
-      <MouseEffectCard className="card mt-5 grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
+      <div className="card mt-5 grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
         <div>
           <ul className="space-y-4">
             {active.benefits.map((benefit) => (
@@ -214,13 +213,13 @@ export function AudienceTabs({
           </ul>
           <Link
             href={active.linkHref}
-            className="mt-5 inline-block text-sm font-medium text-primary underline decoration-dotted hover:text-accent"
+            className="mt-5 inline-block text-sm font-medium text-primary underline decoration-dotted hover:opacity-80"
           >
             {active.linkLabel} →
           </Link>
         </div>
         <ExampleCard audience={active.value} details={details} examples={examples} />
-      </MouseEffectCard>
+      </div>
     </div>
   );
 }

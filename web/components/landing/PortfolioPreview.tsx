@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
-import { MouseEffectCard } from "@/components/ui/MouseEffectCard";
 import type { ProcessorDetailResponse } from "@/lib/api";
 import { formatTonnes } from "@/lib/format";
 import { topFindingHeadline } from "@/lib/landing";
@@ -17,9 +16,9 @@ export function PortfolioPreview({ details }: { details: ProcessorDetailResponse
         const stage = detail.full ?? detail.checks_only;
         const clean = stage.unverifiable_t <= 0;
         return (
-          <MouseEffectCard
+          <div
             key={detail.profile.processor_id}
-            className="card transition-shadow duration-150 hover:shadow-md"
+            className="card transition-colors duration-150 hover:border-primary"
           >
             <Link href={`/processors/${encodeURIComponent(detail.profile.processor_id)}`} className="block p-4">
               <div className="flex items-start justify-between gap-2">
@@ -39,7 +38,7 @@ export function PortfolioPreview({ details }: { details: ProcessorDetailResponse
                 {topFindingHeadline(detail)}
               </p>
             </Link>
-          </MouseEffectCard>
+          </div>
         );
       })}
     </div>

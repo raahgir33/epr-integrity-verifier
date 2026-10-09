@@ -59,3 +59,12 @@ from scratch anyway, as the addendum's own fallback clause anticipates
 ("if the licence is missing or anything else, build our own equivalents
 instead and say so" — generalized here to "or otherwise unusable without
 exceeding the task's own dependency allow-list").
+
+**Update, T13.5c (2026-10-10):** `GlowButton.tsx` and the two built-from-
+scratch Kokonut equivalents named above — `MouseEffectCard.tsx` and
+`SpotlightCard.tsx` (plus its `SpotlightGroup.tsx` coordination helper) —
+were deleted in Batch 0.1/0.6, per the developer's deployed-site review
+("remove the glow button everywhere"; "remove hover effects everywhere —
+tilt, spotlight, glow, lift; plain cards"). No call site remained for any
+of the four files, so they were removed rather than left unused; this
+record stays as the history of why they existed in the first place.

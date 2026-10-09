@@ -7,7 +7,6 @@
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
 import { MetricTile } from "@/components/ui/MetricTile";
-import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import type { ProcessorProfile, StageAssessment } from "@/lib/api";
 import { formatTonnes, formatTonnesValue } from "@/lib/format";
 import { titleCase } from "@/lib/titleCase";
@@ -64,14 +63,15 @@ export function StickyHeader({
         </div>
       </div>
 
-      {/* T13.5b plan, Kokonut addendum: "processor metric tiles" — the
-          glow-only SpotlightCard variant (cursor-following glow, no tilt,
-          no dimming, numbers never move). */}
+      {/* Processor metric tiles — plain tiles, no hover/glow effect
+          (T13.5c plan, Batch 0.6: card hover/glow/tilt effects removed
+          app-wide). rounded-md, not the outer .card's rounded-lg, so the
+          nested radius stays concentric (outer radius minus padding). */}
       <div className="mt-3 grid grid-cols-3 gap-3 sm:w-fit">
-        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+        <div className="rounded-md px-3 py-2">
           <MetricTile size="sm" countUp value={certifiedT} formatter={formatTonnesValue} unit="t" label="Certified" />
-        </SpotlightCard>
-        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+        </div>
+        <div className="rounded-md px-3 py-2">
           <MetricTile
             size="sm"
             countUp
@@ -80,8 +80,8 @@ export function StickyHeader({
             unit="t"
             label="Verifiable"
           />
-        </SpotlightCard>
-        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+        </div>
+        <div className="rounded-md px-3 py-2">
           <MetricTile
             size="sm"
             countUp
@@ -91,7 +91,7 @@ export function StickyHeader({
             unit="t"
             label="Unverifiable"
           />
-        </SpotlightCard>
+        </div>
       </div>
 
       {/* T13.5b plan, Part 4: KeyFactsRail's "Type/Capacity/Consent
