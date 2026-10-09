@@ -60,7 +60,7 @@ export default async function LandingPage() {
           <SectionTitle className="text-xl">Who it&apos;s for</SectionTitle>
         </TextReveal>
         <div className="mt-5">
-          <AudienceTabs />
+          <AudienceTabs details={details} examples={examples} />
         </div>
       </section>
 
