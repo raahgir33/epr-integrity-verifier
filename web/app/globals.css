@@ -2,7 +2,11 @@
 
 @theme {
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-heading), ui-serif, Georgia, "Times New Roman", serif;
+  /* T13.5c plan, Batch 0.14: fallback stack changed from serif to sans —
+     heading and body now share one sans family (Google Sans), so there's
+     no more serif intent. */
+  --font-display: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-code), ui-monospace, SFMono-Regular, monospace;
 
   --color-risk-low: #15803d;
   --color-risk-medium: #b45309;
@@ -32,48 +36,44 @@
   --text-3xl: clamp(1.875rem, 1.65rem + 1vw, 2.25rem);
   --text-4xl: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
 
-  /* T13.5 plan, Part 2: base palette — warm off-white / deep forest-green
-     / warm umber, replacing the flat slate-grey direction. T13.5b plan,
-     Part 2 deepened --color-primary and --color-surface-sunk further (a
-     richer primary, more contrast between page bands) and added
-     --color-glow, a new luminous-green accent reserved for the glow
-     button/badge and highlights — distinct in hue from both --color-accent
-     (warm umber) and --color-risk-low (sage green), used only as a
-     decorative shadow/gradient accent, never as a sole-carrier text/
-     background pairing, so it isn't subject to its own AA check. Each
-     token generates bg-/text-/border- utilities automatically (Tailwind
-     v4). Contrast checked against WCAG AA (4.5:1, normal text) by hand:
-     ink-on-page is near-black-on-near-white (>>4.5:1); primary-foreground-
-     on-primary is >11:1 (primary only got darker); accent-on-page is
-     ~4.85:1; all four --color-risk-* (unchanged below) are ~4.7-6:1
-     against the new page background. --color-risk-* stay reserved for
-     status chips only — never reused as decorative color. Dark-theme
-     values for every token below live in the `:root[data-theme="dark"]`
-     block further down this file — next-themes toggles that attribute;
-     see components/ThemeProvider.tsx.
-     T13.5b verification: this token is named --color-page, not
-     --color-base — "base" collides with Tailwind's own text-size scale
-     (text-base is a reserved size key), so naming a color token "base"
-     made Tailwind merge color:var(--color-base) into the SAME .text-base
-     rule as the font-size utility, silently recoloring every plain
-     text-base element with no explicit color class of its own (found via
-     a real Lighthouse color-contrast failure, then confirmed empirically
-     via CDP's matched-styles — AudienceTabs' inactive tab labels were
-     rendering invisible cream-on-white). Never name a custom token after
-     a Tailwind-reserved scale key (the size keys: xs/sm/base/lg/xl/2xl/
-     3xl/4xl are the ones this project's tokens could plausibly collide
-     with again). */
-  --color-page: #faf7f1;
+  /* T13.5c plan, Batch 0.8: site-wide palette replacement, developer-
+     specified — navy #071952, deep teal #005461, teal #00b7b5, light
+     blue #90ddf0, light grey #f4f4f4, plus white and the unchanged
+     --color-risk-* set. Replaces T13.5/T13.5b's warm off-white/forest-
+     green/umber direction entirely. --color-accent (the old warm umber)
+     is removed outright, not repointed to a new hex: the new palette
+     defines only two text-bearing roles — "primary actions" and "ink" —
+     and no third "accent" slot, and the one color the note explicitly
+     reserves for highlights (teal #00b7b5) is explicitly barred from
+     text use ("never used for text... fails contrast" — confirmed: teal
+     measures ~2.3:1 against both --color-page and white, nowhere near
+     the 4.5:1 AA floor). Every former --color-accent call site now reads
+     --color-primary instead (deep teal, hand-verified below).
+     Hand-checked contrast (WCAG AA, 4.5:1 normal text), computed exactly
+     (relative-luminance formula), not eyeballed:
+       --color-ink (navy #071952) on --color-page/white: 15.0/16.5:1
+       --color-primary (#005461) on --color-page/white: 7.8/8.6:1
+       white (--color-primary-foreground) on --color-primary: 8.6:1
+       --color-ink-muted (#5a668b, 65% navy into --color-page) on
+         --color-page/white: 5.15/5.66:1
+       --color-risk-low/-medium/-high/-unknown (unchanged hexes) on
+         --color-page: 4.56/4.57/5.88/6.89:1 — all still clear the 4.5:1
+         floor against the new lighter page background, so kept exactly
+         as instructed, no shade change needed.
+       teal (#00b7b5) is visually distinct from every --color-risk-*
+         hue (teal vs. amber/red/green/slate) — used only for icons,
+         focus rings, chart accents and small glows, per the note.
+     Dark-theme values live in the `:root[data-theme="dark"]` block
+     below, same contrast method. */
+  --color-page: #f4f4f4;
   --color-surface: #ffffff;
-  --color-surface-sunk: #ece4d4;
-  --color-primary: #15301f;
-  --color-primary-foreground: #faf7f1;
-  --color-accent: #9a5f2e;
-  --color-glow: #16c488;
-  --color-glow-foreground: #052e21;
-  --color-ink: #1c1b18;
-  --color-ink-muted: #5b5648;
-  --color-border: #e3dccb;
+  --color-surface-sunk: #ebf9fc; /* 18% light-blue (#90ddf0) tint into white — the note's "tinted surfaces" role */
+  --color-primary: #005461;
+  --color-primary-foreground: #ffffff;
+  --color-glow: #00b7b5;
+  --color-ink: #071952;
+  --color-ink-muted: #5a668b;
+  --color-border: rgb(7 25 82 / 0.12); /* navy at low opacity, per the note's own wording */
 
   /* Motion: subtle only, 150-250ms. Components should wrap transition
      utilities in motion-safe: (Tailwind's own prefers-reduced-motion
@@ -81,41 +81,35 @@
   --default-transition-duration: 200ms;
 }
 
-/* T13.5b plan, Part 2: dark theme. next-themes (components/ThemeProvider.tsx)
-   sets data-theme="dark"/"light" on <html> — default is light,
-   enableSystem is off, so this is the only dark block needed (no
-   prefers-color-scheme media query, which keeps "no flash on load"
-   simple: next-themes' own blocking script sets the attribute before
-   paint). Every color an app component uses goes through one of these
-   custom properties (no literal Tailwind palette classes anywhere in
-   web/components or web/app), so this block is the entire dark theme —
-   no component needs a dark: variant.
-   - --color-primary flips from a deep green (unreadable as text on a
-     near-black page) to a light mint, with --color-primary-foreground
-     flipping to dark, so solid primary buttons stay ~10:1.
-   - --color-surface is lighter than --color-page (elevation via
-     lightness, the standard dark-UI convention, since drop shadows don't
-     read on a dark page); --color-surface-sunk is the darkest band.
-   - --color-risk-* become brighter variants of their light values (same
-     logic as Tailwind's own 400-vs-700 shade pairs for dark surfaces) —
-     hand-checked at roughly 7-10:1 against --color-page/--color-surface
-     dark, comfortably past the 4.5:1 AA floor.
-   - --color-border stays a low-contrast hairline in both themes
-     (decorative card/table dividers, not a focus ring or input boundary)
-     — consistent with the light theme's own ~1.3:1 hairline against
-     white, not a regression. */
+/* T13.5c plan, Batch 0.8: dark theme, same palette replacement as the
+   light block above — developer's explicit dark-mode roles: page navy
+   #071952, surfaces a slightly lighter navy, text light grey #f4f4f4,
+   primary teal #00b7b5 with navy text on it, highlights light blue
+   #90ddf0. next-themes (components/ThemeProvider.tsx) sets
+   data-theme="dark"/"light" on <html>; this remains the only dark block
+   needed. Hand-checked contrast, computed exactly:
+     --color-ink (#f4f4f4) on --color-page/--color-surface: 15.0/12.2:1
+     navy (--color-primary-foreground) on --color-primary (teal): 6.65:1
+     --color-ink-muted (#8991ab, 55% page-grey into navy) on
+       --color-page: 5.28:1
+     --color-risk-* (unchanged dark hexes, kept per the note) on
+       --color-page: low 9.49, medium 9.91, high 5.98, unknown 6.45:1 —
+       all comfortably clear 4.5:1 against the new navy page, no shade
+       change needed; still visually distinct from the new teal/light-
+       blue highlight hues.
+   --color-accent and --color-glow-foreground removed (see the light
+   block's comment above — --color-glow-foreground was never actually
+   consumed by any component; confirmed by grep before removing). */
 :root[data-theme="dark"] {
-  --color-page: #0f1713;
-  --color-surface: #182019;
-  --color-surface-sunk: #0a0e0b;
-  --color-primary: #6fcf9b;
-  --color-primary-foreground: #0b1510;
-  --color-accent: #e0a469;
-  --color-glow: #45f0ac;
-  --color-glow-foreground: #04170f;
-  --color-ink: #f2ede4;
-  --color-ink-muted: #a39b8b;
-  --color-border: #313b32;
+  --color-page: #071952;
+  --color-surface: #1b2b60; /* 8% white mixed into navy — "a slightly lighter navy" */
+  --color-surface-sunk: #061442; /* 20% black mixed into navy — the darkest band */
+  --color-primary: #00b7b5;
+  --color-primary-foreground: #071952;
+  --color-glow: #90ddf0;
+  --color-ink: #f4f4f4;
+  --color-ink-muted: #8991ab;
+  --color-border: rgb(244 244 244 / 0.12); /* light grey at low opacity — this project's existing convention of flipping border lightness in dark mode */
   --color-risk-low: #4ade80;
   --color-risk-medium: #fbbf24;
   --color-risk-high: #f87171;
@@ -144,6 +138,15 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 1px 2px rgb(28 27 24 / 0.04), 0 1px 1px rgb(28 27 24 / 0.03);
+}
+
+/* T13.5c plan, Batch 0.7: smooth in-page scrolling (hash links to
+   #live-verification/#how-it-works/#portfolio-preview/#site), off under
+   reduced motion like every other animation in this file. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* T13.5 plan, Part 2: Radix primitive transitions — 150-250ms, skipped
@@ -244,52 +247,6 @@
       0 0 0 1px var(--color-glow),
       0 0 18px 4px color-mix(in srgb, var(--color-glow) 70%, transparent);
   }
-}
-
-/* T13.5b plan, Kokonut addendum: SpotlightCard/MouseEffectCard's cursor-
-   glow. --spot-x/--spot-y are set by the component on pointer move (only
-   when a fine, hover-capable pointer is detected and motion isn't
-   reduced — see each component's own comment); the (hover: hover) guard
-   here is a second, CSS-level backstop so the glow never appears via
-   :hover on a touch device even if something else goes wrong upstream.
-   spotlight-card-full additionally tilts via --spot-rotate-x/-y, which
-   only ever get a non-zero value from the same JS gate. */
-.spotlight-card {
-  position: relative;
-  overflow: hidden;
-}
-.spotlight-card::before {
-  /* No z-index (auto) is deliberate: ::before is generated as this
-     element's first child, so plain in-flow content passed as `children`
-     — which comes after it in the box tree and isn't itself positioned —
-     paints on top of it automatically. The element's own background-color
-     (from the .card class also applied here) paints beneath both. */
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    280px circle at var(--spot-x, 50%) var(--spot-y, 50%),
-    color-mix(in srgb, var(--color-glow) 20%, transparent),
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 200ms ease-out;
-  pointer-events: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .spotlight-card:hover::before {
-    opacity: 1;
-  }
-}
-.spotlight-card-full {
-  transform: perspective(800px) rotateX(var(--spot-rotate-x, 0deg)) rotateY(var(--spot-rotate-y, 0deg));
-  transition:
-    transform 200ms ease-out,
-    opacity 200ms ease-out;
-}
-.spotlight-card-dimmed {
-  opacity: 0.6;
 }
 
 /* T13.5b plan, Kokonut addendum: AILoadingSpinner's counter-rotating

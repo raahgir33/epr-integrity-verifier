@@ -37,13 +37,13 @@ export default async function LandingPage() {
       </FullBleed>
 
       <AlertBanner alerts={alerts} />
-      <div id="live-verification">
+      <div id="live-verification" className="scroll-mt-20">
         <RunLiveVerification batches={batches} />
       </div>
 
       <ProofStrip figures={figures} />
 
-      <section id="how-it-works">
+      <section id="how-it-works" className="scroll-mt-20">
         <TextReveal>
           <SectionTitle className="text-xl">How it works</SectionTitle>
         </TextReveal>
@@ -64,7 +64,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section id="portfolio-preview">
+      <section id="portfolio-preview" className="scroll-mt-20">
         <TextReveal>
           <SectionTitle className="text-xl">Processors</SectionTitle>
         </TextReveal>
