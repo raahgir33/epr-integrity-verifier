@@ -1,12 +1,17 @@
 [
   {
     "batch_id": "BATCH-PWP-01-001",
-    "period_month": "2026-04",
+    "extra_document_ids": [
+      "PWP-01-DEMO-INBOUND_INVOICE-001",
+      "PWP-01-DEMO-EWAY_BILL-001",
+      "PWP-01-DEMO-WEIGHBRIDGE_SLIP-001"
+    ],
+    "period_month": "2026-03",
     "pre_batch_certified_t": 129.41,
     "pre_batch_true_verifiable_t": 129.41,
     "processor_id": "PWP-01",
     "pushes_over_verifiable": false,
-    "quantity_t": 1.6
+    "quantity_t": 7.82
   },
   {
     "batch_id": "BATCH-PWP-02-001",
@@ -19,12 +24,17 @@
   },
   {
     "batch_id": "BATCH-PWP-03-001",
-    "period_month": "2026-04",
+    "extra_document_ids": [
+      "PWP-03-DEMO-INBOUND_INVOICE-001",
+      "PWP-03-DEMO-EWAY_BILL-001",
+      "PWP-03-DEMO-WEIGHBRIDGE_SLIP-001"
+    ],
+    "period_month": "2026-03",
     "pre_batch_certified_t": 126.72,
     "pre_batch_true_verifiable_t": 126.72,
     "processor_id": "PWP-03",
     "pushes_over_verifiable": false,
-    "quantity_t": 1.44
+    "quantity_t": 8.45
   },
   {
     "batch_id": "BATCH-PWP-04-001",

@@ -99,3 +99,11 @@ api/scripts/deploy/.epr-api-url
 # (which are not git-ignored).
 data/synthetic/seed-*/documents/*
 !data/synthetic/seed-42/documents/PWP-01
+
+# T13's demo-extra documents (scripts/generate_demo_extra_docs.py) — same
+# reasoning: reproducible from the seed, commit only the sample processor's.
+# pre_demo_snapshot/ is NOT reproducible from the seed (it's a snapshot of
+# live BigQuery state at a point in time scripts/snapshot_demo_processors.py
+# captured) and is committed in full, unconditionally.
+data/synthetic/seed-*/demo_extra/*
+!data/synthetic/seed-42/demo_extra/PWP-01

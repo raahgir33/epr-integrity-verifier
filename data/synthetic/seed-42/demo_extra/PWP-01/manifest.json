@@ -1,0 +1,43 @@
+{
+  "documents": [
+    {
+      "doc_id": "PWP-01-DEMO-INBOUND_INVOICE-001",
+      "doc_type": "inbound_invoice",
+      "gcs_path": "seed-42/demo_extra/PWP-01/PWP-01-DEMO-INBOUND_INVOICE-001.pdf",
+      "lang": "en",
+      "mime_type": "application/pdf",
+      "processor_id": "PWP-01"
+    },
+    {
+      "doc_id": "PWP-01-DEMO-EWAY_BILL-001",
+      "doc_type": "eway_bill",
+      "gcs_path": "seed-42/demo_extra/PWP-01/PWP-01-DEMO-EWAY_BILL-001.pdf",
+      "lang": "en",
+      "mime_type": "application/pdf",
+      "processor_id": "PWP-01"
+    },
+    {
+      "doc_id": "PWP-01-DEMO-WEIGHBRIDGE_SLIP-001",
+      "doc_type": "weighbridge_slip",
+      "gcs_path": "seed-42/demo_extra/PWP-01/PWP-01-DEMO-WEIGHBRIDGE_SLIP-001.png",
+      "lang": "en",
+      "mime_type": "image/png",
+      "processor_id": "PWP-01"
+    }
+  ],
+  "remark_hi": null,
+  "shipment": {
+    "distance_km": 189.8,
+    "eway_doc_id": "PWP-01-DEMO-EWAY_BILL-001",
+    "ewb_no": "649484330479",
+    "invoice_doc_id": "PWP-01-DEMO-INBOUND_INVOICE-001",
+    "invoice_qty_t": 7.82,
+    "match_status": "matched",
+    "month": "2026-03",
+    "shipment_id": "PWP-01-DEMO-SHP-001",
+    "vehicle_no": "MH33AB9173",
+    "verified": true,
+    "weighbridge_doc_id": "PWP-01-DEMO-WEIGHBRIDGE_SLIP-001",
+    "weighbridge_net_t": 7.78
+  }
+}
