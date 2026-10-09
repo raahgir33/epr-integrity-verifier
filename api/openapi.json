@@ -1,13 +1,82 @@
 {
   "components": {
     "schemas": {
+      "AlertOut": {
+        "properties": {
+          "alert_id": {
+            "title": "Alert Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "new_finding_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Finding Summary"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "risk_band_after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band After"
+          },
+          "risk_band_before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band Before"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alert_id",
+          "run_id",
+          "processor_id",
+          "created_at",
+          "risk_band_before",
+          "risk_band_after",
+          "new_finding_summary",
+          "message"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
       "AlertsResponse": {
         "properties": {
           "alerts": {
             "default": [],
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/AlertOut"
             },
             "title": "Alerts",
             "type": "array"
@@ -177,6 +246,90 @@
           "closing_paragraph"
         ],
         "title": "ClarificationMemo",
+        "type": "object"
+      },
+      "DemoBatchOut": {
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "period_month": {
+            "title": "Period Month",
+            "type": "string"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "pushes_over_verifiable": {
+            "title": "Pushes Over Verifiable",
+            "type": "boolean"
+          },
+          "quantity_t": {
+            "title": "Quantity T",
+            "type": "number"
+          }
+        },
+        "required": [
+          "batch_id",
+          "processor_id",
+          "period_month",
+          "quantity_t",
+          "pushes_over_verifiable"
+        ],
+        "title": "DemoBatchOut",
+        "type": "object"
+      },
+      "DemoBatchesResponse": {
+        "properties": {
+          "batches": {
+            "items": {
+              "$ref": "#/components/schemas/DemoBatchOut"
+            },
+            "title": "Batches",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta",
+          "batches"
+        ],
+        "title": "DemoBatchesResponse",
+        "type": "object"
+      },
+      "DemoCertificateBatchRequest": {
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id"
+        ],
+        "title": "DemoCertificateBatchRequest",
+        "type": "object"
+      },
+      "DemoCertificateBatchResponse": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "DemoCertificateBatchResponse",
         "type": "object"
       },
       "DocumentFactsResponse": {
@@ -1136,6 +1289,119 @@
         "title": "RevisionOut",
         "type": "object"
       },
+      "RunStageTiming": {
+        "description": "One completed stage's wall-clock cost \u2014 app/events/run_processor.py\nmeasures this from the previous stage transition, not from run start,\nso each value is that stage's own duration (what the web progress view\nlabels, e.g. \"Agents reviewing - 74s\"), not a cumulative total.",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "duration_s": {
+            "title": "Duration S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "at",
+          "duration_s"
+        ],
+        "title": "RunStageTiming",
+        "type": "object"
+      },
+      "RunStatusOut": {
+        "description": "GET /runs/{run_id}. steps mirrors ReasoningStepOut's shape so the\nweb app's existing ReasoningTimeline component renders a live run's\npartial trail with no changes \u2014 while the run is in flight on this\ninstance these come from the in-process live-step tracker\n(app/events/run_processor.py's on_step callback), not BigQuery; once\nterminal (done/failed) they're the same reconstructed trail\nGET /processors/{id}/reasoning would show.",
+        "properties": {
+          "alert": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlertOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "processor_id": {
+            "title": "Processor Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "stage_timestamps": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RunStageTiming"
+            },
+            "title": "Stage Timestamps",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "reading_documents",
+              "checking",
+              "reasoning",
+              "drafting_memo",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ReasoningStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meta",
+          "run_id",
+          "batch_id",
+          "processor_id",
+          "status",
+          "created_at",
+          "updated_at",
+          "stage_timestamps",
+          "steps",
+          "error_message",
+          "alert"
+        ],
+        "title": "RunStatusOut",
+        "type": "object"
+      },
       "SiteResponse": {
         "properties": {
           "building_count": {
@@ -1394,7 +1660,6 @@
   "paths": {
     "/alerts": {
       "get": {
-        "description": "The alerts table doesn't exist yet (T13 creates it) \u2014 same reasoning\nas /evaluation above.",
         "operationId": "get_alerts_alerts_get",
         "responses": {
           "200": {
@@ -1428,6 +1693,64 @@
           }
         },
         "summary": "List Brands"
+      }
+    },
+    "/demo-batches": {
+      "get": {
+        "description": "Lets the web app offer a batch picker for the live-verification\nbutton (docs/BUILD_PLAN.md T13).",
+        "operationId": "list_demo_batches_demo_batches_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoBatchesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Demo Batches"
+      }
+    },
+    "/demo/certificate-batch": {
+      "post": {
+        "description": "Creates a run record and publishes the scripted batch event\n(docs/ARCHITECTURE.md \u00a73.2). Abuse gates (one run at a time, a\ncooldown between runs, a daily cap) protect the public demo button's\nGemini cost/quota \u2014 docs/BUILD_PLAN.md T13.",
+        "operationId": "post_demo_certificate_batch_demo_certificate_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoCertificateBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoCertificateBatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Demo Certificate Batch"
       }
     },
     "/documents/{doc_id}/facts": {
@@ -1524,6 +1847,67 @@
           }
         },
         "summary": "Get Evaluation"
+      }
+    },
+    "/events/certificate-batch": {
+      "post": {
+        "description": "Pub/Sub push endpoint (docs/ARCHITECTURE.md \u00a73.2). Synchronous\nwithin the request (CLAUDE.md \u00a79's CPU-throttling trap) and\nidempotent on run_id \u2014 a re-delivered push for an already-terminal\nrun is a no-op, never a duplicate alert.",
+        "operationId": "post_events_certificate_batch_events_certificate_batch_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Events Certificate Batch Events Certificate Batch Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Events Certificate Batch"
       }
     },
     "/health": {
@@ -1807,6 +2191,45 @@
           }
         },
         "summary": "Get Processor Site"
+      }
+    },
+    "/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run"
       }
     },
     "/site-images/{processor_id}": {

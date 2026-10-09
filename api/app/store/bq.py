@@ -287,11 +287,109 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("output_tokens", "INTEGER"),
         bigquery.SchemaField("generated_at", "TIMESTAMP"),
     ],
+    # T13 (live event path). The committed data/synthetic/seed-<seed>/
+    # demo_batches.json's own rows, loaded once (scripts/
+    # load_demo_extra_docs.py) — a BigQuery table, not a local file read,
+    # because api/Dockerfile only COPYs app/ into the deployed image
+    # (neither scripts/ nor data/ ship), so the live event path (which
+    # runs inside that deployed container) can't read the JSON file off
+    # local disk the way the generator/loader scripts do. Whole-seed
+    # replaceable (delete_by_seed then load) — small, not facts_source-
+    # dimensioned (a demo batch's own documents are extracted_facts-
+    # independent until the live run itself extracts them).
+    "demo_batches": [
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("batch_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("period_month", "STRING"),
+        bigquery.SchemaField("quantity_t", "FLOAT"),
+        bigquery.SchemaField("pushes_over_verifiable", "BOOLEAN"),
+        bigquery.SchemaField("pre_batch_certified_t", "FLOAT"),
+        bigquery.SchemaField("pre_batch_true_verifiable_t", "FLOAT"),
+        bigquery.SchemaField("extra_document_ids", "STRING", mode="REPEATED"),
+    ],
+    # T13 (live event path). One row per demo click, rewritten in place
+    # (delete_by_run_id then load — app/events/run_processor.py) at each
+    # coarse stage transition: status moves
+    # queued -> reading_documents -> checking -> reasoning -> drafting_memo
+    # -> done|failed. stage_timestamps_json is a JSON object keyed by
+    # completed stage name, each value {"at": ISO8601, "duration_s": float}
+    # — the measured wall-clock time that stage took, which the web
+    # progress view displays (e.g. "Agents reviewing - 74s"). snapshot_
+    # before_json is captured once, at POST /demo/certificate-batch time,
+    # from that processor's then-current "full" assessment + findings —
+    # the fixed baseline the alert decision (step 4 of run_processor.py)
+    # compares the post-run state against, immune to any race with the
+    # write itself. alert_id is set once an alerts row is written for this
+    # run, null otherwise (including every run that didn't alert).
+    "runs": [
+        bigquery.SchemaField("run_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("batch_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("status", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("created_at", "TIMESTAMP", mode="REQUIRED"),
+        bigquery.SchemaField("updated_at", "TIMESTAMP"),
+        bigquery.SchemaField("stage_timestamps_json", "STRING"),
+        bigquery.SchemaField("error_message", "STRING"),
+        bigquery.SchemaField("snapshot_before_json", "STRING"),
+        bigquery.SchemaField("alert_id", "STRING"),
+    ],
+    # T13 (live event path). One row per fired alert (not every run alerts
+    # — only one whose risk band rose or that surfaced a new non-
+    # concurs-with-check/non-withdrawn finding versus its run's own
+    # snapshot_before_json). Keyed by run_id (delete_by_run_id), same as
+    # "runs" — a re-delivered push for an already-alerted run must never
+    # produce a second alert row for that run.
+    "alerts": [
+        bigquery.SchemaField("alert_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("run_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("processor_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("seed", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("facts_source", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("created_at", "TIMESTAMP", mode="REQUIRED"),
+        bigquery.SchemaField("risk_band_before", "STRING"),
+        bigquery.SchemaField("risk_band_after", "STRING"),
+        bigquery.SchemaField("new_finding_summary", "STRING"),
+        bigquery.SchemaField("message", "STRING"),
+    ],
 }
 
 
 _client: bigquery.Client | None = None
 _client_lock = threading.Lock()
+
+
+def fetch_rows(
+    client: bigquery.Client,
+    table_name: str,
+    columns: str,
+    seed: int,
+    processor_id: str | None = None,
+    facts_source: str | None = None,
+) -> list[dict]:
+    """General-purpose read, mirroring scripts/run_pipeline.py's own
+    private _fetch_bq_rows — exposed here (not there) because T13's live
+    event path (app/events/run_processor.py) runs inside the deployed
+    api/ image, which never includes scripts/ (api/Dockerfile only
+    `COPY app ./app` — scripts/ isn't in the deployed container), so it
+    can't import anything from scripts/run_pipeline.py. Both call sites
+    conceptually share this shape now; scripts/run_pipeline.py's own
+    _fetch_bq_rows is left as-is (not worth the risk of touching an
+    already-stable, heavily tested script for a non-functional dedup)."""
+    table_ref = _table_ref(table_name)
+    query = f"SELECT {columns} FROM `{table_ref}` WHERE seed = @seed"
+    params = [bigquery.ScalarQueryParameter("seed", "INTEGER", seed)]
+    if processor_id:
+        query += " AND processor_id = @processor_id"
+        params.append(bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id))
+    if facts_source:
+        query += " AND facts_source = @facts_source"
+        params.append(bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source))
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    return [dict(row) for row in job.result()]
 
 
 def get_client() -> bigquery.Client:
@@ -387,6 +485,106 @@ def delete_memos_by_processor(
             bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
             bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id),
         ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_by_run_id(client: bigquery.Client, table_name: str, run_id: str) -> None:
+    """For "runs" (rewritten at each stage transition) and "alerts" (at
+    most one row per run_id) — both keyed by run_id, so a re-delivered
+    push for a run already written never produces a second row for
+    either table (app/events/run_processor.py)."""
+    table_ref = _table_ref(table_name)
+    query = f"DELETE FROM `{table_ref}` WHERE run_id = @run_id"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("run_id", "STRING", run_id)]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def _delete_by_processor(
+    client: bigquery.Client, table_name: str, seed: int, facts_source: str, processor_id: str
+) -> None:
+    """Shared body for the per-processor delete helpers below — same
+    granularity as delete_memos_by_processor, generalised to check_results
+    and agent_runs so T13's live path can rewrite one processor's rows
+    without wiping the other 9's (unlike run_checks()/run_agents()'s
+    existing whole-(seed, facts_source) delete_by_seed_and_source)."""
+    table_ref = _table_ref(table_name)
+    query = (
+        f"DELETE FROM `{table_ref}` "
+        "WHERE seed = @seed AND facts_source = @facts_source AND processor_id = @processor_id"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+            bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_shipments_by_processor(
+    client: bigquery.Client, seed: int, facts_source: str, processor_id: str
+) -> None:
+    _delete_by_processor(client, "shipments", seed, facts_source, processor_id)
+
+
+def delete_check_results_by_processor(
+    client: bigquery.Client, seed: int, facts_source: str, processor_id: str
+) -> None:
+    _delete_by_processor(client, "check_results", seed, facts_source, processor_id)
+
+
+def delete_agent_runs_by_processor(
+    client: bigquery.Client, seed: int, facts_source: str, processor_id: str
+) -> None:
+    _delete_by_processor(client, "agent_runs", seed, facts_source, processor_id)
+
+
+def delete_assessments_by_processor_and_stage(
+    client: bigquery.Client, seed: int, facts_source: str, processor_id: str, stage: str
+) -> None:
+    """One level finer than delete_assessments_by_stage (which deletes
+    every processor's row for that stage) — T13's live path must only
+    ever touch the one processor a demo batch targets."""
+    table_ref = _table_ref("assessments")
+    query = (
+        f"DELETE FROM `{table_ref}` "
+        "WHERE seed = @seed AND facts_source = @facts_source "
+        "AND processor_id = @processor_id AND stage = @stage"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
+            bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id),
+            bigquery.ScalarQueryParameter("stage", "STRING", stage),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def delete_by_ids(client: bigquery.Client, table_name: str, id_column: str, ids: list[str]) -> None:
+    """Deletes rows matching any of the given ids, regardless of seed/
+    facts_source — used by scripts/reset_demo.py to remove the handful of
+    doc_id/certificate_id rows a demo run touched (documents.doc_id,
+    extracted_facts.doc_id, extraction_results.doc_id,
+    certificates.certificate_id), where the id itself is already globally
+    unique and clearly tagged (e.g. "PWP-03-DEMO-...", "CERT-DEMO-...") so
+    there's no risk of matching an unrelated row. A no-op (no query) if
+    ids is empty."""
+    if not ids:
+        return
+    table_ref = _table_ref(table_name)
+    query = f"DELETE FROM `{table_ref}` WHERE {id_column} IN UNNEST(@ids)"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ArrayQueryParameter("ids", "STRING", ids)]
     )
     job = client.query(query, job_config=job_config, location=settings.vertex_location)
     job.result()

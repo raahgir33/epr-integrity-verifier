@@ -2,12 +2,10 @@
 # Deploys epr-api to Cloud Run. Run by the developer — never by the agent.
 # Usage: api/scripts/deploy/deploy_api.sh
 #
-# PUSH_TOKEN is deliberately NOT set here: the live event path
-# (POST /events/certificate-batch) doesn't exist until T13, so there's
-# nothing on this service that would check it yet. app/config.py's
-# push_token is Optional — add it to the --set-env-vars list below (and
-# to the required-vars check) once T13's push subscription is created
-# (docs/GCP_SETUP.md §8).
+# PUSH_TOKEN (T13's live event path, POST /events/certificate-batch) is
+# now required — generate one with `openssl rand -hex 32`, add it to
+# api/.env, and create/update the push subscription with the SAME value
+# (docs/GCP_SETUP.md §8) before relying on this endpoint.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -31,7 +29,7 @@ if [[ -z "${GCP_PROJECT:-}" ]]; then
   GCP_PROJECT="$(gcloud config get-value project 2>/dev/null || true)"
 fi
 
-for var in GCP_PROJECT VERTEX_LOCATION GEMINI_MODEL BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET PUBSUB_TOPIC; do
+for var in GCP_PROJECT VERTEX_LOCATION GEMINI_MODEL BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET PUBSUB_TOPIC PUSH_TOKEN; do
   if [[ -z "${!var:-}" ]]; then
     echo "error: $var is not set in $ENV_FILE (and no gcloud fallback available for it)" >&2
     exit 1
@@ -66,6 +64,7 @@ ENV_VARS+=",BQ_DATASET=${BQ_DATASET}"
 ENV_VARS+=",DOSSIER_BUCKET=${DOSSIER_BUCKET}"
 ENV_VARS+=",ARTIFACT_BUCKET=${ARTIFACT_BUCKET}"
 ENV_VARS+=",PUBSUB_TOPIC=${PUBSUB_TOPIC}"
+ENV_VARS+=",PUSH_TOKEN=${PUSH_TOKEN}"
 ENV_VARS+=",DEFAULT_SEED=${DEFAULT_SEED}"
 ENV_VARS+=",DEFAULT_FACTS_SOURCE=${DEFAULT_FACTS_SOURCE}"
 ENV_VARS+=",AGENT_HYPOTHESIS_TIMEOUT_MS=${AGENT_HYPOTHESIS_TIMEOUT_MS}"
@@ -76,9 +75,19 @@ ENV_VARS+=",EXTRACT_REQUEST_TIMEOUT_MS=${EXTRACT_REQUEST_TIMEOUT_MS}"
 
 echo "Deploying epr-api to project $GCP_PROJECT in $VERTEX_LOCATION..."
 
+# --max-instances=1 (T13): app/store/cache.py's cache is per-process and
+# never expires on wall-clock time alone (NO_EXPIRY) — a live demo run's
+# cache.invalidate()+cache.preload() only updates the ONE instance that
+# served the push. With more than one instance, any other instance would
+# keep serving stale pre-batch data indefinitely. Capping at 1 makes
+# "exactly one process, one cache" an invariant rather than a race; the
+# one-demo-run-at-a-time abuse gate (app/main.py) already assumes this
+# too, so there's no concurrency given up that the feature was relying
+# on anyway.
 gcloud run deploy epr-api --source=api --region="$VERTEX_LOCATION" \
   --service-account="epr-api-sa@${GCP_PROJECT}.iam.gserviceaccount.com" \
-  --allow-unauthenticated --timeout=600 --memory=1Gi --cpu-boost --min-instances=0 \
+  --allow-unauthenticated --timeout=600 --memory=1Gi --cpu-boost \
+  --min-instances=1 --max-instances=1 \
   --set-env-vars="$ENV_VARS"
 
 API_URL="$(gcloud run services describe epr-api --region="$VERTEX_LOCATION" --format='value(status.url)')"

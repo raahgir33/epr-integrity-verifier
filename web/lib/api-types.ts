@@ -11,11 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Alerts
-         * @description The alerts table doesn't exist yet (T13 creates it) — same reasoning
-         *     as /evaluation above.
-         */
+        /** Get Alerts */
         get: operations["get_alerts_alerts_get"];
         put?: never;
         post?: never;
@@ -41,6 +37,50 @@ export interface paths {
         get: operations["list_brands_brands_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/demo-batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Demo Batches
+         * @description Lets the web app offer a batch picker for the live-verification
+         *     button (docs/BUILD_PLAN.md T13).
+         */
+        get: operations["list_demo_batches_demo_batches_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/demo/certificate-batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Demo Certificate Batch
+         * @description Creates a run record and publishes the scripted batch event
+         *     (docs/ARCHITECTURE.md §3.2). Abuse gates (one run at a time, a
+         *     cooldown between runs, a daily cap) protect the public demo button's
+         *     Gemini cost/quota — docs/BUILD_PLAN.md T13.
+         */
+        post: operations["post_demo_certificate_batch_demo_certificate_batch_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -105,6 +145,29 @@ export interface paths {
         get: operations["get_evaluation_evaluation_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/certificate-batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Events Certificate Batch
+         * @description Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
+         *     within the request (CLAUDE.md §9's CPU-throttling trap) and
+         *     idempotent on run_id — a re-delivered push for an already-terminal
+         *     run is a no-op, never a duplicate alert.
+         */
+        post: operations["post_events_certificate_batch_events_certificate_batch_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -255,6 +318,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run */
+        get: operations["get_run_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/site-images/{processor_id}": {
         parameters: {
             query?: never;
@@ -283,15 +363,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertOut */
+        AlertOut: {
+            /** Alert Id */
+            alert_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Message */
+            message: string;
+            /** New Finding Summary */
+            new_finding_summary: string | null;
+            /** Processor Id */
+            processor_id: string;
+            /** Risk Band After */
+            risk_band_after: string | null;
+            /** Risk Band Before */
+            risk_band_before: string | null;
+            /** Run Id */
+            run_id: string;
+        };
         /** AlertsResponse */
         AlertsResponse: {
             /**
              * Alerts
              * @default []
              */
-            alerts: {
-                [key: string]: unknown;
-            }[];
+            alerts: components["schemas"]["AlertOut"][];
             meta: components["schemas"]["Meta"];
         };
         /** BrandListItem */
@@ -356,6 +456,37 @@ export interface components {
             salutation: string;
             /** Subject */
             subject: string;
+        };
+        /** DemoBatchOut */
+        DemoBatchOut: {
+            /** Batch Id */
+            batch_id: string;
+            /** Period Month */
+            period_month: string;
+            /** Processor Id */
+            processor_id: string;
+            /** Pushes Over Verifiable */
+            pushes_over_verifiable: boolean;
+            /** Quantity T */
+            quantity_t: number;
+        };
+        /** DemoBatchesResponse */
+        DemoBatchesResponse: {
+            /** Batches */
+            batches: components["schemas"]["DemoBatchOut"][];
+            meta: components["schemas"]["Meta"];
+        };
+        /** DemoCertificateBatchRequest */
+        DemoCertificateBatchRequest: {
+            /** Batch Id */
+            batch_id: string;
+        };
+        /** DemoCertificateBatchResponse */
+        DemoCertificateBatchResponse: {
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
         };
         /** DocumentFactsResponse */
         DocumentFactsResponse: {
@@ -720,6 +851,65 @@ export interface components {
             /** Explanation */
             explanation: string;
         };
+        /**
+         * RunStageTiming
+         * @description One completed stage's wall-clock cost — app/events/run_processor.py
+         *     measures this from the previous stage transition, not from run start,
+         *     so each value is that stage's own duration (what the web progress view
+         *     labels, e.g. "Agents reviewing - 74s"), not a cumulative total.
+         */
+        RunStageTiming: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Duration S */
+            duration_s: number;
+        };
+        /**
+         * RunStatusOut
+         * @description GET /runs/{run_id}. steps mirrors ReasoningStepOut's shape so the
+         *     web app's existing ReasoningTimeline component renders a live run's
+         *     partial trail with no changes — while the run is in flight on this
+         *     instance these come from the in-process live-step tracker
+         *     (app/events/run_processor.py's on_step callback), not BigQuery; once
+         *     terminal (done/failed) they're the same reconstructed trail
+         *     GET /processors/{id}/reasoning would show.
+         */
+        RunStatusOut: {
+            alert: components["schemas"]["AlertOut"] | null;
+            /** Batch Id */
+            batch_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Message */
+            error_message: string | null;
+            meta: components["schemas"]["Meta"];
+            /** Processor Id */
+            processor_id: string;
+            /** Run Id */
+            run_id: string;
+            /** Stage Timestamps */
+            stage_timestamps: {
+                [key: string]: components["schemas"]["RunStageTiming"];
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "reading_documents" | "checking" | "reasoning" | "drafting_memo" | "done" | "failed";
+            /** Steps */
+            steps: components["schemas"]["ReasoningStepOut"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** SiteResponse */
         SiteResponse: {
             /** Building Count */
@@ -875,6 +1065,59 @@ export interface operations {
             };
         };
     };
+    list_demo_batches_demo_batches_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoBatchesResponse"];
+                };
+            };
+        };
+    };
+    post_demo_certificate_batch_demo_certificate_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemoCertificateBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoCertificateBatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_document_facts_documents__doc_id__facts_get: {
         parameters: {
             query?: never;
@@ -953,6 +1196,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvaluationResponse"];
+                };
+            };
+        };
+    };
+    post_events_certificate_batch_events_certificate_batch_post: {
+        parameters: {
+            query?: {
+                token?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1174,6 +1456,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunStatusOut"];
                 };
             };
             /** @description Validation Error */

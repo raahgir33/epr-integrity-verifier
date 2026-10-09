@@ -300,6 +300,58 @@ def get_memo(seed: int, facts_source: str, processor_id: str, lang: str) -> dict
     return None
 
 
+def _alerts(seed: int, facts_source: str) -> list[dict]:
+    """Whole-table loader for T13's live event path (app/events/
+    run_processor.py writes these; app/main.py's GET /alerts and the web
+    overview/processor pages read them). Same NO_EXPIRY/invalidate()
+    pattern as every other preloaded table — a live run calls
+    cache.invalidate(None) + cache.preload(...) itself once it writes a
+    new alert, so this never goes stale on wall-clock time alone."""
+
+    def load() -> list[dict]:
+        return _fetch_rows(
+            bq.get_client(),
+            "alerts",
+            "alert_id, run_id, processor_id, created_at, risk_band_before, risk_band_after, "
+            "new_finding_summary, message",
+            seed,
+            facts_source=facts_source,
+        )
+
+    return get_or_load(f"alerts:{seed}:{facts_source}", load, ttl=NO_EXPIRY)
+
+
+def get_alerts(seed: int, facts_source: str) -> list[dict]:
+    return sorted(_alerts(seed, facts_source), key=lambda a: a["created_at"], reverse=True)
+
+
+def _demo_batches(seed: int) -> list[dict]:
+    """Whole-table loader for data/synthetic/seed-<seed>/demo_batches.json's
+    own rows (scripts/load_demo_extra_docs.py loads them once) — not
+    facts_source-dimensioned (docs/PROGRESS.md: a demo batch's documents
+    are extracted_facts-independent until the live run itself extracts
+    them)."""
+
+    def load() -> list[dict]:
+        return _fetch_rows(
+            bq.get_client(),
+            "demo_batches",
+            "batch_id, processor_id, period_month, quantity_t, pushes_over_verifiable, "
+            "pre_batch_certified_t, pre_batch_true_verifiable_t, extra_document_ids",
+            seed,
+        )
+
+    return get_or_load(f"demo_batches:{seed}", load, ttl=NO_EXPIRY)
+
+
+def get_demo_batches(seed: int) -> list[dict]:
+    return sorted(_demo_batches(seed), key=lambda b: b["batch_id"])
+
+
+def get_demo_batch(seed: int, batch_id: str) -> dict | None:
+    return next((b for b in _demo_batches(seed) if b["batch_id"] == batch_id), None)
+
+
 def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dict]:
     """Raw agent_runs rows for one processor, ordered by step_index — the
     shape app/agents/orchestrator.py's reconstruct_agent_findings expects.
@@ -1021,6 +1073,8 @@ def preload(seed: int, facts_source: str) -> None:
     _extraction_results(seed)
     _agent_runs(seed, facts_source)
     _memos(seed, facts_source)
+    _alerts(seed, facts_source)
+    _demo_batches(seed)
 
     for p in processors:
         pid = p["processor_id"]

@@ -107,13 +107,18 @@ api/scripts/deploy/deploy_web.sh   # epr-web — reads epr-api's URL automatical
 Equivalent commands, for reference (the scripts also fill in every agent/extract timeout setting from `app/config.py`'s defaults — omitted below for brevity; see `deploy_api.sh`):
 
 ```bash
-# API — PUSH_TOKEN is deliberately not set; nothing checks it until T13's
-# push endpoint exists (app/config.py's push_token is Optional for exactly
-# this reason). Add it once T13's push subscription (below) is created.
+# API — PUSH_TOKEN is required (T13's live event path). Generate with
+# `openssl rand -hex 32` and use the SAME value in the push subscription
+# below. --max-instances=1 (T13): app/store/cache.py's cache is per-
+# process and never expires on its own (NO_EXPIRY) — a live demo run's
+# cache.invalidate()+preload() only updates the instance that served the
+# push, so more than one instance risks another one serving stale data
+# indefinitely.
 gcloud run deploy epr-api --source=api --region=asia-south1 \
   --service-account=epr-api-sa@PROJECT_ID.iam.gserviceaccount.com \
-  --allow-unauthenticated --timeout=600 --memory=1Gi --cpu-boost --min-instances=0 \
-  --set-env-vars=GCP_PROJECT=PROJECT_ID,VERTEX_LOCATION=asia-south1,GEMINI_MODEL=gemini-3.5-flash,BQ_DATASET=epr,DOSSIER_BUCKET=PROJECT_ID-epr-dossiers,ARTIFACT_BUCKET=PROJECT_ID-epr-artifacts,PUBSUB_TOPIC=certificate-batches,DEFAULT_SEED=42,DEFAULT_FACTS_SOURCE=truth
+  --allow-unauthenticated --timeout=600 --memory=1Gi --cpu-boost \
+  --min-instances=1 --max-instances=1 \
+  --set-env-vars=GCP_PROJECT=PROJECT_ID,VERTEX_LOCATION=asia-south1,GEMINI_MODEL=gemini-3.5-flash,BQ_DATASET=epr,DOSSIER_BUCKET=PROJECT_ID-epr-dossiers,ARTIFACT_BUCKET=PROJECT_ID-epr-artifacts,PUBSUB_TOPIC=certificate-batches,PUSH_TOKEN=YOUR_PUSH_TOKEN,DEFAULT_SEED=42,DEFAULT_FACTS_SOURCE=extracted
 
 # Web — API_BASE_URL is read live from `gcloud run services describe epr-api`,
 # never hardcoded or cached, so it always points at whatever epr-api
@@ -125,14 +130,15 @@ gcloud run deploy epr-web --source=web --region=asia-south1 \
   --set-env-vars="API_BASE_URL=${EPR_API_URL}"
 
 # Push subscription (T13 — after the API URL is known and PUSH_TOKEN has
-# been added to epr-api's env vars)
+# been set on epr-api's env vars). ack-deadline=600 covers even the
+# agent loop's worst-case processor-level retry (two full 300s attempts).
 gcloud pubsub subscriptions create certificate-batches-push \
   --topic=certificate-batches \
   --push-endpoint="${EPR_API_URL}/events/certificate-batch?token=SAME_PUSH_TOKEN" \
   --ack-deadline=600
 ```
 
-From 9 October until results: add `--min-instances=1` to both services (`gcloud run services update epr-api --min-instances=1`, same for `epr-web`).
+Both services run with `--min-instances=1` from 9 October until results are announced (`gcloud run services update epr-web --min-instances=1`; `epr-api` already has it, above). `epr-api` additionally keeps `--max-instances=1` permanently, for cache coherence — never relax this unless app/store/cache.py's per-process cache is also redesigned for multiple instances.
 
 ## 8a. Post-deploy verification
 

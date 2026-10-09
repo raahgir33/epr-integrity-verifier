@@ -26,6 +26,7 @@ leak guard; see docs/PROGRESS.md and tests/test_agent_leak_guard.py).
 import json
 import logging
 import time
+from collections.abc import Callable
 
 from app.agents import tools as agent_tools
 from app.agents.prompts import (
@@ -801,6 +802,7 @@ def run_agent_loop(
     llm_client: LLMClient,
     deadline: float,
     thinking_level: str | None = None,
+    on_step: Callable[[dict], None] | None = None,
 ) -> dict:
     """Returns {conclusions, hypothesis_findings, verdicts, objections,
     revisions, hypothesis_finding_responses, confirmed_findings,
@@ -841,9 +843,21 @@ def run_agent_loop(
     thinking_level is forwarded, unmodified, to every Gemini call in this
     loop — None (the default) sends no thinking config at all. Only
     scripts/probe_agent_thinking.py passes "low"; normal pipeline runs
-    never set this (docs/PROGRESS.md's T10 thinking-comparison decision)."""
+    never set this (docs/PROGRESS.md's T10 thinking-comparison decision).
+
+    on_step, when given, is called with each trail step's dict the moment
+    it's appended — T13's live event path uses this to surface reasoning
+    steps to GET /runs/{run_id} while this function is still running,
+    rather than only after it returns. Optional and additive: None (the
+    default) makes this identical to the pre-T13 behaviour; the batch
+    pipeline (scripts/run_pipeline.py) never passes it."""
     trail: list[dict] = []
     step_index = 0
+
+    def _append_step(step: dict) -> None:
+        trail.append(step)
+        if on_step is not None:
+            on_step(step)
 
     def _deadline_exceeded() -> bool:
         return time.monotonic() >= deadline
@@ -868,7 +882,7 @@ def run_agent_loop(
             purpose="agent_hypothesis",
             thinking_level=thinking_level,
         )
-        trail.append(
+        _append_step(
             _trail_step(
                 step_index,
                 "hypothesis",
@@ -956,7 +970,7 @@ def run_agent_loop(
                     else None
                 )
                 tool_call_record_idx += 1
-                trail.append(
+                _append_step(
                     _trail_step(
                         step_index,
                         "critic_tool_call",
@@ -968,7 +982,7 @@ def run_agent_loop(
             else:
                 role = _get(content, "role")
                 if role == "user":
-                    trail.append(
+                    _append_step(
                         _trail_step(
                             step_index,
                             "critic_tool_result",
@@ -982,7 +996,7 @@ def run_agent_loop(
                         else None
                     )
                     tool_call_record_idx += 1
-                    trail.append(
+                    _append_step(
                         _trail_step(
                             step_index,
                             "critic_model_turn",
@@ -992,7 +1006,7 @@ def run_agent_loop(
                     )
             step_index += 1
         if tool_cap_reached:
-            trail.append(
+            _append_step(
                 _trail_step(
                     step_index,
                     "tool_cap_reached",
@@ -1019,7 +1033,7 @@ def run_agent_loop(
             purpose="agent_critic_final",
             thinking_level=thinking_level,
         )
-        trail.append(
+        _append_step(
             _trail_step(
                 step_index,
                 "critic_final",
@@ -1101,7 +1115,7 @@ def run_agent_loop(
                 purpose="agent_revision",
                 thinking_level=thinking_level,
             )
-            trail.append(
+            _append_step(
                 _trail_step(
                     step_index,
                     "revision",
@@ -1179,6 +1193,7 @@ def run_agent_loop_with_retry(
     llm_client: LLMClient,
     timeout_s: float,
     thinking_level: str | None = None,
+    on_step: Callable[[dict], None] | None = None,
 ) -> tuple[dict, list[dict]]:
     """Processor-level retry (docs/PROGRESS.md, 2026-10-08 acceptance
     pair): run_agent_loop's own per-call retry budget (app/llm.py's
@@ -1209,10 +1224,16 @@ def run_agent_loop_with_retry(
     run_agent_loop return shape is being kept — the only attempt, if no
     retry was needed; the second, if one ran. attempts is
     [{"attempt": 1, "trail": [...], "agent_status": "..."}] (length 1), or
-    that plus the same shape for attempt 2 (length 2) if a retry ran."""
+    that plus the same shape for attempt 2 (length 2) if a retry ran.
+
+    on_step (optional, additive — see run_agent_loop's own docstring) is
+    forwarded unchanged to both attempts, so a live caller sees every step
+    from attempt 1 and, only if a retry runs, every step from attempt 2
+    appended after it, in order — streamed exactly as produced, with no
+    special "attempt boundary" marker today."""
     processor_id = processor_context.get("processor", {}).get("processor_id")
     deadline = time.monotonic() + timeout_s
-    result = run_agent_loop(processor_context, llm_client, deadline, thinking_level)
+    result = run_agent_loop(processor_context, llm_client, deadline, thinking_level, on_step)
     attempts = [{"attempt": 1, "trail": result["trail"], "agent_status": result["agent_status"]}]
 
     if result["agent_status"] in _RETRIABLE_AGENT_STATUSES:
@@ -1222,7 +1243,7 @@ def run_agent_loop_with_retry(
             processor_id,
         )
         deadline = time.monotonic() + timeout_s
-        result = run_agent_loop(processor_context, llm_client, deadline, thinking_level)
+        result = run_agent_loop(processor_context, llm_client, deadline, thinking_level, on_step)
         attempts.append(
             {"attempt": 2, "trail": result["trail"], "agent_status": result["agent_status"]}
         )

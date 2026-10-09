@@ -1,10 +1,16 @@
+import { AlertBanner } from "@/components/demo/AlertBanner";
+import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
 import { ProcessorsTable } from "@/components/ProcessorsTable";
 import { StatCard } from "@/components/StatCard";
-import { getProcessors } from "@/lib/api";
+import { getAlerts, getDemoBatches, getProcessors } from "@/lib/api";
 import { formatSignedTonnes, formatTonnes } from "@/lib/format";
 
 export default async function OverviewPage() {
-  const { processors } = await getProcessors();
+  const [{ processors }, { batches }, { alerts }] = await Promise.all([
+    getProcessors(),
+    getDemoBatches(),
+    getAlerts(),
+  ]);
 
   const totalCertified = processors.reduce((sum, p) => sum + p.checks_only.certified_t, 0);
   const totalChecksOnly = processors.reduce((sum, p) => sum + p.checks_only.verifiable_t, 0);
@@ -23,6 +29,9 @@ export default async function OverviewPage() {
           checks-only, and with the agent loop&apos;s own findings folded in.
         </p>
       </div>
+
+      <AlertBanner alerts={alerts} />
+      <RunLiveVerification batches={batches} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <StatCard label="Certified" value={formatTonnes(totalCertified)} />

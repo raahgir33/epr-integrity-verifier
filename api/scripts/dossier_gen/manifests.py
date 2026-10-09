@@ -5,7 +5,7 @@ brands.json and demo_batches.json. See docs/DATA_SPEC.md §2-§3.
 import csv
 import io
 
-from scripts.dossier_gen.shipments import Dossier
+from scripts.dossier_gen.shipments import FY_MONTHS, Dossier
 from scripts.dossier_gen.world import Brand, Processor, Supplier
 
 
@@ -94,7 +94,29 @@ def build_demo_batches(
     """One scripted 'new certificate batch' per processor for the live demo
     (docs/DATA_SPEC.md §2). PWP-05 (F1 — already over its verifiable tonnes)
     gets a batch that visibly pushes it further past true_verifiable_t, so
-    the live-demo alert has something to fire on."""
+    the live-demo alert has something to fire on.
+
+    period_month is always FY_MONTHS[-1] ("2026-03") — the financial
+    year's own last month, never a literal "next calendar month" ("2026-
+    04" would be the FIRST month of a NEW financial year, since the FY
+    runs April-March; app/checks/capacity.py's certified_t_fy_to_date
+    windows strictly by fiscal year, so a batch dated into a new FY could
+    never sum together with this processor's existing FY-to-date
+    certified/verifiable figures — the live dashboard's headline numbers
+    would never move). T13's live event path adds this batch's
+    certificate directly into the SAME, already-reported fiscal year
+    (found and fixed at the source during T13's implementation — see
+    docs/PROGRESS.md).
+
+    extra_document_ids is always empty here — every entry starts as a
+    pure certificate-ledger bump (matching docs/ARCHITECTURE.md §3.2's
+    original "no re-extraction needed" design). Exactly two entries
+    (PWP-01, PWP-03) are patched afterward, in place, by
+    scripts/generate_demo_extra_docs.py — which also overwrites their
+    quantity_t to match the real new shipment's own invoice quantity, so
+    the certificate and the shipment agree exactly, the same "honest
+    basis" rule docs/DATA_SPEC.md §5 already applies to every normal
+    clean-processor certificate."""
     batches = []
     for processor in processors:
         truth = ground_truth_by_id[processor.processor_id]
@@ -104,11 +126,12 @@ def build_demo_batches(
             {
                 "batch_id": f"BATCH-{processor.processor_id}-001",
                 "processor_id": processor.processor_id,
-                "period_month": "2026-04",
+                "period_month": FY_MONTHS[-1],
                 "quantity_t": quantity_t,
                 "pushes_over_verifiable": pushes_over,
                 "pre_batch_certified_t": truth["certified_t"],
                 "pre_batch_true_verifiable_t": truth["true_verifiable_t"],
+                "extra_document_ids": [],
             }
         )
     return batches

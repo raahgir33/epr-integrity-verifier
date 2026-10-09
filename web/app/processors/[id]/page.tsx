@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckResultRow } from "@/components/CheckResultRow";
+import { AlertBanner } from "@/components/demo/AlertBanner";
+import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
 import { DocumentsTable } from "@/components/DocumentsTable";
 import { EmptyState } from "@/components/EmptyState";
 import { FindingCard } from "@/components/FindingCard";
@@ -13,6 +15,8 @@ import { SitePanel } from "@/components/SitePanel";
 import { StageComparison } from "@/components/StageComparison";
 import {
   ApiError,
+  getAlerts,
+  getDemoBatches,
   getDocumentFacts,
   getProcessor,
   getProcessorDocuments,
@@ -26,14 +30,16 @@ import { isDisplayedFinding } from "@/lib/findings";
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let processor, documents, reasoning, site, memoEn;
+  let processor, documents, reasoning, site, memoEn, demoBatches, alerts;
   try {
-    [processor, documents, reasoning, site, memoEn] = await Promise.all([
+    [processor, documents, reasoning, site, memoEn, demoBatches, alerts] = await Promise.all([
       getProcessor(id),
       getProcessorDocuments(id),
       getProcessorReasoning(id),
       getProcessorSite(id),
       getProcessorMemo(id, "en"),
+      getDemoBatches(),
+      getAlerts(),
     ]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
@@ -42,6 +48,8 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
     throw error; // anything else (API unreachable, 5xx) surfaces via app/error.tsx
   }
   const memoHi = memoEn?.has_hindi ? await getProcessorMemo(id, "hi") : null;
+  const ownBatches = demoBatches.batches.filter((b) => b.processor_id === id);
+  const ownAlerts = alerts.alerts.filter((a) => a.processor_id === id);
 
   const facts = await Promise.all(
     documents.documents.map((d) => getDocumentFacts(d.doc_id).catch(() => null)),
@@ -70,6 +78,9 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
         </div>
         <p className="text-sm text-slate-500">{processor.profile.type}</p>
       </div>
+
+      {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null}
+      {ownBatches.length > 0 ? <RunLiveVerification batches={ownBatches} /> : null}
 
       <section>
         <h2 className="font-display text-lg font-semibold text-slate-900">1. Summary</h2>

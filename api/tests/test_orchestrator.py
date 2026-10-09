@@ -228,6 +228,48 @@ def test_trail_steps_carry_per_call_latency_and_tokens():
     assert steps_by_type["critic_tool_result"].get("input_tokens") is None
 
 
+def test_on_step_callback_receives_each_trail_step_in_order():
+    """T13's live event path threads on_step through to stream steps to
+    GET /runs/{run_id} as they're produced — confirms it's called once
+    per trail step, in the same order, with the same step dicts the
+    returned trail ends up holding (not a copy/subset)."""
+    conclusions = ConclusionsResponse(conclusions=[])
+    objections = ObjectionsResponse(objections=[])
+    fake = _FakeLLMClient(
+        [conclusions, objections], tool_loop_side_effect=_tool_call_then_text_side_effect
+    )
+    seen: list[dict] = []
+
+    result = run_agent_loop(
+        _processor_context(), fake, deadline=time.monotonic() + 60, on_step=seen.append
+    )
+
+    assert [s["step_type"] for s in seen] == [s["step_type"] for s in result["trail"]]
+    assert seen == result["trail"]
+
+
+def test_run_agent_loop_with_retry_forwards_on_step_to_every_attempt(monkeypatch):
+    calls = {"n": 0}
+
+    def _stub(processor_context, llm_client, deadline, thinking_level=None, on_step=None):
+        calls["n"] += 1
+        step = {"step_type": f"attempt_{calls['n']}"}
+        if on_step is not None:
+            on_step(step)
+        if calls["n"] == 1:
+            return {"trail": [step], "agent_status": "timeout"}
+        return {"trail": [step], "agent_status": "ok"}
+
+    monkeypatch.setattr(orchestrator_module, "run_agent_loop", _stub)
+    seen: list[dict] = []
+
+    run_agent_loop_with_retry(
+        _processor_context(), _FakeLLMClient([]), timeout_s=60, on_step=seen.append
+    )
+
+    assert [s["step_type"] for s in seen] == ["attempt_1", "attempt_2"]
+
+
 def test_happy_path_confirms_accepted_objection_and_cites_shipment():
     conclusions = ConclusionsResponse(
         conclusions=[
@@ -966,7 +1008,7 @@ def test_run_agent_loop_with_retry_also_retries_on_timeout(monkeypatch):
     deadline-timing scenario through the fake client."""
     calls = {"n": 0}
 
-    def _stub(processor_context, llm_client, deadline, thinking_level=None):
+    def _stub(processor_context, llm_client, deadline, thinking_level=None, on_step=None):
         calls["n"] += 1
         if calls["n"] == 1:
             return {"trail": [{"step_type": "hypothesis"}], "agent_status": "timeout"}

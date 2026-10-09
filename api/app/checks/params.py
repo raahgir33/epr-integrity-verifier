@@ -120,6 +120,21 @@ IMPROVEMENT_NEAR_THRESHOLD_MARGIN = 0.10
 # assessment month is surfaced as a consent-expiry observation.
 CONSENT_EXPIRY_WARNING_MONTHS = 6
 
+# T13 (live event path) — ASSUMPTION. Minimum seconds between the end of
+# one demo run and the start of the next, regardless of processor —
+# protects Gemini cost/quota on the public demo button. Developer-tunable.
+DEMO_COOLDOWN_SECONDS = 60
+
+# T13 (live event path) — ASSUMPTION. Maximum demo runs per IST calendar
+# day, counted from the runs table. Developer-tunable.
+DEMO_DAILY_RUN_CAP = 10
+
+# T13 (live event path) — ASSUMPTION. A runs row stuck in a non-terminal
+# status (e.g. a crashed instance mid-run) older than this no longer
+# blocks a new demo click — generously above AGENT_TIMEOUT_S's worst case
+# with one retry (2 * 300s = 600s).
+ACTIVE_RUN_STALE_AFTER_S = 900
+
 # T11 (API): one short source label per check, for the UI's
 # "Measured X · Tolerance Y (assumption)" line. Mirrors each check's own
 # threshold comment above, not a new judgement — C1/C5/C6 have no tunable

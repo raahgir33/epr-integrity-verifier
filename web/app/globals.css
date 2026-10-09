@@ -10,6 +10,21 @@
   --color-risk-unknown: #475569;
 }
 
+/* T13 plan: widen the laptop+ experience. Every Tailwind utility here
+   (text-*, p-*, gap-*, max-w-*, ...) is defined in rem, which is always
+   relative to the ROOT element's font-size — bumping that one value at
+   a laptop-and-up breakpoint scales every size/spacing/heading/table/
+   timeline proportionally everywhere at once, rather than needing an
+   xl: variant added to each of the many repeated utility classes across
+   every page/component individually (and risking missing one). Below
+   1280px this is unchanged from the browser default (16px), so 400px
+   mobile keeps rendering exactly as before. */
+@media (min-width: 1280px) {
+  html {
+    font-size: 18px;
+  }
+}
+
 /* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
    regardless of the viewer's OS/device fonts, applied only where the API
    marks content lang="hi" — English body copy keeps --font-sans. */

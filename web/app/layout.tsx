@@ -14,7 +14,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${devanagariFont.variable}`}>
       <body className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
         <Nav />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</div>
+        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 xl:max-w-7xl xl:px-8">
+          {children}
+        </div>
         <Footer />
       </body>
     </html>

@@ -21,6 +21,11 @@ export type BrandsResponse = components["schemas"]["BrandsResponse"];
 export type PortfolioResponse = components["schemas"]["PortfolioResponse"];
 export type EvaluationResponse = components["schemas"]["EvaluationResponse"];
 export type AlertsResponse = components["schemas"]["AlertsResponse"];
+export type AlertOut = components["schemas"]["AlertOut"];
+export type DemoBatchOut = components["schemas"]["DemoBatchOut"];
+export type DemoBatchesResponse = components["schemas"]["DemoBatchesResponse"];
+export type DemoCertificateBatchResponse = components["schemas"]["DemoCertificateBatchResponse"];
+export type RunStatusOut = components["schemas"]["RunStatusOut"];
 export type FindingOut = components["schemas"]["FindingOut"];
 export type CheckResultOut = components["schemas"]["CheckResultOut"];
 export type StageAssessment = components["schemas"]["StageAssessment"];
@@ -28,9 +33,14 @@ export type MemoResponse = components["schemas"]["MemoResponse"];
 
 export class ApiError extends Error {
   status: number;
-  constructor(path: string, status: number) {
-    super(`API ${path} returned ${status}`);
+  /** The API's own HTTPException `detail` string, when the error body was
+   * JSON shaped {"detail": "..."} — T13's abuse-gate 429s (cooldown,
+   * daily cap, already running) carry a user-facing message here. */
+  detail?: string;
+  constructor(path: string, status: number, detail?: string) {
+    super(detail ?? `API ${path} returned ${status}`);
     this.status = status;
+    this.detail = detail;
   }
 }
 
@@ -42,6 +52,28 @@ async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${baseUrl()}${path}`, { cache: "no-store" });
   if (!response.ok) {
     throw new ApiError(path, response.status);
+  }
+  return response.json();
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${baseUrl()}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    let detail: string | undefined;
+    try {
+      const data: unknown = await response.json();
+      if (data && typeof data === "object" && "detail" in data && typeof data.detail === "string") {
+        detail = data.detail;
+      }
+    } catch {
+      // non-JSON error body — detail stays undefined, status is still reported
+    }
+    throw new ApiError(path, response.status, detail);
   }
   return response.json();
 }
@@ -101,4 +133,16 @@ export function getEvaluation(): Promise<EvaluationResponse> {
 
 export function getAlerts(): Promise<AlertsResponse> {
   return getJson<AlertsResponse>("/alerts");
+}
+
+export function getDemoBatches(): Promise<DemoBatchesResponse> {
+  return getJson<DemoBatchesResponse>("/demo-batches");
+}
+
+export function postDemoBatch(batchId: string): Promise<DemoCertificateBatchResponse> {
+  return postJson<DemoCertificateBatchResponse>("/demo/certificate-batch", { batch_id: batchId });
+}
+
+export function getRun(runId: string): Promise<RunStatusOut> {
+  return getJson<RunStatusOut>(`/runs/${encodeURIComponent(runId)}`);
 }

@@ -1,23 +1,31 @@
 """FastAPI app and routes (docs/ARCHITECTURE.md §7). Every GET route reads
 through app/store/cache.py, never BigQuery/GCS directly except for the two
-file-streaming routes, which still validate against the cache first (no
-arbitrary paths). Nothing in this module writes to BigQuery or GCS — the
-live event path (POST /demo/certificate-batch, GET /runs/{run_id},
-POST /events/certificate-batch) is T13's, not built here.
+file-streaming routes (and T13's live-event routes below, which read the
+runs/alerts/demo_batches tables directly — small, low-traffic, not part
+of the warm read-cache contract preload() guarantees for everything
+else).
 """
 
 import json
 import logging
 import time
+import uuid
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException, Response
 
+from app.checks import params as check_params
 from app.config import settings
+from app.events import pubsub
+from app.events import run_processor as live_run_processor
 from app.geo import site as geo_site
 from app.models.api import (
     AlertsResponse,
     BrandsResponse,
+    DemoBatchesResponse,
+    DemoCertificateBatchRequest,
+    DemoCertificateBatchResponse,
     DocumentFactsResponse,
     DocumentsResponse,
     EvaluationResponse,
@@ -26,9 +34,10 @@ from app.models.api import (
     ProcessorDetailResponse,
     ProcessorListResponse,
     ReasoningResponse,
+    RunStatusOut,
     SiteResponse,
 )
-from app.store import cache
+from app.store import bq, cache
 
 logger = logging.getLogger(__name__)
 
@@ -307,6 +316,151 @@ def get_evaluation() -> dict:
 
 @app.get("/alerts", response_model=AlertsResponse)
 def get_alerts() -> dict:
-    """The alerts table doesn't exist yet (T13 creates it) — same reasoning
-    as /evaluation above."""
-    return {"meta": _meta()}
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    return {"meta": _meta(), "alerts": cache.get_alerts(seed, facts_source)}
+
+
+@app.get("/demo-batches", response_model=DemoBatchesResponse)
+def list_demo_batches() -> dict:
+    """Lets the web app offer a batch picker for the live-verification
+    button (docs/BUILD_PLAN.md T13)."""
+    return {"meta": _meta(), "batches": cache.get_demo_batches(settings.default_seed)}
+
+
+def _active_or_recent_runs(seed: int) -> list[dict]:
+    return bq.fetch_rows(bq.get_client(), "runs", "*", seed)
+
+
+@app.post("/demo/certificate-batch", response_model=DemoCertificateBatchResponse, status_code=202)
+def post_demo_certificate_batch(body: DemoCertificateBatchRequest) -> dict:
+    """Creates a run record and publishes the scripted batch event
+    (docs/ARCHITECTURE.md §3.2). Abuse gates (one run at a time, a
+    cooldown between runs, a daily cap) protect the public demo button's
+    Gemini cost/quota — docs/BUILD_PLAN.md T13."""
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    batch = cache.get_demo_batch(seed, body.batch_id)
+    if batch is None:
+        raise HTTPException(status_code=404, detail="unknown batch_id")
+    processor_id = batch["processor_id"]
+
+    now = datetime.now(UTC)
+    runs = _active_or_recent_runs(seed)
+    non_terminal = [
+        r
+        for r in runs
+        if r["status"] not in ("done", "failed")
+        and (now - r["created_at"]).total_seconds() < check_params.ACTIVE_RUN_STALE_AFTER_S
+    ]
+    if non_terminal:
+        raise HTTPException(status_code=429, detail="a verification is already running")
+
+    if runs:
+        last = max(runs, key=lambda r: r["created_at"])
+        elapsed = (now - last["created_at"]).total_seconds()
+        if elapsed < check_params.DEMO_COOLDOWN_SECONDS:
+            remaining = int(check_params.DEMO_COOLDOWN_SECONDS - elapsed)
+            raise HTTPException(
+                status_code=429, detail=f"cooldown active — try again in {remaining}s"
+            )
+
+    today_count = sum(1 for r in runs if r["created_at"].date() == now.date())
+    if today_count >= check_params.DEMO_DAILY_RUN_CAP:
+        raise HTTPException(status_code=429, detail="daily demo limit reached for today")
+
+    assessments = cache.get_processor_assessments(seed, facts_source, processor_id)
+    full_assessment = (assessments or {}).get("full")
+    findings = cache.get_findings(seed, facts_source, processor_id)
+    snapshot_before = {
+        "risk_band": full_assessment["risk_band"] if full_assessment else None,
+        "findings": [
+            {"cited_shipment_ids": f["cited_shipment_ids"], "classification": f["classification"]}
+            for f in findings
+        ],
+    }
+
+    run_id = str(uuid.uuid4())
+    bq_client = bq.get_client()
+    bq.load_rows(
+        bq_client,
+        "runs",
+        [
+            {
+                "run_id": run_id,
+                "batch_id": body.batch_id,
+                "processor_id": processor_id,
+                "seed": seed,
+                "facts_source": facts_source,
+                "status": "queued",
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+                "stage_timestamps_json": "{}",
+                "error_message": None,
+                "snapshot_before_json": json.dumps(snapshot_before),
+                "alert_id": None,
+            }
+        ],
+    )
+    pubsub.publish_certificate_batch(run_id, body.batch_id)
+    return {"run_id": run_id, "status": "queued"}
+
+
+@app.get("/runs/{run_id}", response_model=RunStatusOut)
+def get_run(run_id: str) -> dict:
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    bq_client = bq.get_client()
+    row = live_run_processor.get_run(bq_client, run_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="run not found")
+
+    live_steps = live_run_processor.get_active_run_steps(run_id)
+    if live_steps is not None:
+        steps = live_steps
+    elif row["status"] in ("done", "failed"):
+        steps = cache.get_reasoning_steps(seed, facts_source, row["processor_id"])
+    else:
+        steps = []
+
+    alert = None
+    if row.get("alert_id"):
+        alert_rows = bq.fetch_rows(bq_client, "alerts", "*", seed)
+        alert_row = next((a for a in alert_rows if a["alert_id"] == row["alert_id"]), None)
+        if alert_row is not None:
+            alert = alert_row
+
+    return {
+        "meta": _meta(),
+        "run_id": row["run_id"],
+        "batch_id": row["batch_id"],
+        "processor_id": row["processor_id"],
+        "status": row["status"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "stage_timestamps": json.loads(row.get("stage_timestamps_json") or "{}"),
+        "steps": steps,
+        "error_message": row.get("error_message"),
+        "alert": alert,
+    }
+
+
+@app.post("/events/certificate-batch")
+def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
+    """Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
+    within the request (CLAUDE.md §9's CPU-throttling trap) and
+    idempotent on run_id — a re-delivered push for an already-terminal
+    run is a no-op, never a duplicate alert."""
+    if not pubsub.verify_push_token(token):
+        raise HTTPException(status_code=401, detail="invalid push token")
+
+    payload = pubsub.decode_push_envelope(body)
+    run_id = payload["run_id"]
+    bq_client = bq.get_client()
+    run_row = live_run_processor.get_run(bq_client, run_id)
+    if run_row is None:
+        # Unknown run_id — ack anyway so Pub/Sub doesn't retry forever on
+        # a malformed/stale message; there is nothing to process.
+        return {"status": "ignored"}
+    if run_row["status"] in ("done", "failed"):
+        return {"status": "already processed"}
+
+    live_run_processor.run_certificate_batch(run_id)
+    return {"status": "ok"}

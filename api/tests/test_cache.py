@@ -170,6 +170,40 @@ FAKE_DB = {
     ],
     "extraction_results": [{"doc_id": "DOC-INV-1", "status": "ok", "error_message": None}],
     "agent_runs": [],
+    "alerts": [
+        {
+            "alert_id": "ALERT-1",
+            "run_id": "RUN-1",
+            "processor_id": "PWP-01",
+            "created_at": datetime.datetime(2026, 4, 1, 10, 0, tzinfo=datetime.UTC),
+            "risk_band_before": "Low",
+            "risk_band_after": "Medium",
+            "new_finding_summary": "handwritten remark",
+            "message": "Risk band Low -> Medium",
+        },
+        {
+            "alert_id": "ALERT-2",
+            "run_id": "RUN-2",
+            "processor_id": "PWP-01",
+            "created_at": datetime.datetime(2026, 4, 2, 10, 0, tzinfo=datetime.UTC),
+            "risk_band_before": "Medium",
+            "risk_band_after": "High",
+            "new_finding_summary": None,
+            "message": "Risk band Medium -> High",
+        },
+    ],
+    "demo_batches": [
+        {
+            "batch_id": "BATCH-PWP-01-001",
+            "processor_id": "PWP-01",
+            "period_month": "2026-03",
+            "quantity_t": 7.82,
+            "pushes_over_verifiable": False,
+            "pre_batch_certified_t": 129.41,
+            "pre_batch_true_verifiable_t": 129.41,
+            "extra_document_ids": ["PWP-01-DEMO-INBOUND_INVOICE-001"],
+        }
+    ],
 }
 
 
@@ -420,6 +454,9 @@ def test_preload_populates_every_expected_key():
         f"extracted_facts:{SEED}",
         f"extraction_results:{SEED}",
         f"agent_runs:{SEED}:{FACTS_SOURCE}",
+        f"memos:{SEED}:{FACTS_SOURCE}",
+        f"alerts:{SEED}:{FACTS_SOURCE}",
+        f"demo_batches:{SEED}",
     ]
     for key in expected_prefixes:
         assert key in cache._store, f"missing cache key after preload: {key}"
@@ -795,3 +832,22 @@ def test_compute_reasoning_steps_no_score_step_without_an_agent_run(monkeypatch)
     steps = cache.get_reasoning_steps(SEED, FACTS_SOURCE, "PWP-01")
 
     assert steps == []
+
+
+# ---------- T13: alerts / demo_batches ----------
+
+
+def test_get_alerts_sorted_newest_first():
+    alerts = cache.get_alerts(SEED, FACTS_SOURCE)
+    assert [a["alert_id"] for a in alerts] == ["ALERT-2", "ALERT-1"]
+
+
+def test_get_demo_batches_sorted_by_batch_id():
+    batches = cache.get_demo_batches(SEED)
+    assert [b["batch_id"] for b in batches] == ["BATCH-PWP-01-001"]
+
+
+def test_get_demo_batch_found_and_not_found():
+    batch = cache.get_demo_batch(SEED, "BATCH-PWP-01-001")
+    assert batch["processor_id"] == "PWP-01"
+    assert cache.get_demo_batch(SEED, "BATCH-UNKNOWN") is None

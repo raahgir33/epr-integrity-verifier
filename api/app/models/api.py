@@ -274,7 +274,7 @@ class PortfolioResponse(BaseModel):
     certificates: list[PortfolioCertificateRow]
 
 
-# ---------- evaluation / alerts (explicit empty states until T14/T13) ----------
+# ---------- evaluation (explicit empty state until T14) ----------
 
 
 class EvaluationResponse(BaseModel):
@@ -283,6 +283,85 @@ class EvaluationResponse(BaseModel):
     message: str = "Evaluation metrics are not yet available — see docs/BUILD_PLAN.md T14."
 
 
+# ---------- live event path (T13) ----------
+
+
+class AlertOut(BaseModel):
+    alert_id: str
+    run_id: str
+    processor_id: str
+    created_at: datetime
+    risk_band_before: str | None
+    risk_band_after: str | None
+    new_finding_summary: str | None
+    message: str
+
+
 class AlertsResponse(BaseModel):
     meta: Meta
-    alerts: list[dict] = []
+    alerts: list[AlertOut] = []
+
+
+class DemoBatchOut(BaseModel):
+    batch_id: str
+    processor_id: str
+    period_month: str
+    quantity_t: float
+    pushes_over_verifiable: bool
+
+
+class DemoBatchesResponse(BaseModel):
+    meta: Meta
+    batches: list[DemoBatchOut]
+
+
+class DemoCertificateBatchRequest(BaseModel):
+    batch_id: str
+
+
+class DemoCertificateBatchResponse(BaseModel):
+    run_id: str
+    status: str
+
+
+RunStatus = Literal[
+    "queued",
+    "reading_documents",
+    "checking",
+    "reasoning",
+    "drafting_memo",
+    "done",
+    "failed",
+]
+
+
+class RunStageTiming(BaseModel):
+    """One completed stage's wall-clock cost — app/events/run_processor.py
+    measures this from the previous stage transition, not from run start,
+    so each value is that stage's own duration (what the web progress view
+    labels, e.g. "Agents reviewing - 74s"), not a cumulative total."""
+
+    at: datetime
+    duration_s: float
+
+
+class RunStatusOut(BaseModel):
+    """GET /runs/{run_id}. steps mirrors ReasoningStepOut's shape so the
+    web app's existing ReasoningTimeline component renders a live run's
+    partial trail with no changes — while the run is in flight on this
+    instance these come from the in-process live-step tracker
+    (app/events/run_processor.py's on_step callback), not BigQuery; once
+    terminal (done/failed) they're the same reconstructed trail
+    GET /processors/{id}/reasoning would show."""
+
+    meta: Meta
+    run_id: str
+    batch_id: str
+    processor_id: str
+    status: RunStatus
+    created_at: datetime
+    updated_at: datetime
+    stage_timestamps: dict[str, RunStageTiming]
+    steps: list[ReasoningStepOut]
+    error_message: str | None
+    alert: AlertOut | None

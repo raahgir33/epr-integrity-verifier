@@ -15,7 +15,7 @@ export function Nav() {
 
   return (
     <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6 xl:max-w-7xl xl:px-8">
         <Link href="/" className="font-display text-lg font-semibold tracking-tight text-slate-900">
           EPR Integrity Verifier
         </Link>
