@@ -121,6 +121,32 @@ def test_decide_alert_ignores_concurs_with_check_and_withdrawn_classifications()
     assert alert is None
 
 
+def _raw_trail_step(step_index: int, step_type: str, **fields) -> dict:
+    """Same shape as app/agents/orchestrator.py's _trail_step — what
+    on_step actually receives. Real trail rows always carry every one
+    of these keys (orchestrator.py's _trail_step fills every key with
+    None by default); a test fixture that omits step_index entirely
+    (the pre-fix version of this test did) can't actually exercise
+    get_active_run_steps's real transformation, which is exactly how
+    the live ResponseValidationError (missing tool_args/output/result/
+    result_summary/tokens/dedup_hit — docs/PROGRESS.md, 2026-10-09)
+    went unnoticed until a real deployed run hit it."""
+    row = {
+        "step_index": step_index,
+        "step_type": step_type,
+        "tool_name": None,
+        "tool_args_json": None,
+        "input_summary": None,
+        "output_json": None,
+        "latency_ms": None,
+        "input_tokens": None,
+        "output_tokens": None,
+        "thinking_tokens": None,
+    }
+    row.update(fields)
+    return row
+
+
 def test_active_run_steps_tracked_and_cleared():
     run_id = "RUN-TEST-1"
     assert run_processor.get_active_run_steps(run_id) is None
@@ -132,8 +158,8 @@ def test_active_run_steps_tracked_and_cleared():
         with run_processor._active_runs_lock:
             run_processor._active_runs.setdefault(run_id, []).append(step)
 
-    on_step({"step_type": "hypothesis"})
-    on_step({"step_type": "critic_final"})
+    on_step(_raw_trail_step(0, "hypothesis", output_json='{"conclusions": []}'))
+    on_step(_raw_trail_step(1, "critic_final", output_json='{"objections": []}'))
 
     steps = run_processor.get_active_run_steps(run_id)
     assert [s["step_type"] for s in steps] == ["hypothesis", "critic_final"]
@@ -142,3 +168,38 @@ def test_active_run_steps_tracked_and_cleared():
         run_processor._active_runs.pop(run_id, None)
 
     assert run_processor.get_active_run_steps(run_id) is None
+
+
+def test_active_run_steps_validate_as_real_reasoning_step_out():
+    """The exact regression this guards: get_active_run_steps's output
+    must satisfy app/models/api.py's ReasoningStepOut (what GET /runs/
+    {run_id} actually returns through) — not just "look like a dict
+    with the right step_type". A raw run_agent_loop trail step (what
+    on_step really receives — tool_args_json/output_json as strings, no
+    tool_args/output/result/result_summary/tokens/dedup_hit keys at all)
+    failed this validation live until get_active_run_steps started
+    reusing app/store/cache.py's _merge_tool_steps."""
+    from app.models.api import ReasoningStepOut
+
+    run_id = "RUN-TEST-2"
+    with run_processor._active_runs_lock:
+        run_processor._active_runs[run_id] = [
+            _raw_trail_step(0, "hypothesis", output_json='{"conclusions": []}'),
+            _raw_trail_step(
+                1,
+                "critic_tool_call",
+                tool_name="run_check",
+                tool_args_json='{"check_id": "C1"}',
+            ),
+            # A dangling tool call with no result yet — the normal
+            # in-progress state while the Critic's tool loop is still
+            # running; must not crash the merge.
+        ]
+
+    try:
+        steps = run_processor.get_active_run_steps(run_id)
+        for step in steps:
+            ReasoningStepOut.model_validate(step)  # raises on any missing/invalid field
+    finally:
+        with run_processor._active_runs_lock:
+            run_processor._active_runs.pop(run_id, None)

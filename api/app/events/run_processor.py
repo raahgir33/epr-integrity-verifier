@@ -69,10 +69,28 @@ def get_active_run_steps(run_id: str) -> list[dict] | None:
     """Live reasoning steps for a run still in progress on THIS instance
     — GET /runs/{run_id} (app/main.py) checks this first, before falling
     back to the durable runs/agent_runs tables for a completed run or one
-    that ran on a different instance/process lifetime."""
+    that ran on a different instance/process lifetime.
+
+    _active_runs stores RAW run_agent_loop trail steps exactly as
+    on_step receives them (_trail_step()'s shape: tool_args_json/
+    output_json as JSON strings, no tool_args/output/result/
+    result_summary/tokens/dedup_hit keys at all) — NOT the API's
+    ReasoningStepOut shape. Confirmed live (2026-10-09, docs/
+    PROGRESS.md): returning the raw steps straight from this function
+    into main.py's response model raised a FastAPI ResponseValidation
+    Error (6 missing-field errors) the moment a run reached the
+    reasoning stage. Reuses app/store/cache.py's own _merge_tool_steps —
+    the exact function the durable read path (get_reasoning_steps)
+    already uses to produce this same shape — rather than a second,
+    parallel transformation; _merge_tool_steps already tolerates a
+    dangling critic_tool_call with no matching critic_tool_result yet
+    (the normal case mid-run), so the live, in-progress trail doesn't
+    need special-casing."""
     with _active_runs_lock:
         steps = _active_runs.get(run_id)
-        return list(steps) if steps is not None else None
+        if steps is None:
+            return None
+        return cache._merge_tool_steps(list(steps))
 
 
 def _row_date_to_ddmmyyyy(value) -> str | None:
