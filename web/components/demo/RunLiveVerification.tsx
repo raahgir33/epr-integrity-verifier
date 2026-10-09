@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RunProgress } from "@/components/demo/RunProgress";
+import { Button } from "@/components/ui/Button";
 import type { DemoBatchOut } from "@/lib/api";
 
 /** "Run live verification" button + batch picker + progress view
@@ -60,22 +61,13 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={handleRun}
-          disabled={running || submitting || !selected}
-          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button variant="primary" onClick={handleRun} disabled={running || submitting || !selected}>
           {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
-        </button>
+        </Button>
         {running ? (
-          <button
-            type="button"
-            onClick={() => setRunId(null)}
-            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-sunk"
-          >
+          <Button variant="secondary" onClick={() => setRunId(null)}>
             Run another
-          </button>
+          </Button>
         ) : null}
       </div>
 

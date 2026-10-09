@@ -9,6 +9,7 @@ import { PortfolioPreview } from "@/components/landing/PortfolioPreview";
 import { ProofStrip } from "@/components/landing/ProofStrip";
 import { WhatWeCheck } from "@/components/landing/WhatWeCheck";
 import { FullBleed } from "@/components/ui/FullBleed";
+import { SectionTitle } from "@/components/ui/SectionTitle";
 import { getAlerts, getDemoBatches, getProcessor, getProcessors } from "@/lib/api";
 import { buildCheckCatalog, getLandingFigures, pickRealExamples } from "@/lib/landing";
 
@@ -42,7 +43,7 @@ export default async function LandingPage() {
       <ProofStrip figures={figures} />
 
       <section id="how-it-works">
-        <h2 className="font-display text-xl font-semibold text-ink">How it works</h2>
+        <SectionTitle className="text-xl">How it works</SectionTitle>
         <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
           Four stages, each shown with a real example from the dataset.
         </p>
@@ -52,14 +53,14 @@ export default async function LandingPage() {
       </section>
 
       <section>
-        <h2 className="font-display text-xl font-semibold text-ink">Who it&apos;s for</h2>
+        <SectionTitle className="text-xl">Who it&apos;s for</SectionTitle>
         <div className="mt-5">
           <AudienceTabs />
         </div>
       </section>
 
       <section id="portfolio-preview">
-        <h2 className="font-display text-xl font-semibold text-ink">Processors</h2>
+        <SectionTitle className="text-xl">Processors</SectionTitle>
         <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
           Every processor in the dataset, with its risk band and headline finding.
         </p>
@@ -70,7 +71,7 @@ export default async function LandingPage() {
 
       <FullBleed className="band py-12">
         <section>
-          <h2 className="font-display text-xl font-semibold text-ink">What we check</h2>
+          <SectionTitle className="text-xl">What we check</SectionTitle>
           <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
             Every threshold lives in <code>app/checks/params.py</code>, cited to a rule or marked an
             explicit assumption — see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
@@ -86,7 +87,7 @@ export default async function LandingPage() {
       </FullBleed>
 
       <section>
-        <h2 className="font-display text-xl font-semibold text-ink">Frequently asked</h2>
+        <SectionTitle className="text-xl">Frequently asked</SectionTitle>
         <div className="card mt-5 p-4">
           <Faq />
         </div>

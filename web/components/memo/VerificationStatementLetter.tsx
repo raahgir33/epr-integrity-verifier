@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EvidenceList } from "@/components/EvidenceLink";
+import { Button } from "@/components/ui/Button";
 import type { MemoResponse } from "@/lib/api";
 import { isClarificationMemo, renderMemoAsPlainText } from "@/lib/memo";
 
@@ -89,20 +90,12 @@ export function VerificationStatementLetter({
               </button>
             </div>
           ) : null}
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="rounded border border-border px-2 py-1 font-medium text-ink hover:bg-surface-sunk"
-          >
+          <Button variant="ghost" size="xs" onClick={handleCopy}>
             {copied ? "Copied!" : "Copy"}
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="rounded border border-border px-2 py-1 font-medium text-ink hover:bg-surface-sunk"
-          >
+          </Button>
+          <Button variant="ghost" size="xs" onClick={() => window.print()}>
             Print / Save as PDF
-          </button>
+          </Button>
         </div>
       </div>
       {hiError ? (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
 import type { ProcessorProfile, StageAssessment } from "@/lib/api";
 import { formatTonnes } from "@/lib/format";
+import { titleCase } from "@/lib/titleCase";
 
 /** Sticky summary header (T13.5 plan, Part 4) — one line of identity plus
  * one line of tonnes. Always visible; only becomes position:sticky at lg
@@ -41,14 +42,14 @@ export function StickyHeader({
               href="?tab=memo"
               className="rounded-md border border-border px-2.5 py-1 font-medium text-ink hover:bg-surface-sunk"
             >
-              View memo
+              {titleCase("View memo")}
             </Link>
             {hasLiveBatches ? (
               <a
                 href="#live-verification"
                 className="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground hover:opacity-90"
               >
-                Run live verification
+                {titleCase("Run live verification")}
               </a>
             ) : null}
           </div>

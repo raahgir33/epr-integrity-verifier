@@ -5,6 +5,7 @@ import { classificationLabel } from "@/lib/findings";
 import { STATUS_LABEL } from "@/lib/checks";
 import { isClarificationMemo } from "@/lib/memo";
 import type { RealExamples } from "@/lib/landing";
+import { SectionTitle } from "@/components/ui/SectionTitle";
 
 const STEPS = [
   {
@@ -103,7 +104,9 @@ export function HowItWorks({ examples }: { examples: RealExamples }) {
         return (
           <div key={step.title} className="card flex flex-col p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-accent">Step {i + 1}</span>
-            <h3 className="mt-1 font-display text-base font-semibold text-ink">{step.title}</h3>
+            <SectionTitle as="h3" className="mt-1 text-base">
+              {step.title}
+            </SectionTitle>
             <p className="mt-1 flex-1 text-sm text-ink-muted">{step.body}</p>
             <button
               type="button"

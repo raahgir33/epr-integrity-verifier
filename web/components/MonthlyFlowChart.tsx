@@ -13,8 +13,10 @@ import {
 } from "recharts";
 import type { MonthlyFlowRow } from "@/lib/api";
 import { formatMonth, formatTonnes } from "@/lib/format";
+import { useChartColors } from "@/lib/useChartColors";
 
 export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
+  const colors = useChartColors();
   const data = rows.map((row) => ({
     month: formatMonth(row.month),
     "Certified (t)": row.certified_t,
@@ -25,20 +27,20 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="#e3dccb" vertical={false} />
-          <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#5b5648" }} />
+          <CartesianGrid stroke={colors.grid} vertical={false} />
+          <XAxis dataKey="month" tick={{ fontSize: 12, fill: colors.axisText }} />
           <YAxis
-            tick={{ fontSize: 12, fill: "#5b5648" }}
+            tick={{ fontSize: 12, fill: colors.axisText }}
             tickFormatter={(value: number) => value.toLocaleString("en-IN")}
             width={64}
           />
           <Tooltip formatter={(value) => formatTonnes(Number(value))} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="Certified (t)" fill="#c9bfa4" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="Certified (t)" fill={colors.certifiedBar} radius={[2, 2, 0, 0]} />
           <Line
             type="monotone"
             dataKey="Verified inbound (t)"
-            stroke="#1e3d2f"
+            stroke={colors.verifiedLine}
             strokeWidth={2}
             dot={{ r: 3 }}
           />

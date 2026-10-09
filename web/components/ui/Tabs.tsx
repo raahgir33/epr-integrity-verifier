@@ -2,6 +2,7 @@
 
 import * as RadixTabs from "@radix-ui/react-tabs";
 import type { ReactNode } from "react";
+import { titleCase } from "@/lib/titleCase";
 
 export type TabItem = {
   value: string;
@@ -36,7 +37,7 @@ export function Tabs({
             value={item.value}
             className="whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-muted outline-none transition-colors duration-150 hover:text-ink data-[state=active]:border-primary data-[state=active]:text-primary"
           >
-            {item.label}
+            {titleCase(item.label)}
           </RadixTabs.Trigger>
         ))}
       </RadixTabs.List>

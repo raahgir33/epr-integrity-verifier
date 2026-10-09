@@ -33,19 +33,32 @@
   --text-4xl: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
 
   /* T13.5 plan, Part 2: base palette — warm off-white / deep forest-green
-     / warm umber, replacing the flat slate-grey direction. Each one
-     generates bg-, text- and border- utilities automatically (Tailwind
-     v4). Contrast checked against WCAG AA (4.5:1, normal text) by hand: ink-on-base is
-     near-black-on-near-white (>>4.5:1); primary-foreground-on-primary is
-     ~11:1; accent-on-base is ~4.85:1; all four --color-risk-* (unchanged
-     below) are ~4.7-6:1 against the new base. --color-risk-* stay
-     reserved for status chips only — never reused as decorative color. */
+     / warm umber, replacing the flat slate-grey direction. T13.5b plan,
+     Part 2 deepened --color-primary and --color-surface-sunk further (a
+     richer primary, more contrast between page bands) and added
+     --color-glow, a new luminous-green accent reserved for the glow
+     button/badge and highlights — distinct in hue from both --color-accent
+     (warm umber) and --color-risk-low (sage green), used only as a
+     decorative shadow/gradient accent, never as a sole-carrier text/
+     background pairing, so it isn't subject to its own AA check. Each
+     token generates bg-/text-/border- utilities automatically (Tailwind
+     v4). Contrast checked against WCAG AA (4.5:1, normal text) by hand:
+     ink-on-base is near-black-on-near-white (>>4.5:1); primary-foreground-
+     on-primary is >11:1 (primary only got darker); accent-on-base is
+     ~4.85:1; all four --color-risk-* (unchanged below) are ~4.7-6:1
+     against the new base. --color-risk-* stay reserved for status chips
+     only — never reused as decorative color. Dark-theme values for every
+     token below live in the `:root[data-theme="dark"]` block further
+     down this file — next-themes toggles that attribute; see
+     components/ThemeProvider.tsx. */
   --color-base: #faf7f1;
   --color-surface: #ffffff;
-  --color-surface-sunk: #f1ece2;
-  --color-primary: #1e3d2f;
+  --color-surface-sunk: #ece4d4;
+  --color-primary: #15301f;
   --color-primary-foreground: #faf7f1;
   --color-accent: #9a5f2e;
+  --color-glow: #16c488;
+  --color-glow-foreground: #052e21;
   --color-ink: #1c1b18;
   --color-ink-muted: #5b5648;
   --color-border: #e3dccb;
@@ -54,6 +67,47 @@
      utilities in motion-safe: (Tailwind's own prefers-reduced-motion
      variant) rather than applying them unconditionally. */
   --default-transition-duration: 200ms;
+}
+
+/* T13.5b plan, Part 2: dark theme. next-themes (components/ThemeProvider.tsx)
+   sets data-theme="dark"/"light" on <html> — default is light,
+   enableSystem is off, so this is the only dark block needed (no
+   prefers-color-scheme media query, which keeps "no flash on load"
+   simple: next-themes' own blocking script sets the attribute before
+   paint). Every color an app component uses goes through one of these
+   custom properties (no literal Tailwind palette classes anywhere in
+   web/components or web/app), so this block is the entire dark theme —
+   no component needs a dark: variant.
+   - --color-primary flips from a deep green (unreadable as text on a
+     near-black page) to a light mint, with --color-primary-foreground
+     flipping to dark, so solid primary buttons stay ~10:1.
+   - --color-surface is lighter than --color-base (elevation via
+     lightness, the standard dark-UI convention, since drop shadows don't
+     read on a dark page); --color-surface-sunk is the darkest band.
+   - --color-risk-* become brighter variants of their light values (same
+     logic as Tailwind's own 400-vs-700 shade pairs for dark surfaces) —
+     hand-checked at roughly 7-10:1 against --color-base/--color-surface
+     dark, comfortably past the 4.5:1 AA floor.
+   - --color-border stays a low-contrast hairline in both themes
+     (decorative card/table dividers, not a focus ring or input boundary)
+     — consistent with the light theme's own ~1.3:1 hairline against
+     white, not a regression. */
+:root[data-theme="dark"] {
+  --color-base: #0f1713;
+  --color-surface: #182019;
+  --color-surface-sunk: #0a0e0b;
+  --color-primary: #6fcf9b;
+  --color-primary-foreground: #0b1510;
+  --color-accent: #e0a469;
+  --color-glow: #45f0ac;
+  --color-glow-foreground: #04170f;
+  --color-ink: #f2ede4;
+  --color-ink-muted: #a39b8b;
+  --color-border: #313b32;
+  --color-risk-low: #4ade80;
+  --color-risk-medium: #fbbf24;
+  --color-risk-high: #f87171;
+  --color-risk-unknown: #94a3b8;
 }
 
 /* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
