@@ -150,7 +150,7 @@ export function AudienceTabs({
               role="tab"
               aria-selected={isActive}
               onClick={() => setValue(a.value)}
-              className={`flex items-center gap-3 rounded-xl border px-5 py-4 text-left transition-colors duration-150 ${
+              className={`flex items-center gap-3 rounded-md border px-5 py-4 text-left transition-colors duration-150 ${
                 isActive
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-surface text-ink hover:bg-surface-sunk"
