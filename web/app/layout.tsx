@@ -18,7 +18,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${bodyFont.variable} ${headingFont.variable} ${devanagariFont.variable}`}
     >
-      <body className="flex min-h-screen flex-col bg-base font-sans text-ink">
+      <body className="flex min-h-screen flex-col bg-page font-sans text-ink">
         <ThemeProvider>
           <Nav />
           <main className="flex-1">

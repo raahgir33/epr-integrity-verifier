@@ -131,7 +131,10 @@ export function RunProgress({
 
       {run.status === "done" && run.alert ? (
         <p className="glow-pulse rounded-md border border-risk-medium/30 bg-risk-medium/10 px-3 py-2 text-sm text-ink">
-          <span className="font-medium text-risk-medium">Alert:</span> {run.alert.message}
+          {/* text-ink, not text-risk-medium — see AlertBanner.tsx's identical
+              comment: Lighthouse caught that pairing at 4.12:1, short of
+              AA's 4.5:1 floor on this tinted background. */}
+          <span className="font-medium">Alert:</span> {run.alert.message}
         </p>
       ) : null}
       {run.status === "done" && !run.alert ? (

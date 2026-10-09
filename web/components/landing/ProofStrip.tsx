@@ -1,3 +1,12 @@
+"use client";
+// Required: MetricTile's countUp path renders CountUp (a Client
+// Component) and passes it a `formatter` function prop — functions
+// can't cross the Server->Client boundary, so a Server Component calling
+// MetricTile(countUp) would fail at runtime ("Functions cannot be passed
+// directly to Client Components"). Confirmed live while testing this
+// task's own build. HeroScene already had to be client for the same
+// reason; StickyHeader needs it too.
+
 import { MetricTile } from "@/components/ui/MetricTile";
 import type { LandingFigures } from "@/lib/landing";
 import { formatTonnesValue } from "@/lib/format";

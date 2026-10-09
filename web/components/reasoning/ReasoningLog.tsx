@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { AnimatedListItem } from "@/components/magicui/animated-list";
 import { StepDetail } from "@/components/reasoning/StepDetail";
 import type { ReasoningStepOut } from "@/lib/api";
 import { stepActionLine, stepTag, type StepTag } from "@/lib/reasoning";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 /** T13.5b plan, Part 4 — a log-style reasoning panel, newest entry on
  * top, replacing the old numbered timeline. Each entry: a colored dot on
  * a connecting vertical line, an agent tag, "Step N" (no timestamp field
  * exists on ReasoningStepOut today — see lib/reasoning.ts), a one-line
  * action, and an expand toggle whose detail panel animates (200ms; 0ms
- * under reduced motion, via motion's own useReducedMotion rather than a
- * CSS media query, since this is a JS height animation). */
+ * under reduced motion, via a JS height animation, not a CSS media
+ * query). Uses this app's own usePrefersReducedMotion, not motion/react's
+ * own useReducedMotion — see TextReveal.tsx's comment for the real
+ * hydration-mismatch bug that caused, confirmed live. */
 
 const TAG_DOT: Record<StepTag, string> = {
   Hypothesis: "bg-primary",
@@ -31,7 +34,7 @@ function LogRowContent({
   knownDocIds: ReadonlySet<string>;
 }) {
   const [open, setOpen] = useState(false);
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = usePrefersReducedMotion();
   const tag = stepTag(step);
   const hasTiming = step.latency_ms !== null || !!step.tokens;
 
@@ -132,7 +135,7 @@ export function ReasoningLog({
   knownDocIds: ReadonlySet<string>;
   isLive?: boolean;
 }) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = usePrefersReducedMotion();
 
   if (steps.length === 0) {
     return <p className="text-sm text-ink-muted">No agent run has happened for this processor yet.</p>;

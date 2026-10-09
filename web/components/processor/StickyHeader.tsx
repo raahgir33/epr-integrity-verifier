@@ -1,3 +1,9 @@
+"use client";
+// Required: MetricTile's countUp path passes a `formatter` function prop
+// to CountUp (a Client Component) — functions can't cross the Server->
+// Client boundary. See ProofStrip.tsx's identical comment for the full
+// explanation; confirmed live while testing this task's own build.
+
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
 import { MetricTile } from "@/components/ui/MetricTile";

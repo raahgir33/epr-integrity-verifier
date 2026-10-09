@@ -37,7 +37,16 @@ const SIZE = {
 
 export function MetricTile({
   value,
-  formatter = (n) => String(n),
+  // Rounded, not raw String(n): with countUp, CountUp's in-flight frames
+  // are genuine floats (value * easeOutCubic(progress)), and for a
+  // unit-less integer count (processors verified, documents read)
+  // String(n) on those frames showed a long, visually jarring decimal
+  // (e.g. "2.999854783280468") that could even overflow its grid cell
+  // into a neighbouring tile — confirmed by actually screenshotting the
+  // animation mid-flight, not just reading the final frame. Tonnage
+  // formatters (formatTonnesValue etc.) already round via Intl.NumberFormat
+  // and were never affected; this default-only fix doesn't touch them.
+  formatter = (n) => String(Math.round(n)),
   unit,
   label,
   tone = "default",

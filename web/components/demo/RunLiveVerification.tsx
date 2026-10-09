@@ -59,6 +59,7 @@ export function RunLiveVerification({
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <select
+          aria-label="Certificate batch to simulate"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={running || submitting}
