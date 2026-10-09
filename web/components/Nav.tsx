@@ -20,7 +20,7 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <PageContainer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
-        <Link href="/" className="font-display text-lg font-semibold tracking-tight text-primary">
+        <Link href="/" className="font-display text-xl font-bold tracking-tight text-primary whitespace-nowrap">
           EPR Integrity Verifier
         </Link>
 
