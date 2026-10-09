@@ -113,7 +113,13 @@ function LogRow({
 
   return (
     <li className="relative pb-5 pl-6 last:pb-0">
-      <span aria-hidden className="absolute bottom-0 left-[5px] top-4 w-px bg-border last:hidden" />
+      {/* T13.5c plan, Audit Batch 3: the 1px line is centered exactly on
+          the 10px dot's own center (dot at left-0, width 2.5 = 10px, so
+          center = 5px; a 1px-wide line needs its own left edge at 4.5px,
+          not 5px, so its center lands on 5px too — the previous left-
+          [5px] put the line's visible center half a pixel right of the
+          dot's). */}
+      <span aria-hidden className="absolute bottom-0 left-[4.5px] top-4 w-px bg-border last:hidden" />
       <span aria-hidden className={`absolute left-0 top-1 h-2.5 w-2.5 rounded-full ${TAG_DOT[tag]}`} />
       {/* Mount-time animation only (no AnimatePresence at the list level —
           steps are only ever appended, never removed, so there's nothing
