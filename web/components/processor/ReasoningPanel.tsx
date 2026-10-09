@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ProgressiveBlur } from "@/components/magicui/progressive-blur";
 import { ReasoningLog } from "@/components/reasoning/ReasoningLog";
+import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
+import { ShimmerText } from "@/components/ui/ShimmerText";
 import type { ReasoningStepOut } from "@/lib/api";
 
 const STORAGE_KEY = "epr:reasoningPanelCollapsed";
@@ -12,15 +14,22 @@ const STORAGE_KEY = "epr:reasoningPanelCollapsed";
  * rendered directly as the "Agent Reasoning" tab instead, with no dock/
  * collapse chrome. Collapse state persists in localStorage so a repeat
  * visitor's choice sticks; top offset matches StickyHeader's own
- * lg:top-16, stacking directly below it rather than overlapping. */
+ * lg:top-16, stacking directly below it rather than overlapping.
+ *
+ * `currentStageLabel` (Kokonut addendum's "AI Loading" equivalent) — set
+ * only while a live run is active and hasn't produced its first reasoning
+ * step yet (still reading documents / running checks); shows the real
+ * stage name, never invented progress. */
 export function ReasoningPanel({
   steps,
   knownDocIds,
   isLive = false,
+  currentStageLabel,
 }: {
   steps: ReasoningStepOut[];
   knownDocIds: ReadonlySet<string>;
   isLive?: boolean;
+  currentStageLabel?: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -104,7 +113,14 @@ export function ReasoningPanel({
         {hydrated && collapsed ? null : (
           <div className="relative min-h-0 flex-1">
             <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4 py-3">
-              <ReasoningLog steps={steps} knownDocIds={knownDocIds} isLive={isLive} />
+              {isLive && steps.length === 0 && currentStageLabel ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <AILoadingSpinner className="h-5 w-5 shrink-0" />
+                  <ShimmerText className="font-medium text-ink">{currentStageLabel}</ShimmerText>
+                </div>
+              ) : (
+                <ReasoningLog steps={steps} knownDocIds={knownDocIds} isLive={isLive} />
+              )}
             </div>
             <ProgressiveBlur position="top" height="1.5rem" className="rounded-t-lg" />
             <ProgressiveBlur position="bottom" height="1.5rem" className="rounded-b-lg" />

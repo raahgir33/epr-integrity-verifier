@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AlertBanner } from "@/components/demo/AlertBanner";
-import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
-import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
+import { ProcessorLiveRun } from "@/components/processor/ProcessorLiveRun";
 import { StickyHeader } from "@/components/processor/StickyHeader";
 import {
   ApiError,
@@ -75,13 +74,9 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
       />
 
       {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null}
-      {ownBatches.length > 0 ? (
-        <div id="live-verification">
-          <RunLiveVerification batches={ownBatches} />
-        </div>
-      ) : null}
 
-      <ProcessorTabs
+      <ProcessorLiveRun
+        batches={ownBatches}
         processorId={id}
         checksOnly={processor.checks_only}
         full={processor.full}

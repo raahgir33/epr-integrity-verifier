@@ -234,6 +234,26 @@
   }
 }
 
+/* T13.5b plan, Kokonut addendum: AILoadingSpinner's counter-rotating
+   rings. The component itself renders a single static ring under
+   prefers-reduced-motion instead of using these at all. */
+@keyframes ai-spin-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ai-spin-ccw {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
 /* T13.5b plan, Part 4: ShimmerText's gradient sweep. Component only
    applies this animation when prefers-reduced-motion is NOT set (it
    renders plain static text instead), so the keyframe itself needs no

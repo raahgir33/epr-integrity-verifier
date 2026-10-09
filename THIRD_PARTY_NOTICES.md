@@ -19,3 +19,42 @@ and placed unmodified (aside from the license header comment) under `web/compone
 Each depends only on this app's own `motion` dependency and a small local
 `cn` helper (`web/lib/utils.ts`, clsx-based) added to satisfy their
 `@/lib/utils` import — no other new dependency was introduced to use them.
+
+## Kokonut UI (kokonutui.com) — checked, not vendored
+
+The task's Kokonut addendum named three components (AI Loading, Mouse
+Effect Card, Spotlight Cards) to add via the shadcn CLI if the repository
+turned out to be MIT/Apache-2.0 licensed. Checked via `gh api
+repos/kokonut-labs/kokonutui` (2026-10-09): GitHub reports
+`"license":{"key":"mit","name":"MIT License",...}` — confirmed MIT. Each
+component's actual registry JSON (`https://kokonutui.com/r/<name>.json`)
+was then fetched and read in full before deciding whether to vendor it:
+
+- `ai-loading.json` — license is fine, but its entire design is built
+  around invented demo content (`TASK_SEQUENCES`: "Scanning web
+  pages...", "Visiting 5 websites...", self-timed on a `setInterval`,
+  unrelated to any real data) — exactly the "fake progress" the brief
+  rules out for this exact feature, and not fixable by re-skinning it,
+  since the fabrication is the component's entire design, not a surface
+  detail. Not vendored. Built `web/components/ui/AILoadingSpinner.tsx`
+  instead — a small decorative multi-ring spinner with no content of its
+  own, paired with the real stage label (`lib/runStages.ts`'s
+  `STAGE_LABEL`, the same names the API reports) via `ShimmerText`.
+- `mouse-effect-card.json` — declares `registryDependencies: ["card",
+  "button"]`, i.e. it expects shadcn/ui's own base primitives (and their
+  own dependencies — class-variance-authority, @radix-ui/react-slot —
+  not currently in this project), not just `motion`. Pulling those in
+  would add packages beyond the task's explicit allow-list ("motion and
+  next-themes"). Not vendored. Built `web/components/ui/MouseEffectCard.tsx`
+  instead.
+- `spotlight-cards.json` — declares a dependency on `lucide-react`, again
+  beyond the allow-list. Not vendored. Built
+  `web/components/ui/SpotlightCard.tsx` instead (two variants, per the
+  brief).
+
+No Kokonut source was copied into this repository — this section exists
+to record that the license was checked and why each component was built
+from scratch anyway, as the addendum's own fallback clause anticipates
+("if the licence is missing or anything else, build our own equivalents
+instead and say so" — generalized here to "or otherwise unusable without
+exceeding the task's own dependency allow-list").

@@ -10,11 +10,13 @@ import type {
   MemoResponse,
   MonthlyFlowRow,
   ReasoningStepOut,
+  RunStatusOut,
   SiteResponse,
   StageAssessment,
 } from "@/lib/api";
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
+import { STAGE_LABEL } from "@/lib/runStages";
 import { useIsXlUp } from "@/lib/useIsXlUp";
 import { Tabs } from "@/components/ui/Tabs";
 import { SidePanel } from "@/components/ui/SidePanel";
@@ -67,6 +69,7 @@ export function ProcessorTabs({
   site,
   memoEn,
   knownDocIds,
+  liveRun = null,
 }: {
   processorId: string;
   checksOnly: StageAssessment;
@@ -81,6 +84,11 @@ export function ProcessorTabs({
   site: SiteResponse;
   memoEn: MemoResponse | null;
   knownDocIds: ReadonlySet<string>;
+  /** T13.5b plan, Part 4 — the active live-verification run, if any
+   * (ProcessorLiveRun lifts this from RunLiveVerification/RunProgress).
+   * While present, the reasoning tab/docked panel mirror its steps live
+   * instead of the page-load-time reasoningSteps snapshot. */
+  liveRun?: RunStatusOut | null;
 }) {
   const searchParams = useSearchParams();
   const urlTab = validateTab(searchParams.get("tab"));
@@ -123,6 +131,15 @@ export function ProcessorTabs({
   const isXlUp = useIsXlUp();
   const confirmedCount = findings.filter((f) => CONFIRMED_CLASSIFICATIONS.has(f.classification)).length;
   const reviewCount = findings.filter((f) => REVIEW_CLASSIFICATIONS.has(f.classification)).length;
+
+  // While a live run is active, the reasoning tab/docked panel mirror its
+  // steps instead of the static page-load snapshot — once it settles
+  // (done/failed), its own final steps keep showing (frozen, isLive
+  // false) rather than silently reverting to the now-stale pre-run
+  // snapshot still sitting in `reasoningSteps`.
+  const liveIsActive = liveRun !== null && liveRun.status !== "done" && liveRun.status !== "failed";
+  const effectiveReasoningSteps = liveRun ? liveRun.steps : reasoningSteps;
+  const currentStageLabel = liveIsActive ? (STAGE_LABEL[liveRun.status] ?? liveRun.status) : undefined;
 
   const items = [
     {
@@ -175,7 +192,13 @@ export function ProcessorTabs({
           {
             value: "reasoning" as const,
             label: "Agent reasoning",
-            content: <ReasoningTimeline steps={reasoningSteps} knownDocIds={knownDocIds} />,
+            content: (
+              <ReasoningTimeline
+                steps={effectiveReasoningSteps}
+                knownDocIds={knownDocIds}
+                isLive={liveIsActive}
+              />
+            ),
           },
         ]),
     {
@@ -213,7 +236,12 @@ export function ProcessorTabs({
     <DocumentPanelProvider value={setOpenDocId}>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] xl:items-start xl:gap-8">
         <Tabs items={items} value={effectiveTab} onValueChange={handleTabChange} />
-        <ReasoningPanel steps={reasoningSteps} knownDocIds={knownDocIds} />
+        <ReasoningPanel
+          steps={effectiveReasoningSteps}
+          knownDocIds={knownDocIds}
+          isLive={liveIsActive}
+          currentStageLabel={currentStageLabel}
+        />
       </div>
 
       <SidePanel

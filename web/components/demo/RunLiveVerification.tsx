@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { RunProgress } from "@/components/demo/RunProgress";
 import { Button } from "@/components/ui/Button";
-import type { DemoBatchOut } from "@/lib/api";
+import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
 
 /** "Run live verification" button + batch picker + progress view
  * (docs/BUILD_PLAN.md T13). batches is pre-filtered by the caller
  * (all batches on /, just this processor's own batch(es) on
- * /processors/[id]). */
-export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
+ * /processors/[id]).
+ *
+ * `onRunUpdate` (T13.5b plan, Part 4) is forwarded straight to RunProgress
+ * — see that component's own doc comment for what it's for. */
+export function RunLiveVerification({
+  batches,
+  onRunUpdate,
+}: {
+  batches: DemoBatchOut[];
+  onRunUpdate?: (run: RunStatusOut | null) => void;
+}) {
   const [selected, setSelected] = useState(batches[0]?.batch_id ?? "");
   const [runId, setRunId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -65,17 +74,23 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
           {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
         </Button>
         {running ? (
-          <Button variant="secondary" onClick={() => setRunId(null)}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setRunId(null);
+              onRunUpdate?.(null);
+            }}
+          >
             Run another
           </Button>
         ) : null}
       </div>
 
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-risk-high">{error}</p> : null}
 
       {runId ? (
         <div className="mt-4 border-t border-border pt-4">
-          <RunProgress runId={runId} />
+          <RunProgress runId={runId} onRunUpdate={onRunUpdate} />
         </div>
       ) : null}
     </div>

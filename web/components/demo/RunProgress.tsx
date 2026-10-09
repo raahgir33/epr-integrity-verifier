@@ -2,16 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
+import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
 import type { RunStatusOut } from "@/lib/api";
+import { STAGE_LABEL, STAGE_ORDER } from "@/lib/runStages";
 
-const STAGE_ORDER = ["reading_documents", "checking", "reasoning", "drafting_memo"] as const;
-const STAGE_LABEL: Record<string, string> = {
-  reading_documents: "Reading documents",
-  checking: "Checks",
-  reasoning: "Agents reviewing",
-  drafting_memo: "Drafting memo",
-};
 const POLL_INTERVAL_MS = 2500;
 
 type StageState = "done" | "in_progress" | "pending";
@@ -34,9 +29,7 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
         ✓
       </span>
     ) : state === "in_progress" ? (
-      <span className="flex h-5 w-5 shrink-0 motion-safe:animate-pulse items-center justify-center rounded-full bg-surface-sunk text-ink-muted">
-        •
-      </span>
+      <AILoadingSpinner className="h-5 w-5 shrink-0" />
     ) : (
       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-ink-muted" />
     );
@@ -57,8 +50,25 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
 }
 
 /** Polls GET /api/runs/{runId} (proxying GET /runs/{run_id}) until the run
- * reaches done/failed — docs/BUILD_PLAN.md T13's live progress view. */
-export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: () => void }) {
+ * reaches done/failed — docs/BUILD_PLAN.md T13's live progress view.
+ *
+ * `onRunUpdate` (T13.5b plan, Part 4/Kokonut addendum) lets a processor-
+ * page caller mirror the live run's steps into the docked reasoning panel
+ * (ProcessorLiveRun/ProcessorTabs) instead of this component's own
+ * embedded trail below — when a caller passes it, this component assumes
+ * something else is now displaying the trail and skips rendering its own
+ * copy, so the same steps are never shown twice in two different styles.
+ * The landing page's global "Run live verification" has no per-processor
+ * panel to feed, so it omits the prop and keeps the embedded trail. */
+export function RunProgress({
+  runId,
+  onSettled,
+  onRunUpdate,
+}: {
+  runId: string;
+  onSettled?: () => void;
+  onRunUpdate?: (run: RunStatusOut | null) => void;
+}) {
   const [run, setRun] = useState<RunStatusOut | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const settledRef = useRef(false);
@@ -78,6 +88,7 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
         }
         setFetchError(null);
         setRun(data);
+        onRunUpdate?.(data);
         if ((data.status === "done" || data.status === "failed") && !settledRef.current) {
           settledRef.current = true;
           onSettled?.();
@@ -94,7 +105,9 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
     return () => {
       cancelled = true;
       clearInterval(interval);
+      onRunUpdate?.(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onRunUpdate is a setState setter (RunLiveVerification/ProcessorLiveRun), stable by identity; adding it would re-subscribe on every parent render for no reason.
   }, [runId, onSettled]);
 
   if (fetchError && !run) {
@@ -125,7 +138,7 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
         <p className="text-sm text-ink-muted">Done — no alert (risk band unchanged, no new finding).</p>
       ) : null}
 
-      {run.steps.length > 0 ? (
+      {!onRunUpdate && run.steps.length > 0 ? (
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Reasoning trail</p>
           <div className="mt-2">
