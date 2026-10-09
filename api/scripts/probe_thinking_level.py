@@ -1,7 +1,7 @@
 """One-off probe: does types.ThinkingConfig(thinking_level="low") work for
 extraction on this model/region, and does it actually reduce thinking vs
-the default (no thinking config, confirmed to give thoughts_token_count=0
-— see docs/PROGRESS.md)?
+model-default thinking (no thinking config sent, confirmed to give
+thoughts_token_count=0 — see docs/PROGRESS.md)?
 
 Never send thinking_budget, or thinking_level="minimal", to Gemini 3.x
 models (developer instruction, 2026-10-07; enforced in app/llm.py, not

@@ -43,6 +43,7 @@ echo "Deploying epr-web to project $GCP_PROJECT in $VERTEX_LOCATION, API_BASE_UR
 gcloud run deploy epr-web --source=web --region="$VERTEX_LOCATION" \
   --service-account="epr-web-sa@${GCP_PROJECT}.iam.gserviceaccount.com" \
   --allow-unauthenticated --memory=512Mi --cpu-boost \
+  --min-instances=1 --max-instances=3 \
   --set-env-vars="API_BASE_URL=${API_URL}"
 
 WEB_URL="$(gcloud run services describe epr-web --region="$VERTEX_LOCATION" --format='value(status.url)')"

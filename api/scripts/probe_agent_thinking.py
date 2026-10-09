@@ -1,7 +1,8 @@
-"""One-off probe: no thinking config vs thinking_level="low" for the T10
-agent loop, across all 10 processors, 2 runs per config (4 full runs
-total) — measures which config wins on cited-shipment accuracy against
-ground truth, and whether a config is consistent run-to-run.
+"""One-off probe: model-default thinking (no thinking config sent) vs
+thinking_level="low" for the T10 agent loop, across all 10 processors,
+2 runs per config (4 full runs total) — measures which config wins on
+cited-shipment accuracy against ground truth, and whether a config is
+consistent run-to-run.
 
 This is the T10 acceptance run (docs/BUILD_PLAN.md): confirms F8 is
 detected (with the right shipments cited) on the two seeded F8
@@ -16,7 +17,7 @@ reused here unchanged (see tests/test_agent_leak_guard.py) for either
 
 Never send thinking_budget, or thinking_level="minimal", to Gemini 3.x
 models (developer instruction; enforced in app/llm.py) — this script only
-ever tries "low" against the no-thinking default.
+ever tries "low" against model-default thinking.
 
 Run by the developer — never by the agent (hits real Vertex AI,
 BigQuery, Cloud Storage). Requires --stage normalize/checks/site to have

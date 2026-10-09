@@ -132,7 +132,9 @@ export default function MethodPage() {
           <p>
             Deterministic checks catch what arithmetic and document fields can prove. The agent loop
             exists for what they can&apos;t: reading meaning in free text, connecting evidence across a
-            whole dossier, and challenging a first conclusion before it&apos;s trusted.
+            whole dossier, and challenging a first conclusion before it&apos;s trusted. Both agents run
+            on Gemini 3.5 Flash on Vertex AI, model-default thinking (no thinking config is sent); per-purpose
+            timeouts and retries.
           </p>
           <p>
             A <strong className="text-ink">Hypothesis</strong> agent reads a compact digest of the

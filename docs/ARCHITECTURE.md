@@ -130,6 +130,8 @@ Verifiable tonnes and the risk band are computed deterministically from these re
 | Cloud Run | `epr-api` and `epr-web` | Mandatory deployment target |
 | Cloud Build, Artifact Registry | Container builds for Cloud Run source deploys | Deployment |
 
+Gemini 3.5 Flash on Vertex AI, model-default thinking (no thinking config is sent); per-purpose timeouts and retries.
+
 Not used: Vertex AI predictive model training (a model trained only on synthetic data would not be credible).
 
 ## 7. API surface (`epr-api`)

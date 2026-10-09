@@ -841,9 +841,10 @@ def run_agent_loop(
     adjustment.
 
     thinking_level is forwarded, unmodified, to every Gemini call in this
-    loop — None (the default) sends no thinking config at all. Only
-    scripts/probe_agent_thinking.py passes "low"; normal pipeline runs
-    never set this (docs/PROGRESS.md's T10 thinking-comparison decision).
+    loop — None (the default) runs with model-default thinking, sending
+    no thinking config at all. Only scripts/probe_agent_thinking.py
+    passes "low"; normal pipeline runs never set this (docs/PROGRESS.md's
+    T10 thinking-comparison decision).
 
     on_step, when given, is called with each trail step's dict the moment
     it's appended — T13's live event path uses this to surface reasoning
