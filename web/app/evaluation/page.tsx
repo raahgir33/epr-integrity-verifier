@@ -9,7 +9,7 @@ export default async function EvaluationPage() {
     <div className="space-y-6">
       <div>
         <Heading>Evaluation</Heading>
-        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Extraction accuracy and detection precision/recall against a held-out, seeded ground truth —
           see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the protocol.
         </p>

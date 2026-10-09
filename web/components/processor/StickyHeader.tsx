@@ -40,7 +40,7 @@ export function StickyHeader({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-xs text-ink-muted">{profile.processor_id}</span>
-          <h1 className="font-display text-lg font-semibold text-ink">{profile.name}</h1>
+          <h1 className="font-display text-lg font-semibold text-balance text-ink">{profile.name}</h1>
         </div>
         <div className="flex items-center gap-3">
           <RiskBadge band={stage.risk_band} />

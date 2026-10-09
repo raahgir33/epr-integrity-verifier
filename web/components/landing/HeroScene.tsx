@@ -68,7 +68,7 @@ export function HeroScene({
             </TypingAnimation>
           )}
         </h1>
-        <p className="mx-auto mt-4 max-w-[60ch] text-base text-[#f4f4f4]/85">
+        <p className="mx-auto mt-4 max-w-[60ch] text-pretty text-base text-[#f4f4f4]/85">
           We reconstruct a processor&apos;s material flow from its own paper trail, test it against
           physical and documentary constraints, and report how many certified tonnes are verifiable —
           with evidence for every finding.

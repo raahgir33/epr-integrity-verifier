@@ -16,7 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${bodyFont.variable} ${headingFont.variable} ${monoFont.variable} ${devanagariFont.variable}`}
+      className={`antialiased ${bodyFont.variable} ${headingFont.variable} ${monoFont.variable} ${devanagariFont.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-page font-sans text-ink">
         <ThemeProvider>

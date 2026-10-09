@@ -86,7 +86,7 @@ export function RuleBasedChecksAccordion() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">{c.severity}</span>
           </span>
         ),
-        content: <p className="max-w-[70ch]">{c.body}</p>,
+        content: <p className="max-w-[70ch] text-pretty">{c.body}</p>,
       }))}
     />
   );

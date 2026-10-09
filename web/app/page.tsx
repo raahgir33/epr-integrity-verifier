@@ -47,7 +47,7 @@ export default async function LandingPage() {
         <TextReveal>
           <SectionTitle className="text-xl">How it works</SectionTitle>
         </TextReveal>
-        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Four stages, each shown with a real example from the dataset.
         </p>
         <div className="mt-5">
@@ -68,7 +68,7 @@ export default async function LandingPage() {
         <TextReveal>
           <SectionTitle className="text-xl">Processors</SectionTitle>
         </TextReveal>
-        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Every processor in the dataset, with its risk band and headline finding.
         </p>
         <div className="mt-5">
@@ -81,7 +81,7 @@ export default async function LandingPage() {
           <TextReveal>
             <SectionTitle className="text-xl">What we check</SectionTitle>
           </TextReveal>
-          <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+          <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
             Every threshold lives in <code>app/checks/params.py</code>, cited to a rule or marked an
             explicit assumption — see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
           </p>

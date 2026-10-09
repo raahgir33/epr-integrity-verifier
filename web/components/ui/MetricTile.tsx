@@ -62,7 +62,7 @@ export function MetricTile({
   countUp?: boolean;
 }) {
   const colors = TONE[tone];
-  const valueClassName = `num-cell font-display font-semibold tabular-nums ${SIZE[size]} ${colors.value}`;
+  const valueClassName = `num-cell font-display font-semibold ${SIZE[size]} ${colors.value}`;
   return (
     <div className="min-w-0">
       <div className="inline-flex items-baseline gap-1 whitespace-nowrap">

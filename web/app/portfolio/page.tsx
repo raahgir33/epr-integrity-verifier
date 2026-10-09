@@ -27,7 +27,7 @@ export default async function PortfolioPage({
     <div className="space-y-6">
       <div>
         <Heading>Brand portfolio</Heading>
-        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Certificates a brand holds across processors, and the share that is verifiable — apportioned
           from each processor&apos;s own verifiable ratio, not a per-certificate traced figure.
         </p>

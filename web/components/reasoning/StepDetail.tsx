@@ -66,7 +66,7 @@ function RevisionBlock({ output }: { output: RevisionOutput }) {
 function ScoreBlock({ output }: { output: ScoreOutput }) {
   return (
     <div className="text-sm text-ink-muted">
-      <p>
+      <p className="tabular-nums">
         Rule Checks verifiable: {output.checks_only_verifiable_t !== null ? formatTonnes(output.checks_only_verifiable_t) : "—"}
         {" → "}
         Agent Validation: {output.full_verifiable_t !== null ? formatTonnes(output.full_verifiable_t) : "—"}

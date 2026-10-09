@@ -7,7 +7,7 @@ export default function MethodPage() {
     <div className="space-y-8">
       <div>
         <Heading>Method</Heading>
-        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
           How the agent loop reasons, the real limits placed on its output, what each deterministic
           check does, how verifiable tonnes are computed, and what this system does not (yet) prove.
         </p>
@@ -15,7 +15,7 @@ export default function MethodPage() {
 
       <section className="card p-5">
         <SectionTitle className="text-lg">Agent reasoning</SectionTitle>
-        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
+        <div className="mt-2 max-w-[70ch] space-y-2 text-pretty text-sm text-ink-muted">
           <p>
             Deterministic checks catch what arithmetic and document fields can prove. The agent loop
             exists for what they can&apos;t: reading meaning in free text, connecting evidence across a
@@ -52,10 +52,10 @@ export default function MethodPage() {
 
       <section className="band rounded-lg p-5">
         <SectionTitle className="text-lg">Guardrails</SectionTitle>
-        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-2 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Real limits placed on AI output, enforced in code — never left to the prompt alone.
         </p>
-        <ul className="mt-4 max-w-[70ch] list-disc space-y-2 pl-5 text-sm text-ink-muted">
+        <ul className="mt-4 max-w-[70ch] list-disc space-y-2 pl-5 text-pretty text-sm text-ink-muted">
           <li>
             <strong className="text-ink">Evidence and shipment IDs are validated</strong> — every
             shipment and evidence ID a finding cites is checked against the processor&apos;s own
@@ -103,7 +103,7 @@ export default function MethodPage() {
 
       <section className="card p-5">
         <SectionTitle className="text-lg">Rule-Based Checks</SectionTitle>
-        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
+        <p className="mt-2 max-w-[70ch] text-pretty text-sm text-ink-muted">
           Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
           rule-derived (cited to a regulation or document convention) or an explicit assumption. A
           failed <strong>hard</strong> check can never be overruled by an agent; a <strong>soft</strong>{" "}
@@ -116,7 +116,7 @@ export default function MethodPage() {
 
       <section className="band rounded-lg p-5">
         <SectionTitle className="text-lg">Verifiable tonnes and risk band</SectionTitle>
-        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
+        <div className="mt-2 max-w-[70ch] space-y-2 text-pretty text-sm text-ink-muted">
           <p>
             <strong className="text-ink">Verified inbound tonnes</strong> — weighbridge-net tonnes
             of shipments that pass C3, C4 and C5, minus shipments an agreed agent finding deducts.
@@ -145,7 +145,7 @@ export default function MethodPage() {
 
       <section className="card p-5">
         <SectionTitle className="text-lg">Evaluation protocol</SectionTitle>
-        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
+        <div className="mt-2 max-w-[70ch] space-y-2 text-pretty text-sm text-ink-muted">
           <p>
             A held-out test set, generated the same way as the development set but with a different seed,
             is never used while building or tuning the system. Before it is generated, every check
@@ -168,7 +168,7 @@ export default function MethodPage() {
 
       <section className="band rounded-lg p-5">
         <SectionTitle className="text-lg">Limitations</SectionTitle>
-        <ul className="mt-2 max-w-[70ch] list-disc space-y-1 pl-5 text-sm text-ink-muted">
+        <ul className="mt-2 max-w-[70ch] list-disc space-y-1 pl-5 text-pretty text-sm text-ink-muted">
           <li>
             Every processor, document, brand and certificate shown here is synthetic and fictional — no
             real company, recycler or brand is represented or implicated.

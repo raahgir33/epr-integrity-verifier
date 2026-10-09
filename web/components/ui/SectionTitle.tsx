@@ -17,7 +17,7 @@ export function SectionTitle({
 }) {
   const Tag = as;
   return (
-    <Tag className={`font-display font-semibold text-ink ${className}`}>
+    <Tag className={`font-display font-semibold text-balance text-ink ${className}`}>
       {typeof children === "string" ? titleCase(children) : children}
     </Tag>
   );

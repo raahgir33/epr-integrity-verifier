@@ -7,7 +7,7 @@ import { titleCase } from "@/lib/titleCase";
  * fragment instead and is rendered verbatim, never title-cased. */
 export function Heading({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <h1 className={`font-display text-2xl font-semibold text-ink ${className}`}>
+    <h1 className={`font-display text-2xl font-semibold text-balance text-ink ${className}`}>
       {typeof children === "string" ? titleCase(children) : children}
     </h1>
   );

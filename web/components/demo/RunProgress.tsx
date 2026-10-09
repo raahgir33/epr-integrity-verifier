@@ -45,7 +45,7 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
       ) : (
         <span className={state === "pending" ? "text-ink-muted" : "text-ink"}>{label}</span>
       )}
-      {timing ? <span className="text-xs text-ink-muted">· {timing.duration_s.toFixed(0)}s</span> : null}
+      {timing ? <span className="text-xs tabular-nums text-ink-muted">· {timing.duration_s.toFixed(0)}s</span> : null}
     </li>
   );
 }

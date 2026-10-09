@@ -95,7 +95,7 @@ export function CountUp({
   }, [value]);
 
   return (
-    <span ref={ref} className={`num-cell tabular-nums ${className}`}>
+    <span ref={ref} className={`num-cell ${className}`}>
       {display}
     </span>
   );
