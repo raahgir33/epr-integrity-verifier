@@ -137,7 +137,7 @@ export function ProcessorTabs({
     },
     {
       value: "checks" as const,
-      label: "Checks",
+      label: "Rule-Based Checks",
       content: (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {checkResults.map((check) => (

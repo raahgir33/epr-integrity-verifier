@@ -106,9 +106,9 @@ function ScoreBlock({ output }: { output: ScoreOutput }) {
   return (
     <div className="text-sm text-ink-muted">
       <p>
-        Checks-only verifiable: {output.checks_only_verifiable_t !== null ? formatTonnes(output.checks_only_verifiable_t) : "—"}
+        Rule Checks verifiable: {output.checks_only_verifiable_t !== null ? formatTonnes(output.checks_only_verifiable_t) : "—"}
         {" → "}
-        With agents: {output.full_verifiable_t !== null ? formatTonnes(output.full_verifiable_t) : "—"}
+        Agent Validation: {output.full_verifiable_t !== null ? formatTonnes(output.full_verifiable_t) : "—"}
       </p>
       <p>
         Risk band: {output.risk_band_before ?? "—"} → {output.risk_band_after ?? "—"}

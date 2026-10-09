@@ -25,9 +25,9 @@ export function StageComparison({
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-ink-muted">
             <th className="py-2 pr-4 font-medium">Measure</th>
-            <th className="py-2 pr-4 font-medium">Checks-only</th>
-            <th className="py-2 font-medium">
-              With agents {agentStatus ? `(${agentStatus})` : "(not yet run)"}
+            <th className="py-2 pr-4 text-right font-medium">Rule Checks</th>
+            <th className="py-2 text-right font-medium">
+              Agent Validation {agentStatus ? `(${agentStatus})` : "(not yet run)"}
             </th>
           </tr>
         </thead>
@@ -43,10 +43,10 @@ export function StageComparison({
           ))}
           <tr>
             <td className="py-2 pr-4 text-ink-muted">Risk band</td>
-            <td className="py-2 pr-4">
+            <td className="py-2 pr-4 text-right">
               <RiskBadge band={checksOnly.risk_band} />
             </td>
-            <td className="py-2">{full ? <RiskBadge band={full.risk_band} /> : "—"}</td>
+            <td className="py-2 text-right">{full ? <RiskBadge band={full.risk_band} /> : "—"}</td>
           </tr>
         </tbody>
       </table>
