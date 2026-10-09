@@ -106,8 +106,16 @@
    needed. Hand-checked contrast, computed exactly:
      --color-ink (#f4f4f4) on --color-page/--color-surface: 15.0/12.2:1
      navy (--color-primary-foreground) on --color-primary (teal): 6.65:1
-     --color-ink-muted (#8991ab, 55% page-grey into navy) on
-       --color-page: 5.28:1
+     --color-ink-muted (#959cb3, 60% page-grey into navy) on
+       --color-page/--color-surface: 6.05/4.92:1 — both checked, since
+       Nav's inactive links sit on --color-surface specifically, not
+       --color-page. (T13.5c verification: the first value picked here,
+       #8991ab at 55%, was only checked against --color-page — 5.28:1 —
+       and missed --color-surface entirely: 4.29:1, short of the 4.5:1
+       AA floor. Found live by axe-core's color-contrast rule against
+       Nav's own links, not caught by the original hand-check. Every
+       --color-ink-muted-on-a-themed-surface pairing needs checking
+       against every surface token it can sit on, not just --color-page.)
      --color-risk-* (unchanged dark hexes, kept per the note) on
        --color-page: low 9.49, medium 9.91, high 5.98, unknown 6.45:1 —
        all comfortably clear 4.5:1 against the new navy page, no shade
@@ -124,7 +132,7 @@
   --color-primary-foreground: #071952;
   --color-glow: #90ddf0;
   --color-ink: #f4f4f4;
-  --color-ink-muted: #8991ab;
+  --color-ink-muted: #959cb3;
   --color-border: rgb(244 244 244 / 0.12); /* light grey at low opacity — this project's existing convention of flipping border lightness in dark mode */
   --color-risk-low: #4ade80;
   --color-risk-medium: #fbbf24;
