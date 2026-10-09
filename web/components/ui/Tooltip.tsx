@@ -22,7 +22,7 @@ export function Tooltip({ label, children }: { label: string; children: ReactNod
         <RadixTooltip.Content
           side="top"
           sideOffset={6}
-          className="tooltip-content z-50 max-w-xs rounded-md bg-ink px-2.5 py-1.5 text-xs text-primary-foreground shadow-lg"
+          className="tooltip-content z-50 max-w-xs rounded-md bg-ink px-2.5 py-1.5 text-xs text-primary-foreground shadow-overlay"
         >
           {label}
           <RadixTooltip.Arrow className="fill-ink" />

@@ -23,7 +23,7 @@ export function SidePanel({
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="side-panel-overlay fixed inset-0 z-40 bg-ink/40" />
         <RadixDialog.Content
-          className="side-panel-content fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-xl focus:outline-none sm:max-w-lg"
+          className="side-panel-content fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-overlay focus:outline-none sm:max-w-lg"
           aria-describedby={undefined}
         >
           <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">

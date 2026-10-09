@@ -75,6 +75,22 @@
   --color-ink-muted: #5a668b;
   --color-border: rgb(7 25 82 / 0.12); /* navy at low opacity, per the note's own wording */
 
+  /* T13.5c plan, Audit Batch 5: one shared elevation scale (surfaces.md's
+     "shadow as border" recipe), replacing the two previously-uncoordinated
+     systems — .card's own hand-written box-shadow (hardcoded to the old
+     ink color, stale after the palette swap above) and ad hoc Tailwind
+     shadow-lg/-xl utilities on Tooltip/SidePanel with no stated
+     relationship to .card's shadow. Three tiers: resting (cards at rest),
+     raised (hover), overlay (floating above the page — tooltip, side
+     panel). Dark-theme values (a single ring per tier, since layered
+     depth shadows don't read on a dark page) live in the dark block below. */
+  --shadow-resting: 0px 0px 0px 1px oklch(0 0 0 / 0.06), 0px 1px 2px -1px oklch(0 0 0 / 0.06),
+    0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-raised: 0px 0px 0px 1px oklch(0 0 0 / 0.08), 0px 1px 2px -1px oklch(0 0 0 / 0.08),
+    0px 2px 4px 0px oklch(0 0 0 / 0.06);
+  --shadow-overlay: 0px 0px 0px 1px oklch(0 0 0 / 0.08), 0px 4px 8px -2px oklch(0 0 0 / 0.1),
+    0px 12px 24px -4px oklch(0 0 0 / 0.12);
+
   /* Motion: subtle only, 150-250ms. Components should wrap transition
      utilities in motion-safe: (Tailwind's own prefers-reduced-motion
      variant) rather than applying them unconditionally. */
@@ -114,6 +130,14 @@
   --color-risk-medium: #fbbf24;
   --color-risk-high: #f87171;
   --color-risk-unknown: #94a3b8;
+
+  /* T13.5c plan, Audit Batch 5: dark-mode elevation — a single white-
+     opacity ring per tier (surfaces.md: layered depth shadows don't read
+     on a dark page), ring strength increasing resting -> raised ->
+     overlay instead of adding more shadow layers. */
+  --shadow-resting: 0 0 0 1px oklch(1 0 0 / 0.08);
+  --shadow-raised: 0 0 0 1px oklch(1 0 0 / 0.13);
+  --shadow-overlay: 0 0 0 1px oklch(1 0 0 / 0.18);
 }
 
 /* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
@@ -130,14 +154,18 @@
   background-color: var(--color-surface-sunk);
 }
 
-/* T13.5 plan, Part 2: shared card elevation — subtle, not a heavy
-   drop-shadow, so a long page of cards doesn't read as a stack of
-   separate panels. */
+/* T13.5 plan, Part 2: shared card elevation. T13.5c plan, Audit Batch 5:
+   re-pointed to the --shadow-resting token (was a hand-written
+   box-shadow hard-coded to the old ink color, rgb(28 27 24 / ...) — gone
+   stale after the Batch 0.8 palette swap, and invisible in dark mode
+   since nothing redefined it there). The 1px solid border stays — it's
+   structural (the card's own boundary), not a depth-only border, so
+   surfaces.md's "convert to shadow" rule doesn't apply to it. */
 .card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 1px 2px rgb(28 27 24 / 0.04), 0 1px 1px rgb(28 27 24 / 0.03);
+  box-shadow: var(--shadow-resting);
 }
 
 /* T13.5c plan, Batch 0.7: smooth in-page scrolling (hash links to
