@@ -14,7 +14,8 @@ and placed unmodified (aside from the license header comment) under `web/compone
 |---|---|
 | `web/components/magicui/animated-list.tsx` | `https://magicui.design/r/animated-list.json` |
 | `web/components/magicui/typing-animation.tsx` | `https://magicui.design/r/typing-animation.json` |
-| `web/components/magicui/progressive-blur.tsx` | `https://magicui.design/r/progressive-blur.json` |
+
+`progressive-blur.tsx` (`https://magicui.design/r/progressive-blur.json`) was vendored here in T13.5b and removed in T13.5c (Batch 0.9, 2026-10-10) when the developer's deployed-site review asked for the docked reasoning panel's top/bottom blur effect to come out entirely — no remaining call site, so the file was deleted rather than left unused.
 
 Each depends only on this app's own `motion` dependency and a small local
 `cn` helper (`web/lib/utils.ts`, clsx-based) added to satisfy their

@@ -19,9 +19,9 @@ const TONE = {
   // comment) — hard-coded to match, so it never flips with the viewer's
   // chosen theme the way text-primary-foreground now does.
   inverted: {
-    value: "text-[#faf7f1]",
-    unit: "text-[#faf7f1]/75",
-    label: "text-[#faf7f1]/70",
+    value: "text-[#f4f4f4]",
+    unit: "text-[#f4f4f4]/75",
+    label: "text-[#f4f4f4]/70",
   },
   // StickyHeader's unverifiable-tonnes tile: red when there's a real
   // unverifiable figure, green when it's zero — same risk-* tokens
@@ -65,7 +65,7 @@ export function MetricTile({
   const valueClassName = `num-cell font-display font-semibold tabular-nums ${SIZE[size]} ${colors.value}`;
   return (
     <div className="min-w-0">
-      <div className="flex items-baseline gap-1 whitespace-nowrap">
+      <div className="inline-flex items-baseline gap-1 whitespace-nowrap">
         {countUp ? (
           <CountUp value={value} formatter={formatter} className={valueClassName} />
         ) : (
