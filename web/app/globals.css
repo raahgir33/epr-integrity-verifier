@@ -8,21 +8,24 @@
   --color-risk-medium: #b45309;
   --color-risk-high: #b91c1c;
   --color-risk-unknown: #475569;
-}
 
-/* T13 plan: widen the laptop+ experience. Every Tailwind utility here
-   (text-*, p-*, gap-*, max-w-*, ...) is defined in rem, which is always
-   relative to the ROOT element's font-size — bumping that one value at
-   a laptop-and-up breakpoint scales every size/spacing/heading/table/
-   timeline proportionally everywhere at once, rather than needing an
-   xl: variant added to each of the many repeated utility classes across
-   every page/component individually (and risking missing one). Below
-   1280px this is unchanged from the browser default (16px), so 400px
-   mobile keeps rendering exactly as before. */
-@media (min-width: 1280px) {
-  html {
-    font-size: 18px;
-  }
+  /* T13.5 plan, Part 1: fluid type scale. These override Tailwind's own
+     fixed-rem --text-* tokens, so every existing text-xs/sm/base/lg/...
+     className becomes fluid with no className changes anywhere else in
+     the app. clamp() floors/ceilings are chosen so text-sm never drops
+     below 14px and text-xs (captions only) never drops below 13px,
+     scaling up smoothly between a ~390px and a ~1536px viewport instead
+     of the old binary 16px/18px root-font-size jump at exactly 1280px.
+     --text-*--line-height stays Tailwind's own unitless ratio (theme.css)
+     — unaffected by overriding the size half of the pair. */
+  --text-xs: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.83rem + 0.25vw, 1rem);
+  --text-base: clamp(1rem, 0.94rem + 0.35vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem);
+  --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.65rem + 1vw, 2.25rem);
+  --text-4xl: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
 }
 
 /* Amendment 3 (T12 plan): Hindi text renders in Noto Sans Devanagari
