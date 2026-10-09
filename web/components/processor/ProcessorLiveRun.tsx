@@ -59,7 +59,7 @@ export function ProcessorLiveRun({
   return (
     <>
       {batches.length > 0 ? (
-        <div id="live-verification">
+        <div id="live-verification" className="scroll-mt-20">
           <RunLiveVerification batches={batches} onRunUpdate={setLiveRun} />
         </div>
       ) : null}

@@ -8,6 +8,7 @@ const VARIANT = {
 } as const;
 
 const SIZE = {
+  lg: "rounded-md px-5 py-3 text-base",
   sm: "rounded-md px-3 py-1.5 text-sm",
   xs: "rounded px-2 py-1 text-xs",
 } as const;

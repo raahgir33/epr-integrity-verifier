@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RunProgress } from "@/components/demo/RunProgress";
 import { Button } from "@/components/ui/Button";
 import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
+import { titleCase } from "@/lib/titleCase";
 
 /** "Run live verification" button + batch picker + progress view
  * (docs/BUILD_PLAN.md T13). batches is pre-filtered by the caller
@@ -50,20 +51,20 @@ export function RunLiveVerification({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <p className="font-display text-base font-semibold text-ink">Run live verification</p>
+    <div className="mx-auto max-w-md rounded-lg border border-border bg-surface p-4 text-center lg:w-1/3">
+      <p className="font-display text-base font-semibold text-ink">{titleCase("Run live verification")}</p>
       <p className="mt-1 text-sm text-ink-muted">
         Simulate a new certificate batch arriving for one processor — watch it extracted, checked and
         reviewed by the agent loop end to end.
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-col items-center gap-3">
         <select
           aria-label="Certificate batch to simulate"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={running || submitting}
-          className="rounded border border-border px-2 py-1.5 text-sm disabled:opacity-60"
+          className="w-full rounded border border-border px-2 py-1.5 text-sm disabled:opacity-60"
         >
           {batches.map((b) => (
             <option key={b.batch_id} value={b.batch_id}>
@@ -71,12 +72,19 @@ export function RunLiveVerification({
             </option>
           ))}
         </select>
-        <Button variant="primary" onClick={handleRun} disabled={running || submitting || !selected}>
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
+          onClick={handleRun}
+          disabled={running || submitting || !selected}
+        >
           {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
         </Button>
         {running ? (
           <Button
             variant="secondary"
+            className="w-full"
             onClick={() => {
               setRunId(null);
               onRunUpdate?.(null);
@@ -90,7 +98,7 @@ export function RunLiveVerification({
       {error ? <p className="mt-2 text-sm text-risk-high">{error}</p> : null}
 
       {runId ? (
-        <div className="mt-4 border-t border-border pt-4">
+        <div className="mt-4 border-t border-border pt-4 text-left">
           <RunProgress runId={runId} onRunUpdate={onRunUpdate} />
         </div>
       ) : null}
