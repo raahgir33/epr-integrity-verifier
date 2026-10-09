@@ -52,7 +52,7 @@ function HeaderButton({
     <button
       type="button"
       onClick={() => onClick(sortKey)}
-      className="flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900"
+      className="flex items-center gap-1 font-medium text-ink-muted hover:text-ink"
     >
       {label}
       {active ? <span aria-hidden>{dir === "asc" ? "↑" : "↓"}</span> : null}
@@ -83,9 +83,9 @@ export function ProcessorsTable({ processors }: { processors: ProcessorSummary[]
     <div className="overflow-x-auto">
       <table className="w-full min-w-[48rem] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide">
-            <th className="py-2 pr-4 font-medium text-slate-500">Processor</th>
-            <th className="py-2 pr-4 font-medium text-slate-500">Type</th>
+          <tr className="border-b border-border text-left text-xs uppercase tracking-wide">
+            <th className="py-2 pr-4 font-medium text-ink-muted">Processor</th>
+            <th className="py-2 pr-4 font-medium text-ink-muted">Type</th>
             <th className="py-2 pr-4">
               <HeaderButton label="Certified" sortKey="certified" active={sortKey === "certified"} dir={dir} onClick={handleSort} />
             </th>
@@ -101,24 +101,24 @@ export function ProcessorsTable({ processors }: { processors: ProcessorSummary[]
             <th className="py-2 pr-4">
               <HeaderButton label="Risk" sortKey="risk" active={sortKey === "risk"} dir={dir} onClick={handleSort} />
             </th>
-            <th className="py-2 font-medium text-slate-500">Agent</th>
+            <th className="py-2 font-medium text-ink-muted">Agent</th>
           </tr>
         </thead>
         <tbody>
           {sorted.map((p) => {
             const d = delta(p);
             return (
-              <tr key={p.processor_id} className="border-b border-slate-100 last:border-0">
+              <tr key={p.processor_id} className="border-b border-border last:border-0">
                 <td className="py-2 pr-4">
                   <Link
                     href={`/processors/${encodeURIComponent(p.processor_id)}`}
-                    className="font-medium text-slate-900 underline decoration-dotted hover:text-slate-700"
+                    className="font-medium text-ink underline decoration-dotted hover:text-primary"
                   >
                     {p.processor_id}
                   </Link>
-                  <div className="text-xs text-slate-500">{p.name}</div>
+                  <div className="text-xs text-ink-muted">{p.name}</div>
                 </td>
-                <td className="py-2 pr-4 text-slate-600">{p.type}</td>
+                <td className="py-2 pr-4 text-ink-muted">{p.type}</td>
                 <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(p.checks_only.certified_t)}</td>
                 <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(p.checks_only.verifiable_t)}</td>
                 <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(withAgentsVerifiable(p))}</td>
@@ -135,7 +135,7 @@ export function ProcessorsTable({ processors }: { processors: ProcessorSummary[]
                 <td className="py-2 pr-4">
                   <RiskBadge band={(p.full ?? p.checks_only).risk_band} />
                 </td>
-                <td className="py-2 text-xs text-slate-500">{p.agent_status ?? "—"}</td>
+                <td className="py-2 text-xs text-ink-muted">{p.agent_status ?? "—"}</td>
               </tr>
             );
           })}

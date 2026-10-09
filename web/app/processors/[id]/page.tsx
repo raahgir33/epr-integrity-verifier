@@ -1,18 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckResultRow } from "@/components/CheckResultRow";
+import Link from "next/link";
 import { AlertBanner } from "@/components/demo/AlertBanner";
 import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
-import { DocumentsTable } from "@/components/DocumentsTable";
-import { EmptyState } from "@/components/EmptyState";
-import { FindingCard } from "@/components/FindingCard";
-import { ClarificationMemoLetter } from "@/components/memo/ClarificationMemoLetter";
-import { VerificationStatementLetter } from "@/components/memo/VerificationStatementLetter";
-import { MonthlyFlowChart } from "@/components/MonthlyFlowChart";
-import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
-import { RiskBadge } from "@/components/RiskBadge";
-import { SitePanel } from "@/components/SitePanel";
-import { StageComparison } from "@/components/StageComparison";
+import { KeyFactsRail } from "@/components/processor/KeyFactsRail";
+import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
+import { StickyHeader } from "@/components/processor/StickyHeader";
 import {
   ApiError,
   getAlerts,
@@ -25,7 +17,6 @@ import {
   getProcessorSite,
   type DocumentFactsResponse,
 } from "@/lib/api";
-import { isDisplayedFinding } from "@/lib/findings";
 
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,7 +38,9 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
     }
     throw error; // anything else (API unreachable, 5xx) surfaces via app/error.tsx
   }
-  const memoHi = memoEn?.has_hindi ? await getProcessorMemo(id, "hi") : null;
+  // Amendment C (T13.5 plan): the Hindi memo is no longer fetched here —
+  // ClarificationMemoLetter/VerificationStatementLetter fetch it lazily,
+  // client-side, only once the viewer clicks the HI toggle.
   const ownBatches = demoBatches.batches.filter((b) => b.processor_id === id);
   const ownAlerts = alerts.alerts.filter((a) => a.processor_id === id);
 
@@ -61,119 +54,52 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
   });
 
   const knownDocIds = new Set(documents.documents.map((d) => d.doc_id));
-  const displayedFindings = processor.findings.filter(isDisplayedFinding);
+  // Amendment A (T13.5 plan): certified_t always reads checks_only (the
+  // figure is identical across stages); the "headline" stage for
+  // verifiable_t/unverifiable_t/risk_band always prefers full, falling
+  // back to checks_only — the same (full ?? checks_only) pattern
+  // ProcessorsTable and StageComparison use, so the sticky header, the
+  // rail and the Overview tab never disagree with each other.
   const stage = processor.full ?? processor.checks_only;
 
   return (
-    <div className="space-y-10">
-      <div>
-        <Link href="/" className="text-sm text-slate-500 hover:text-slate-900">
-          ← Overview
-        </Link>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="font-display text-2xl font-semibold text-slate-900">
-            {processor.profile.processor_id} — {processor.profile.name}
-          </h1>
-          <RiskBadge band={stage.risk_band} />
-        </div>
-        <p className="text-sm text-slate-500">{processor.profile.type}</p>
-      </div>
+    <div className="space-y-6">
+      <Link href="/" className="text-sm text-ink-muted hover:text-ink">
+        ← Overview
+      </Link>
+
+      <StickyHeader
+        profile={processor.profile}
+        certifiedT={processor.checks_only.certified_t}
+        stage={stage}
+        hasLiveBatches={ownBatches.length > 0}
+      />
 
       {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null}
-      {ownBatches.length > 0 ? <RunLiveVerification batches={ownBatches} /> : null}
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">1. Summary</h2>
-        <div className="mt-3">
-          <StageComparison
-            checksOnly={processor.checks_only}
-            full={processor.full}
-            agentStatus={processor.agent_status}
-          />
+      {ownBatches.length > 0 ? (
+        <div id="live-verification">
+          <RunLiveVerification batches={ownBatches} />
         </div>
-      </section>
+      ) : null}
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">2. Monthly material flow</h2>
-        <div className="mt-3">
-          <MonthlyFlowChart rows={processor.monthly_flow} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">3. Findings</h2>
-        <div className="mt-3">
-          {displayedFindings.length > 0 ? (
-            <ul className="space-y-3">
-              {displayedFindings.map((finding, i) => (
-                <FindingCard key={i} finding={finding} knownDocIds={knownDocIds} />
-              ))}
-            </ul>
-          ) : (
-            <EmptyState
-              title="No agent findings"
-              message="The agent loop has not raised any findings for this processor."
-            />
-          )}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">
-          4.{" "}
-          {memoEn === null
-            ? "Draft clarification request"
-            : memoEn.doc_type === "clarification_memo"
-              ? "Draft clarification request"
-              : "Verification statement & improvement roadmap"}
-        </h2>
-        <div className="mt-3">
-          {memoEn === null ? (
-            <EmptyState
-              title="No draft available yet"
-              message="The memo-drafting stage has not run for this processor yet."
-            />
-          ) : memoEn.doc_type === "clarification_memo" ? (
-            <ClarificationMemoLetter memoEn={memoEn} memoHi={memoHi} knownDocIds={knownDocIds} />
-          ) : (
-            <VerificationStatementLetter
-              memoEn={memoEn}
-              memoHi={memoHi}
-              knownDocIds={knownDocIds}
-            />
-          )}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">5. Reasoning trail</h2>
-        <div className="mt-3">
-          <ReasoningTimeline steps={reasoning.steps} knownDocIds={knownDocIds} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">6. Checks</h2>
-        <ul className="mt-3">
-          {processor.check_results.map((check) => (
-            <CheckResultRow key={check.check_id} check={check} knownDocIds={knownDocIds} />
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">7. Site</h2>
-        <div className="mt-3">
-          <SitePanel site={site} processorId={id} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">8. Documents</h2>
-        <div className="mt-3">
-          <DocumentsTable documents={documents.documents} facts={factsByDocId} />
-        </div>
-      </section>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_16rem] lg:items-start lg:gap-8">
+        <ProcessorTabs
+          processorId={id}
+          checksOnly={processor.checks_only}
+          full={processor.full}
+          agentStatus={processor.agent_status}
+          monthlyFlow={processor.monthly_flow}
+          findings={processor.findings}
+          checkResults={processor.check_results}
+          reasoningSteps={reasoning.steps}
+          documents={documents.documents}
+          factsByDocId={factsByDocId}
+          site={site}
+          memoEn={memoEn}
+          knownDocIds={knownDocIds}
+        />
+        <KeyFactsRail profile={processor.profile} findings={processor.findings} />
+      </div>
     </div>
   );
 }

@@ -33,20 +33,20 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
         ✓
       </span>
     ) : state === "in_progress" ? (
-      <span className="flex h-5 w-5 shrink-0 animate-pulse items-center justify-center rounded-full bg-slate-200 text-slate-600">
+      <span className="flex h-5 w-5 shrink-0 motion-safe:animate-pulse items-center justify-center rounded-full bg-surface-sunk text-ink-muted">
         •
       </span>
     ) : (
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-400" />
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-ink-muted" />
     );
 
   return (
     <li className="flex items-center gap-2 text-sm">
       {icon}
-      <span className={state === "pending" ? "text-slate-400" : "text-slate-900"}>
+      <span className={state === "pending" ? "text-ink-muted" : "text-ink"}>
         {STAGE_LABEL[stage] ?? stage}
       </span>
-      {timing ? <span className="text-xs text-slate-500">· {timing.duration_s.toFixed(0)}s</span> : null}
+      {timing ? <span className="text-xs text-ink-muted">· {timing.duration_s.toFixed(0)}s</span> : null}
     </li>
   );
 }
@@ -96,7 +96,7 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
     return <p className="text-sm text-red-700">{fetchError}</p>;
   }
   if (!run) {
-    return <p className="text-sm text-slate-500">Starting…</p>;
+    return <p className="text-sm text-ink-muted">Starting…</p>;
   }
 
   return (
@@ -117,12 +117,12 @@ export function RunProgress({ runId, onSettled }: { runId: string; onSettled?: (
         </p>
       ) : null}
       {run.status === "done" && !run.alert ? (
-        <p className="text-sm text-slate-600">Done — no alert (risk band unchanged, no new finding).</p>
+        <p className="text-sm text-ink-muted">Done — no alert (risk band unchanged, no new finding).</p>
       ) : null}
 
       {run.steps.length > 0 ? (
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Reasoning trail</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Reasoning trail</p>
           <div className="mt-2">
             <ReasoningTimeline steps={run.steps} knownDocIds={new Set()} />
           </div>

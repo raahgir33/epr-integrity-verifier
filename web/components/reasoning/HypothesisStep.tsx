@@ -28,9 +28,9 @@ export function HypothesisStep({
       <ul className="space-y-2">
         {visible.map((c) => (
           <li key={c.certificate_batch} className="text-sm">
-            <span className="font-medium text-slate-900">{formatMonth(c.certificate_batch)}</span>{" "}
-            <span className="text-slate-600">— {STATUS_LABEL[c.status] ?? c.status}</span>
-            <p className="text-slate-600">{c.explanation}</p>
+            <span className="font-medium text-ink">{formatMonth(c.certificate_batch)}</span>{" "}
+            <span className="text-ink-muted">— {STATUS_LABEL[c.status] ?? c.status}</span>
+            <p className="text-ink-muted">{c.explanation}</p>
             {c.evidence_ids.length > 0 ? (
               <div className="mt-0.5">
                 <EvidenceList evidenceIds={c.evidence_ids} knownDocIds={knownDocIds} />
@@ -43,20 +43,20 @@ export function HypothesisStep({
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-2 text-xs font-medium text-slate-500 underline decoration-dotted hover:text-slate-900"
+          className="mt-2 text-xs font-medium text-ink-muted underline decoration-dotted hover:text-ink"
         >
           {showAll ? "Hide supported months" : `Show all ${output.conclusions.length} months`}
         </button>
       ) : null}
 
       {output.findings.length > 0 ? (
-        <div className="mt-3 border-t border-slate-100 pt-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Proposed findings</p>
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Proposed findings</p>
           <ul className="mt-1 space-y-2">
             {output.findings.map((f, i) => (
               <li key={i} className="text-sm">
-                <span className="font-medium text-slate-900">{f.finding_type}</span>
-                <p className="text-slate-600">{f.explanation}</p>
+                <span className="font-medium text-ink">{f.finding_type}</span>
+                <p className="text-ink-muted">{f.explanation}</p>
                 {f.evidence_ids.length > 0 ? (
                   <div className="mt-0.5">
                     <EvidenceList evidenceIds={f.evidence_ids} knownDocIds={knownDocIds} />

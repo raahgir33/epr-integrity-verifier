@@ -9,7 +9,7 @@ function ToolArgs({ args }: { args: Record<string, unknown> | null }) {
   return (
     <span className="inline-flex flex-wrap gap-1">
       {Object.entries(args).map(([key, value]) => (
-        <span key={key} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">
+        <span key={key} className="rounded bg-surface-sunk px-1.5 py-0.5 font-mono text-xs text-ink-muted">
           {key}: {Array.isArray(value) ? value.join(", ") : String(value)}
         </span>
       ))}
@@ -28,8 +28,8 @@ export function ToolStep({
 
   if (step.dedup_hit) {
     return (
-      <p className="text-sm text-slate-500">
-        <span className="font-mono text-slate-700">{step.tool_name}</span> — same call as an earlier step
+      <p className="text-sm text-ink-muted">
+        <span className="font-mono text-ink">{step.tool_name}</span> — same call as an earlier step
         — cached.
       </p>
     );
@@ -43,14 +43,14 @@ export function ToolStep({
   return (
     <div>
       <p className="text-sm">
-        <span className="font-mono font-medium text-slate-900">{step.tool_name}</span>{" "}
+        <span className="font-mono font-medium text-ink">{step.tool_name}</span>{" "}
         <ToolArgs args={step.tool_args} />
       </p>
-      {step.result_summary ? <p className="mt-1 text-sm text-slate-600">{step.result_summary}</p> : null}
+      {step.result_summary ? <p className="mt-1 text-sm text-ink-muted">{step.result_summary}</p> : null}
       {docIdArg ? (
         <p className="mt-1 text-xs">
           <EvidenceList evidenceIds={[docIdArg]} knownDocIds={knownDocIds} />
-          <span className="ml-1 text-slate-500">opened</span>
+          <span className="ml-1 text-ink-muted">opened</span>
         </p>
       ) : null}
       {step.result !== null && step.result !== undefined ? (
@@ -58,12 +58,12 @@ export function ToolStep({
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="mt-1 text-xs font-medium text-slate-500 underline decoration-dotted hover:text-slate-900"
+            className="mt-1 text-xs font-medium text-ink-muted underline decoration-dotted hover:text-ink"
           >
             {open ? "Hide full result" : "Show full result"}
           </button>
           {open ? (
-            <pre className="mt-1 max-h-72 overflow-y-auto rounded bg-slate-900 p-3 text-xs text-slate-100">
+            <pre className="mt-1 max-h-72 overflow-y-auto rounded bg-ink p-3 text-xs text-primary-foreground">
               {typeof step.result === "string" ? step.result : JSON.stringify(step.result, null, 2)}
             </pre>
           ) : null}

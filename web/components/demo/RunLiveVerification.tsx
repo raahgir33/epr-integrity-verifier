@@ -40,9 +40,9 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="font-display text-base font-semibold text-slate-900">Run live verification</p>
-      <p className="mt-1 text-sm text-slate-600">
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <p className="font-display text-base font-semibold text-ink">Run live verification</p>
+      <p className="mt-1 text-sm text-ink-muted">
         Simulate a new certificate batch arriving for one processor — watch it extracted, checked and
         reviewed by the agent loop end to end.
       </p>
@@ -52,7 +52,7 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={running || submitting}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-60"
+          className="rounded border border-border px-2 py-1.5 text-sm disabled:opacity-60"
         >
           {batches.map((b) => (
             <option key={b.batch_id} value={b.batch_id}>
@@ -64,7 +64,7 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
           type="button"
           onClick={handleRun}
           disabled={running || submitting || !selected}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
         </button>
@@ -72,7 +72,7 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
           <button
             type="button"
             onClick={() => setRunId(null)}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-sunk"
           >
             Run another
           </button>
@@ -82,7 +82,7 @@ export function RunLiveVerification({ batches }: { batches: DemoBatchOut[] }) {
       {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
 
       {runId ? (
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-border pt-4">
           <RunProgress runId={runId} />
         </div>
       ) : null}

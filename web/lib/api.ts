@@ -7,6 +7,7 @@ export type Health = {
   consistency_ok: boolean | null;
 };
 
+export type ProcessorProfile = components["schemas"]["ProcessorProfile"];
 export type ProcessorSummary = components["schemas"]["ProcessorSummary"];
 export type ProcessorListResponse = components["schemas"]["ProcessorListResponse"];
 export type ProcessorDetailResponse = components["schemas"]["ProcessorDetailResponse"];

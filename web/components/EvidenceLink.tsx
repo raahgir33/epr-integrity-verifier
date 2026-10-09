@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { resolveEvidence } from "@/lib/evidence";
+import { useDocumentPanel } from "@/lib/document-panel-context";
 
 export function EvidenceList({
   evidenceIds,
@@ -8,6 +11,7 @@ export function EvidenceList({
   evidenceIds: string[];
   knownDocIds: ReadonlySet<string>;
 }) {
+  const openDocument = useDocumentPanel();
   if (evidenceIds.length === 0) return null;
 
   return (
@@ -18,10 +22,22 @@ export function EvidenceList({
           return (
             <span
               key={id}
-              className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-600"
+              className="rounded border border-border bg-surface-sunk px-1.5 py-0.5 font-mono text-xs text-ink-muted"
             >
               {resolved.label}
             </span>
+          );
+        }
+        if (resolved.kind === "document" && openDocument) {
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => openDocument(id)}
+              className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted hover:bg-surface-sunk"
+            >
+              {resolved.label}
+            </button>
           );
         }
         return (
@@ -30,7 +46,7 @@ export function EvidenceList({
             href={resolved.href}
             target={resolved.kind === "document" ? "_blank" : undefined}
             rel={resolved.kind === "document" ? "noopener noreferrer" : undefined}
-            className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-xs text-slate-700 underline decoration-dotted hover:bg-slate-50"
+            className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted hover:bg-surface-sunk"
           >
             {resolved.label}
           </Link>

@@ -66,18 +66,18 @@ const CHECKS = [
 
 export default function MethodPage() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-slate-900">Method</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <h1 className="font-display text-2xl font-semibold text-ink">Method</h1>
+        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
           How verifiable tonnes are computed, what each check does, how the agent loop reasons, and what
           this system does not (yet) prove.
         </p>
       </div>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">1. Deterministic checks</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">1. Deterministic checks</h2>
+        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
           Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
           rule-derived (cited to a regulation or document convention) or an explicit assumption. A
           failed <strong>hard</strong> check can never be overruled by an agent; a <strong>soft</strong>{" "}
@@ -87,38 +87,38 @@ export default function MethodPage() {
           {CHECKS.map((c) => (
             <li key={c.id}>
               <p className="text-sm">
-                <span className="font-mono font-semibold text-slate-900">{c.id}</span>{" "}
-                <span className="font-medium text-slate-900">{c.name}</span>{" "}
-                <span className="text-xs uppercase tracking-wide text-slate-400">{c.severity}</span>
+                <span className="font-mono font-semibold text-ink">{c.id}</span>{" "}
+                <span className="font-medium text-ink">{c.name}</span>{" "}
+                <span className="text-xs uppercase tracking-wide text-ink-muted">{c.severity}</span>
               </p>
-              <p className="mt-0.5 text-sm text-slate-600">{c.body}</p>
+              <p className="mt-0.5 max-w-[70ch] text-sm text-ink-muted">{c.body}</p>
             </li>
           ))}
         </ul>
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">2. Verifiable tonnes and risk band</h2>
-        <div className="mt-2 space-y-2 text-sm text-slate-600">
+      <section className="band rounded-lg p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">2. Verifiable tonnes and risk band</h2>
+        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
           <p>
-            <strong className="text-slate-900">Verified inbound tonnes</strong> — weighbridge-net tonnes
+            <strong className="text-ink">Verified inbound tonnes</strong> — weighbridge-net tonnes
             of shipments that pass C3, C4 and C5, minus shipments an agreed agent finding deducts.
           </p>
           <p>
-            <strong className="text-slate-900">Capacity limit</strong> — consented capacity × months
+            <strong className="text-ink">Capacity limit</strong> — consented capacity × months
             elapsed ÷ 12, zero for any month outside the consent&apos;s validity window (C6).
           </p>
           <p>
-            <strong className="text-slate-900">Verifiable tonnes</strong> — the minimum of eligible
+            <strong className="text-ink">Verifiable tonnes</strong> — the minimum of eligible
             certified tonnes (certified tonnes excluding any out-of-consent category), verified inbound
             tonnes, and the capacity limit.
           </p>
           <p>
-            <strong className="text-slate-900">Unverifiable tonnes</strong> — certified tonnes minus
+            <strong className="text-ink">Unverifiable tonnes</strong> — certified tonnes minus
             verifiable tonnes.
           </p>
           <p>
-            <strong className="text-slate-900">Risk band</strong> — Low under 5% unverifiable, Medium
+            <strong className="text-ink">Risk band</strong> — Low under 5% unverifiable, Medium
             5–25%, High over 25%. Each failed soft check (C2b, C7, C8), or any non-empty review-flag,
             systemic-finding or no-own-evidence finding list, raises the band by one step — never more
             than one step in total, however many of these signals fire together.
@@ -126,23 +126,23 @@ export default function MethodPage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">3. The agent loop</h2>
-        <div className="mt-2 space-y-2 text-sm text-slate-600">
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">3. The agent loop</h2>
+        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
           <p>
             Deterministic checks catch what arithmetic and document fields can prove. The agent loop
             exists for what they can&apos;t: reading meaning in free text, connecting evidence across a
             whole dossier, and challenging a first conclusion before it&apos;s trusted.
           </p>
           <p>
-            A <strong className="text-slate-900">Hypothesis</strong> agent reads a compact digest of the
+            A <strong className="text-ink">Hypothesis</strong> agent reads a compact digest of the
             processor&apos;s dossier — profile, consent terms, monthly material flow, every check result
             with its evidence, the site result, and every distinct inbound item description — and judges
             each certificate batch (calendar month) as supported, partly supported or unsupported, with
             its own proposed findings.
           </p>
           <p>
-            A <strong className="text-slate-900">Critic</strong> agent then runs a tool-calling loop
+            A <strong className="text-ink">Critic</strong> agent then runs a tool-calling loop
             (inspecting check results, shipments, document facts, the site assessment, and reading a
             document&apos;s own bytes directly) to challenge or confirm the Hypothesis, then issues a
             verdict on every one of the Hypothesis&apos;s own findings and raises any new objections of
@@ -153,12 +153,12 @@ export default function MethodPage() {
             withdraw each of its own disputed findings.
           </p>
           <p>
-            <strong className="text-slate-900">Two agents must agree before a finding is deducted.</strong>{" "}
+            <strong className="text-ink">Two agents must agree before a finding is deducted.</strong>{" "}
             A finding neither agent disputes becomes a deduction; one they disagree on, or that the other
             agent never addressed, becomes a visible review flag instead — never a silent deduction, and
             never silently dropped.
           </p>
-          <p className="font-medium text-slate-900">Guards enforced in code, not left to the prompt:</p>
+          <p className="font-medium text-ink">Guards enforced in code, not left to the prompt:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
               <strong>Own-evidence rule</strong> — every shipment a finding cites must have at least one
@@ -186,9 +186,9 @@ export default function MethodPage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">4. Evaluation protocol</h2>
-        <div className="mt-2 space-y-2 text-sm text-slate-600">
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">4. Evaluation protocol</h2>
+        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
           <p>
             A held-out test set, generated the same way as the development set but with a different seed,
             is never used while building or tuning the system. Before it is generated, every check
@@ -199,16 +199,19 @@ export default function MethodPage() {
             The full pipeline — extraction, normalisation, checks, agents — runs once on the held-out set.
             Reported metrics: extraction field accuracy against the seeded ground truth, detection
             precision and recall against the seeded issue types, and the measured gain of the full system
-            (checks plus agents) over deterministic checks alone. The <a href="/evaluation" className="underline decoration-dotted">Evaluation</a>{" "}
+            (checks plus agents) over deterministic checks alone. The{" "}
+            <a href="/evaluation" className="underline decoration-dotted hover:text-primary">
+              Evaluation
+            </a>{" "}
             page reports these once the held-out run has completed; development-set numbers, where shown
             anywhere, are always labelled as such.
           </p>
         </div>
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">5. Limitations</h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+      <section className="band rounded-lg p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">5. Limitations</h2>
+        <ul className="mt-2 max-w-[70ch] list-disc space-y-1 pl-5 text-sm text-ink-muted">
           <li>
             Every processor, document, brand and certificate shown here is synthetic and fictional — no
             real company, recycler or brand is represented or implicated.
@@ -228,10 +231,10 @@ export default function MethodPage() {
         </ul>
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-slate-900">6. Data sources and attribution</h2>
-        <p className="mt-2 text-sm text-slate-600">Contains modified Copernicus Sentinel data (2023).</p>
-        <p className="text-sm text-slate-600">Open Buildings v3, Google Research — CC BY 4.0.</p>
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">6. Data sources and attribution</h2>
+        <p className="mt-2 text-sm text-ink-muted">Contains modified Copernicus Sentinel data (2023).</p>
+        <p className="text-sm text-ink-muted">Open Buildings v3, Google Research — CC BY 4.0.</p>
       </section>
     </div>
   );

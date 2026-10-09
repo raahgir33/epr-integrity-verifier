@@ -17,7 +17,7 @@ export default async function PortfolioPage({
     : brands[0]?.brand_id;
 
   if (!activeBrandId) {
-    return <p className="text-sm text-slate-500">No brands in this dataset.</p>;
+    return <p className="text-sm text-ink-muted">No brands in this dataset.</p>;
   }
 
   const portfolio = await getPortfolio(activeBrandId);
@@ -25,22 +25,22 @@ export default async function PortfolioPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-slate-900">Brand portfolio</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <h1 className="font-display text-2xl font-semibold text-ink">Brand portfolio</h1>
+        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
           Certificates a brand holds across processors, and the share that is verifiable — apportioned
           from each processor&apos;s own verifiable ratio, not a per-certificate traced figure.
         </p>
       </div>
 
-      <nav aria-label="Brand" className="flex flex-wrap gap-2 border-b border-slate-200 text-sm">
+      <nav aria-label="Brand" className="flex flex-wrap gap-2 border-b border-border text-sm">
         {brands.map((b) => (
           <Link
             key={b.brand_id}
             href={`/portfolio?brand=${encodeURIComponent(b.brand_id)}`}
             className={
               b.brand_id === activeBrandId
-                ? "border-b-2 border-slate-900 px-3 py-2 font-medium text-slate-900"
-                : "border-b-2 border-transparent px-3 py-2 text-slate-500 hover:text-slate-900"
+                ? "border-b-2 border-primary px-3 py-2 font-medium text-primary"
+                : "border-b-2 border-transparent px-3 py-2 text-ink-muted hover:text-ink"
             }
           >
             {b.name}
@@ -53,10 +53,10 @@ export default async function PortfolioPage({
         <StatCard label="Total verifiable (apportioned)" value={formatTonnes(portfolio.total_verifiable_t)} />
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="card overflow-x-auto p-4">
         <table className="w-full min-w-[36rem] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-ink-muted">
               <th className="py-2 pr-4 font-medium">Certificate</th>
               <th className="py-2 pr-4 font-medium">Processor</th>
               <th className="py-2 pr-4 font-medium">Category</th>
@@ -67,18 +67,18 @@ export default async function PortfolioPage({
           </thead>
           <tbody>
             {portfolio.certificates.map((c) => (
-              <tr key={c.certificate_id} className="border-b border-slate-100 last:border-0">
-                <td className="py-2 pr-4 font-mono text-xs text-slate-700">{c.certificate_id}</td>
+              <tr key={c.certificate_id} className="border-b border-border last:border-0">
+                <td className="py-2 pr-4 font-mono text-xs text-ink">{c.certificate_id}</td>
                 <td className="py-2 pr-4">
                   <Link
                     href={`/processors/${encodeURIComponent(c.processor_id)}`}
-                    className="text-slate-900 underline decoration-dotted hover:text-slate-700"
+                    className="text-ink underline decoration-dotted hover:text-primary"
                   >
                     {c.processor_id}
                   </Link>
                 </td>
-                <td className="py-2 pr-4 text-slate-600">{c.category}</td>
-                <td className="py-2 pr-4 text-slate-600">{formatMonth(c.period_month)}</td>
+                <td className="py-2 pr-4 text-ink-muted">{c.category}</td>
+                <td className="py-2 pr-4 text-ink-muted">{formatMonth(c.period_month)}</td>
                 <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(c.quantity_t)}</td>
                 <td className="py-2">{c.processor_risk_band ? <RiskBadge band={c.processor_risk_band} /> : "—"}</td>
               </tr>

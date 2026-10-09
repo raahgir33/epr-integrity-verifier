@@ -20,10 +20,10 @@ export function StageComparison({
   agentStatus: string | null;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="card overflow-x-auto p-4">
       <table className="w-full min-w-[28rem] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-ink-muted">
             <th className="py-2 pr-4 font-medium">Measure</th>
             <th className="py-2 pr-4 font-medium">Checks-only</th>
             <th className="py-2 font-medium">
@@ -33,8 +33,8 @@ export function StageComparison({
         </thead>
         <tbody>
           {ROWS.map(({ key, label }) => (
-            <tr key={key} className="border-b border-slate-100 last:border-0">
-              <td className="py-2 pr-4 text-slate-600">{label}</td>
+            <tr key={key} className="border-b border-border last:border-0">
+              <td className="py-2 pr-4 text-ink-muted">{label}</td>
               <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(checksOnly[key] as number)}</td>
               <td className="num-cell py-2 tabular-nums">
                 {full ? formatTonnes(full[key] as number) : "—"}
@@ -42,7 +42,7 @@ export function StageComparison({
             </tr>
           ))}
           <tr>
-            <td className="py-2 pr-4 text-slate-600">Risk band</td>
+            <td className="py-2 pr-4 text-ink-muted">Risk band</td>
             <td className="py-2 pr-4">
               <RiskBadge band={checksOnly.risk_band} />
             </td>
