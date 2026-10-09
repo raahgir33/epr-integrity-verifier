@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Magic UI source (T13.5b plan) — kept unmodified aside from a
+    // license header, so it isn't held to this project's own lint rules.
+    "components/magicui/**",
   ]),
 ]);
 
