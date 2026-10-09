@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
-import { CountUp } from "@/components/ui/CountUp";
+import { MetricTile } from "@/components/ui/MetricTile";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import type { ProcessorProfile, StageAssessment } from "@/lib/api";
-import { formatTonnes } from "@/lib/format";
+import { formatTonnes, formatTonnesValue } from "@/lib/format";
 import { titleCase } from "@/lib/titleCase";
 
 /** Sticky summary header (T13.5 plan, Part 4) — one line of identity plus
@@ -57,38 +58,34 @@ export function StickyHeader({
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-        <span className="text-ink-muted">
-          Certified <CountUp value={certifiedT} formatter={formatTonnes} className="font-medium text-ink" />
-        </span>
-        <span className="text-ink-muted">
-          Verifiable{" "}
-          <CountUp value={stage.verifiable_t} formatter={formatTonnes} className="font-medium text-ink" />
-        </span>
-        {clean ? (
-          <span className="inline-flex items-center gap-1 font-medium text-risk-low">
-            <svg viewBox="0 0 16 16" aria-hidden className="h-3.5 w-3.5">
-              <path
-                d="M3 8.5 6.2 11.5 13 4.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Verified — no unverifiable tonnes
-          </span>
-        ) : (
-          <span className="text-ink-muted">
-            Unverifiable{" "}
-            <CountUp
-              value={stage.unverifiable_t}
-              formatter={formatTonnes}
-              className="font-medium text-risk-high"
-            />
-          </span>
-        )}
+      {/* T13.5b plan, Kokonut addendum: "processor metric tiles" — the
+          glow-only SpotlightCard variant (cursor-following glow, no tilt,
+          no dimming, numbers never move). */}
+      <div className="mt-3 grid grid-cols-3 gap-3 sm:w-fit">
+        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+          <MetricTile size="sm" countUp value={certifiedT} formatter={formatTonnesValue} unit="t" label="Certified" />
+        </SpotlightCard>
+        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+          <MetricTile
+            size="sm"
+            countUp
+            value={stage.verifiable_t}
+            formatter={formatTonnesValue}
+            unit="t"
+            label="Verifiable"
+          />
+        </SpotlightCard>
+        <SpotlightCard variant="glow" className="rounded-lg px-3 py-2">
+          <MetricTile
+            size="sm"
+            countUp
+            tone={clean ? "risk-low" : "risk-high"}
+            value={stage.unverifiable_t}
+            formatter={formatTonnesValue}
+            unit="t"
+            label="Unverifiable"
+          />
+        </SpotlightCard>
       </div>
 
       {/* T13.5b plan, Part 4: KeyFactsRail's "Type/Capacity/Consent

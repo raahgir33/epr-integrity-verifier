@@ -234,6 +234,52 @@
   }
 }
 
+/* T13.5b plan, Kokonut addendum: SpotlightCard/MouseEffectCard's cursor-
+   glow. --spot-x/--spot-y are set by the component on pointer move (only
+   when a fine, hover-capable pointer is detected and motion isn't
+   reduced — see each component's own comment); the (hover: hover) guard
+   here is a second, CSS-level backstop so the glow never appears via
+   :hover on a touch device even if something else goes wrong upstream.
+   spotlight-card-full additionally tilts via --spot-rotate-x/-y, which
+   only ever get a non-zero value from the same JS gate. */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::before {
+  /* No z-index (auto) is deliberate: ::before is generated as this
+     element's first child, so plain in-flow content passed as `children`
+     — which comes after it in the box tree and isn't itself positioned —
+     paints on top of it automatically. The element's own background-color
+     (from the .card class also applied here) paints beneath both. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    280px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--color-glow) 20%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .spotlight-card:hover::before {
+    opacity: 1;
+  }
+}
+.spotlight-card-full {
+  transform: perspective(800px) rotateX(var(--spot-rotate-x, 0deg)) rotateY(var(--spot-rotate-y, 0deg));
+  transition:
+    transform 200ms ease-out,
+    opacity 200ms ease-out;
+}
+.spotlight-card-dimmed {
+  opacity: 0.6;
+}
+
 /* T13.5b plan, Kokonut addendum: AILoadingSpinner's counter-rotating
    rings. The component itself renders a single static ring under
    prefers-reduced-motion instead of using these at all. */

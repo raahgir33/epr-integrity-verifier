@@ -7,6 +7,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
+import { MouseEffectCard } from "@/components/ui/MouseEffectCard";
 import { STATUS_LABEL } from "@/lib/checks";
 import { classificationLabel } from "@/lib/findings";
 import { formatTonnes } from "@/lib/format";
@@ -192,7 +193,7 @@ export function AudienceTabs({
         })}
       </div>
 
-      <div className="card mt-5 grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
+      <MouseEffectCard className="card mt-5 grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
         <div>
           <ul className="space-y-4">
             {active.benefits.map((benefit) => (
@@ -219,7 +220,7 @@ export function AudienceTabs({
           </Link>
         </div>
         <ExampleCard audience={active.value} details={details} examples={examples} />
-      </div>
+      </MouseEffectCard>
     </div>
   );
 }

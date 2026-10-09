@@ -3,9 +3,9 @@ import { CountUp } from "@/components/ui/CountUp";
 /** Equal-width metric tile (T13.5b plan, Part 1) — value and unit share one
  * baseline, the unit styled smaller/muted rather than concatenated into the
  * same string, label sits below in the existing caption style. Used by
- * HeroScene's hero figures and ProofStrip; `whitespace-nowrap` on the
- * value row keeps it from wrapping once the surrounding grid is forced to
- * stay equal-width at lg and above.
+ * HeroScene's hero figures, ProofStrip and StickyHeader's compact tiles;
+ * `whitespace-nowrap` on the value row keeps it from wrapping once the
+ * surrounding grid is forced to stay equal-width at lg and above.
  *
  * `countUp` (Part 5) renders the value through CountUp instead of a plain
  * span, passing `value`/`formatter` straight through so the animation
@@ -23,6 +23,16 @@ const TONE = {
     unit: "text-[#faf7f1]/75",
     label: "text-[#faf7f1]/70",
   },
+  // StickyHeader's unverifiable-tonnes tile: red when there's a real
+  // unverifiable figure, green when it's zero — same risk-* tokens
+  // RiskBadge/StageComparison use elsewhere, never a decorative choice.
+  "risk-high": { value: "text-risk-high", unit: "text-ink-muted", label: "text-ink-muted" },
+  "risk-low": { value: "text-risk-low", unit: "text-ink-muted", label: "text-ink-muted" },
+} as const;
+
+const SIZE = {
+  md: "text-xl sm:text-2xl",
+  sm: "text-base sm:text-lg",
 } as const;
 
 export function MetricTile({
@@ -31,6 +41,7 @@ export function MetricTile({
   unit,
   label,
   tone = "default",
+  size = "md",
   countUp = false,
 }: {
   value: number;
@@ -38,10 +49,11 @@ export function MetricTile({
   unit?: string;
   label: string;
   tone?: keyof typeof TONE;
+  size?: keyof typeof SIZE;
   countUp?: boolean;
 }) {
   const colors = TONE[tone];
-  const valueClassName = `num-cell font-display text-xl font-semibold tabular-nums sm:text-2xl ${colors.value}`;
+  const valueClassName = `num-cell font-display font-semibold tabular-nums ${SIZE[size]} ${colors.value}`;
   return (
     <div className="min-w-0">
       <div className="flex items-baseline gap-1 whitespace-nowrap">
