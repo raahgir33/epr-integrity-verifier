@@ -116,7 +116,7 @@ export function ProcessorTabs({
           <StageComparison checksOnly={checksOnly} full={full} agentStatus={agentStatus} />
           <MonthlyFlowChart rows={monthlyFlow} />
           <div>
-            <h3 className="font-display text-base font-semibold text-ink">Findings</h3>
+            <h2 className="font-display text-base font-semibold text-ink">Findings</h2>
             <div className="mt-3">
               {displayedFindings.length > 0 ? (
                 <ul className="space-y-3">

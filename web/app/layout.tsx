@@ -15,7 +15,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${devanagariFont.variable}`}>
       <body className="flex min-h-screen flex-col bg-base font-sans text-ink">
         <Nav />
-        <PageContainer className="flex-1 py-8">{children}</PageContainer>
+        <main className="flex-1">
+          <PageContainer className="py-8">{children}</PageContainer>
+        </main>
         <Footer />
       </body>
     </html>

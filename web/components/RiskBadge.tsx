@@ -11,7 +11,7 @@ import { riskBandTone } from "@/lib/format";
  * on the same page — confirmed by bisection while testing Part 3). */
 const TONE_STYLES: Record<string, { bg: string; text: string; ring: string; Icon: () => ReactNode }> = {
   low: {
-    bg: "bg-risk-low/10",
+    bg: "bg-risk-low/5",
     text: "text-risk-low",
     ring: "ring-risk-low/30",
     Icon: () => (
@@ -28,7 +28,7 @@ const TONE_STYLES: Record<string, { bg: string; text: string; ring: string; Icon
     ),
   },
   medium: {
-    bg: "bg-risk-medium/10",
+    bg: "bg-risk-medium/5",
     text: "text-risk-medium",
     ring: "ring-risk-medium/30",
     Icon: () => (
@@ -46,7 +46,7 @@ const TONE_STYLES: Record<string, { bg: string; text: string; ring: string; Icon
     ),
   },
   high: {
-    bg: "bg-risk-high/10",
+    bg: "bg-risk-high/5",
     text: "text-risk-high",
     ring: "ring-risk-high/30",
     Icon: () => (
@@ -64,7 +64,7 @@ const TONE_STYLES: Record<string, { bg: string; text: string; ring: string; Icon
     ),
   },
   unknown: {
-    bg: "bg-risk-unknown/10",
+    bg: "bg-risk-unknown/5",
     text: "text-risk-unknown",
     ring: "ring-risk-unknown/30",
     Icon: () => (
