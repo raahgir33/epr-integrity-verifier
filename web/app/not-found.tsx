@@ -7,7 +7,7 @@ export default function NotFound() {
       <p className="mt-3 text-pretty text-ink-muted">There&apos;s no processor or page at this address.</p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-ink hover:bg-surface-sunk"
+        className="mt-6 inline-block rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface-sunk"
       >
         Back to Overview
       </Link>

@@ -47,14 +47,14 @@ export function StickyHeader({
           <div className="hidden items-center gap-2 text-sm sm:flex">
             <Link
               href="?tab=memo"
-              className="rounded-md border border-border px-2.5 py-1 font-medium text-ink hover:bg-surface-sunk"
+              className="rounded-md border border-border px-2.5 py-2.5 font-medium text-ink hover:bg-surface-sunk"
             >
               {titleCase("View memo")}
             </Link>
             {hasLiveBatches ? (
               <a
                 href="#live-verification"
-                className="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground hover:opacity-90"
+                className="rounded-md bg-primary px-2.5 py-2.5 font-medium text-primary-foreground hover:opacity-90"
               >
                 {titleCase("Run live verification")}
               </a>

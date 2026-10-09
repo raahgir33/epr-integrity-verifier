@@ -76,7 +76,7 @@ export function VerificationStatementLetter({
               <button
                 type="button"
                 onClick={() => handleSelectLang("en")}
-                className={`px-2 py-1 font-medium transition-colors duration-150 ${lang === "en" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
+                className={`px-2 py-2.5 font-medium transition-colors duration-150 ${lang === "en" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
               >
                 EN
               </button>
@@ -84,7 +84,7 @@ export function VerificationStatementLetter({
                 type="button"
                 onClick={() => handleSelectLang("hi")}
                 disabled={loadingHi}
-                className={`px-2 py-1 font-medium transition-colors duration-150 disabled:opacity-60 ${lang === "hi" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
+                className={`px-2 py-2.5 font-medium transition-colors duration-150 disabled:opacity-60 ${lang === "hi" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
               >
                 {loadingHi ? "…" : "HI"}
               </button>

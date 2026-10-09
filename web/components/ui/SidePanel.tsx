@@ -32,7 +32,7 @@ export function SidePanel({
             </RadixDialog.Title>
             <RadixDialog.Close
               aria-label="Close panel"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunk hover:text-ink"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunk hover:text-ink"
             >
               <X aria-hidden size={16} />
             </RadixDialog.Close>

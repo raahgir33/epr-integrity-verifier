@@ -9,8 +9,18 @@ const VARIANT = {
 
 const SIZE = {
   lg: "rounded-md px-5 py-3 text-base",
-  sm: "rounded-md px-3 py-1.5 text-sm",
-  xs: "rounded px-2 py-1 text-xs",
+  sm: "rounded-md px-3 py-2.5 text-sm",
+  // T13.5c plan, Audit Batch 6: xs stays visually compact (used for
+  // tightly-packed toolbar rows — the memo letter's Copy/Print buttons,
+  // gap-2 apart) but gets an invisible centered hit-area extension via
+  // `relative` + `after:` instead of a direct padding bump, per
+  // surfaces.md's small-control pattern. Sized to 32px (size-8), not the
+  // usual 40px floor: at this row's 8px gap, a 40px box would overlap
+  // the neighboring button's own extended hit area (surfaces.md's
+  // collision rule — shrink rather than let two hit areas overlap);
+  // 32px clears the gap with room to spare while still meaningfully
+  // growing the ~24px visible target.
+  xs: "relative rounded px-2 py-1 text-xs after:absolute after:left-1/2 after:top-1/2 after:size-8 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
 } as const;
 
 /** Shared CTA/toolbar button (T13.5b plan, Part 2) — a native <button>

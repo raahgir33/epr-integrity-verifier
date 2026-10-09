@@ -60,7 +60,7 @@ export function Nav() {
             onKeyDown={(e) => {
               if (e.key === "Escape") setOpen(false);
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink"
           >
             {/* T13.5c plan, Audit Batch 1: Lucide Menu/X, cross-faded per
                 the make-interfaces-feel-better skill's exact contextual

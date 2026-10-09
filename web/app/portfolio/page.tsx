@@ -40,8 +40,8 @@ export default async function PortfolioPage({
             href={`/portfolio?brand=${encodeURIComponent(b.brand_id)}`}
             className={
               b.brand_id === activeBrandId
-                ? "border-b-2 border-primary px-3 py-2 font-medium text-primary"
-                : "border-b-2 border-transparent px-3 py-2 text-ink-muted hover:text-ink"
+                ? "border-b-2 border-primary px-3 py-2.5 font-medium text-primary"
+                : "border-b-2 border-transparent px-3 py-2.5 text-ink-muted hover:text-ink"
             }
           >
             {b.name}

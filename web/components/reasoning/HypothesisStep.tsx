@@ -43,7 +43,7 @@ export function HypothesisStep({
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-2 text-xs font-medium text-ink-muted underline decoration-dotted hover:text-ink"
+          className="relative mt-2 text-xs font-medium text-ink-muted underline decoration-dotted after:absolute after:-inset-1.5 after:content-[''] hover:text-ink"
         >
           {showAll ? "Hide supported months" : `Show all ${output.conclusions.length} months`}
         </button>

@@ -64,7 +64,7 @@ export function RunLiveVerification({
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={running || submitting}
-          className="w-full rounded border border-border px-2 py-1.5 text-sm disabled:opacity-60"
+          className="w-full rounded border border-border px-2 py-2.5 text-sm disabled:opacity-60"
         >
           {batches.map((b) => (
             <option key={b.batch_id} value={b.batch_id}>

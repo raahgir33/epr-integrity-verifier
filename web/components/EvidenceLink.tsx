@@ -4,6 +4,13 @@ import Link from "next/link";
 import { resolveEvidence } from "@/lib/evidence";
 import { useDocumentPanel } from "@/lib/document-panel-context";
 
+/** T13.5c plan, Audit Batch 6: the two clickable chip variants below get
+ * a small invisible hit-area extension (`after:-inset-0.5`, 2px each
+ * side) rather than the usual 40px floor — chips wrap at only a 6px gap
+ * (`gap-1.5` on the parent), so a larger extension would overlap the
+ * next chip's own hit area (surfaces.md's collision rule: shrink rather
+ * than let two hit areas overlap). The plain (non-clickable) variant is
+ * untouched. */
 export function EvidenceList({
   evidenceIds,
   knownDocIds,
@@ -34,7 +41,7 @@ export function EvidenceList({
               key={id}
               type="button"
               onClick={() => openDocument(id)}
-              className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted hover:bg-surface-sunk"
+              className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk"
             >
               {resolved.label}
             </button>
@@ -46,7 +53,7 @@ export function EvidenceList({
             href={resolved.href}
             target={resolved.kind === "document" ? "_blank" : undefined}
             rel={resolved.kind === "document" ? "noopener noreferrer" : undefined}
-            className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted hover:bg-surface-sunk"
+            className="relative rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-xs text-ink underline decoration-dotted after:absolute after:-inset-0.5 after:content-[''] hover:bg-surface-sunk"
           >
             {resolved.label}
           </Link>

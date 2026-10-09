@@ -175,7 +175,7 @@ export function AudienceTabs({
           </ul>
           <Link
             href={active.linkHref}
-            className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary underline decoration-dotted hover:opacity-80"
+            className="relative mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary underline decoration-dotted after:absolute after:-inset-2 after:content-[''] hover:opacity-80"
           >
             {active.linkLabel}
             <ArrowRight aria-hidden size={16} />

@@ -119,7 +119,7 @@ export function HowItWorks({ examples }: { examples: RealExamples }) {
                 })
               }
               aria-expanded={open}
-              className="mt-3 self-start text-xs font-medium text-primary underline decoration-dotted hover:opacity-80"
+              className="relative mt-3 self-start text-xs font-medium text-primary underline decoration-dotted after:absolute after:-inset-2 after:content-[''] hover:opacity-80"
             >
               {open ? "Hide example" : "See a real example"}
             </button>

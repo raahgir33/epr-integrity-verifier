@@ -58,7 +58,7 @@ export function ToolStep({
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="mt-1 text-xs font-medium text-ink-muted underline decoration-dotted hover:text-ink"
+            className="relative mt-1 text-xs font-medium text-ink-muted underline decoration-dotted after:absolute after:-inset-1.5 after:content-[''] hover:text-ink"
           >
             {open ? "Hide full result" : "Show full result"}
           </button>
