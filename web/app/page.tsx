@@ -1,55 +1,96 @@
 import { AlertBanner } from "@/components/demo/AlertBanner";
 import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
-import { ProcessorsTable } from "@/components/ProcessorsTable";
-import { StatCard } from "@/components/StatCard";
-import { getAlerts, getDemoBatches, getProcessors } from "@/lib/api";
-import { formatSignedTonnes, formatTonnes } from "@/lib/format";
+import { AudienceTabs } from "@/components/landing/AudienceTabs";
+import { CloudStrip } from "@/components/landing/CloudStrip";
+import { Faq } from "@/components/landing/Faq";
+import { HeroScene } from "@/components/landing/HeroScene";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { PortfolioPreview } from "@/components/landing/PortfolioPreview";
+import { ProofStrip } from "@/components/landing/ProofStrip";
+import { WhatWeCheck } from "@/components/landing/WhatWeCheck";
+import { FullBleed } from "@/components/ui/FullBleed";
+import { getAlerts, getDemoBatches, getProcessor, getProcessors } from "@/lib/api";
+import { buildCheckCatalog, getLandingFigures, pickRealExamples } from "@/lib/landing";
 
-export default async function OverviewPage() {
+export default async function LandingPage() {
   const [{ processors }, { batches }, { alerts }] = await Promise.all([
     getProcessors(),
     getDemoBatches(),
     getAlerts(),
   ]);
 
-  const totalCertified = processors.reduce((sum, p) => sum + p.checks_only.certified_t, 0);
-  const totalChecksOnly = processors.reduce((sum, p) => sum + p.checks_only.verifiable_t, 0);
-  const totalWithAgents = processors.reduce(
-    (sum, p) => sum + (p.full ? p.full.verifiable_t : p.checks_only.verifiable_t),
-    0,
-  );
-  const delta = totalWithAgents - totalChecksOnly;
+  const processorIds = processors.map((p) => p.processor_id);
+  const details = await Promise.all(processorIds.map((id) => getProcessor(id)));
+
+  const [figures, examples] = await Promise.all([
+    getLandingFigures(processors),
+    pickRealExamples(processorIds, details),
+  ]);
+  const checkCatalog = buildCheckCatalog(details);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-slate-900">Portfolio overview</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Certified EPR tonnes across all processors, and the share that is independently verifiable —
-          checks-only, and with the agent loop&apos;s own findings folded in.
-        </p>
-      </div>
+    <div className="space-y-16">
+      <FullBleed className="band -mt-8 pb-10 pt-8 sm:-mt-10 sm:pb-14 sm:pt-10">
+        <HeroScene figures={figures} />
+      </FullBleed>
 
       <AlertBanner alerts={alerts} />
-      <RunLiveVerification batches={batches} />
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-        <StatCard label="Certified" value={formatTonnes(totalCertified)} />
-        <StatCard label="Checks-only verifiable" value={formatTonnes(totalChecksOnly)} />
-        <StatCard label="With agents verifiable" value={formatTonnes(totalWithAgents)} />
-        <StatCard
-          label="Agents' own contribution"
-          value={formatSignedTonnes(delta)}
-          sub={delta > 0 ? "additional tonnes confirmed unverifiable" : undefined}
-        />
+      <div id="live-verification">
+        <RunLiveVerification batches={batches} />
       </div>
 
-      <div>
-        <h2 className="font-display text-lg font-semibold text-slate-900">Processors</h2>
-        <div className="mt-3">
-          <ProcessorsTable processors={processors} />
+      <ProofStrip figures={figures} />
+
+      <section id="how-it-works">
+        <h2 className="font-display text-xl font-semibold text-ink">How it works</h2>
+        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+          Four stages, each shown with a real example from the dataset.
+        </p>
+        <div className="mt-5">
+          <HowItWorks examples={examples} />
         </div>
-      </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-xl font-semibold text-ink">Who it&apos;s for</h2>
+        <div className="mt-5">
+          <AudienceTabs />
+        </div>
+      </section>
+
+      <section id="portfolio-preview">
+        <h2 className="font-display text-xl font-semibold text-ink">Processors</h2>
+        <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+          Every processor in the dataset, with its risk band and headline finding.
+        </p>
+        <div className="mt-5">
+          <PortfolioPreview details={details} />
+        </div>
+      </section>
+
+      <FullBleed className="band py-12">
+        <section>
+          <h2 className="font-display text-xl font-semibold text-ink">What we check</h2>
+          <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
+            Every threshold lives in <code>app/checks/params.py</code>, cited to a rule or marked an
+            explicit assumption — see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
+          </p>
+          <div className="card mt-5 p-4">
+            <WhatWeCheck catalog={checkCatalog} />
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <CloudStrip />
+        </section>
+      </FullBleed>
+
+      <section>
+        <h2 className="font-display text-xl font-semibold text-ink">Frequently asked</h2>
+        <div className="card mt-5 p-4">
+          <Faq />
+        </div>
+      </section>
     </div>
   );
 }
