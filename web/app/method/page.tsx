@@ -1,3 +1,7 @@
+import { Accordion } from "@/components/ui/Accordion";
+import { Heading } from "@/components/ui/Heading";
+import { SectionTitle } from "@/components/ui/SectionTitle";
+
 const CHECKS = [
   {
     id: "C1",
@@ -68,66 +72,15 @@ export default function MethodPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">Method</h1>
+        <Heading>Method</Heading>
         <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
-          How verifiable tonnes are computed, what each check does, how the agent loop reasons, and what
-          this system does not (yet) prove.
+          How the agent loop reasons, the real limits placed on its output, what each deterministic
+          check does, how verifiable tonnes are computed, and what this system does not (yet) prove.
         </p>
       </div>
 
       <section className="card p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">1. Deterministic checks</h2>
-        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
-          Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
-          rule-derived (cited to a regulation or document convention) or an explicit assumption. A
-          failed <strong>hard</strong> check can never be overruled by an agent; a <strong>soft</strong>{" "}
-          check can raise the risk band by at most one step.
-        </p>
-        <ul className="mt-4 space-y-4">
-          {CHECKS.map((c) => (
-            <li key={c.id}>
-              <p className="text-sm">
-                <span className="font-mono font-semibold text-ink">{c.id}</span>{" "}
-                <span className="font-medium text-ink">{c.name}</span>{" "}
-                <span className="text-xs uppercase tracking-wide text-ink-muted">{c.severity}</span>
-              </p>
-              <p className="mt-0.5 max-w-[70ch] text-sm text-ink-muted">{c.body}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="band rounded-lg p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">2. Verifiable tonnes and risk band</h2>
-        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
-          <p>
-            <strong className="text-ink">Verified inbound tonnes</strong> — weighbridge-net tonnes
-            of shipments that pass C3, C4 and C5, minus shipments an agreed agent finding deducts.
-          </p>
-          <p>
-            <strong className="text-ink">Capacity limit</strong> — consented capacity × months
-            elapsed ÷ 12, zero for any month outside the consent&apos;s validity window (C6).
-          </p>
-          <p>
-            <strong className="text-ink">Verifiable tonnes</strong> — the minimum of eligible
-            certified tonnes (certified tonnes excluding any out-of-consent category), verified inbound
-            tonnes, and the capacity limit.
-          </p>
-          <p>
-            <strong className="text-ink">Unverifiable tonnes</strong> — certified tonnes minus
-            verifiable tonnes.
-          </p>
-          <p>
-            <strong className="text-ink">Risk band</strong> — Low under 5% unverifiable, Medium
-            5–25%, High over 25%. Each failed soft check (C2b, C7, C8), or any non-empty review-flag,
-            systemic-finding or no-own-evidence finding list, raises the band by one step — never more
-            than one step in total, however many of these signals fire together.
-          </p>
-        </div>
-      </section>
-
-      <section className="card p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">3. The agent loop</h2>
+        <SectionTitle className="text-lg">Agent reasoning</SectionTitle>
         <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
           <p>
             Deterministic checks catch what arithmetic and document fields can prove. The agent loop
@@ -160,36 +113,116 @@ export default function MethodPage() {
             agent never addressed, becomes a visible review flag instead — never a silent deduction, and
             never silently dropped.
           </p>
-          <p className="font-medium text-ink">Guards enforced in code, not left to the prompt:</p>
-          <ul className="list-disc space-y-1 pl-5">
-            <li>
-              <strong>Own-evidence rule</strong> — every shipment a finding cites must have at least one
-              of its own documents (invoice, e-way bill or weighbridge slip) among that finding&apos;s
-              evidence, or the finding is kept but not deducted.
-            </li>
-            <li>
-              <strong>Systemic-finding guard</strong> — a finding citing more than half the processor&apos;s
-              verified shipments is too broad to deduct automatically; it&apos;s kept and flagged for
-              review instead.
-            </li>
-            <li>
-              <strong>Concurs-with-check rule</strong> — a finding that only restates what a deterministic
-              check already caught adds no second deduction and no second risk-band bump.
-            </li>
-            <li>
-              <strong>Hard checks are final</strong> — no agent finding can overrule a failed hard check.
-            </li>
-            <li>
-              <strong>The language model never does arithmetic that matters</strong> — every tonnage
-              figure and the risk band are computed deterministically from the agents&apos; structured
-              findings; the model only writes the plain-language narrative from numbers already computed.
-            </li>
-          </ul>
+        </div>
+      </section>
+
+      <section className="band rounded-lg p-5">
+        <SectionTitle className="text-lg">Guardrails</SectionTitle>
+        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
+          Real limits placed on AI output, enforced in code — never left to the prompt alone.
+        </p>
+        <ul className="mt-4 max-w-[70ch] list-disc space-y-2 pl-5 text-sm text-ink-muted">
+          <li>
+            <strong className="text-ink">Evidence and shipment IDs are validated</strong> — every
+            shipment and evidence ID a finding cites is checked against the processor&apos;s own
+            verified documents and shipments, never taken on trust from the model.
+          </li>
+          <li>
+            <strong className="text-ink">A finding counts only when both agents agree</strong> — the
+            Hypothesis and Critic must independently concur before a finding is deducted.
+          </li>
+          <li>
+            <strong className="text-ink">Processor-level evidence makes a finding review-only</strong>{" "}
+            — a finding backed only by processor-level evidence, not evidence tied to the specific
+            shipments it cites, is kept but not deducted.
+          </li>
+          <li>
+            <strong className="text-ink">Findings citing most shipments become review flags</strong> —
+            a finding touching more than half a processor&apos;s verified shipments is too broad to act
+            on automatically, so it&apos;s flagged for review instead of deducted.
+          </li>
+          <li>
+            <strong className="text-ink">No extra deduction for restating a failed check</strong> — a
+            finding that only restates what a deterministic check already caught earns no second
+            deduction and no second risk-band bump.
+          </li>
+          <li>
+            <strong className="text-ink">Hard checks are final</strong> — no agent finding can overrule
+            a failed hard check.
+          </li>
+          <li>
+            <strong className="text-ink">Drafted documents are guarded, with a template fallback</strong>{" "}
+            — before a clarification memo or verification statement goes out, every number in it is
+            checked against figures the system already computed, every evidence ID against the
+            processor&apos;s own verified documents, and its wording against a short list of disallowed
+            words. A failure triggers one corrective rewrite; if that still fails, a plain pre-written
+            template is used instead — never a partially-edited model draft.
+          </li>
+          <li>
+            <strong className="text-ink">The model never does arithmetic that matters</strong> — every
+            tonnage figure and the risk band are computed deterministically from the agents&apos;
+            structured findings; the model only writes the plain-language narrative from numbers already
+            computed.
+          </li>
+        </ul>
+      </section>
+
+      <section className="card p-5">
+        <SectionTitle className="text-lg">Rule-Based Checks</SectionTitle>
+        <p className="mt-2 max-w-[70ch] text-sm text-ink-muted">
+          Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
+          rule-derived (cited to a regulation or document convention) or an explicit assumption. A
+          failed <strong>hard</strong> check can never be overruled by an agent; a <strong>soft</strong>{" "}
+          check can raise the risk band by at most one step.
+        </p>
+        <div className="mt-4">
+          <Accordion
+            items={CHECKS.map((c) => ({
+              id: c.id,
+              trigger: (
+                <span>
+                  <span className="font-mono font-semibold text-ink">{c.id}</span>{" "}
+                  <span className="font-medium text-ink">{c.name}</span>{" "}
+                  <span className="text-xs uppercase tracking-wide text-ink-muted">{c.severity}</span>
+                </span>
+              ),
+              content: <p className="max-w-[70ch]">{c.body}</p>,
+            }))}
+          />
+        </div>
+      </section>
+
+      <section className="band rounded-lg p-5">
+        <SectionTitle className="text-lg">Verifiable tonnes and risk band</SectionTitle>
+        <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
+          <p>
+            <strong className="text-ink">Verified inbound tonnes</strong> — weighbridge-net tonnes
+            of shipments that pass C3, C4 and C5, minus shipments an agreed agent finding deducts.
+          </p>
+          <p>
+            <strong className="text-ink">Capacity limit</strong> — consented capacity × months
+            elapsed ÷ 12, zero for any month outside the consent&apos;s validity window (C6).
+          </p>
+          <p>
+            <strong className="text-ink">Verifiable tonnes</strong> — the minimum of eligible
+            certified tonnes (certified tonnes excluding any out-of-consent category), verified inbound
+            tonnes, and the capacity limit.
+          </p>
+          <p>
+            <strong className="text-ink">Unverifiable tonnes</strong> — certified tonnes minus
+            verifiable tonnes.
+          </p>
+          <p>
+            <strong className="text-ink">Risk band</strong> — Low under 5% unverifiable, Medium
+            5–25%, High over 25%. Each failed soft check (C2b, C7, C8), or any non-empty review-flag,
+            systemic-finding or no-own-evidence finding list, raises the band by one step — never more
+            than one step in total, however many of these signals fire together.
+          </p>
         </div>
       </section>
 
       <section className="card p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">4. Evaluation protocol</h2>
+        <SectionTitle className="text-lg">Evaluation protocol</SectionTitle>
         <div className="mt-2 max-w-[70ch] space-y-2 text-sm text-ink-muted">
           <p>
             A held-out test set, generated the same way as the development set but with a different seed,
@@ -212,7 +245,7 @@ export default function MethodPage() {
       </section>
 
       <section className="band rounded-lg p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">5. Limitations</h2>
+        <SectionTitle className="text-lg">Limitations</SectionTitle>
         <ul className="mt-2 max-w-[70ch] list-disc space-y-1 pl-5 text-sm text-ink-muted">
           <li>
             Every processor, document, brand and certificate shown here is synthetic and fictional — no
@@ -234,7 +267,7 @@ export default function MethodPage() {
       </section>
 
       <section className="card p-5">
-        <h2 className="font-display text-lg font-semibold text-ink">6. Data sources and attribution</h2>
+        <SectionTitle className="text-lg">Data sources and attribution</SectionTitle>
         <p className="mt-2 text-sm text-ink-muted">Contains modified Copernicus Sentinel data (2023).</p>
         <p className="text-sm text-ink-muted">Open Buildings v3, Google Research — CC BY 4.0.</p>
       </section>
