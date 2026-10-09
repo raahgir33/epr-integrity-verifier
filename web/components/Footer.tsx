@@ -11,10 +11,10 @@ export function Footer() {
           recycler or brand is represented or implicated.
         </p>
         <nav aria-label="Footer" className="flex shrink-0 gap-4 font-medium">
-          <Link href="/method" className="outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <Link href="/method" className="outline-none hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             Method
           </Link>
-          <Link href="/evaluation" className="outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <Link href="/evaluation" className="outline-none hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             Evaluation
           </Link>
         </nav>

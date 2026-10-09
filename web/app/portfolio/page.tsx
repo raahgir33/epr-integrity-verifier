@@ -38,7 +38,7 @@ export default async function PortfolioPage({
           <Link
             key={b.brand_id}
             href={`/portfolio?brand=${encodeURIComponent(b.brand_id)}`}
-            className={`outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+            className={`outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               b.brand_id === activeBrandId
                 ? "border-b-2 border-primary px-3 py-2.5 font-medium text-primary"
                 : "border-b-2 border-transparent px-3 py-2.5 text-ink-muted hover:text-ink"

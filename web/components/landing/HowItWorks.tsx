@@ -119,7 +119,7 @@ export function HowItWorks({ examples }: { examples: RealExamples }) {
                 })
               }
               aria-expanded={open}
-              className="relative mt-3 self-start text-xs font-medium text-primary underline decoration-dotted outline-none after:absolute after:-inset-2 after:content-[''] hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+              className="relative mt-3 self-start text-xs font-medium text-primary underline decoration-dotted outline-none after:absolute after:-inset-2 after:content-[''] hover:opacity-80 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
             >
               {open ? "Hide example" : "See a real example"}
             </button>

@@ -11,7 +11,7 @@ export type AccordionItemData = {
 };
 
 const ITEM_CLASSNAME =
-  "group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink outline-none transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink outline-none transition-colors duration-150 hover:text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function AccordionItems({ items }: { items: AccordionItemData[] }) {
   return (

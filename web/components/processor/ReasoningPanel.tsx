@@ -88,7 +88,7 @@ export function ReasoningPanel({
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Expand reasoning panel" : "Collapse reasoning panel"}
-            className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
           >
             <ChevronLeft
               aria-hidden

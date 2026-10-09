@@ -54,7 +54,7 @@ export function Button({
     <button
       type="button"
       {...rest}
-      className={`font-medium outline-none transition-[color,background-color,border-color,scale] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${isStatic ? "" : "motion-safe:active:scale-[0.96]"} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
+      className={`font-medium outline-none transition-[color,background-color,border-color,scale] duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${isStatic ? "" : "motion-safe:active:scale-[0.96]"} ${SIZE[size]} ${VARIANT[variant]} ${className}`}
     >
       {typeof children === "string" ? titleCase(children) : children}
     </button>

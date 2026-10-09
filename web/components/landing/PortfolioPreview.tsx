@@ -22,7 +22,7 @@ export function PortfolioPreview({ details }: { details: ProcessorDetailResponse
           >
             <Link
               href={`/processors/${encodeURIComponent(detail.profile.processor_id)}`}
-              className="block rounded-[inherit] p-4 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+              className="block rounded-[inherit] p-4 outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>

@@ -30,7 +30,7 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
           </p>
           <Link
             href={`/processors/${encodeURIComponent(alert.processor_id)}`}
-            className="inline-flex items-center gap-1 font-medium text-ink underline decoration-2 underline-offset-4 outline-none hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="inline-flex items-center gap-1 font-medium text-ink underline decoration-2 underline-offset-4 outline-none hover:opacity-80 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             View {alert.processor_id}
             <ArrowRight aria-hidden size={14} />

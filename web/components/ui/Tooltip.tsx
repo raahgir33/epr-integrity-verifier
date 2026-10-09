@@ -16,7 +16,7 @@ export function Tooltip({ label, children }: { label: string; children: ReactNod
       <RadixTooltip.Trigger asChild>
         <span
           tabIndex={0}
-          className="cursor-help underline decoration-dotted decoration-ink-muted outline-none focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="cursor-help underline decoration-dotted decoration-ink-muted outline-none focus-visible:rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {children}
         </span>

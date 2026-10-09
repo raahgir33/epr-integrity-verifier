@@ -17,7 +17,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <button
         type="button"
         onClick={reset}
-        className="mt-6 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-ink outline-none transition-[background-color,scale] duration-150 hover:bg-surface-sunk focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
+        className="mt-6 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-ink outline-none transition-[background-color,scale] duration-150 hover:bg-surface-sunk focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
       >
         Try again
       </button>
