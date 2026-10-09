@@ -1,15 +1,3 @@
-"use client";
-// "use client" is required here, not optional: Accordion's `items` prop
-// carries React elements (trigger/content). Building that array in a
-// Server Component and passing it across the RSC boundary into a Client
-// Component reliably produced a spurious "missing key" warning on every
-// render in dev (confirmed by bisection — the array itself always had
-// correct, unique keys; moving the array's construction client-side,
-// so no element instances cross the boundary as props, is what fixed
-// it). Faq/AudienceTabs/ProcessorTabs hit the same pattern and get the
-// same fix.
-
-import { Accordion } from "@/components/ui/Accordion";
 import type { CheckCatalogEntry } from "@/lib/landing";
 
 /** Plain-English description of what each check tests — deliberately no
@@ -36,19 +24,42 @@ const DESCRIPTIONS: Record<string, string> = {
 
 const FALLBACK_DESCRIPTION = "A deterministic check in the pipeline — see /method for the full description.";
 
+/** T13.5c plan, Batch 0.12/13: explicit check order (C1 first), since
+ * buildCheckCatalog's own localeCompare sort would put the "AGENT_*"
+ * entries before "C1" alphabetically. Anything not in this list falls
+ * back to the existing locale sort, preserving buildCheckCatalog's own
+ * "a check added to the pipeline later appears automatically" design. */
+const CHECK_ORDER = ["C1", "C2a", "C2b", "C3a", "C3b", "C4", "C5", "C6", "C7", "C8"];
+
+function orderedCatalog(catalog: CheckCatalogEntry[]): CheckCatalogEntry[] {
+  return [...catalog].sort((a, b) => {
+    const ia = CHECK_ORDER.indexOf(a.checkId);
+    const ib = CHECK_ORDER.indexOf(b.checkId);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return a.checkId.localeCompare(b.checkId);
+  });
+}
+
+/** Rebuilt as a card grid (T13.5c plan, Batch 0.12/13), same visual
+ * treatment as the Method page's Rule-Based Checks accordion rows
+ * (`components/method/RuleBasedChecksAccordion.tsx`, left unchanged,
+ * approved as is) — font-mono id, uppercase severity label — but as a
+ * static, always-expanded 3/2/1-column grid of cards rather than a
+ * collapsible accordion. */
 export function WhatWeCheck({ catalog }: { catalog: CheckCatalogEntry[] }) {
   return (
-    <Accordion
-      items={catalog.map((entry) => ({
-        id: entry.checkId,
-        trigger: (
-          <span>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {orderedCatalog(catalog).map((entry) => (
+        <div key={entry.checkId} className="card p-4">
+          <p>
             <span className="font-mono font-semibold text-ink">{entry.checkId}</span>{" "}
             <span className="text-xs uppercase tracking-wide text-ink-muted">{entry.severity}</span>
-          </span>
-        ),
-        content: <p>{DESCRIPTIONS[entry.checkId] ?? FALLBACK_DESCRIPTION}</p>,
-      }))}
-    />
+          </p>
+          <p className="mt-2 text-sm text-ink-muted">{DESCRIPTIONS[entry.checkId] ?? FALLBACK_DESCRIPTION}</p>
+        </div>
+      ))}
+    </div>
   );
 }

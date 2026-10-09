@@ -85,7 +85,7 @@ export default async function LandingPage() {
             Every threshold lives in <code>app/checks/params.py</code>, cited to a rule or marked an
             explicit assumption — see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
           </p>
-          <div className="card mt-5 p-4">
+          <div className="mt-5">
             <WhatWeCheck catalog={checkCatalog} />
           </div>
         </section>
