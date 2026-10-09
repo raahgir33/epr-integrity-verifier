@@ -43,17 +43,22 @@ function capitalize(letters: string): string {
 /** A token is left byte-for-byte untouched if any of: it contains
  * Devanagari (Hindi text must never be touched); it's already fully
  * uppercase (acronyms/IDs like EPR, GSTIN); it contains a hyphen
- * (PWP-05); it contains an ASCII digit; or it has an uppercase letter
- * after its first *letter* — this last rule is what preserves "tCO₂e"
- * (no hyphen, no ASCII digit — the ₂ is a Unicode subscript, not \d —
- * but it IS already mixed-case, which is enough on its own). */
+ * (PWP-05) or underscore (a tool/field identifier like read_document —
+ * found live in the reasoning log's title-cased action line, where
+ * "Called read_document" became "Called Read_document" without this
+ * rule, since an underscore-joined identifier shouldn't be word-split
+ * and capitalized any more than a hyphenated one should); it contains
+ * an ASCII digit; or it has an uppercase letter after its first *letter*
+ * — this last rule is what preserves "tCO₂e" (no hyphen/underscore, no
+ * ASCII digit — the ₂ is a Unicode subscript, not \d — but it IS
+ * already mixed-case, which is enough on its own). */
 function shouldPreserve(token: string): boolean {
   if (DEVANAGARI.test(token)) return true;
   const letters = token.replace(/[^A-Za-z]/g, "");
   if (letters.length === 0) return false;
   const isAllCaps = letters.length > 1 && letters === letters.toUpperCase();
   const hasInternalUpper = /[A-Z]/.test(letters.slice(1));
-  return isAllCaps || token.includes("-") || HAS_DIGIT.test(token) || hasInternalUpper;
+  return isAllCaps || token.includes("-") || token.includes("_") || HAS_DIGIT.test(token) || hasInternalUpper;
 }
 
 export function titleCase(input: string): string {

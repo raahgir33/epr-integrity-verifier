@@ -18,6 +18,13 @@ describe("titleCase", () => {
     expect(titleCase("processor PWP-05 summary")).toBe("Processor PWP-05 Summary");
   });
 
+  it("preserves an underscore-joined identifier exactly as written", () => {
+    // Found live in the reasoning log: "Called read_document" was coming
+    // out as "Called Read_document" before shouldPreserve checked for
+    // underscores the same way it already checked for hyphens.
+    expect(titleCase("called read_document")).toBe("Called read_document");
+  });
+
   it("preserves an all-caps acronym exactly as written", () => {
     expect(titleCase("EPR certificate")).toBe("EPR Certificate");
     expect(titleCase("GSTIN lookup")).toBe("GSTIN Lookup");
