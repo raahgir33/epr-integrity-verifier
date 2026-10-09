@@ -9,27 +9,15 @@ export type AccordionItemData = {
   content: ReactNode;
 };
 
-/** Styled Radix accordion (T13.5 plan, Part 2) — single-open by default.
- * Pass type="multiple" items individually if a future caller needs more
- * than one section open at once; not needed by anything built so far. */
-export function Accordion({
-  items,
-  defaultValue,
-}: {
-  items: AccordionItemData[];
-  defaultValue?: string;
-}) {
+const ITEM_CLASSNAME = "group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink hover:text-primary";
+
+function AccordionItems({ items }: { items: AccordionItemData[] }) {
   return (
-    <RadixAccordion.Root
-      type="single"
-      collapsible
-      defaultValue={defaultValue}
-      className="divide-y divide-border"
-    >
+    <>
       {items.map((item) => (
         <RadixAccordion.Item key={item.id} value={item.id}>
           <RadixAccordion.Header>
-            <RadixAccordion.Trigger className="group flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-ink hover:text-primary">
+            <RadixAccordion.Trigger className={ITEM_CLASSNAME}>
               {item.trigger}
               <svg
                 viewBox="0 0 16 16"
@@ -52,6 +40,35 @@ export function Accordion({
           </RadixAccordion.Content>
         </RadixAccordion.Item>
       ))}
+    </>
+  );
+}
+
+/** Styled Radix accordion (T13.5 plan, Part 2) — single-open by default.
+ * `type="multiple"` (T13.5b plan, Part 5 — DocumentsTable's grouped-by-
+ * type sections, each independently toggleable) takes `defaultValue` as
+ * an array instead of a string; Radix's own types require branching on
+ * `type` rather than passing one prop shape through to either variant. */
+export function Accordion(
+  props:
+    | { type?: "single"; items: AccordionItemData[]; defaultValue?: string }
+    | { type: "multiple"; items: AccordionItemData[]; defaultValue?: string[] },
+) {
+  if (props.type === "multiple") {
+    return (
+      <RadixAccordion.Root type="multiple" defaultValue={props.defaultValue} className="divide-y divide-border">
+        <AccordionItems items={props.items} />
+      </RadixAccordion.Root>
+    );
+  }
+  return (
+    <RadixAccordion.Root
+      type="single"
+      collapsible
+      defaultValue={props.defaultValue}
+      className="divide-y divide-border"
+    >
+      <AccordionItems items={props.items} />
     </RadixAccordion.Root>
   );
 }

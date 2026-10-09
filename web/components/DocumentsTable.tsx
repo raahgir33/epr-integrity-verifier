@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Accordion, type AccordionItemData } from "@/components/ui/Accordion";
 import type { DocumentFactsResponse, DocumentListItem } from "@/lib/api";
 import { useDocumentPanel } from "@/lib/document-panel-context";
 
@@ -9,6 +10,15 @@ const EXTRACTION_LABEL: Record<string, string> = {
   failed: "Extraction failed",
   not_extracted: "Not extracted",
 };
+
+/** T13.5b plan, Part 5: a document is "flagged" when its own extraction
+ * didn't succeed — the only flag state derivable from DocumentListItem
+ * today without a new API field. If "flagged" was meant to mean
+ * something broader (e.g. cited by an unresolved finding), this is the
+ * one spot to change. */
+function isFlagged(document: DocumentListItem): boolean {
+  return document.extraction_status !== "ok";
+}
 
 function DocumentRow({
   document,
@@ -24,9 +34,9 @@ function DocumentRow({
   return (
     <li className="border-b border-border py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <span className="font-medium text-ink">{document.doc_type}</span>
+        <span className="font-mono text-xs text-ink-muted">{document.doc_id}</span>
         <span className="text-xs uppercase tracking-wide text-ink-muted">{document.lang}</span>
-        <span className="text-xs text-ink-muted">
+        <span className={isFlagged(document) ? "text-xs font-medium text-risk-high" : "text-xs text-ink-muted"}>
           {EXTRACTION_LABEL[document.extraction_status] ?? document.extraction_status}
         </span>
         <a
@@ -71,6 +81,10 @@ function DocumentRow({
   );
 }
 
+/** Grouped by doc_type (T13.5b plan, Part 5) — each group shows the type,
+ * a count and a flagged-count badge; groups containing a flagged document
+ * start open. doc_type's own display name comes straight off the API
+ * (already a readable string, e.g. "invoice", "weighbridge_slip"). */
 export function DocumentsTable({
   documents,
   facts,
@@ -78,11 +92,42 @@ export function DocumentsTable({
   documents: DocumentListItem[];
   facts: Record<string, DocumentFactsResponse>;
 }) {
-  return (
-    <ul>
-      {documents.map((document) => (
-        <DocumentRow key={document.doc_id} document={document} facts={facts[document.doc_id]} />
-      ))}
-    </ul>
-  );
+  const byType = new Map<string, DocumentListItem[]>();
+  for (const document of documents) {
+    const group = byType.get(document.doc_type);
+    if (group) group.push(document);
+    else byType.set(document.doc_type, [document]);
+  }
+
+  const groups = [...byType.entries()].sort(([a], [b]) => a.localeCompare(b));
+  const defaultOpen = groups.filter(([, docs]) => docs.some(isFlagged)).map(([type]) => type);
+
+  const items: AccordionItemData[] = groups.map(([type, docs]) => {
+    const flaggedCount = docs.filter(isFlagged).length;
+    return {
+      id: type,
+      trigger: (
+        <span className="flex items-center gap-2">
+          <span className="text-ink">{type}</span>
+          <span className="rounded-full bg-surface-sunk px-2 py-0.5 text-xs font-medium text-ink-muted">
+            {docs.length}
+          </span>
+          {flaggedCount > 0 ? (
+            <span className="rounded-full bg-risk-high/10 px-2 py-0.5 text-xs font-medium text-risk-high">
+              {flaggedCount} flagged
+            </span>
+          ) : null}
+        </span>
+      ),
+      content: (
+        <ul>
+          {docs.map((document) => (
+            <DocumentRow key={document.doc_id} document={document} facts={facts[document.doc_id]} />
+          ))}
+        </ul>
+      ),
+    };
+  });
+
+  return <Accordion type="multiple" items={items} defaultValue={defaultOpen} />;
 }
