@@ -249,8 +249,16 @@ uv run python scripts/probe_agent_thinking.py --seed 7 --facts-source extracted 
 #     normal epr dataset from .env, not epr_eval
 unset BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET
 uv run python scripts/evaluate.py --seed 7 --eval-dataset epr_eval
+
+# (g) the deployed epr-api never queries BigQuery per request (app/store/cache.py,
+#     docs/ARCHITECTURE.md §7) — it reads eval_metrics once at startup and caches
+#     it in memory forever (NO_EXPIRY), so the live /evaluation page stays on
+#     whatever it saw at boot until the service gets a fresh instance. Force one —
+#     no code changed, so this just needs a new revision, not a full redeploy:
+gcloud run services update epr-api --region=asia-south1 \
+    --update-env-vars="CACHE_REFRESHED_AT=$(date +%s)"
 ```
 
 **Expected total cost: ~$19-20** (extraction ~$8 + 4 agent-stage runs ~$3+$9 ≈ $12; everything else deterministic/local/free). This is a projection from seed-42 measured rates, not a guarantee — compare against `uv run python scripts/cost_report.py` (run with `BQ_DATASET=epr_eval` to scope it to this evaluation's own `llm_calls`) once it's done, and paste the actual total back.
 
-`scripts/evaluate.py` prints a summary table and reports how many `eval_metrics` rows it wrote (`dataset_label="heldout-seed7"`) to the live `epr.eval_metrics` table — `/evaluation` reads them from there directly, no redeploy needed.
+`scripts/evaluate.py` prints a summary table and reports how many `eval_metrics` rows it wrote (`dataset_label="heldout-seed7"`) to the live `epr.eval_metrics` table. Step (g) is required every time you rerun `evaluate.py` with new numbers — `CACHE_REFRESHED_AT` is a throwaway env var (`app/config.py`'s `Settings` has `extra="ignore"`, so the app never reads it) whose only job is to force Cloud Run to mint a new revision from the *same* image, so `app/main.py`'s `lifespan()` re-runs `preload()` against the now-current `eval_metrics` table — cheap and fast (no Cloud Build), unlike a full `deploy_api.sh` run.
