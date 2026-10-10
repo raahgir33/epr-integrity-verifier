@@ -1,3 +1,5 @@
+[![CI](https://github.com/raahgir33/epr-integrity-verifier/actions/workflows/ci.yml/badge.svg)](https://github.com/raahgir33/epr-integrity-verifier/actions/workflows/ci.yml)
+
 # EPR Integrity Verifier
 
 India's plastic packaging EPR (Extended Producer Responsibility) scheme requires
