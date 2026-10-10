@@ -89,7 +89,11 @@ const FRAGMENTS: Fragment[] = [
     alt: "",
     widthPx: 110,
     aspect: 1383 / 2192,
-    className: "top-[40%] -left-7 hidden sm:block",
+    // mobile: true below means this must actually render under 640px —
+    // bottom-anchored there (in the stacked-layout's scene band, not the
+    // desktop overlay's 40%-from-top position, which would land inside
+    // the text column on a narrow phone viewport instead).
+    className: "bottom-[1%] -left-5 sm:bottom-auto sm:top-[40%] sm:-left-7",
     mirror: true,
     tier: "mid",
     blurPx: 1.5,
@@ -372,7 +376,13 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               pointer or scroll position (T13.6b plan, Part 3). */}
           <motion.div
             style={{ y: driftByTier.earth }}
-            className="absolute right-[6%] top-1/2 -translate-y-1/2 sm:right-[8%] md:right-[10%]"
+            // Mobile (brief: "text stacked above" the scene, not
+            // overlaid): bottom-anchored in the lower band the text
+            // column's justify-start flow leaves clear, found overlapping
+            // the headline/CTAs when it was unconditionally vertically
+            // centered during T13.6b's own verification pass. sm+ restores
+            // the desktop vertical-centre overlay.
+            className="absolute bottom-[1%] right-[4%] sm:bottom-auto sm:right-[8%] sm:top-1/2 sm:-translate-y-1/2 lg:right-[18%]"
           >
             <div ref={setLayerRef(earthLayerIndex)} className="relative will-change-transform">
               <img
@@ -382,7 +392,18 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
                 width={340}
                 height={340}
                 decoding="async"
-                className="h-[42svh] min-h-[220px] w-auto max-w-[70vw] drop-shadow-xl sm:h-[48svh] md:h-[52svh]"
+                // lg jumps to a smaller vh% than sm, not a continued
+                // increase: the HUD column appears for the first time at
+                // lg (below, `lg:block`) and needs real horizontal room
+                // between earth's right edge and the viewport edge —
+                // measured directly (Playwright + getBoundingClientRect)
+                // against 1280/1440/1920 during T13.6b's verification
+                // pass after the chip column was found overflowing the
+                // viewport by ~100px at the previous, larger sizing. The
+                // base (mobile) size is deliberately smaller than sm+ —
+                // it shares its band with 2 fragments and the bottom row,
+                // not the whole viewport height.
+                className="h-[28svh] min-h-[170px] w-auto max-w-[62vw] drop-shadow-xl sm:h-[48svh] sm:max-w-[70vw] lg:h-[38svh] xl:h-[46svh]"
               />
 
               {/* Thin corner brackets framing part of the rock. */}
@@ -396,13 +417,22 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               />
 
               {hudChips.length > 0 ? (
-                <div className="absolute left-full top-1/2 ml-4 hidden w-56 -translate-y-1/2 space-y-2 lg:block">
+                <div className="absolute left-full top-1/2 ml-3 hidden w-40 -translate-y-1/2 space-y-2 lg:block">
                   {hudChips.map((chip) => (
                     <div key={chip.key} className="flex items-center gap-2">
-                      <span aria-hidden className="h-px w-5 shrink-0 bg-white/50" />
-                      <div className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2.5 py-1.5 text-ink shadow-sm backdrop-blur-sm">
-                        <div className="font-mono text-sm font-semibold leading-tight">{chip.value}</div>
-                        <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
+                      <span aria-hidden className="h-px w-4 shrink-0 bg-white/50" />
+                      {/* Fixed navy/grey, not text-ink/-muted: this chip's
+                          own surface is deliberately theme-invariant
+                          (always a light card over the photo), so the
+                          theme token would flip to near-white text in
+                          dark mode — confirmed illegible (~1:1) in
+                          T13.6b's own dark-mode verification pass. Same
+                          hardcoded-hex architecture as MetricTile's
+                          "inverted" tone for this exact kind of
+                          image-band content. */}
+                      <div className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2 py-1.5 text-[#071952] shadow-sm backdrop-blur-sm">
+                        <div className="font-mono text-xs font-semibold leading-tight">{chip.value}</div>
+                        <div className="text-[9px] font-medium uppercase leading-tight tracking-wide text-[#071952]/70">
                           {chip.label}
                         </div>
                       </div>
@@ -450,7 +480,13 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         style={reducedMotion ? undefined : { opacity: heroOpacity }}
         className="relative z-10 flex h-full flex-col justify-between px-5 py-6 sm:px-10 sm:py-10"
       >
-        <div className="flex flex-1 flex-col justify-center">
+        {/* Mobile: text starts at the top and flows down ("stacked
+            above" the scene, per the brief) rather than vertically
+            centering into the same band hero-earth occupies — found
+            overlapping the headline/CTAs when both were centered during
+            T13.6b's own verification pass. sm+ restores the centred
+            overlay look. */}
+        <div className="flex flex-1 flex-col justify-start pt-2 sm:justify-center sm:pt-0">
           <h1
             className="max-w-xl text-pretty font-display font-semibold tracking-tight text-white"
             style={{ fontSize: "clamp(2.25rem, 1.6rem + 3.2vw, 5rem)", lineHeight: 1.05 }}
@@ -473,7 +509,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <a
               href="#live-verification"
-              className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="rounded-md bg-glow px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {titleCase("Run live verification")}
             </a>
@@ -496,10 +532,13 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               {mobileChips.map((chip) => (
                 <div
                   key={chip.key}
-                  className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2.5 py-1.5 text-ink shadow-sm backdrop-blur-sm"
+                  // Fixed navy, not text-ink — see the desktop HUD
+                  // column's identical comment; this surface is always
+                  // light, regardless of site theme.
+                  className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2.5 py-1.5 text-[#071952] shadow-sm backdrop-blur-sm"
                 >
                   <div className="font-mono text-sm font-semibold leading-tight">{chip.value}</div>
-                  <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
+                  <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-[#071952]/70">
                     {chip.label}
                   </div>
                 </div>

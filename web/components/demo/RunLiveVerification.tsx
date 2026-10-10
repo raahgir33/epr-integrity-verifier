@@ -73,7 +73,7 @@ export function RunLiveVerification({
           ))}
         </select>
         <Button
-          variant="primary"
+          variant="glow"
           size="lg"
           className="w-full"
           onClick={handleRun}

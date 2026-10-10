@@ -54,7 +54,7 @@ export function StickyHeader({
             {hasLiveBatches ? (
               <a
                 href="#live-verification"
-                className="rounded-md bg-primary px-2.5 py-2.5 font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="rounded-md bg-glow px-2.5 py-2.5 font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 {titleCase("Run live verification")}
               </a>

@@ -3,6 +3,13 @@ import { titleCase } from "@/lib/titleCase";
 
 const VARIANT = {
   primary: "bg-primary text-primary-foreground hover:opacity-90",
+  // Developer note: every "Run Live Verification" control site-wide uses
+  // --color-glow (globals.css) as its background instead of --color-
+  // primary — StickyHeader's and HeroScene's own raw-<a> CTAs were
+  // switched directly; this variant is the equivalent for the one
+  // "Run Live Verification" control built from the shared Button
+  // component (RunLiveVerification.tsx's submit button).
+  glow: "bg-glow text-primary-foreground hover:opacity-90",
   secondary: "border border-border text-ink hover:bg-surface-sunk",
   ghost: "border border-border text-ink hover:bg-surface-sunk",
 } as const;

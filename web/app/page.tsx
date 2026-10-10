@@ -36,8 +36,13 @@ export default async function LandingPage() {
           the fixed, transparent-over-hero Nav (Nav.tsx publishes
           --nav-h; the fallback here matches Nav's own fixed ~64px height
           for the brief instant before that CSS var is set). No .band/
-          padding — HeroScene owns its own full background now. */}
-      <FullBleed contained={false} className="-mt-[var(--nav-h,4rem)]">
+          padding — HeroScene owns its own full background now. Cancels
+          BOTH main's --nav-h top padding AND PageContainer's own py-8
+          (2rem) top padding — missing the second one left a real,
+          measured 32px gap above the hero in T13.6b's own verification
+          pass (main's padding + PageContainer's py-8 - FullBleed's
+          margin != 0 with only --nav-h cancelled). */}
+      <FullBleed contained={false} className="-mt-[calc(var(--nav-h,4rem)+2rem)]">
         <HeroScene figures={figures} />
       </FullBleed>
 
