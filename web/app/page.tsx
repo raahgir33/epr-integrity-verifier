@@ -83,7 +83,7 @@ export default async function LandingPage() {
           </TextReveal>
           <p className="mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
             Every threshold lives in <code>app/checks/params.py</code>, cited to a rule or marked an
-            explicit assumption — see <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
+            explicit assumption. See <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the full detail.
           </p>
           <div className="mt-5">
             <WhatWeCheck catalog={checkCatalog} />
@@ -97,9 +97,9 @@ export default async function LandingPage() {
 
       <section>
         <TextReveal>
-          <SectionTitle className="text-xl">Frequently asked</SectionTitle>
+          <SectionTitle className="text-center text-xl">Frequently asked</SectionTitle>
         </TextReveal>
-        <div className="card mt-5 p-4">
+        <div className="card mx-auto mt-5 w-full max-w-[70%] p-4">
           <Faq />
         </div>
       </section>

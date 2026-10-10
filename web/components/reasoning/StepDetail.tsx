@@ -25,7 +25,7 @@ function CriticFinalBlock({
       {output.verdicts.map((v, i) => (
         <p key={i} className="text-ink-muted">
           Verdict on Hypothesis finding #{v.hypothesis_finding_index + 1}:{" "}
-          <span className="font-medium">{v.verdict}</span> — {v.reason}
+          <span className="font-medium">{v.verdict}</span>, {v.reason}
         </p>
       ))}
       {output.objections.map((o, i) => (
@@ -51,12 +51,12 @@ function RevisionBlock({ output }: { output: RevisionOutput }) {
     <div className="space-y-1 text-sm text-ink-muted">
       {output.revisions.map((r, i) => (
         <p key={`r${i}`}>
-          Critic finding #{r.objection_index + 1}: {r.accepted ? "accepted" : "rejected"} — {r.explanation}
+          Critic finding #{r.objection_index + 1}: {r.accepted ? "accepted" : "rejected"}, {r.explanation}
         </p>
       ))}
       {output.hypothesis_finding_responses.map((r, i) => (
         <p key={`h${i}`}>
-          Hypothesis finding #{r.hypothesis_finding_index + 1}: {r.decision} — {r.explanation}
+          Hypothesis finding #{r.hypothesis_finding_index + 1}: {r.decision}, {r.explanation}
         </p>
       ))}
     </div>

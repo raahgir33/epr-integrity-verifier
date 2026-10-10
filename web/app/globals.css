@@ -36,6 +36,20 @@
   --text-3xl: clamp(1.875rem, 1.65rem + 1vw, 2.25rem);
   --text-4xl: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
 
+  /* Method page cards (developer review note, 2026-10-10): heading/body
+     sizes at exactly 1.2× --text-lg/--text-sm — clamp() scales linearly,
+     so multiplying every term (floor, vw-coefficient, ceiling) by the
+     same constant preserves the fluid curve's shape and guarantees the
+     +20% holds at every viewport width, not just at one breakpoint. */
+  --text-method-heading: clamp(1.35rem, 1.26rem + 0.48vw, 1.5rem);
+  --text-method-body: clamp(1.05rem, 0.996rem + 0.3vw, 1.275rem);
+
+  /* Footer (developer review note, 2026-10-10): +10% over --text-xs for
+     legibility, same scale-every-term-by-a-constant technique as the
+     Method tokens above (0.8125rem * 1.1 = 0.89375rem, rounded to 3
+     decimals; same for the floor's vw-coefficient and the ceiling). */
+  --text-footer: clamp(0.894rem, 0.858rem + 0.165vw, 0.963rem);
+
   /* T13.5c plan, Batch 0.8: site-wide palette replacement, developer-
      specified — navy #071952, deep teal #005461, teal #00b7b5, light
      blue #90ddf0, light grey #f4f4f4, plus white and the unchanged
@@ -64,10 +78,26 @@
          hue (teal vs. amber/red/green/slate) — used only for icons,
          focus rings, chart accents and small glows, per the note.
      Dark-theme values live in the `:root[data-theme="dark"]` block
-     below, same contrast method. */
-  --color-page: #f4f4f4;
+     below, same contrast method.
+
+     Developer review note, 2026-10-10: --color-page moved from the flat
+     light grey (#f4f4f4) to the SAME light-blue tint --color-surface-sunk
+     already used — "replicate the continuous light blue band colour...
+     instead of grey, for all the pages". Since body (app/layout.tsx) is
+     the only thing that reads --color-page, this one token change
+     propagates everywhere automatically — no need to touch each page.
+     --color-surface-sunk is left unchanged, so any existing .band/
+     bg-surface-sunk section (the landing page's bands, Method's former
+     band wrapper) now reads as the exact same colour as the page itself,
+     i.e. no visible seam — the "no more alternating sections" look,
+     achieved by removing the contrast rather than adding a second colour.
+     Every text token re-verified against this new page value (and the
+     unchanged --color-surface) before the change — see the Python-
+     computed numbers in the dark block's own comment for the method;
+     all still clear 4.5:1 AA, light and dark, nothing needed adjusting. */
+  --color-page: #ebf9fc;
   --color-surface: #ffffff;
-  --color-surface-sunk: #ebf9fc; /* 18% light-blue (#90ddf0) tint into white — the note's "tinted surfaces" role */
+  --color-surface-sunk: #ebf9fc; /* 18% light-blue (#90ddf0) tint into white — the note's "tinted surfaces" role; now identical to --color-page, deliberately (see above) */
   --color-primary: #005461;
   --color-primary-foreground: #ffffff;
   --color-glow: #00b7b5;
@@ -125,9 +155,13 @@
    block's comment above — --color-glow-foreground was never actually
    consumed by any component; confirmed by grep before removing). */
 :root[data-theme="dark"] {
-  --color-page: #071952;
+  /* Developer review note, 2026-10-10: --color-page moved to the same
+     value as --color-surface-sunk (the darkest navy band), same reasoning
+     as the light block above — one token change, propagates everywhere
+     via body's bg-page, every text token re-verified against it. */
+  --color-page: #061442;
   --color-surface: #1b2b60; /* 8% white mixed into navy — "a slightly lighter navy" */
-  --color-surface-sunk: #061442; /* 20% black mixed into navy — the darkest band */
+  --color-surface-sunk: #061442; /* 20% black mixed into navy — the darkest band; now identical to --color-page, deliberately */
   --color-primary: #00b7b5;
   --color-primary-foreground: #071952;
   --color-glow: #90ddf0;

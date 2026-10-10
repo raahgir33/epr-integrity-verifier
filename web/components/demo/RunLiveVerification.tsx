@@ -54,8 +54,8 @@ export function RunLiveVerification({
     <div className="mx-auto max-w-md rounded-lg border border-border bg-surface p-4 text-center lg:w-1/3">
       <p className="font-display text-base font-semibold text-ink">{titleCase("Run live verification")}</p>
       <p className="mt-1 text-sm text-ink-muted">
-        Simulate a new certificate batch arriving for one processor — watch it extracted, checked and
-        reviewed by the agent loop end to end.
+        Simulate a new certificate batch arriving for one processor, and watch it get extracted, checked
+        and reviewed by the agent loop end to end.
       </p>
 
       <div className="mt-3 flex flex-col items-center gap-3">
@@ -68,7 +68,7 @@ export function RunLiveVerification({
         >
           {batches.map((b) => (
             <option key={b.batch_id} value={b.batch_id}>
-              {b.processor_id} — +{b.quantity_t.toFixed(2)}t ({b.period_month})
+              {b.processor_id} · +{b.quantity_t.toFixed(2)}t ({b.period_month})
             </option>
           ))}
         </select>

@@ -166,8 +166,8 @@ export function ProcessorTabs({
                 </ul>
               ) : (
                 <EmptyState
-                  title="Verified — no outstanding findings"
-                  message="The agent loop raised no findings for this processor; its certified tonnes are fully accounted for."
+                  title="Fully verified, no outstanding findings"
+                  message="The agent loop raised no findings for this processor. Its certified tonnes are fully accounted for."
                 />
               )}
             </div>
@@ -251,7 +251,7 @@ export function ProcessorTabs({
         onOpenChange={(open) => {
           if (!open) setOpenDocId(null);
         }}
-        title={openDocument ? `${openDocument.doc_type} — ${openDocument.doc_id}` : "Document"}
+        title={openDocument ? `${openDocument.doc_type} · ${openDocument.doc_id}` : "Document"}
       >
         {openDocument ? (
           <div className="space-y-4">

@@ -22,7 +22,7 @@ const DESCRIPTIONS: Record<string, string> = {
   AGENT_DISPUTED_FINDING: "Flags a finding the Hypothesis and Critic agents disagreed on.",
 };
 
-const FALLBACK_DESCRIPTION = "A deterministic check in the pipeline — see /method for the full description.";
+const FALLBACK_DESCRIPTION = "A deterministic check in the pipeline. See /method for the full description.";
 
 /** T13.5c plan, Batch 0.12/13: explicit check order (C1 first), since
  * buildCheckCatalog's own localeCompare sort would put the "AGENT_*"

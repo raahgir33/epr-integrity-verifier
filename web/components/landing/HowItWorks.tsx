@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { classificationLabel } from "@/lib/findings";
 import { STATUS_LABEL } from "@/lib/checks";
 import { isClarificationMemo } from "@/lib/memo";
@@ -11,7 +12,7 @@ const STEPS = [
   {
     title: "Read the paper trail",
     body:
-      "Gemini extracts invoices, e-way bills, weighbridge slips, consent permits and electricity bills — mixed formats, some in Hindi — into structured facts, values captured exactly as printed.",
+      "Gemini reads invoices, e-way bills, weighbridge slips, consent permits and electricity bills, in mixed formats and sometimes Hindi, and turns them into structured facts. Every value is captured exactly as printed.",
   },
   {
     title: "Deterministic checks",
@@ -21,12 +22,12 @@ const STEPS = [
   {
     title: "Two AI agents must agree",
     body:
-      "A Hypothesis agent argues each certificate batch is or isn't supported; a Critic agent attacks that argument with tools. A finding only becomes a deduction once both agree.",
+      "A Hypothesis agent argues each certificate batch is or isn't supported. A Critic agent then attacks that argument with its own tools. A finding only becomes a deduction once both agree.",
   },
   {
     title: "Clarification memo",
     body:
-      "A clean processor gets a verification statement; a flagged one gets a draft clarification request — in English or Hindi — citing the exact evidence behind every item.",
+      "A clean processor gets a verification statement, and a flagged one gets a draft clarification request, in English or Hindi, citing the exact evidence behind every item.",
   },
 ];
 
@@ -38,7 +39,7 @@ function ExampleBlock({ step, examples }: { step: number; examples: RealExamples
     return (
       <div className="text-sm">
         <p className="text-ink-muted">
-          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> — {ex.doc.doc_type} ({ex.doc.lang})
+          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> · {ex.doc.doc_type} ({ex.doc.lang})
         </p>
         {field ? (
           <p className="mt-1 text-ink">
@@ -55,7 +56,7 @@ function ExampleBlock({ step, examples }: { step: number; examples: RealExamples
     return (
       <div className="text-sm">
         <p className="text-ink-muted">
-          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> —{" "}
+          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> ·{" "}
           <span className="font-mono font-medium text-ink">{ex.check.check_id}</span>{" "}
           {STATUS_LABEL[ex.check.status] ?? ex.check.status}
         </p>
@@ -69,7 +70,7 @@ function ExampleBlock({ step, examples }: { step: number; examples: RealExamples
     return (
       <div className="text-sm">
         <p className="text-ink-muted">
-          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> — {classificationLabel(ex.finding)}
+          <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> · {classificationLabel(ex.finding)}
         </p>
         <p className="mt-1 text-ink">{ex.finding.explanation}</p>
       </div>
@@ -83,7 +84,7 @@ function ExampleBlock({ step, examples }: { step: number; examples: RealExamples
   return (
     <div className="text-sm">
       <p className="text-ink-muted">
-        <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> — {ex.memo.memo.subject}
+        <span className="font-mono text-xs text-ink-muted">{ex.processorId}</span> · {ex.memo.memo.subject}
       </p>
       {item ? <p className="mt-1 text-ink">{item.what_we_observed}</p> : null}
     </div>
@@ -123,11 +124,22 @@ export function HowItWorks({ examples }: { examples: RealExamples }) {
             >
               {open ? "Hide example" : "See a real example"}
             </button>
-            {open ? (
-              <div className="mt-3 border-t border-border pt-3">
-                <ExampleBlock step={i} examples={examples} />
-              </div>
-            ) : null}
+            <AnimatePresence initial={false}>
+              {open ? (
+                <motion.div
+                  key="example"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 border-t border-border pt-3">
+                    <ExampleBlock step={i} examples={examples} />
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         );
       })}

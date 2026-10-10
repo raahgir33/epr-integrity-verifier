@@ -143,7 +143,7 @@ export async function pickRealExamples(
  * instead of an empty "no finding" line. */
 export function topFindingHeadline(detail: ProcessorDetailResponse): string {
   const stage = detail.full ?? detail.checks_only;
-  if (stage.unverifiable_t <= 0) return "Verified — no unverifiable tonnes";
+  if (stage.unverifiable_t <= 0) return "Fully verified, no unverifiable tonnes";
   const displayed = detail.findings.find((f) => f.classification !== "withdrawn");
   return displayed ? displayed.finding_type : "Unverifiable tonnes flagged by deterministic checks";
 }

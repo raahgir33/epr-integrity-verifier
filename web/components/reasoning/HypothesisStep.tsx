@@ -29,7 +29,7 @@ export function HypothesisStep({
         {visible.map((c) => (
           <li key={c.certificate_batch} className="text-sm">
             <span className="font-medium text-ink">{formatMonth(c.certificate_batch)}</span>{" "}
-            <span className="text-ink-muted">— {STATUS_LABEL[c.status] ?? c.status}</span>
+            <span className="text-ink-muted">· {STATUS_LABEL[c.status] ?? c.status}</span>
             <p className="text-ink-muted">{c.explanation}</p>
             {c.evidence_ids.length > 0 ? (
               <div className="mt-0.5">

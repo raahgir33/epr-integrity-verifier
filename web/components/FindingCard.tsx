@@ -37,7 +37,7 @@ export function FindingCard({
 
       {finding.verdict ? (
         <p className="mt-2 text-xs text-ink-muted">
-          Critic verdict: <span className="font-medium">{finding.verdict.verdict}</span> —{" "}
+          Critic verdict: <span className="font-medium">{finding.verdict.verdict}</span>,{" "}
           {finding.verdict.reason}
         </p>
       ) : null}

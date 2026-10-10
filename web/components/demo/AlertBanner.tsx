@@ -26,7 +26,7 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
           className="glow-pulse flex flex-wrap items-center justify-between gap-2 rounded-lg border border-risk-medium/30 bg-risk-medium/10 px-4 py-3 text-sm"
         >
           <p className="text-ink">
-            <span className="font-medium">Live verification alert</span> — {alert.message}
+            <span className="font-medium">Live verification alert:</span> {alert.message}
           </p>
           <Link
             href={`/processors/${encodeURIComponent(alert.processor_id)}`}

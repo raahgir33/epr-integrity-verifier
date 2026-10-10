@@ -4,9 +4,9 @@ import type { ProcessorDetailResponse } from "@/lib/api";
 import { formatTonnes } from "@/lib/format";
 import { topFindingHeadline } from "@/lib/landing";
 
-/** Processor cards (T13.5 plan, Part 3, section 5) — risk-band chip,
+/** Processor cards (T13.5 plan, Part 3, section 5): risk-band chip,
  * tonnes and a top-finding headline, each linking to /processors/[id].
- * Amendment F: a clean processor's headline reads "Verified — no
+ * Amendment F: a clean processor's headline reads "Fully verified, no
  * unverifiable tonnes" (via topFindingHeadline) rather than a blank
  * findings area. */
 export function PortfolioPreview({ details }: { details: ProcessorDetailResponse[] }) {

@@ -139,7 +139,7 @@ export function RunProgress({
         </p>
       ) : null}
       {run.status === "done" && !run.alert ? (
-        <p className="text-sm text-ink-muted">Done — no alert (risk band unchanged, no new finding).</p>
+        <p className="text-sm text-ink-muted">Done. No alert (risk band unchanged, no new finding).</p>
       ) : null}
 
       {!onRunUpdate && run.steps.length > 0 ? (

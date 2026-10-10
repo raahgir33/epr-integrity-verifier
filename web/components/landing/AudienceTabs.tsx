@@ -41,7 +41,7 @@ const AUDIENCES: Audience[] = [
     label: "Processors",
     Icon: ChartBar,
     benefits: [
-      "Every finding comes with its evidence — see exactly what was checked and why.",
+      "Every finding comes with its evidence, so you can see exactly what was checked and why.",
       "A finding only becomes a deduction once two independent agents agree on it.",
       "See what a clarification request would ask for before it's ever sent to you.",
     ],
@@ -54,7 +54,7 @@ const AUDIENCES: Audience[] = [
     Icon: Search,
     benefits: [
       "Cross-processor checks against the same deterministic thresholds, every time.",
-      "A full reasoning trail per certificate batch — nothing the agents concluded is hidden.",
+      "A full reasoning trail per certificate batch, so nothing the agents concluded is hidden.",
       "A measured accuracy report against a seeded, held-out test set, not a self-reported claim.",
     ],
     linkHref: "/evaluation",

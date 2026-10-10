@@ -14,22 +14,22 @@ export function isDisplayedFinding(finding: FindingOut): boolean {
 
 export function agreementLabel(finding: FindingOut): string {
   return finding.classification === "review_flag"
-    ? "Flagged for review — agents disagreed"
+    ? "Flagged for review, agents disagreed"
     : "Both agents agreed";
 }
 
 export function classificationLabel(finding: FindingOut): string {
   switch (finding.classification) {
     case "deductible":
-      return "Confirmed — tonnes deducted from the verifiable total";
+      return "Confirmed, tonnes deducted from the verifiable total";
     case "systemic":
-      return "Too broad to deduct automatically — flagged for review";
+      return "Too broad to deduct automatically, flagged for review";
     case "no_own_evidence":
-      return "No shipment-level evidence for every cited shipment — flagged for review, not deducted";
+      return "No shipment-level evidence for every cited shipment, flagged for review, not deducted";
     case "concurs_with_check":
-      return "Independently confirmed — already caught by a deterministic check";
+      return "Independently confirmed, already caught by a deterministic check";
     case "review_flag":
-      return "Disputed between agents — kept for review, not deducted";
+      return "Disputed between agents, kept for review, not deducted";
     default:
       return finding.classification;
   }

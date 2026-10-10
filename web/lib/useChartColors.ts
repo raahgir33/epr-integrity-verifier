@@ -19,13 +19,15 @@ export type ChartColors = {
 
 // T13.5c plan, Batch 0.8/0.10: hex values kept in sync by hand with the
 // new palette's --color-border/--color-ink-muted/--color-primary tokens
-// (app/globals.css). certifiedBar is the one deliberate exception — the
-// developer's own note names #1A3D64 specifically for "wherever light
-// brown is used now", so it isn't derived from a theme token.
+// (app/globals.css). certifiedBar is a deliberate exception, not derived
+// from a theme token: the developer's own review note (2026-10-10, round
+// 6) asked for the teal highlight (#00b7b5) in place of the dark-navy
+// bar it read as before (it was #1A3D64, close enough to --color-ink's
+// #071952 to look like the ink colour in a bar chart).
 const LIGHT: ChartColors = {
   grid: "#0719521f", // navy at ~12% alpha (8-digit hex) — matches --color-border's own construction
   axisText: "#5a668b",
-  certifiedBar: "#1A3D64",
+  certifiedBar: "#00b7b5",
   verifiedLine: "#005461",
 };
 

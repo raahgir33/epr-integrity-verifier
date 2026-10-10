@@ -18,7 +18,7 @@ import { formatTonnesValue } from "@/lib/format";
  * other. */
 export function ProofStrip({ figures }: { figures: LandingFigures }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
       <MetricTile countUp value={figures.processorsVerified} label="Processors verified" />
       <MetricTile
         countUp

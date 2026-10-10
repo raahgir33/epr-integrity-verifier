@@ -103,7 +103,7 @@ export function ClarificationMemoLetter({
       </div>
       {hiError ? (
         <p className="mt-2 text-xs text-risk-high print:hidden">
-          Could not load the Hindi version — showing English.
+          Could not load the Hindi version. Showing English instead.
         </p>
       ) : null}
 
