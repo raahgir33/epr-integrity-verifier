@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { ReasoningLog } from "@/components/reasoning/ReasoningLog";
+import { ReasoningLog, type ReasoningLogHandle } from "@/components/reasoning/ReasoningLog";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
 import type { ReasoningStepOut } from "@/lib/api";
@@ -20,7 +20,20 @@ const STORAGE_KEY = "epr:reasoningPanelCollapsed";
  * `currentStageLabel` (Kokonut addendum's "AI Loading" equivalent) — set
  * only while a live run is active and hasn't produced its first reasoning
  * step yet (still reading documents / running checks); shows the real
- * stage name, never invented progress. */
+ * stage name, never invented progress.
+ *
+ * Round 7 fix (developer-reported, 2026-10-10): the card used
+ * `max-height` with no `overflow` set (default `visible`), not a real
+ * `height`. A column flex container sized only by `max-height` has no
+ * definite main size to hand its `flex-1` body for free-space
+ * distribution, so the body never actually got bounded — it grew to fit
+ * all its content, and the card's own box (clipped only by `max-height`,
+ * `overflow: visible`) let that excess spill straight past its bottom
+ * edge onto the rest of the page once more than a step or two was open.
+ * Fixed by giving the card a real, fixed `height` (not `max-height`) so
+ * flex-grow has a concrete space to fill, plus `overflow-hidden` on the
+ * card itself as a second line of defense. Reproduced and pinned down by
+ * e2e/reasoning-panel-overflow.spec.ts. */
 export function ReasoningPanel({
   steps,
   knownDocIds,
@@ -35,6 +48,7 @@ export function ReasoningPanel({
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<ReasoningLogHandle>(null);
   const userScrolledAwayRef = useRef(false);
   const stepCountRef = useRef(steps.length);
 
@@ -78,24 +92,47 @@ export function ReasoningPanel({
     }
   }
 
+  const showExpandControls = steps.length > 0 && !(isLive && steps.length === 0);
+
   return (
     <aside className="hidden lg:block lg:sticky lg:top-16 lg:self-start">
-      <div className="card flex max-h-[calc(100vh-5rem)] flex-col p-0">
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3">
+      <div className="card flex h-[calc(100dvh-5rem)] flex-col overflow-hidden p-0">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <p className="font-display text-sm font-semibold text-ink">Reasoning</p>
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? "Expand reasoning panel" : "Collapse reasoning panel"}
-            className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
-          >
-            <ChevronLeft
-              aria-hidden
-              size={16}
-              className={`transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
-            />
-          </button>
+          <div className="flex items-center gap-3">
+            {showExpandControls ? (
+              <div className="flex items-center gap-2 text-xs font-medium text-ink-muted">
+                <button
+                  type="button"
+                  onClick={() => logRef.current?.expandAll()}
+                  className="relative outline-none after:absolute after:-inset-1.5 after:content-[''] hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                >
+                  Expand all
+                </button>
+                <span aria-hidden>·</span>
+                <button
+                  type="button"
+                  onClick={() => logRef.current?.collapseAll()}
+                  className="relative outline-none after:absolute after:-inset-1.5 after:content-[''] hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                >
+                  Collapse all
+                </button>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? "Expand reasoning panel" : "Collapse reasoning panel"}
+              className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
+            >
+              <ChevronLeft
+                aria-hidden
+                size={16}
+                className={`transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
+              />
+            </button>
+          </div>
         </div>
         {/* hydrated gate avoids a one-frame flash of the wrong collapsed
             state on a repeat visitor (localStorage is unreadable during
@@ -104,14 +141,18 @@ export function ReasoningPanel({
             flipping open right after mount. */}
         {hydrated && collapsed ? null : (
           <div className="relative min-h-0 flex-1">
-            <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4 py-3">
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="h-full overflow-y-auto overscroll-contain px-4 py-3"
+            >
               {isLive && steps.length === 0 && currentStageLabel ? (
                 <div className="flex items-center gap-2 text-sm">
                   <AILoadingSpinner className="h-5 w-5 shrink-0" />
                   <ShimmerText className="font-medium text-ink">{currentStageLabel}</ShimmerText>
                 </div>
               ) : (
-                <ReasoningLog steps={steps} knownDocIds={knownDocIds} isLive={isLive} />
+                <ReasoningLog ref={logRef} steps={steps} knownDocIds={knownDocIds} isLive={isLive} />
               )}
             </div>
           </div>

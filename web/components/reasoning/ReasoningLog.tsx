@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { AnimatedListItem } from "@/components/magicui/animated-list";
 import { StepDetail } from "@/components/reasoning/StepDetail";
@@ -14,11 +13,27 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
  * top, replacing the old numbered timeline. Each entry: a colored dot on
  * a connecting vertical line, an agent tag, "Step N" (no timestamp field
  * exists on ReasoningStepOut today — see lib/reasoning.ts), a one-line
- * action, and an expand toggle whose detail panel animates (200ms; 0ms
- * under reduced motion, via a JS height animation, not a CSS media
- * query). Uses this app's own usePrefersReducedMotion, not motion/react's
- * own useReducedMotion — see TextReveal.tsx's comment for the real
- * hydration-mismatch bug that caused, confirmed live. */
+ * action, and an expand toggle whose detail panel animates open.
+ *
+ * Round 7 fix, part 1 (developer-reported, 2026-10-10): the detail panel
+ * used to animate via motion/react's height: 0 -> "auto", which measures
+ * the content's pixel height in JS before animating to it. With more
+ * than one row expanded at once inside the docked panel's own
+ * overflow-auto scroll box, that measurement raced against the sibling
+ * row's own reflow and the panel's content visibly spilled past the
+ * card's edge. Replaced with the CSS-only grid-template-rows: 0fr -> 1fr
+ * technique (no JS measurement, nothing to race) — the row's box is
+ * always exactly its current animated size, so there's nothing to
+ * overflow.
+ *
+ * Round 7 fix, part 2: that wasn't the whole bug — see
+ * ReasoningPanel.tsx's own doc comment for the real root cause (the
+ * panel's card had no definite height for its flex-grow body to fill).
+ * This file's own change here is unrelated plumbing for the same report:
+ * each row's open/closed state moved from local useState into a Set kept
+ * in this component, exposed via a forwardRef handle (expandAll/
+ * collapseAll) so ReasoningPanel's new header buttons can drive every
+ * row at once. */
 
 const TAG_DOT: Record<StepTag, string> = {
   Hypothesis: "bg-primary",
@@ -31,12 +46,14 @@ const TAG_DOT: Record<StepTag, string> = {
 function LogRowContent({
   step,
   knownDocIds,
+  open,
+  onToggle,
 }: {
   step: ReasoningStepOut;
   knownDocIds: ReadonlySet<string>;
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const reducedMotion = usePrefersReducedMotion();
   const tag = stepTag(step);
   const hasTiming = step.latency_ms !== null || !!step.tokens;
 
@@ -44,7 +61,7 @@ function LogRowContent({
     <div className="min-w-0">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         className="flex w-full items-start justify-between gap-2 text-left"
       >
@@ -69,32 +86,28 @@ function LogRowContent({
           className={`mt-0.5 shrink-0 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-2 pb-1">
-              <StepDetail step={step} knownDocIds={knownDocIds} />
-              {hasTiming ? (
-                <p className="mt-1 text-[11px] text-ink-muted">
-                  {step.latency_ms !== null ? `${Math.round(step.latency_ms)} ms` : null}
-                  {step.tokens && Object.values(step.tokens).some((v) => v !== null)
-                    ? ` · ${Object.entries(step.tokens)
-                        .filter(([, v]) => v !== null)
-                        .map(([k, v]) => `${k} ${v}`)
-                        .join(", ")}`
-                    : null}
-                </p>
-              ) : null}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className={`min-h-0 overflow-hidden transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}>
+          <div className="mt-2 pb-1">
+            <StepDetail step={step} knownDocIds={knownDocIds} />
+            {hasTiming ? (
+              <p className="mt-1 text-[11px] text-ink-muted">
+                {step.latency_ms !== null ? `${Math.round(step.latency_ms)} ms` : null}
+                {step.tokens && Object.values(step.tokens).some((v) => v !== null)
+                  ? ` · ${Object.entries(step.tokens)
+                      .filter(([, v]) => v !== null)
+                      .map(([k, v]) => `${k} ${v}`)
+                      .join(", ")}`
+                  : null}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -103,13 +116,17 @@ function LogRow({
   step,
   knownDocIds,
   animateIn,
+  open,
+  onToggle,
 }: {
   step: ReasoningStepOut;
   knownDocIds: ReadonlySet<string>;
   animateIn: boolean;
+  open: boolean;
+  onToggle: () => void;
 }) {
   const tag = stepTag(step);
-  const content = <LogRowContent step={step} knownDocIds={knownDocIds} />;
+  const content = <LogRowContent step={step} knownDocIds={knownDocIds} open={open} onToggle={onToggle} />;
 
   return (
     <li className="relative pb-5 pl-6 last:pb-0">
@@ -133,22 +150,48 @@ function LogRow({
   );
 }
 
-export function ReasoningLog({
-  steps,
-  knownDocIds,
-  isLive = false,
-}: {
-  steps: ReasoningStepOut[];
-  knownDocIds: ReadonlySet<string>;
-  isLive?: boolean;
-}) {
+export type ReasoningLogHandle = {
+  expandAll: () => void;
+  collapseAll: () => void;
+};
+
+export const ReasoningLog = forwardRef<
+  ReasoningLogHandle,
+  {
+    steps: ReasoningStepOut[];
+    knownDocIds: ReadonlySet<string>;
+    isLive?: boolean;
+  }
+>(function ReasoningLog({ steps, knownDocIds, isLive = false }, ref) {
   const reducedMotion = usePrefersReducedMotion();
+  const [openIndexes, setOpenIndexes] = useState<ReadonlySet<number>>(() => new Set());
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      expandAll: () => setOpenIndexes(new Set(steps.map((s) => s.step_index))),
+      collapseAll: () => setOpenIndexes(new Set()),
+    }),
+    [steps],
+  );
 
   if (steps.length === 0) {
     return <p className="text-sm text-ink-muted">No agent run has happened for this processor yet.</p>;
   }
 
   const newestFirst = [...steps].reverse();
+
+  function toggle(stepIndex: number) {
+    setOpenIndexes((prev) => {
+      const next = new Set(prev);
+      if (next.has(stepIndex)) {
+        next.delete(stepIndex);
+      } else {
+        next.add(stepIndex);
+      }
+      return next;
+    });
+  }
 
   return (
     <ol>
@@ -158,8 +201,10 @@ export function ReasoningLog({
           step={step}
           knownDocIds={knownDocIds}
           animateIn={isLive && !reducedMotion}
+          open={openIndexes.has(step.step_index)}
+          onToggle={() => toggle(step.step_index)}
         />
       ))}
     </ol>
   );
-}
+});
