@@ -33,6 +33,7 @@ htmlcov/
 docs/BUILD_PLAN.md
 docs/PROGRESS.md
 api/ref
+docs/plan-t13-to-submission.md
 
 # GCP/Local credentials (Safety)
 !google-services.json
