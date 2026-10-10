@@ -60,6 +60,9 @@ web/coverage/
 
 # next.js
 web/.next/
+# T13.8: e2e/api-down.spec.ts's dedicated `next dev` instance uses its
+# own distDir (Next refuses two dev servers sharing one .next/).
+web/.next-api-down/
 web/out/
 
 # production

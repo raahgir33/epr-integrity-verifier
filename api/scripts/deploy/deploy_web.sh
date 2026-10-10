@@ -38,20 +38,29 @@ if [[ -z "$API_URL" ]]; then
   exit 1
 fi
 
-echo "Deploying epr-web to project $GCP_PROJECT in $VERTEX_LOCATION, API_BASE_URL=$API_URL ..."
+# T13.8: preview-tag pattern — deploy a new revision with NO live traffic
+# first (--no-traffic --tag), so a bad build never reaches real visitors.
+# The developer checks the tagged preview URL, then runs the printed
+# promotion command themselves; nothing here shifts traffic automatically.
+TAG="preview-$(date +%s)"
+
+echo "Deploying epr-web (tag=$TAG, no traffic yet) to project $GCP_PROJECT in $VERTEX_LOCATION, API_BASE_URL=$API_URL ..."
 
 gcloud run deploy epr-web --source=web --region="$VERTEX_LOCATION" \
   --service-account="epr-web-sa@${GCP_PROJECT}.iam.gserviceaccount.com" \
   --allow-unauthenticated --memory=512Mi --cpu-boost \
   --min-instances=1 --max-instances=3 \
+  --no-traffic --tag="$TAG" \
   --set-env-vars="API_BASE_URL=${API_URL}"
 
-WEB_URL="$(gcloud run services describe epr-web --region="$VERTEX_LOCATION" --format='value(status.url)')"
-if [[ -z "$WEB_URL" ]]; then
-  echo "error: deploy succeeded but 'gcloud run services describe epr-web' returned no URL" >&2
+PREVIEW_URL="$(gcloud run services describe epr-web --region="$VERTEX_LOCATION" --format="value(status.traffic[?tag=='$TAG'].url)" 2>/dev/null || true)"
+if [[ -z "$PREVIEW_URL" ]]; then
+  echo "error: deploy succeeded but the tagged preview URL could not be read" >&2
   exit 1
 fi
 
 echo ""
-echo "epr-web deployed: $WEB_URL"
-echo "Verify by opening it in a browser — it should show the live API health."
+echo "epr-web preview deployed, NOT yet live: $PREVIEW_URL"
+echo "Check it manually, then promote it to 100% live traffic with:"
+echo ""
+echo "  gcloud run services update-traffic epr-web --region=$VERTEX_LOCATION --to-latest"
