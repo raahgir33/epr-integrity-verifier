@@ -51,7 +51,7 @@ from app.store import bq, cache
 from scripts.cost_report import estimate_cost_usd
 from scripts.run_pipeline import _fetch_bq_rows, load_ground_truth
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DATASET_LABEL = "heldout-seed7"
 SOURCE_SCRIPT = "scripts/evaluate.py"
 
