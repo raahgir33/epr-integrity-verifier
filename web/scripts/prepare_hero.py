@@ -3,16 +3,24 @@
 under web/public/hero/. Local-only, developer-run, never deployed —
 reproducible from the generated source folder (never committed raw).
 
-Background removal for the l2/l3 fragments uses a flood-fill chroma key
-(numpy + Pillow only, no extra dependency): the source files sit on a
-near-uniform grey studio backdrop, so a color-distance flood fill seeded
-from the image border reliably isolates the backdrop even where it's not
-perfectly flat, then the mask is computed at a downscaled working size and
-upsampled with bilinear interpolation for a naturally anti-aliased,
-feathered edge (docs/PROGRESS.md T13.6: `rembg`'s own dependency chain
-(`numba`/`llvmlite`) failed to build from source via `uvx` on this
-machine's architecture — the brief's own fallback, "a careful chroma-key
-is acceptable if edges are clean," covers this).
+Background removal for the l2/l3/hero-earth fragments uses a flood-fill
+chroma key (numpy + Pillow only, no extra dependency): the source files
+sit on a near-uniform grey/white studio backdrop, so a color-distance
+flood fill seeded from the image border reliably isolates the backdrop
+even where it's not perfectly flat, then the mask is computed at a
+downscaled working size and upsampled with bilinear interpolation for a
+naturally anti-aliased, feathered edge (docs/PROGRESS.md T13.6: `rembg`'s
+own dependency chain (`numba`/`llvmlite`) failed to build from source via
+`uvx` on this machine's architecture — the brief's own fallback, "a
+careful chroma-key is acceptable if edges are clean," covers this).
+
+T13.6b repoints this script at a replaced source set (all .jpg now, a
+different file list and variant count than T13.6's): drops the old sky/
+distant-islands backdrops, adds `sky-clouds.jpg` (new sky layer) and
+`hero-earth.jpg` (new centrepiece, exported larger than the other
+fragments since it renders as the hero's focal point). The mist layers
+and most l2/l3 fragments carry over, repointed at their current file
+names.
 
 Usage:
     python3 web/scripts/prepare_hero.py --source ~/Workspace/tmp/hero-pictures
@@ -21,6 +29,20 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
+
+# Must be set before numpy is imported: on this machine, numpy's Accelerate
+# (Apple's veclib) BLAS backend hangs indefinitely at 100% CPU with no
+# progress on ordinary array ops as soon as they're invoked through an
+# imported module function rather than inlined top-level code — isolated
+# while debugging T13.6b's rewrite of this script, a known class of macOS
+# Accelerate-BLAS threading bug. Forcing every thread pool to size 1 is the
+# standard mitigation and avoids spinning up Accelerate's thread pool at
+# all for this script's small, non-performance-critical arrays.
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,35 +52,39 @@ from PIL import Image, ImageFilter
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUT = REPO_ROOT / "web" / "public" / "hero"
 
-SKY_SRC = "l0-sky.png"
-DISTANT_SRC = "l1-distant.png"
-# Only 2 of the 3 mist variants are used — l4-mist-2.png is the closeup/
+SKY_SRC = "sky-clouds.jpg"
+HERO_EARTH_SRC = "hero-earth.jpg"
+# Only 2 of the 3 mist variants are used — l4-mist-2.jpg is the closeup/
 # denser look, kept as the near mist layer; l4-mist-1/3 are near-duplicate
 # horizon-band smoke (same style, different noise seed) and only one is
 # needed as the far mist layer. Dropping the third keeps the hero's image
 # weight well under budget without losing a visually distinct look.
-MIST_SRC = ["l4-mist-1.png", "l4-mist-2.png"]
+MIST_SRC = ["l4-mist-1.jpg", "l4-mist-2.jpg"]
 
-# Output name -> source file. Every l2/l3 variant is kept EXCEPT
-# l3-pellets-2.png: unlike every other fragment (one centered object, clear
-# margin), its pellets scatter to every edge of the frame, so "trim to
-# content" can't crop it at all, and its corner watermark sits in isolated
-# transparent background (not connected to the flood-filled region) where
-# it can't be safely removed without risking real pellets — confirmed by
-# inspection (docs/PROGRESS.md T13.6). The other two pellets variants don't
-# have this problem, so the pellets slot still gets 2 variants.
+# Output name -> source file. T13.6b: repointed at the replaced source
+# directory — every variant below is what's actually present now (several
+# T13.6 variants' source files are gone: strata-b, pellets-rock-b,
+# pebble-b, pebble-c). `pellets-b` recovers what was `l3-pellets-2.png` in
+# T13.6 (dropped then for an unremovable corner watermark, see
+# CORNER_STAMP_FRAGMENTS below) and `hero-earth` is new — the composition's
+# centrepiece, widths overridden in FRAGMENT_WIDTH_OVERRIDES since it
+# renders far larger than every other fragment here.
 FRAGMENT_SRC = {
-    "soil-moss-a": "l2-soil-moss-2.png",
-    "soil-moss-b": "l2-soil-moss-3.png",
-    "strata-a": "l2-strata.png",
-    "strata-b": "l2-strata-2.png",
-    "pellets-rock-a": "l2-pellets-rock.png",
-    "pellets-rock-b": "l2-pellets-rock-2.png",
-    "pebble-a": "l3-pebble.png",
-    "pebble-b": "l3-pebble-2.png",
-    "pebble-c": "l3-pebble-3.png",
-    "pellets-a": "l3-pellets.png",
-    "pellets-c": "l3-pellets-3.png",
+    "soil-moss-a": "l2-soil-moss.jpg",
+    "soil-moss-b": "l2-soil-moss02.jpg",
+    "strata-a": "l2-strata.jpg",
+    "pellets-rock-a": "l2-pellets-rock.jpg",
+    "pebble-a": "l3-pebble.jpg",
+    # pellets-a's corner_is_clean() check flags "WATERMARK SUSPECTED" in
+    # the run report — confirmed by inspection to be a false positive:
+    # l3-pellets.jpg's actual watermark sits in plain background that the
+    # chroma key already removed; the flagged corner's opacity comes from
+    # real pellets that genuinely scatter that close to the edge (same
+    # scattered-to-every-edge composition as pellets-b, just not quite
+    # touching this particular corner). No stamp needed here.
+    "pellets-a": "l3-pellets.jpg",
+    "pellets-b": "l3-pellets-2.jpg",
+    "hero-earth": "hero-earth.jpg",
 }
 
 MASK_WORK_SIZE = 480  # longest-edge size the flood-fill mask is computed at
@@ -72,19 +98,47 @@ MASK_WORK_SIZE = 480  # longest-edge size the flood-fill mask is computed at
 # value, swept in steps of 6 from 28 to 60, where the glow's connecting
 # gradient first drops entirely below threshold and the mask becomes a
 # clean, single rounded blob — verified for every fragment in this set at
-# full resolution, not just this one.
+# full resolution, not just this one. Unchanged for T13.6b's replaced
+# source set — re-verified on hero-earth.jpg (white-backdrop studio
+# render) and every repointed l2/l3 file; same clean single-blob result.
 BG_THRESHOLD = 40.0
 TRIM_MARGIN_FRAC = 0.03  # margin kept around the trimmed content bbox
 CORNER_CHECK_FRAC = 0.08  # fraction of trimmed size checked for a leftover watermark
 CORNER_OPAQUE_LIMIT = 0.05  # max fraction of that corner allowed to be non-transparent
 
+# T13.6b: l3-pellets-2.jpg's pellets scatter to every edge of the frame
+# (same composition as T13.6's l3-pellets-2.png), so trim_to_content can't
+# crop the bottom-right watermark away — confirmed again on this JPG,
+# same failure mode documented in T13.6's PROGRESS.md entry. Unlike T13.6,
+# this is not dropped a second time: the watermark's own corner is plain,
+# untextured background (no pellet sits there — checked by eye at full
+# resolution before adding this), so it's safe to zero that corner's
+# alpha directly rather than rely on trim_to_content. Opt-in per fragment
+# name, not automatic on every corner_is_clean() failure — an unrelated
+# failure elsewhere should still fail loudly, not get silently patched.
+CORNER_STAMP_FRAGMENTS = {"pellets-b"}
+# Slightly larger than CORNER_CHECK_FRAC's own box, so the stamp fully
+# covers what that check would have flagged.
+CORNER_STAMP_FRAC = 0.09
+
 FRAGMENT_WIDTHS = {"1x": 240, "2x": 480}  # on-screen target widths
+# hero-earth is the composition's centrepiece (~45-55% of viewport height,
+# centre-right, full 100svh hero) — far larger on screen than every other
+# fragment, so it gets its own export size rather than FRAGMENT_WIDTHS'
+# small-fragment default. 1120px at 2x stays within the 2048px source, so
+# the 2x density is never upscaled.
+FRAGMENT_WIDTH_OVERRIDES = {"hero-earth": {"1x": 560, "2x": 1120}}
 FRAGMENT_QUALITY = 85  # lossy WebP — these are organic/textured, not flat graphics
-BACKDROP_WIDTHS = {"1x": 900, "2x": 1800}  # sky / distant
+BACKDROP_WIDTHS = {"1x": 900, "2x": 1800}  # legacy default, unused now sky is the only backdrop
+# Sky is now full-bleed behind a 100svh hero (up to 1920px+ viewports),
+# not a bordered card at partial width — needs real resolution at 1x, not
+# a small thumbnail. 2752px at 2x is the native source width, so it's
+# never upscaled either.
+SKY_WIDTHS = {"1x": 1600, "2x": 2752}
 MIST_WIDTHS = {"1x": 700, "2x": 1400}  # smaller: mist is a soft, low-detail layer
 MIST_QUALITY = 68
 BACKDROP_QUALITY = 82
-EDGE_CROP_FRAC = 0.03  # sky/distant: fraction cropped off the watermark corner
+EDGE_CROP_FRAC = 0.03  # sky: fraction cropped off the watermark corner
 POSTER_WIDTH = 1600
 POSTER_ASPECT = 1536 / 2752  # source aspect ratio, kept for the poster canvas
 
@@ -116,21 +170,38 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
 
 
 def _background_color(im_rgb: np.ndarray) -> np.ndarray:
-    border = np.concatenate(
-        [im_rgb[0, :, :], im_rgb[-1, :, :], im_rgb[:, 0, :], im_rgb[:, -1, :]]
-    )
+    border = np.concatenate([im_rgb[0, :, :], im_rgb[-1, :, :], im_rgb[:, 0, :], im_rgb[:, -1, :]])
     return border.mean(axis=0)
 
 
-def _flood_fill_background_mask(im_rgb: np.ndarray, threshold: float) -> np.ndarray:
-    """True = background. Seeds from every border pixel that already looks
-    like background, then grows through any 4-connected neighbor within
-    `threshold` of the sampled background color — so an interior pixel
-    that merely resembles the backdrop color is never removed unless a
-    continuous path of matching pixels actually connects it to the
-    border."""
+def chroma_key(src_path: Path, threshold: float = BG_THRESHOLD) -> Image.Image:
+    """True = background in the mask below. Seeds from every border pixel
+    that already looks like background, then grows through any
+    4-connected neighbor within `threshold` of the sampled background
+    color — so an interior pixel that merely resembles the backdrop color
+    is never removed unless a continuous path of matching pixels actually
+    connects it to the border.
+
+    The mask-growing loop is inlined here rather than factored into its
+    own function: on this machine, calling an otherwise-identical loop
+    through a separate module-level function hung indefinitely (100% CPU,
+    no progress) where the exact same code inlined at a script's top
+    level ran in milliseconds — isolated while debugging T13.6b's rewrite
+    of this script. The root cause wasn't pinned down (environment-
+    specific, not a logic bug — every manual re-derivation of the
+    algorithm converged correctly and fast), so this sidesteps it rather
+    than chase it further; the 2000-iteration cap below is a defensive
+    backstop, not expected to ever trigger (actual convergence is under
+    ~200 iterations for every fragment in this set)."""
+    full = Image.open(src_path).convert("RGB")
+    w, h = full.size
+    scale = MASK_WORK_SIZE / max(w, h)
+    small = full.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
+    im_rgb = np.asarray(small)
+
     bg_color = _background_color(im_rgb)
-    dist = np.linalg.norm(im_rgb.astype(np.float32) - bg_color, axis=-1)
+    diff = im_rgb.astype(np.float32) - bg_color
+    dist = np.sqrt((diff * diff).sum(axis=-1))
     candidate = dist < threshold
 
     mask = np.zeros_like(candidate)
@@ -139,23 +210,16 @@ def _flood_fill_background_mask(im_rgb: np.ndarray, threshold: float) -> np.ndar
     mask[:, 0] = candidate[:, 0]
     mask[:, -1] = candidate[:, -1]
 
-    while True:
+    for _ in range(2000):
         grown = mask.copy()
         grown[1:, :] |= mask[:-1, :] & candidate[1:, :]
         grown[:-1, :] |= mask[1:, :] & candidate[:-1, :]
         grown[:, 1:] |= mask[:, :-1] & candidate[:, 1:]
         grown[:, :-1] |= mask[:, 1:] & candidate[:, :-1]
         if np.array_equal(grown, mask):
-            return mask
+            break
         mask = grown
-
-
-def chroma_key(src_path: Path, threshold: float = BG_THRESHOLD) -> Image.Image:
-    full = Image.open(src_path).convert("RGB")
-    w, h = full.size
-    scale = MASK_WORK_SIZE / max(w, h)
-    small = full.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
-    bg_mask_small = _flood_fill_background_mask(np.asarray(small), threshold)
+    bg_mask_small = mask
 
     # Upscaling the binary mask with BILINEAR gives a naturally anti-
     # aliased edge; a small Gaussian blur on top softens it further so the
@@ -167,6 +231,30 @@ def chroma_key(src_path: Path, threshold: float = BG_THRESHOLD) -> Image.Image:
     rgba = full.convert("RGBA")
     rgba.putalpha(alpha)
     return rgba
+
+
+def stamp_corner_transparent(
+    im: Image.Image, corner: str = "br", frac: float = CORNER_STAMP_FRAC
+) -> Image.Image:
+    """Zeroes one corner's alpha directly, for a fragment whose watermark
+    corner trim_to_content can't crop away (content touching every edge —
+    see CORNER_STAMP_FRAGMENTS). Only ever called on a name explicitly
+    opted into that set, after a by-eye check that the corner is empty
+    background, not real content."""
+    w, h = im.size
+    cw, ch = max(1, round(w * frac)), max(1, round(h * frac))
+    boxes = {
+        "tl": (0, 0, cw, ch),
+        "tr": (w - cw, 0, w, ch),
+        "bl": (0, h - ch, cw, h),
+        "br": (w - cw, h - ch, w, h),
+    }
+    r, g, b, a = im.split()
+    patch = Image.new("L", a.size, 0)
+    a.paste(patch.crop(boxes[corner]), boxes[corner])
+    out = Image.merge("RGB", (r, g, b)).convert("RGBA")
+    out.putalpha(a)
+    return out
 
 
 def trim_to_content(im: Image.Image, margin_frac: float = TRIM_MARGIN_FRAC) -> Image.Image:
@@ -203,10 +291,11 @@ def corner_is_clean(im: Image.Image, frac: float = CORNER_CHECK_FRAC) -> bool:
     return True
 
 
-def export_fragment(im: Image.Image, out_dir: Path, name: str) -> dict:
+def export_fragment(im: Image.Image, out_dir: Path, name: str, widths: dict | None = None) -> dict:
     sizes = {}
     aspect = im.height / im.width
-    for density, target_w in FRAGMENT_WIDTHS.items():
+    target_widths = widths or FRAGMENT_WIDTHS
+    for density, target_w in target_widths.items():
         target_h = max(1, round(target_w * aspect))
         resized = resize_rgba(im, (target_w, target_h))
         path = out_dir / f"{name}-{density}.webp"
@@ -216,14 +305,7 @@ def export_fragment(im: Image.Image, out_dir: Path, name: str) -> dict:
 
 
 def process_mist(src_path: Path, out_dir: Path, name: str) -> dict:
-    luminance = np.asarray(Image.open(src_path).convert("L")).astype(np.float32)
-    floor, ceil = np.percentile(luminance, [5, 99])
-    alpha = np.clip((luminance - floor) / max(1.0, ceil - floor), 0.0, 1.0) * 255
-    alpha_img = Image.fromarray(alpha.astype(np.uint8), mode="L")
-
-    white = Image.new("RGBA", alpha_img.size, (255, 255, 255, 255))
-    white.putalpha(alpha_img)
-
+    white = process_mist_image(src_path)
     sizes = {}
     w, h = white.size
     for density, target_w in MIST_WIDTHS.items():
@@ -233,50 +315,6 @@ def process_mist(src_path: Path, out_dir: Path, name: str) -> dict:
         resized.save(path, "WEBP", quality=MIST_QUALITY, method=6)
         sizes[density] = path.stat().st_size
     return sizes
-
-
-def process_backdrop(src_path: Path, out_dir: Path, name: str, edge_frac: float = EDGE_CROP_FRAC) -> dict:
-    """Sky / distant: crop the watermark corner off, scale back up to the
-    working size so the layer's framing doesn't shift, export at both
-    densities."""
-    im = Image.open(src_path).convert("RGB")
-    w, h = im.size
-    cropped = im.crop((0, 0, round(w * (1 - edge_frac)), round(h * (1 - edge_frac))))
-    cropped = cropped.resize((w, h), Image.LANCZOS)
-
-    sizes = {}
-    for density, target_w in BACKDROP_WIDTHS.items():
-        target_h = max(1, round(target_w * h / w))
-        resized = cropped.resize((target_w, target_h), Image.LANCZOS)
-        path = out_dir / f"{name}-{density}.webp"
-        resized.save(path, "WEBP", quality=BACKDROP_QUALITY, method=6)
-        sizes[density] = path.stat().st_size
-    return sizes, cropped
-
-
-def build_poster(sky: Image.Image, distant: Image.Image, mist_paths: list[Path], out_dir: Path) -> int:
-    """Flattened full-scene composite for the no-JS / reduced-motion
-    fallback — a representative static arrangement, not pixel-identical to
-    HeroScene.tsx's live CSS layout (built before Part B's exact
-    positioning exists); revisited if the two diverge noticeably."""
-    canvas_h = round(POSTER_WIDTH * POSTER_ASPECT)
-    base = sky.convert("RGBA").resize((POSTER_WIDTH, canvas_h), Image.LANCZOS)
-
-    distant_layer = distant.convert("RGBA").resize((POSTER_WIDTH, canvas_h), Image.LANCZOS)
-    distant_layer.putalpha(160)
-    base.alpha_composite(distant_layer)
-
-    for mist_src in mist_paths:
-        mist_rgba = process_mist_image(mist_src)
-        mist_resized = resize_rgba(mist_rgba, (POSTER_WIDTH, canvas_h))
-        r, g, b, a = mist_resized.split()
-        a = a.point(lambda v: int(v * 0.35))
-        mist_resized = Image.merge("RGBA", (r, g, b, a))
-        base.alpha_composite(mist_resized)
-
-    path = out_dir / "poster.webp"
-    base.convert("RGB").save(path, "WEBP", quality=82, method=6)
-    return path.stat().st_size
 
 
 def process_mist_image(src_path: Path) -> Image.Image:
@@ -289,6 +327,60 @@ def process_mist_image(src_path: Path) -> Image.Image:
     return white
 
 
+def process_backdrop(
+    src_path: Path, out_dir: Path, name: str, widths: dict, edge_frac: float = EDGE_CROP_FRAC
+) -> tuple[dict, Image.Image]:
+    """Sky: crop the watermark corner off, scale back up to the working
+    size so the layer's framing doesn't shift, export at both densities.
+    Canvas aspect ratio is unchanged by this — only the watermark corner's
+    few source pixels are discarded, same technique T13.6 already used
+    for the sky/distant backdrops."""
+    im = Image.open(src_path).convert("RGB")
+    w, h = im.size
+    cropped = im.crop((0, 0, round(w * (1 - edge_frac)), round(h * (1 - edge_frac))))
+    cropped = cropped.resize((w, h), Image.LANCZOS)
+
+    sizes = {}
+    for density, target_w in widths.items():
+        target_h = max(1, round(target_w * h / w))
+        resized = cropped.resize((target_w, target_h), Image.LANCZOS)
+        path = out_dir / f"{name}-{density}.webp"
+        resized.save(path, "WEBP", quality=BACKDROP_QUALITY, method=6)
+        sizes[density] = path.stat().st_size
+    return sizes, cropped
+
+
+def build_poster(
+    sky: Image.Image, hero_earth: Image.Image, accents: list[Image.Image], out_dir: Path
+) -> int:
+    """Flattened full-scene composite for the no-JS / reduced-motion
+    fallback — a representative static arrangement, not pixel-identical to
+    HeroScene.tsx's live CSS layout. T13.6b: rebuilt around the new
+    composition (sky + centred-right hero-earth + a couple of accent
+    fragments near the edges); no mist/distant layers, matching the live
+    scene's "no mist in the poster" simplicity."""
+    canvas_h = round(POSTER_WIDTH * POSTER_ASPECT)
+    base = sky.convert("RGBA").resize((POSTER_WIDTH, canvas_h), Image.LANCZOS)
+
+    earth_h = round(canvas_h * 0.5)
+    earth_w = round(earth_h * hero_earth.width / hero_earth.height)
+    earth_resized = resize_rgba(hero_earth, (earth_w, earth_h))
+    earth_x = round(POSTER_WIDTH * 0.58 - earth_w / 2)
+    earth_y = round(canvas_h * 0.5 - earth_h / 2)
+    base.alpha_composite(earth_resized, (max(0, earth_x), max(0, earth_y)))
+
+    accent_positions = [(0.04, 0.68, 0.12), (0.90, 0.08, 0.09), (0.05, 0.06, 0.08)]
+    for frag, (xf, yf, wf) in zip(accents, accent_positions, strict=False):
+        fw = round(POSTER_WIDTH * wf)
+        fh = round(fw * frag.height / frag.width)
+        resized = resize_rgba(frag, (fw, fh))
+        base.alpha_composite(resized, (round(POSTER_WIDTH * xf), round(canvas_h * yf)))
+
+    path = out_dir / "poster.webp"
+    base.convert("RGB").save(path, "WEBP", quality=82, method=6)
+    return path.stat().st_size
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", required=True, type=Path)
@@ -299,19 +391,55 @@ def main() -> None:
     out_dir: Path = args.out
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # T13.6b: the current manifest (fragments + mist + sky + poster) is
+    # smaller than T13.6's — distant/old-sky are gone outright and several
+    # fragment variants lost their source file. Without this, re-running
+    # against the replaced source directory leaves those old *.webp files
+    # sitting in public/hero/ forever (they're just not overwritten, since
+    # nothing regenerates a name that's no longer in FRAGMENT_SRC) — a
+    # stale asset HeroScene.tsx no longer references, silently inflating
+    # the directory's weight. Delete anything not in the current manifest
+    # before writing a single new file.
+    current_names = {
+        *FRAGMENT_SRC.keys(),
+        *(f"mist-{i}" for i in range(1, len(MIST_SRC) + 1)),
+        "sky",
+        "poster",
+    }
+    removed = []
+    for existing in out_dir.glob("*.webp"):
+        stem = (
+            existing.stem.rsplit("-", 1)[0]
+            if existing.stem.rsplit("-", 1)[-1] in ("1x", "2x")
+            else existing.stem
+        )
+        if stem not in current_names:
+            existing.unlink()
+            removed.append(existing.name)
+
     report = Report([])
     total_bytes = 0
+    fragment_rgba: dict[str, Image.Image] = {}
 
     report.add(f"source: {src_dir}")
     report.add(f"out:    {out_dir}\n")
+    if removed:
+        report.add(f"-- removed {len(removed)} stale file(s) no longer in the manifest --")
+        for name in sorted(removed):
+            report.add(f"  removed: {name}")
+        report.add("")
 
     report.add("-- fragments (chroma key + trim) --")
     for name, src_name in FRAGMENT_SRC.items():
         rgba = chroma_key(src_dir / src_name)
+        if name in CORNER_STAMP_FRAGMENTS:
+            rgba = stamp_corner_transparent(rgba)
         rgba = trim_to_content(rgba)
         ok = corner_is_clean(rgba)
-        sizes = export_fragment(rgba, out_dir, name)
+        widths = FRAGMENT_WIDTH_OVERRIDES.get(name)
+        sizes = export_fragment(rgba, out_dir, name, widths=widths)
         total_bytes += sum(sizes.values())
+        fragment_rgba[name] = rgba
         status = "clean" if ok else "WATERMARK SUSPECTED — inspect manually"
         report.add(
             f"  {name:16s} <- {src_name:24s} {rgba.width}x{rgba.height}  "
@@ -325,21 +453,24 @@ def main() -> None:
         total_bytes += sum(sizes.values())
         report.add(f"  {name:10s} <- {src_name:16s} 1x={sizes['1x']}B 2x={sizes['2x']}B")
 
-    report.add("\n-- backdrops (edge crop, watermark removed) --")
-    sky_sizes, sky_cropped = process_backdrop(src_dir / SKY_SRC, out_dir, "sky")
+    report.add("\n-- sky backdrop (edge crop, watermark removed) --")
+    sky_sizes, sky_cropped = process_backdrop(src_dir / SKY_SRC, out_dir, "sky", SKY_WIDTHS)
     total_bytes += sum(sky_sizes.values())
     report.add(f"  sky        <- {SKY_SRC:16s} 1x={sky_sizes['1x']}B 2x={sky_sizes['2x']}B")
-    distant_sizes, distant_cropped = process_backdrop(src_dir / DISTANT_SRC, out_dir, "distant")
-    total_bytes += sum(distant_sizes.values())
-    report.add(f"  distant    <- {DISTANT_SRC:16s} 1x={distant_sizes['1x']}B 2x={distant_sizes['2x']}B")
 
     report.add("\n-- poster (flattened fallback) --")
-    mist_paths = [src_dir / s for s in MIST_SRC]
-    poster_bytes = build_poster(sky_cropped, distant_cropped, mist_paths[:2], out_dir)
+    accents = [
+        fragment_rgba[name]
+        for name in ("pebble-a", "pellets-rock-a", "soil-moss-a")
+        if name in fragment_rgba
+    ]
+    poster_bytes = build_poster(sky_cropped, fragment_rgba["hero-earth"], accents, out_dir)
     total_bytes += poster_bytes
     report.add(f"  poster.webp  {poster_bytes}B")
 
-    report.add(f"\nTOTAL hero/ weight: {total_bytes / 1_000_000:.2f} MB (budget: 1.5 MB target, 3 MB cap)")
+    report.add(
+        f"\nTOTAL hero/ weight: {total_bytes / 1_000_000:.2f} MB (budget: 1.5 MB target, 3 MB cap)"
+    )
     if total_bytes > 3_000_000:
         report.add("  !! OVER the 3 MB cap — revisit sizes/quality before committing")
     elif total_bytes > 1_500_000:
