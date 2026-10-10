@@ -33,6 +33,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 
+[tool.pytest.ini_options]
+markers = [
+    "requires_gcp: needs live Google Cloud credentials/network; skipped in CI (none currently use this — reserved for a future test that does).",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

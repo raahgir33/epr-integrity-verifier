@@ -1,5 +1,33 @@
 # Third-Party Notices
 
+## Fonts
+
+### Noto Sans Devanagari
+
+SIL Open Font License 1.1 — Copyright 2022 The Noto Project Authors.
+
+Used to render Hindi text correctly in generated synthetic documents
+(`assets/fonts/NotoSansDevanagari-Regular.ttf`, headless-Chromium
+rendering) and in the web app (`web/public/fonts/NotoSansDevanagari-Regular.ttf`,
+for Hindi strings shown in the UI, e.g. clarification memos). License
+text ships alongside the font (`*-OFL.txt`).
+
+### Kalam
+
+SIL Open Font License 1.1 — Copyright 2011-2013 Rajesh Jinaga Ramamurthy
+and the Kalam Project Authors.
+
+Used for the handwriting-style annotations in generated synthetic
+documents (`assets/fonts/Kalam-Regular.ttf`). License text ships
+alongside the font (`assets/fonts/Kalam-OFL.txt`).
+
+### Sentinel-2 imagery and Open Buildings
+
+Not fonts, but attributed here for completeness alongside the other
+data/asset credits: "Contains modified Copernicus Sentinel data" and
+Open Buildings v3 (Google Research, CC BY 4.0) — both used by `geo/site.py`
+(C8 site plausibility) and attributed in the app itself, on `/method`.
+
 ## Lucide (lucide.dev)
 
 ISC License — Copyright (c) Lucide Contributors.
