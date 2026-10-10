@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { Heading } from "@/components/ui/Heading";
 import { getEvaluation } from "@/lib/api";
-import { groupMetrics } from "@/lib/evaluation";
+import { annotateMisses, groupMetrics } from "@/lib/evaluation";
 
 export const metadata: Metadata = {
   title: "Evaluation",
@@ -14,6 +14,7 @@ export default async function EvaluationPage() {
   const evaluation = await getEvaluation();
   const heldoutGroups = groupMetrics(evaluation.heldout);
   const devGroups = groupMetrics(evaluation.dev);
+  const misses = annotateMisses(evaluation.misses, evaluation.heldout);
 
   return (
     <div className="space-y-8">
@@ -34,11 +35,11 @@ export default async function EvaluationPage() {
             <span className="text-xs text-ink-muted">{evaluation.heldout_dataset_label}</span>
           </div>
 
-          {evaluation.misses.length > 0 ? (
+          {misses.length > 0 ? (
             <div className="card p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Misses</p>
               <ul className="mt-2 space-y-1.5 text-sm text-ink">
-                {evaluation.misses.map((miss) => (
+                {misses.map((miss) => (
                   <li key={miss} className="border-l-2 border-risk-high/60 pl-2 text-ink-muted">
                     {miss}
                   </li>

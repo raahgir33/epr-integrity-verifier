@@ -1,0 +1,102 @@
+[
+  {
+    "batch_id": "BATCH-PWP-01-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 130.36,
+    "pre_batch_true_verifiable_t": 130.36,
+    "processor_id": "PWP-01",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.6
+  },
+  {
+    "batch_id": "BATCH-PWP-02-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 141.51,
+    "pre_batch_true_verifiable_t": 134.16,
+    "processor_id": "PWP-02",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.92
+  },
+  {
+    "batch_id": "BATCH-PWP-03-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 129.16,
+    "pre_batch_true_verifiable_t": 129.16,
+    "processor_id": "PWP-03",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.44
+  },
+  {
+    "batch_id": "BATCH-PWP-04-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 120.08,
+    "pre_batch_true_verifiable_t": 120.08,
+    "processor_id": "PWP-04",
+    "pushes_over_verifiable": false,
+    "quantity_t": 2.13
+  },
+  {
+    "batch_id": "BATCH-PWP-05-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 199.68,
+    "pre_batch_true_verifiable_t": 103.5,
+    "processor_id": "PWP-05",
+    "pushes_over_verifiable": true,
+    "quantity_t": 25.6
+  },
+  {
+    "batch_id": "BATCH-PWP-06-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 216.36,
+    "pre_batch_true_verifiable_t": 108.26,
+    "processor_id": "PWP-06",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.39
+  },
+  {
+    "batch_id": "BATCH-PWP-07-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 158.4,
+    "pre_batch_true_verifiable_t": 112.04,
+    "processor_id": "PWP-07",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.76
+  },
+  {
+    "batch_id": "BATCH-PWP-08-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 119.36,
+    "pre_batch_true_verifiable_t": 111.81,
+    "processor_id": "PWP-08",
+    "pushes_over_verifiable": false,
+    "quantity_t": 1.33
+  },
+  {
+    "batch_id": "BATCH-PWP-09-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 359.34,
+    "pre_batch_true_verifiable_t": 296.77,
+    "processor_id": "PWP-09",
+    "pushes_over_verifiable": false,
+    "quantity_t": 5.33
+  },
+  {
+    "batch_id": "BATCH-PWP-10-001",
+    "extra_document_ids": [],
+    "period_month": "2026-03",
+    "pre_batch_certified_t": 276.4,
+    "pre_batch_true_verifiable_t": 276.4,
+    "processor_id": "PWP-10",
+    "pushes_over_verifiable": false,
+    "quantity_t": 4.8
+  }
+]

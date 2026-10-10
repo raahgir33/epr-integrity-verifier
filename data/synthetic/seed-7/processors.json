@@ -1,0 +1,237 @@
+[
+  {
+    "address": "Plot 10, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 192.0,
+    "consent_no": "CTO/MH/439563",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "27MUBCR1590Q4ZB",
+    "hard_negatives": [],
+    "issue_types": [],
+    "lat": 18.7645,
+    "lon": 73.8623,
+    "name": "Sahyadri Green Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-01",
+    "registration_no": "EPR-REG/MH/258176",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 13, Industrial Area, Gujarat",
+    "capacity_t_per_year": 230.4,
+    "consent_no": "CTO/GJ/538485",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "24HCRNB9139B7ZJ",
+    "hard_negatives": [],
+    "issue_types": [
+      "F9"
+    ],
+    "lat": 23.0726,
+    "lon": 72.6626,
+    "name": "Sabarmati Polymer Recovery Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-02",
+    "registration_no": "EPR-REG/GJ/173248",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 96, Industrial Area, Gujarat",
+    "capacity_t_per_year": 172.8,
+    "consent_no": "CTO/GJ/683705",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "24JNERD9482D4ZQ",
+    "hard_negatives": [
+      "H1",
+      "H2"
+    ],
+    "issue_types": [],
+    "lat": 22.3511,
+    "lon": 73.1951,
+    "name": "Vishwamitri Plastics Recycling Co.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-03",
+    "registration_no": "EPR-REG/GJ/239643",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 93, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 256.0,
+    "consent_no": "CTO/TN/846702",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "33SBTGP8657S8Z5",
+    "hard_negatives": [
+      "H3",
+      "H4",
+      "H5"
+    ],
+    "issue_types": [],
+    "lat": 12.9685,
+    "lon": 79.9416,
+    "name": "Palar Valley Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-04",
+    "registration_no": "EPR-REG/TN/165839",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 74, Industrial Area, Tamil Nadu",
+    "capacity_t_per_year": 153.6,
+    "consent_no": "CTO/TN/932967",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "33WYHCS4875X8Z1",
+    "hard_negatives": [],
+    "issue_types": [
+      "F1",
+      "F8"
+    ],
+    "lat": 12.7351,
+    "lon": 77.8256,
+    "name": "Ponnaiyar Polymer Works",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-05",
+    "registration_no": "EPR-REG/TN/288499",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 147, Industrial Area, Telangana",
+    "capacity_t_per_year": 166.4,
+    "consent_no": "CTO/TG/223800",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "36NFYKE7601Y9ZY",
+    "hard_negatives": [],
+    "issue_types": [
+      "F1",
+      "F3"
+    ],
+    "lat": 17.5297,
+    "lon": 78.2694,
+    "name": "Manjira Recycling Industries",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-06",
+    "registration_no": "EPR-REG/TG/636800",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 16, Industrial Area, Madhya Pradesh",
+    "capacity_t_per_year": 211.20000000000002,
+    "consent_no": "CTO/MP/456644",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "23LTPSZ7114P2ZB",
+    "hard_negatives": [],
+    "issue_types": [
+      "F2",
+      "F7"
+    ],
+    "lat": 22.6089,
+    "lon": 75.6544,
+    "name": "Narmada Valley Plastics Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-07",
+    "registration_no": "EPR-REG/MP/829070",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 127, Industrial Area, Haryana",
+    "capacity_t_per_year": 160.0,
+    "consent_no": "CTO/HR/778563",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "06VOJWM5075F2ZV",
+    "hard_negatives": [],
+    "issue_types": [
+      "F8"
+    ],
+    "lat": 28.4089,
+    "lon": 77.3178,
+    "name": "Yamuna Belt Recyclers Pvt. Ltd.",
+    "permitted_categories": [
+      "I",
+      "II"
+    ],
+    "processor_id": "PWP-08",
+    "registration_no": "EPR-REG/HR/706020",
+    "site_validated": false,
+    "type": "recycler"
+  },
+  {
+    "address": "Plot 72, Industrial Area, Rajasthan",
+    "capacity_t_per_year": 640.0,
+    "consent_no": "CTO/RJ/905550",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "08EXHMM7127M9ZT",
+    "hard_negatives": [],
+    "issue_types": [
+      "F5",
+      "F6"
+    ],
+    "lat": 27.5486,
+    "lon": 76.596,
+    "name": "Aravalli EcoProcessors Pvt. Ltd.",
+    "permitted_categories": [
+      "III",
+      "IV"
+    ],
+    "processor_id": "PWP-09",
+    "registration_no": "EPR-REG/RJ/401394",
+    "site_validated": false,
+    "type": "end_of_life"
+  },
+  {
+    "address": "Plot 169, Industrial Area, Maharashtra",
+    "capacity_t_per_year": 576.0,
+    "consent_no": "CTO/MH/676947",
+    "consent_valid_from": "01/04/2022",
+    "consent_valid_to": "31/03/2028",
+    "gstin": "27WNLVM3212E4Z9",
+    "hard_negatives": [],
+    "issue_types": [
+      "F4"
+    ],
+    "lat": 21.121,
+    "lon": 79.052,
+    "name": "Kanhan River Processors Pvt. Ltd.",
+    "permitted_categories": [
+      "III",
+      "IV"
+    ],
+    "processor_id": "PWP-10",
+    "registration_no": "EPR-REG/MH/391945",
+    "site_validated": false,
+    "type": "end_of_life"
+  }
+]

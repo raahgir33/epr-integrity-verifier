@@ -1,10 +1,12 @@
 """Metrics vs ground truth. Extraction field accuracy (T6's gate) plus
 T14's held-out-evaluation metrics: issue-type recall, check/agent finding
 precision, false flags on clean/hard-negative processors, risk-band
-accuracy, verifiable-tonnes error, and run-to-run agent agreement. Every
-function here is pure (no I/O) — scripts/evaluate.py and
-scripts/probe_agent_thinking.py are the callers that fetch real data and
-write results.
+accuracy, verifiable-tonnes error, run-to-run finding-set agreement
+(pooled Jaccard) and outcome stability (risk_band/unverifiable_t held
+identical across runs), and whether a missed planted issue (F5/F7) at
+least surfaced as a review flag. Every function here is pure (no I/O) —
+scripts/evaluate.py and scripts/probe_agent_thinking.py are the callers
+that fetch real data and write results.
 """
 
 import itertools
@@ -307,6 +309,40 @@ def issue_type_recall(
     return {"numerator": detected, "denominator": len(planted)}
 
 
+def missed_planted_processors(
+    check_results_by_processor: dict[str, list[dict]], ground_truth: dict, issue_code: str
+) -> list[str]:
+    """issue_type_recall's own misses, broken out by processor_id: ids
+    where `issue_code` was planted but the mapped deterministic check(s)
+    never failed."""
+    planted = [p for p in ground_truth["processors"] if issue_code in p.get("issue_types", [])]
+    return [
+        p["processor_id"]
+        for p in planted
+        if not _check_fires_for_issue(
+            check_results_by_processor.get(p["processor_id"], []), issue_code
+        )
+    ]
+
+
+def issue_surfaced_as_review_flag(
+    missed_processor_ids: list[str], findings_by_processor: dict[str, list[dict]]
+) -> dict:
+    """Of the processors where a planted issue was missed by the
+    deterministic check (missed_planted_processors), the share where the
+    agent raised it anyway as a review_flag finding (docs/DATA_SPEC.md §4a:
+    review_flag findings are kept visible but never deducted — this
+    checks whether that visibility actually happened for a miss, rather
+    than the issue vanishing from the report entirely). findings_by_
+    processor: the API/cache's FindingOut-shaped list (get_findings)."""
+    surfaced = sum(
+        1
+        for pid in missed_processor_ids
+        if any(f["classification"] == "review_flag" for f in findings_by_processor.get(pid, []))
+    )
+    return {"numerator": surfaced, "denominator": len(missed_processor_ids)}
+
+
 def finding_precision_checks(
     check_results_by_processor: dict[str, list[dict]], ground_truth: dict
 ) -> dict:
@@ -387,6 +423,22 @@ def false_flags_on_hard_negatives(
     return _false_flag_rate(hard_case_ids, check_results_by_processor, findings_by_processor)
 
 
+def _normalize_shipment_id(shipment_id: str) -> str:
+    """Extracted-mode shipment_ids carry an extra "EXT-" segment
+    (app/ingest/normalize.py's match_shipments_from_extracted:
+    f"{processor_id}-EXT-SHP-{i:03d}") that ground_truth.json's own
+    f"{processor_id}-SHP-{i:03d}" doesn't carry — both modes enumerate a
+    processor's inbound invoices 1-indexed in the same order, so
+    stripping "EXT-" makes a finding's cited_shipment_ids directly
+    comparable to ground truth regardless of facts_source. Same fix as
+    scripts/report_truth_vs_extracted.py's own helper of the same name;
+    duplicated rather than imported since that script never ships to the
+    deployed container. Without this, every extracted-mode citation
+    metric scored near zero recall/precision purely from the ID mismatch,
+    never from the agent's own citations being wrong."""
+    return shipment_id.replace("EXT-", "", 1)
+
+
 def agent_citation_metrics(
     findings_by_processor: dict[str, list[dict]], ground_truth: dict
 ) -> dict:
@@ -403,9 +455,10 @@ def agent_citation_metrics(
         if pid in f5_ids:
             continue
         true_positive = ground_truth_true_positive_shipment_ids(ground_truth, pid)
-        cited = cited_shipment_ids_from_findings(
-            findings_by_processor.get(pid, [])
-        ) - f7_neutral_shipment_ids(ground_truth, pid)
+        cited = {
+            _normalize_shipment_id(sid)
+            for sid in cited_shipment_ids_from_findings(findings_by_processor.get(pid, []))
+        } - f7_neutral_shipment_ids(ground_truth, pid)
         pr = precision_recall_f1(cited, true_positive)
         agg_tp += pr["tp"]
         agg_fp += pr["fp"]
@@ -572,3 +625,31 @@ def pooled_run_to_run_agreement(runs: list[dict]) -> dict:
                 total_intersection += len(cited_a & cited_b)
                 total_union += len(union)
     return {"numerator": total_intersection, "denominator": total_union}
+
+
+def risk_band_stability(runs: list[dict]) -> dict:
+    """Outcome-level stability companion to pooled_run_to_run_agreement's
+    citation-set Jaccard: share of processors whose assessed risk_band
+    (runs[i][pid]["score"]["risk_band"]) is identical across every run in
+    `runs` (>=2 probe-run "processors" dicts). risk_band is the one number
+    the processor page actually shows, so this is the metric a demo
+    viewer would notice drifting even when citation-set agreement looks
+    fine."""
+    pids = runs[0].keys()
+    stable = sum(1 for pid in pids if len({run[pid]["score"]["risk_band"] for run in runs}) == 1)
+    return {"numerator": stable, "denominator": len(pids)}
+
+
+def unverifiable_t_stability(runs: list[dict], tolerance_t: float = 0.01) -> dict:
+    """Share of processors whose assessed unverifiable_t
+    (runs[i][pid]["score"]["unverifiable_t"]) stays within `tolerance_t`
+    tonnes of its own min/max across every run in `runs` — float-rounding
+    noise only, not a materiality threshold (same tolerance
+    scripts/report_truth_vs_extracted.py uses for the same reason)."""
+    pids = runs[0].keys()
+    stable = 0
+    for pid in pids:
+        values = [run[pid]["score"]["unverifiable_t"] for run in runs]
+        if max(values) - min(values) <= tolerance_t:
+            stable += 1
+    return {"numerator": stable, "denominator": len(pids)}

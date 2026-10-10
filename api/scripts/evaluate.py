@@ -29,9 +29,10 @@ Prerequisites (see docs/GCP_SETUP.md's T14 section for the exact commands):
      extracted), with BQ_DATASET=<eval dataset>
   4. scripts/probe_agent_thinking.py --seed 7 --facts-source extracted
      --configs no_thinking --runs-per-config 3 (3 independent runs, for the
-     agent_run_to_run_agreement/cost/latency metrics — read from this
-     script's own saved JSON, not BigQuery, since BigQuery's agent_runs/
-     assessments tables only ever hold the latest run per processor)
+     finding_set_agreement/risk_band_stability/unverifiable_t_stability/
+     cost/latency metrics — read from this script's own saved JSON, not
+     BigQuery, since BigQuery's agent_runs/assessments tables only ever
+     hold the latest run per processor)
 
 Run by the developer — never by the agent (reads/writes real BigQuery).
 
@@ -144,6 +145,21 @@ def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
             agent_metrics["precision"]["denominator"],
         )
 
+        # Whether a planted F5/F7 missed by its deterministic check at
+        # least surfaced as a review flag — the real (extracted-facts)
+        # measurement only; truth-mode's ground-truth shortcut doesn't
+        # exercise the agent the same way.
+        if facts_source == EXTRACTED:
+            for issue_code in ("F5", "F7"):
+                missed = ev.missed_planted_processors(
+                    check_results_by_processor, ground_truth, issue_code
+                )
+                surfaced = ev.issue_surfaced_as_review_flag(missed, findings_by_processor)
+                rows[f"issue_surfaced_as_review_flag_{issue_code}"] = (
+                    surfaced["numerator"],
+                    surfaced["denominator"],
+                )
+
         for stage in ("checks_only", "full"):
             assessments = _assessments_for_stage(seed, facts_source, stage, processor_ids)
             rb = ev.risk_band_accuracy(assessments, ground_truth)
@@ -166,8 +182,17 @@ def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
     run_paths = _stability_run_paths(seed)
     if len(run_paths) >= 2:
         records = [json.loads(p.read_text(encoding="utf-8")) for p in run_paths]
-        agreement = ev.pooled_run_to_run_agreement([r["processors"] for r in records])
-        rows["agent_run_to_run_agreement"] = (agreement["numerator"], agreement["denominator"])
+        processors_by_run = [r["processors"] for r in records]
+        agreement = ev.pooled_run_to_run_agreement(processors_by_run)
+        rows["finding_set_agreement"] = (agreement["numerator"], agreement["denominator"])
+
+        rb_stability = ev.risk_band_stability(processors_by_run)
+        rows["risk_band_stability"] = (rb_stability["numerator"], rb_stability["denominator"])
+        vt_stability = ev.unverifiable_t_stability(processors_by_run)
+        rows["unverifiable_t_stability"] = (
+            vt_stability["numerator"],
+            vt_stability["denominator"],
+        )
 
         total_cost_usd = sum(
             estimate_cost_usd(c["input_tokens"], c["output_tokens"], c["thinking_tokens"])

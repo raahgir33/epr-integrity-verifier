@@ -7,9 +7,13 @@ from app.eval.evaluate import (
     false_flags_on_clean,
     false_flags_on_hard_negatives,
     finding_precision_checks,
+    issue_surfaced_as_review_flag,
     issue_type_recall,
+    missed_planted_processors,
     pooled_run_to_run_agreement,
     risk_band_accuracy,
+    risk_band_stability,
+    unverifiable_t_stability,
     verifiable_t_error,
 )
 
@@ -237,6 +241,74 @@ def test_agent_citation_metrics_excludes_f5_processor_entirely():
 
     assert result["recall"] == {"numerator": 0, "denominator": 0}
     assert result["precision"] == {"numerator": 0, "denominator": 0}
+
+
+def test_agent_citation_metrics_normalizes_extracted_mode_shipment_ids():
+    # Extracted-mode shipment_ids carry an "EXT-" segment ground_truth.json's
+    # own ids don't — without stripping it, this looks like a false
+    # citation (and a missed recall) even though the content matches.
+    ground_truth = _ground_truth(
+        [
+            {
+                "processor_id": "PWP-01",
+                "issue_types": [],
+                "shipments": [{"shipment_id": "PWP-01-SHP-001", "is_f8": True}],
+            }
+        ]
+    )
+    findings_by_processor = {"PWP-01": [_finding(["PWP-01-EXT-SHP-001"])]}
+
+    result = agent_citation_metrics(findings_by_processor, ground_truth)
+
+    assert result["recall"] == {"numerator": 1, "denominator": 1}
+    assert result["precision"] == {"numerator": 1, "denominator": 1}
+
+
+def test_missed_planted_processors_returns_ids_where_check_never_fired():
+    ground_truth = _ground_truth(
+        [_processor("PWP-01", issue_types=["F5"]), _processor("PWP-02", issue_types=["F5"])]
+    )
+    check_results_by_processor = {
+        "PWP-01": [_check("C8", "pass")],
+        "PWP-02": [_check("C8", "fail")],
+    }
+
+    missed = missed_planted_processors(check_results_by_processor, ground_truth, "F5")
+
+    assert missed == ["PWP-01"]
+
+
+def test_issue_surfaced_as_review_flag_counts_review_flag_findings():
+    findings_by_processor = {
+        "PWP-01": [_finding([], classification="review_flag")],
+        "PWP-02": [_finding([], classification="deductible")],
+    }
+
+    result = issue_surfaced_as_review_flag(["PWP-01", "PWP-02"], findings_by_processor)
+
+    assert result == {"numerator": 1, "denominator": 2}
+
+
+def test_issue_surfaced_as_review_flag_zero_misses_is_zero_over_zero():
+    assert issue_surfaced_as_review_flag([], {}) == {"numerator": 0, "denominator": 0}
+
+
+def test_risk_band_stability_counts_processors_with_identical_band():
+    run_a = {"PWP-01": {"score": {"risk_band": "Low"}}, "PWP-02": {"score": {"risk_band": "Low"}}}
+    run_b = {"PWP-01": {"score": {"risk_band": "Low"}}, "PWP-02": {"score": {"risk_band": "High"}}}
+
+    result = risk_band_stability([run_a, run_b])
+
+    assert result == {"numerator": 1, "denominator": 2}
+
+
+def test_unverifiable_t_stability_within_tolerance_counts_as_stable():
+    run_a = {"PWP-01": {"score": {"unverifiable_t": 10.0}}}
+    run_b = {"PWP-01": {"score": {"unverifiable_t": 10.005}}}
+    run_c = {"PWP-01": {"score": {"unverifiable_t": 10.3}}}
+
+    assert unverifiable_t_stability([run_a, run_b]) == {"numerator": 1, "denominator": 1}
+    assert unverifiable_t_stability([run_a, run_c]) == {"numerator": 0, "denominator": 1}
 
 
 def test_pooled_run_to_run_agreement_identical_runs_is_full_agreement():

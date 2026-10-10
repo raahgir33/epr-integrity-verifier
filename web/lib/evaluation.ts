@@ -152,13 +152,44 @@ export function describeMetric(row: EvalMetricRow): DisplayMetric {
     };
   }
 
-  if (metric === "agent_run_to_run_agreement") {
+  if (metric === "finding_set_agreement") {
     return {
       metric,
       group: "Stability, cost and latency",
-      label: "Run-to-run citation agreement (3 independent extracted-facts runs)",
+      label: "Run-to-run finding-set agreement (3 independent extracted-facts runs)",
       display: pct,
       sub: `pooled Jaccard, ${ratioSub}`,
+    };
+  }
+
+  if (metric === "risk_band_stability") {
+    return {
+      metric,
+      group: "Stability, cost and latency",
+      label: "Risk-band stability (3 independent extracted-facts runs)",
+      display: pct,
+      sub: `identical band every run, ${ratioSub} processors`,
+    };
+  }
+
+  if (metric === "unverifiable_t_stability") {
+    return {
+      metric,
+      group: "Stability, cost and latency",
+      label: "Unverifiable-tonnes stability (3 independent extracted-facts runs)",
+      display: pct,
+      sub: `within 0.01t every run, ${ratioSub} processors`,
+    };
+  }
+
+  if (metric.startsWith("issue_surfaced_as_review_flag_")) {
+    const issueCode = metric.slice("issue_surfaced_as_review_flag_".length);
+    return {
+      metric,
+      group: "Missed-pattern visibility",
+      label: `${ISSUE_LABELS[issueCode] ?? issueCode}, when missed by its rule check — surfaced as a review flag`,
+      display: pct,
+      sub: `of this pattern's misses, ${ratioSub}`,
     };
   }
 
@@ -185,12 +216,33 @@ export function describeMetric(row: EvalMetricRow): DisplayMetric {
   return { metric, group: "Other", label: metric, display: pct, sub: ratioSub };
 }
 
+/** describe_misses (app/eval/evaluate.py) writes each miss as a plain
+ * string, keyed to the issue label at its start — no structured code to
+ * join against. For a missed F5/F7 pattern specifically, appends whether
+ * it at least surfaced as a review flag (docs/DATA_SPEC.md §4a), read
+ * from this same response's own issue_surfaced_as_review_flag_<code>
+ * row. Leaves every other miss line untouched. */
+export function annotateMisses(misses: string[], rows: EvalMetricRow[]): string[] {
+  return misses.map((miss) => {
+    for (const issueCode of ["F5", "F7"] as const) {
+      if (!miss.startsWith(ISSUE_LABELS[issueCode])) continue;
+      const row = rows.find((r) => r.metric === `issue_surfaced_as_review_flag_${issueCode}`);
+      if (!row || row.denominator === 0) continue;
+      return row.numerator === row.denominator
+        ? `${miss} Surfaced as a review flag.`
+        : `${miss} Surfaced as a review flag in ${row.numerator}/${row.denominator} miss(es).`;
+    }
+    return miss;
+  });
+}
+
 export function groupMetrics(rows: EvalMetricRow[]): { group: string; metrics: DisplayMetric[] }[] {
   const described = rows.map(describeMetric);
   const order = [
     "Extraction",
     "Issue-type recall (rule checks)",
     "Issue-type recall (agents)",
+    "Missed-pattern visibility",
     "Finding precision",
     "False flags",
     "Risk-band accuracy",

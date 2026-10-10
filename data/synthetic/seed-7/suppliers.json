@@ -1,0 +1,202 @@
+[
+  {
+    "gstin": "27PSFIJ0268L6ZE",
+    "lat": 18.5775,
+    "lon": 73.8613,
+    "name": "Pune Scrap Traders",
+    "pin_code": "411228",
+    "supplier_id": "SUP-01"
+  },
+  {
+    "gstin": "27TUVXB7866M7ZJ",
+    "lat": 19.0705,
+    "lon": 72.8478,
+    "name": "Mumbai Recyclables Pvt. Ltd.",
+    "pin_code": "400206",
+    "supplier_id": "SUP-02"
+  },
+  {
+    "gstin": "27GCGOF1590D1ZU",
+    "lat": 19.8929,
+    "lon": 73.6702,
+    "name": "Nashik Enterprises",
+    "pin_code": "422680",
+    "supplier_id": "SUP-03"
+  },
+  {
+    "gstin": "27LTACG9624L6ZR",
+    "lat": 21.0327,
+    "lon": 79.1929,
+    "name": "Nagpur Waste Aggregators",
+    "pin_code": "440585",
+    "supplier_id": "SUP-04"
+  },
+  {
+    "gstin": "24OPPJC2154P3ZK",
+    "lat": 22.8794,
+    "lon": 72.7067,
+    "name": "Ahmedabad Scrap Traders",
+    "pin_code": "380628",
+    "supplier_id": "SUP-05"
+  },
+  {
+    "gstin": "24QLEWR0841W5ZI",
+    "lat": 21.1302,
+    "lon": 72.7312,
+    "name": "Surat Recyclables Pvt. Ltd.",
+    "pin_code": "395630",
+    "supplier_id": "SUP-06"
+  },
+  {
+    "gstin": "24YHRRY8539Z4ZL",
+    "lat": 22.229,
+    "lon": 73.1514,
+    "name": "Vadodara Enterprises",
+    "pin_code": "390925",
+    "supplier_id": "SUP-07"
+  },
+  {
+    "gstin": "24ZHGQP5004P5ZB",
+    "lat": 22.3617,
+    "lon": 70.9392,
+    "name": "Rajkot Waste Aggregators",
+    "pin_code": "360298",
+    "supplier_id": "SUP-08"
+  },
+  {
+    "gstin": "33OZXLL1313P4ZO",
+    "lat": 12.994,
+    "lon": 80.3079,
+    "name": "Chennai Scrap Traders",
+    "pin_code": "600445",
+    "supplier_id": "SUP-09"
+  },
+  {
+    "gstin": "33TAPUL1163P3ZH",
+    "lat": 11.1035,
+    "lon": 76.9056,
+    "name": "Coimbatore Recyclables Pvt. Ltd.",
+    "pin_code": "641544",
+    "supplier_id": "SUP-10"
+  },
+  {
+    "gstin": "33ZXMOM1222A3ZH",
+    "lat": 10.0467,
+    "lon": 78.2118,
+    "name": "Madurai Enterprises",
+    "pin_code": "625704",
+    "supplier_id": "SUP-11"
+  },
+  {
+    "gstin": "33ETTPV5288E1ZW",
+    "lat": 12.8307,
+    "lon": 77.8932,
+    "name": "Hosur Waste Aggregators",
+    "pin_code": "635114",
+    "supplier_id": "SUP-12"
+  },
+  {
+    "gstin": "36DQXEN3304G5Z3",
+    "lat": 17.3072,
+    "lon": 78.5126,
+    "name": "Hyderabad Scrap Traders",
+    "pin_code": "500613",
+    "supplier_id": "SUP-13"
+  },
+  {
+    "gstin": "36IRNEB5798N9Z5",
+    "lat": 17.9879,
+    "lon": 79.6012,
+    "name": "Warangal Recyclables Pvt. Ltd.",
+    "pin_code": "506233",
+    "supplier_id": "SUP-14"
+  },
+  {
+    "gstin": "23AOYFT0222P2ZX",
+    "lat": 22.5881,
+    "lon": 75.9124,
+    "name": "Indore Enterprises",
+    "pin_code": "452669",
+    "supplier_id": "SUP-15"
+  },
+  {
+    "gstin": "23QRPZY1803G5ZL",
+    "lat": 23.3416,
+    "lon": 77.4149,
+    "name": "Bhopal Waste Aggregators",
+    "pin_code": "462143",
+    "supplier_id": "SUP-16"
+  },
+  {
+    "gstin": "23RAYCO5989Q4ZG",
+    "lat": 26.1515,
+    "lon": 78.1852,
+    "name": "Gwalior Scrap Traders",
+    "pin_code": "474809",
+    "supplier_id": "SUP-17"
+  },
+  {
+    "gstin": "06ZPQHW8483O3Z9",
+    "lat": 28.2954,
+    "lon": 77.3004,
+    "name": "Faridabad Recyclables Pvt. Ltd.",
+    "pin_code": "121526",
+    "supplier_id": "SUP-18"
+  },
+  {
+    "gstin": "06CVHNC3412W6Z6",
+    "lat": 28.3854,
+    "lon": 76.9178,
+    "name": "Gurugram Enterprises",
+    "pin_code": "122246",
+    "supplier_id": "SUP-19"
+  },
+  {
+    "gstin": "06OHXDM7232W7Z7",
+    "lat": 30.6653,
+    "lon": 76.837,
+    "name": "Panchkula Waste Aggregators",
+    "pin_code": "134627",
+    "supplier_id": "SUP-20"
+  },
+  {
+    "gstin": "08LKCXL0587O1ZY",
+    "lat": 26.8618,
+    "lon": 75.8245,
+    "name": "Jaipur Scrap Traders",
+    "pin_code": "302493",
+    "supplier_id": "SUP-21"
+  },
+  {
+    "gstin": "08QCDZH1144B3ZB",
+    "lat": 27.6297,
+    "lon": 76.7305,
+    "name": "Alwar Recyclables Pvt. Ltd.",
+    "pin_code": "301376",
+    "supplier_id": "SUP-22"
+  },
+  {
+    "gstin": "08VIMER8975C5ZK",
+    "lat": 25.3037,
+    "lon": 75.7698,
+    "name": "Kota Enterprises",
+    "pin_code": "324158",
+    "supplier_id": "SUP-23"
+  },
+  {
+    "gstin": "07CIAUC4193C5ZD",
+    "lat": 28.5906,
+    "lon": 76.956,
+    "name": "Delhi Waste Aggregators",
+    "pin_code": "110983",
+    "supplier_id": "SUP-24"
+  },
+  {
+    "gstin": "09RNITE0831F5ZL",
+    "lat": 26.3542,
+    "lon": 80.4616,
+    "name": "Kanpur Scrap Traders",
+    "pin_code": "208151",
+    "supplier_id": "SUP-25"
+  }
+]
