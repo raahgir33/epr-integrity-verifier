@@ -962,59 +962,73 @@ def run_memo(
         if memo_context is None:
             print(f"  {pid}: skipped — no assessment yet (run --stage checks first)")
             continue
-        touched_processor_ids.append(pid)
 
-        call_start = len(llm_client.call_log)
-        if memo_context["doc_type"] == "clarification_memo":
-            english_doc, guard_status = memo.generate_clarification_memo(memo_context, llm_client)
-        else:
-            english_doc, guard_status = memo.generate_verification_statement(
-                memo_context, llm_client
-            )
-        input_tokens, output_tokens = _tokens_since(llm_client, call_start)
-
-        generated_at = datetime.now(UTC).isoformat()
-        memo_rows.append(
-            {
-                "seed": seed,
-                "facts_source": facts_source,
-                "processor_id": pid,
-                "doc_type": memo_context["doc_type"],
-                "lang": "en",
-                "memo_json": english_doc.model_dump_json(),
-                "guard_status": guard_status,
-                "model": settings.gemini_model,
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "generated_at": generated_at,
-            }
-        )
-
-        has_hindi = False
-        if guard_status != "template_fallback":
+        # Isolated per processor: one processor's generation failure (a
+        # live API error, a timeout, anything) must not cost every other
+        # processor its memo refresh. new_rows/touched_processor_ids are
+        # only committed to the outer lists on success, so a failed
+        # processor is simply skipped — same "left untouched" contract as
+        # the no-assessment-yet skip above, its existing row (if any)
+        # survives, and the batch keeps going for the rest.
+        try:
             call_start = len(llm_client.call_log)
-            hindi_doc, hindi_guard_status = memo.generate_hindi_memo(
-                memo_context["doc_type"], english_doc, llm_client
-            )
-            if hindi_doc is not None:
-                has_hindi = True
-                hi_input_tokens, hi_output_tokens = _tokens_since(llm_client, call_start)
-                memo_rows.append(
-                    {
-                        "seed": seed,
-                        "facts_source": facts_source,
-                        "processor_id": pid,
-                        "doc_type": memo_context["doc_type"],
-                        "lang": "hi",
-                        "memo_json": hindi_doc.model_dump_json(),
-                        "guard_status": hindi_guard_status,
-                        "model": settings.gemini_model,
-                        "input_tokens": hi_input_tokens,
-                        "output_tokens": hi_output_tokens,
-                        "generated_at": generated_at,
-                    }
+            if memo_context["doc_type"] == "clarification_memo":
+                english_doc, guard_status = memo.generate_clarification_memo(
+                    memo_context, llm_client
                 )
+            else:
+                english_doc, guard_status = memo.generate_verification_statement(
+                    memo_context, llm_client
+                )
+            input_tokens, output_tokens = _tokens_since(llm_client, call_start)
 
+            generated_at = datetime.now(UTC).isoformat()
+            new_rows = [
+                {
+                    "seed": seed,
+                    "facts_source": facts_source,
+                    "processor_id": pid,
+                    "doc_type": memo_context["doc_type"],
+                    "lang": "en",
+                    "memo_json": english_doc.model_dump_json(),
+                    "guard_status": guard_status,
+                    "model": settings.gemini_model,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "generated_at": generated_at,
+                }
+            ]
+
+            has_hindi = False
+            if guard_status != "template_fallback":
+                call_start = len(llm_client.call_log)
+                hindi_doc, hindi_guard_status = memo.generate_hindi_memo(
+                    memo_context["doc_type"], english_doc, llm_client
+                )
+                if hindi_doc is not None:
+                    has_hindi = True
+                    hi_input_tokens, hi_output_tokens = _tokens_since(llm_client, call_start)
+                    new_rows.append(
+                        {
+                            "seed": seed,
+                            "facts_source": facts_source,
+                            "processor_id": pid,
+                            "doc_type": memo_context["doc_type"],
+                            "lang": "hi",
+                            "memo_json": hindi_doc.model_dump_json(),
+                            "guard_status": hindi_guard_status,
+                            "model": settings.gemini_model,
+                            "input_tokens": hi_input_tokens,
+                            "output_tokens": hi_output_tokens,
+                            "generated_at": generated_at,
+                        }
+                    )
+        except Exception as exc:
+            print(f"  {pid}: FAILED ({exc!r}) — existing memo row, if any, left untouched")
+            continue
+
+        touched_processor_ids.append(pid)
+        memo_rows.extend(new_rows)
         print(
             f"  {pid}: doc_type={memo_context['doc_type']} guard_status={guard_status} "
             f"has_hindi={has_hindi}"
