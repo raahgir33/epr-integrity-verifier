@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { RiskBadge } from "@/components/RiskBadge";
 import { StatCard } from "@/components/StatCard";
 import { Heading } from "@/components/ui/Heading";
 import { getBrands, getPortfolio } from "@/lib/api";
 import { formatMonth, formatTonnes } from "@/lib/format";
+
+export const metadata: Metadata = {
+  title: "Portfolio",
+  description: "Brand-level view of certified vs. verifiable tonnes across every associated processor.",
+};
 
 export default async function PortfolioPage({
   searchParams,

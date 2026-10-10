@@ -1,26 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => {
-    // Logged for local debugging only — never shown to the viewer.
-    console.error(error);
-  }, [error]);
-
-  return (
-    <div className="mx-auto max-w-lg py-20 text-center">
-      <h1 className="font-display text-2xl font-semibold text-balance text-ink">Data service unavailable</h1>
-      <p className="mt-3 text-pretty text-ink-muted">
-        The verification API could not be reached. This page will work again once it&apos;s back.
-      </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-6 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-ink outline-none transition-[background-color,scale] duration-150 hover:bg-surface-sunk focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
-      >
-        Try again
-      </button>
-    </div>
-  );
+  return <ErrorState error={error} reset={reset} />;
 }

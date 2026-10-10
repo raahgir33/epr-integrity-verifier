@@ -2,9 +2,6 @@ import type { components } from "@/lib/api-types";
 
 export type Health = {
   status: string;
-  model: string;
-  region: string;
-  consistency_ok: boolean | null;
 };
 
 export type ProcessorProfile = components["schemas"]["ProcessorProfile"];
@@ -35,9 +32,10 @@ export type StatsResponse = components["schemas"]["StatsResponse"];
 
 export class ApiError extends Error {
   status: number;
-  /** The API's own HTTPException `detail` string, when the error body was
-   * JSON shaped {"detail": "..."} — T13's abuse-gate 429s (cooldown,
-   * daily cap, already running) carry a user-facing message here. */
+  /** The API's own error message, when the error body was JSON shaped
+   * {"error": "...", "request_id": "..."} (T13.8's uniform error envelope)
+   * — T13's abuse-gate 429s (cooldown, daily cap, already running) carry a
+   * user-facing message here. */
   detail?: string;
   constructor(path: string, status: number, detail?: string) {
     super(detail ?? `API ${path} returned ${status}`);
@@ -50,8 +48,33 @@ function baseUrl(): string {
   return process.env.API_BASE_URL ?? "http://localhost:8080";
 }
 
+/** T13.8: a network-level failure (API down, DNS, connection refused)
+ * throws a raw `TypeError` from `fetch` itself, not an `ApiError` — wrap
+ * it into a plain, clearly-labelled Error instead, so server logs read
+ * "API unreachable: <path>" rather than an undifferentiated TypeError.
+ * (Next.js redacts a Server Component error's message from the client in
+ * production either way — see app/error.tsx's ErrorState — so this is
+ * for log clarity, not for a client-visible distinction.) */
+async function fetchOrThrow(path: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${baseUrl()}${path}`, init);
+  } catch (cause) {
+    // Next.js signals its own internal control flow (bailing out of
+    // static generation with DYNAMIC_SERVER_USAGE, redirects, etc.)
+    // by throwing from inside fetch() itself and tagging the error with
+    // a `digest` — those must propagate completely unwrapped, or the
+    // framework can no longer recognize them (this broke `npm run build`
+    // before this check was added: it turned a normal "render this route
+    // dynamically" signal into a fatal prerender error).
+    if (cause && typeof cause === "object" && "digest" in cause) {
+      throw cause;
+    }
+    throw new Error(`API unreachable: ${path}`, { cause });
+  }
+}
+
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${baseUrl()}${path}`, { cache: "no-store" });
+  const response = await fetchOrThrow(path, { cache: "no-store" });
   if (!response.ok) {
     throw new ApiError(path, response.status);
   }
@@ -59,7 +82,7 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${baseUrl()}${path}`, {
+  const response = await fetchOrThrow(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -69,8 +92,8 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     let detail: string | undefined;
     try {
       const data: unknown = await response.json();
-      if (data && typeof data === "object" && "detail" in data && typeof data.detail === "string") {
-        detail = data.detail;
+      if (data && typeof data === "object" && "error" in data && typeof data.error === "string") {
+        detail = data.error;
       }
     } catch {
       // non-JSON error body — detail stays undefined, status is still reported

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { EmptyState } from "@/components/EmptyState";
 import { Heading } from "@/components/ui/Heading";
 import { getEvaluation } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "Evaluation",
+  description: "Extraction accuracy and detection precision/recall against a held-out, seeded ground truth.",
+};
 
 export default async function EvaluationPage() {
   const evaluation = await getEvaluation();

@@ -7,7 +7,16 @@ import { bodyFont, devanagariFont, headingFont, monoFont } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "EPR Integrity Verifier",
+  // T13.8: resolves the auto-generated opengraph-image/icon tags to an
+  // absolute URL — without this, Next falls back to localhost:3000,
+  // which breaks link previews once deployed. Same fixed production URL
+  // CORS_ALLOWED_ORIGINS already hardcodes (api/.env.example) — this app
+  // has one deployed Cloud Run URL, not a custom domain.
+  metadataBase: new URL("https://epr-web-igr6jyk3na-el.a.run.app"),
+  title: {
+    default: "EPR Integrity Verifier",
+    template: "%s — EPR Integrity Verifier",
+  },
   description: "Independent verification of plastic packaging EPR certificates.",
 };
 

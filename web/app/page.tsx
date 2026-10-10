@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { AlertBanner } from "@/components/demo/AlertBanner";
 import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
 import { AudienceTabs } from "@/components/landing/AudienceTabs";
@@ -13,6 +14,12 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import { TextReveal } from "@/components/ui/TextReveal";
 import { getAlerts, getDemoBatches, getProcessor, getProcessors } from "@/lib/api";
 import { buildCheckCatalog, getLandingFigures, pickRealExamples } from "@/lib/landing";
+
+export const metadata: Metadata = {
+  title: "EPR Integrity Verifier",
+  description:
+    "See how many certified recycling tonnes are independently verifiable, with evidence for every finding.",
+};
 
 export default async function LandingPage() {
   const [{ processors }, { batches }, { alerts }] = await Promise.all([

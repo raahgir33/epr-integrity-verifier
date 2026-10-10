@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -16,6 +17,18 @@ import {
   getProcessorSite,
   type DocumentFactsResponse,
 } from "@/lib/api";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    title: `Processor ${id}`,
+    description: `Verification evidence, checks and findings for processor ${id}.`,
+  };
+}
 
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

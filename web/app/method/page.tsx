@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { RuleBasedChecksAccordion } from "@/components/method/RuleBasedChecksAccordion";
 import { Heading } from "@/components/ui/Heading";
 import { SectionTitle } from "@/components/ui/SectionTitle";
+
+export const metadata: Metadata = {
+  title: "Method",
+  description: "How the verifier checks a processor's documents, flags findings, and measures accuracy.",
+};
 
 export default function MethodPage() {
   return (
