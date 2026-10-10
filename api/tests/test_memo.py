@@ -547,6 +547,44 @@ def test_hindi_evidence_id_mismatch_returns_none():
     assert guard_status is None
 
 
+def test_hindi_untranslated_echo_returns_none():
+    """Found live: the model can reply with the English text completely
+    unchanged (no translation at all). Every number and evidence ID in
+    that reply trivially "matches" the English document (it IS the
+    English document), so the pre-fix guard accepted it — the web toggle
+    then showed English prose with only the lang="hi" font switched.
+    Both attempts echo English here, so the guard must reject both."""
+    english = _clean_memo_response()
+    untranslated = english.model_copy(deep=True)
+    fake = _FakeLLMClient([untranslated, untranslated])
+    result, guard_status = generate_hindi_memo("clarification_memo", english, fake)
+    assert result is None
+    assert guard_status is None
+    assert len(fake.purposes_called) == 2
+
+
+def test_hindi_untranslated_first_attempt_recovers_on_retry():
+    """The retry must ask the model to translate, not to fix digit
+    formatting, when the first attempt's failure was an untranslated
+    echo — confirms _hindi_corrective_for picks the right corrective note
+    instead of always sending the digit-format one."""
+    english = _clean_memo_response()
+    untranslated = english.model_copy(deep=True)
+    hindi = english.model_copy(deep=True)
+    hindi.opening_paragraph = "हमने एक मद पाया जिस पर हम स्पष्टीकरण का अनुरोध करते हैं।"
+    hindi.closing_paragraph = "हम इस पत्र के 15 दिनों के भीतर प्रतिक्रिया का अनुरोध करते हैं।"
+    hindi.items[0].what_we_observed = (
+        "चालान PWP-08-INBOUND_INVOICE-024 में सामग्री को HSN 3915 के अंतर्गत वर्जिन एलडीपीई "
+        "कणिकाओं के रूप में वर्णित किया गया है। इस रिकॉर्ड के अंतर्गत 18.40 टन की पुष्टि नहीं "
+        "हो सकी।"
+    )
+    hindi.items[0].what_we_request = "कृपया इस मद को स्पष्ट करने वाले सहायक दस्तावेज प्रदान करें।"
+    fake = _FakeLLMClient([untranslated, hindi])
+    result, guard_status = generate_hindi_memo("clarification_memo", english, fake)
+    assert guard_status == "regenerated"
+    assert result is not None
+
+
 # ---------- structured diagnosis (scripts/probe_memo_guards.py's dependency) ----------
 
 

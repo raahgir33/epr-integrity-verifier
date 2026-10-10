@@ -1064,6 +1064,27 @@ _CORRECTIVE_WESTERN_DIGITS_HI = (
     "Use Western digits (0123456789) for all numbers, not Devanagari numerals."
 )
 
+_DEVANAGARI_RE = re.compile(r"[ऀ-ॿ]")
+_CORRECTIVE_UNTRANSLATED_HI = (
+    "Your previous reply was not translated into Hindi — it was English text. "
+    "Rewrite every field in Hindi (Devanagari script), not English."
+)
+
+
+def _is_untranslated(text: str) -> bool:
+    """True when a "Hindi" field carries no Devanagari at all — the model
+    echoed the English prompt content back instead of translating it.
+    Found live: _hindi_matches_english only ever checked numbers and
+    evidence IDs, so an untouched English field trivially passed (its own
+    numbers always "match" themselves) and got stored as the Hindi memo —
+    the web toggle then showed English text with only the lang="hi" font
+    switched, never actual Hindi. Short fields with no prose (shouldn't
+    occur in practice, since every paired field here is a generated
+    sentence) would also fail this check, which is the conservative
+    direction — reject and retry/fall back to English-only, never accept
+    silently untranslated text."""
+    return not _DEVANAGARI_RE.search(text)
+
 
 def _hindi_field_pairs(
     doc_type: DocType,
@@ -1146,8 +1167,25 @@ def _hindi_matches_english(
     pairs = _hindi_field_pairs(doc_type, hindi_doc, english_doc)
     if pairs is None:
         return False
+    if any(_is_untranslated(hi) for hi, _en in pairs):
+        return False
     known_identifiers = _hindi_known_identifiers(doc_type, hindi_doc, english_doc)
     return all(_field_numbers_match(hi, en, known_identifiers) for hi, en in pairs)
+
+
+def _hindi_corrective_for(
+    doc_type: DocType,
+    raw: ClarificationMemo | VerificationStatement,
+    english_doc: ClarificationMemo | VerificationStatement,
+) -> str:
+    """Picks the retry's corrective note to match why the first attempt
+    actually failed, instead of always sending the digit-format note
+    regardless of cause — an untranslated (still-English) reply needs to
+    be told to translate, not told about digit formatting."""
+    pairs = _hindi_field_pairs(doc_type, raw, english_doc)
+    if pairs is not None and any(_is_untranslated(hi) for hi, _en in pairs):
+        return _CORRECTIVE_UNTRANSLATED_HI
+    return _CORRECTIVE_WESTERN_DIGITS_HI
 
 
 def generate_hindi_memo(
@@ -1171,9 +1209,8 @@ def generate_hindi_memo(
     if _hindi_matches_english(doc_type, raw, english_doc):
         return raw, "ok"
 
-    raw2 = llm_client.generate_structured(
-        [_prompt(_CORRECTIVE_WESTERN_DIGITS_HI)], schema, purpose="agent_memo_hi"
-    )
+    corrective = _hindi_corrective_for(doc_type, raw, english_doc)
+    raw2 = llm_client.generate_structured([_prompt(corrective)], schema, purpose="agent_memo_hi")
     if _hindi_matches_english(doc_type, raw2, english_doc):
         return raw2, "regenerated"
 
