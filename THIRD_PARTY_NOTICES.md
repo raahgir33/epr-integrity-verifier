@@ -89,3 +89,44 @@ were deleted in Batch 0.1/0.6, per the developer's deployed-site review
 tilt, spotlight, glow, lift; plain cards"). No call site remained for any
 of the four files, so they were removed rather than left unused; this
 record stays as the history of why they existed in the first place.
+
+## Hero image preparation — `web/scripts/prepare_hero.py` (dev-only, local)
+
+T13.6's hero parallax layers (`web/public/hero/*.webp`) are processed from
+a locally-generated source set (never committed raw) by a developer-run
+script, never part of the deployed app. The task's brief named `rembg`
+(MIT) as the preferred background-removal tool, with "a careful chroma-key
+... if the licence is missing or anything else" as its own explicit
+fallback.
+
+**`rembg` was attempted first** (`uvx --from rembg rembg i <in> <out>`, no
+project dependency added). It failed to install on this machine: one of
+its transitive dependencies (`pymatting` → `numba` → `llvmlite`) has no
+prebuilt wheel for this Python/platform combination and failed to build
+from source (`llvmlite==0.50.0`'s own `build.py` exited non-zero via
+`uv`'s isolated build environment). Not pursued further — the task's own
+fallback clause covers exactly this case.
+
+**Built instead:** a flood-fill chroma key, implemented directly in
+`prepare_hero.py` using only `numpy` and `Pillow` (both already present in
+this machine's Python 3.11 environment; neither is added to any
+`package.json`/`pyproject.toml`, since this script runs outside both the
+`web/` and `api/` dependency trees). The source fragments sit on a
+near-uniform grey studio backdrop; a border-seeded flood fill in
+color-distance space removes it, computed at a downscaled working
+resolution and upsampled with bilinear interpolation for a naturally
+anti-aliased edge. One real defect found and fixed during this process:
+several renders have a soft off-axis light glow baked into the backdrop,
+connected to the object by a faint color gradient — invisible to the eye
+but bright enough to survive a tight threshold, and genuinely *connected*
+to the object in color-space (not a separate blob — a true-separate-
+component filter, tried first, was a no-op on it and actively broke the
+scattered-pellet fragments, which legitimately have many disconnected
+pieces). Fixed by widening the background-color threshold until the
+glow's connecting gradient itself drops below it (swept 28→60 in steps of
+6 on the worst-affected source image; 40 was the lowest clean value,
+verified at full resolution across the whole set, not just that one
+image) — see `prepare_hero.py`'s own `BG_THRESHOLD` comment for the full
+account.
+
+No third-party package is vendored or newly depended upon by this script.
