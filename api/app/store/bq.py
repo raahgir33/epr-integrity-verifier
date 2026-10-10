@@ -131,7 +131,7 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("ewb_no", "STRING"),
         bigquery.SchemaField("vehicle_no", "STRING"),
         bigquery.SchemaField("distance_km", "FLOAT"),
-        # For C3a/C3b (transport checks) — UTC per CLAUDE.md §6. Nullable:
+        # For C3a/C3b (transport checks) — UTC per internal engineering notes §6. Nullable:
         # unmatched shipments have no weighbridge_in_time, and a shipment
         # with no eway_doc_id has neither eway timestamp.
         bigquery.SchemaField("eway_generated_at", "TIMESTAMP"),

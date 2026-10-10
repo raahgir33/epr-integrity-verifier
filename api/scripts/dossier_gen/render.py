@@ -138,7 +138,7 @@ def overlay_handwritten_remark(path: Path, text: str, rng: random.Random) -> Non
     Drawn with ONE call to draw.text for the whole string — never
     per-character — so Devanagari shaping (conjuncts, matras) is
     handled correctly by the font's own layout engine; the same trap
-    CLAUDE.md §9 documents for ReportLab generalizes to any manual
+    the internal engineering notes (§9) document for ReportLab generalizes to any manual
     glyph-by-glyph drawing. Called before degrade_photo so the overlay
     picks up the same photographic noise/rotation/brightness as the
     rest of the slip, not a cleaner image than the typed fields.

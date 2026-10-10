@@ -87,10 +87,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# auto-written by `next dev`/`next build`; not part of this project
-web/AGENTS.md
-web/CLAUDE.md
-
 # machine-local convenience file written by deploy_api.sh, not a secret
 api/scripts/deploy/.epr-api-url
 

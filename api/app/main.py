@@ -545,7 +545,7 @@ def get_run(run_id: str) -> dict:
 @app.post("/events/certificate-batch")
 def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
     """Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
-    within the request (CLAUDE.md §9's CPU-throttling trap) and
+    within the request (internal engineering notes §9's CPU-throttling trap) and
     idempotent on run_id — a re-delivered push for an already-terminal
     run is a no-op, never a duplicate alert."""
     if not pubsub.verify_push_token(token):

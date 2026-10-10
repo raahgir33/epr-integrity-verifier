@@ -13,8 +13,8 @@ the before/after sweep across dev seeds):
    seed: F1 -> C1 and C2a; F2 -> C2a; F3 -> C1, C2a and C4 (seed-42's only
    F3 instance is paired with F1, which also fails C1/C2a).
 
-Seeds 1-20, excluding 7 — 7 is the held-out test set (docs/CLAUDE.md:
-"--seed 7 (held-out test set)") and is never generated or inspected here,
+Seeds 1-20, excluding 7 — 7 is the held-out test set (the internal engineering
+notes: "--seed 7 (held-out test set)") and is never generated or inspected here,
 directly or indirectly, even for a robustness check like this one.
 
 scripts/dossier_gen's processor-to-issue-type assignment is a fixed

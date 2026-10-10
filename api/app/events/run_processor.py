@@ -1,6 +1,6 @@
 """T13's live event path — the actual verification work the push handler
 (app/main.py's POST /events/certificate-batch) runs synchronously inside
-the request (CLAUDE.md §9's Cloud Run CPU-throttling trap: all work must
+the request (internal engineering notes §9's Cloud Run CPU-throttling trap: all work must
 finish before the response is sent, never scheduled after it).
 
 Deliberately does NOT import anything from scripts/: api/Dockerfile only

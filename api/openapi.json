@@ -789,7 +789,7 @@
         "type": "object"
       },
       "MemoResponse": {
-        "description": "GET /processors/{id}/memo?lang=en|hi (app/agents/memo.py). memo is\nwhichever of ClarificationMemo/VerificationStatement doc_type names \u2014\nthe one deliberate exception to \"flat schemas only\" in this codebase\n(CLAUDE.md \u00a76's constraint is on what's sent to Gemini as a\nresponse_schema; this Union only exists at the FastAPI/OpenAPI\nresponse layer, never passed to Gemini). sender_line/drafted_by are\ncode-set, never written by Gemini \u2014 see app/agents/memo.py's module\ndocstring.",
+        "description": "GET /processors/{id}/memo?lang=en|hi (app/agents/memo.py). memo is\nwhichever of ClarificationMemo/VerificationStatement doc_type names \u2014\nthe one deliberate exception to \"flat schemas only\" in this codebase\n(internal engineering notes \u00a76's constraint is on what's sent to Gemini as a\nresponse_schema; this Union only exists at the FastAPI/OpenAPI\nresponse layer, never passed to Gemini). sender_line/drafted_by are\ncode-set, never written by Gemini \u2014 see app/agents/memo.py's module\ndocstring.",
         "properties": {
           "doc_type": {
             "enum": [
@@ -2119,7 +2119,7 @@
     },
     "/events/certificate-batch": {
       "post": {
-        "description": "Pub/Sub push endpoint (docs/ARCHITECTURE.md \u00a73.2). Synchronous\nwithin the request (CLAUDE.md \u00a79's CPU-throttling trap) and\nidempotent on run_id \u2014 a re-delivered push for an already-terminal\nrun is a no-op, never a duplicate alert.",
+        "description": "Pub/Sub push endpoint (docs/ARCHITECTURE.md \u00a73.2). Synchronous\nwithin the request (internal engineering notes \u00a79's CPU-throttling trap) and\nidempotent on run_id \u2014 a re-delivered push for an already-terminal\nrun is a no-op, never a duplicate alert.",
         "operationId": "post_events_certificate_batch_events_certificate_batch_post",
         "parameters": [
           {

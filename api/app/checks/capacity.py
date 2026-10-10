@@ -1,6 +1,6 @@
 """C1 — capacity. docs/DATA_SPEC.md §4: FY-to-date certified tonnes ≤ CTO
 capacity (t/yr) × months elapsed / 12. The EPR financial year runs
-April-March (CLAUDE.md §6).
+April-March (internal engineering notes §6).
 
 months_elapsed comes from a run-level `as_of_month` ("YYYY-MM") passed in
 by the caller — never derived from a single processor's own certificates,

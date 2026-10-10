@@ -1,5 +1,5 @@
 // Proxies POST /demo/certificate-batch so the client component (lib/api.ts's
-// API_BASE_URL is server-only, per CLAUDE.md §6) never calls the API
+// API_BASE_URL is server-only, per internal engineering notes §6) never calls the API
 // directly. Forwards the API's own status code and detail message —
 // T13's abuse gates (cooldown, daily cap, already running) return 429
 // with a user-facing detail string the client shows verbatim.

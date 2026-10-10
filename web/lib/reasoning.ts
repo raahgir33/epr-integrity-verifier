@@ -66,8 +66,9 @@ export type ScoreOutput = {
 // ---------- T13.5b plan, Part 4: reasoning log panel ----------
 
 /** The log panel's agent tag — the brief names exactly Hypothesis/Critic/
- * Revision/Tool, but `score` is deterministic Python (CLAUDE.md's "the
- * language model never does arithmetic that matters"), not agent output —
+ * Revision/Tool, but `score` is deterministic Python (the internal
+ * engineering notes' "the language model never does arithmetic that
+ * matters"), not agent output —
  * folding it into "Revision" would misattribute a computed number to an
  * agent, so it gets its own neutral "Score" tag instead. `tool_cap_reached`
  * folds into "Tool" (it's a tool-loop meta-event, not a new agent). */

@@ -188,7 +188,7 @@ export interface paths {
         /**
          * Post Events Certificate Batch
          * @description Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
-         *     within the request (CLAUDE.md §9's CPU-throttling trap) and
+         *     within the request (internal engineering notes §9's CPU-throttling trap) and
          *     idempotent on run_id — a re-delivered push for an already-terminal
          *     run is a no-op, never a duplicate alert.
          */
@@ -742,7 +742,7 @@ export interface components {
          * @description GET /processors/{id}/memo?lang=en|hi (app/agents/memo.py). memo is
          *     whichever of ClarificationMemo/VerificationStatement doc_type names —
          *     the one deliberate exception to "flat schemas only" in this codebase
-         *     (CLAUDE.md §6's constraint is on what's sent to Gemini as a
+         *     (internal engineering notes §6's constraint is on what's sent to Gemini as a
          *     response_schema; this Union only exists at the FastAPI/OpenAPI
          *     response layer, never passed to Gemini). sender_line/drafted_by are
          *     code-set, never written by Gemini — see app/agents/memo.py's module

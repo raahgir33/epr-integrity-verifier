@@ -1,7 +1,7 @@
 // Proxies GET /processors/{id}/memo so the client-side EN/HI toggle (T13.5
 // plan, Amendment C — the Hindi memo is only fetched once the viewer
 // actually clicks HI, not eagerly on every page load) never calls the API
-// directly (lib/api.ts's API_BASE_URL is server-only, per CLAUDE.md §6).
+// directly (lib/api.ts's API_BASE_URL is server-only, per internal engineering notes §6).
 
 import { ApiError, getProcessorMemo } from "@/lib/api";
 import { NextResponse } from "next/server";

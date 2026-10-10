@@ -8,8 +8,8 @@ import type { NextConfig } from "next";
 // tags (next/font self-hosts, so no external font-src is needed at all).
 // Everything else — scripts, images, API calls — is same-origin: every
 // client fetch in components/ goes through this app's own /api/* route
-// handlers, never straight to a different origin (CLAUDE.md's Next.js
-// conventions).
+// handlers, never straight to a different origin (the internal engineering
+// notes' Next.js conventions).
 // Dev-only: React Refresh reconstructs component stacks with eval() in
 // `next dev` (never in a production build — React's own eval() use is
 // dev-only, per React's error message). script-src without 'unsafe-eval'

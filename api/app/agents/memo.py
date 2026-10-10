@@ -13,7 +13,7 @@ fake client. scripts/run_pipeline.py's --stage memo does the actual
 BigQuery fetching and glue.
 
 Every number and evidence ID in a generated document is code-supplied and
-code-checked (CLAUDE.md §2.6: the model never does arithmetic that
+code-checked (internal engineering notes §2.6: the model never does arithmetic that
 matters) — Gemini only writes connective prose, under four guards:
 
 1. Evidence-ID subset guard: every item/observation's evidence_ids is

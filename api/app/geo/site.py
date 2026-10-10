@@ -25,7 +25,7 @@ _SENTINEL_COLLECTION = "COPERNICUS/S2_SR_HARMONIZED"
 _CLOUD_FILTER_MAX_PCT = 20
 
 # ~1 km box via buffer().bounds() — metres-based, correct at any
-# latitude, unlike a fixed degree offset (CLAUDE.md §9's known trap).
+# latitude, unlike a fixed degree offset (internal engineering notes §9's known trap).
 _THUMBNAIL_BOX_RADIUS_M = 500
 _THUMBNAIL_PX = 512
 _THUMBNAIL_CRS = "EPSG:3857"
@@ -193,7 +193,7 @@ def build_site_thumbnail(lat: float, lon: float) -> tuple[bytes, dict]:
         {"region": region, "dimensions": _THUMBNAIL_PX, "format": "png", "crs": _THUMBNAIL_CRS}
     )
 
-    # getThumbURL links expire (CLAUDE.md §9) — fetch the bytes now, never
+    # getThumbURL links expire (internal engineering notes §9) — fetch the bytes now, never
     # persist the URL itself.
     response = requests.get(thumb_url, timeout=30)
     if response.status_code != 200:

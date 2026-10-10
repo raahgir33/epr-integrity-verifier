@@ -1,5 +1,5 @@
 // Proxies GET /runs/{runId} so the client-side polling component (lib/
-// api.ts's API_BASE_URL is server-only, per CLAUDE.md §6) never calls
+// api.ts's API_BASE_URL is server-only, per internal engineering notes §6) never calls
 // the API directly.
 
 import { ApiError, getRun } from "@/lib/api";
