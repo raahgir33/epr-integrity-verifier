@@ -252,9 +252,22 @@ uv run python scripts/evaluate.py --seed 7 --eval-dataset epr_eval
 
 # (g) the deployed epr-api never queries BigQuery per request (app/store/cache.py,
 #     docs/ARCHITECTURE.md §7) — it reads eval_metrics once at startup and caches
-#     it in memory forever (NO_EXPIRY), so the live /evaluation page stays on
-#     whatever it saw at boot until the service gets a fresh instance. Force one —
-#     no code changed, so this just needs a new revision, not a full redeploy:
+#     it in memory forever (NO_EXPIRY), so the live /evaluation page never reflects
+#     a new (f) run on its own.
+#
+#     The FIRST time T14 is rolled out (or any time api/app/ or web/ code itself
+#     changed — e.g. the /evaluation route, cache.get_evaluation(), the page
+#     component) a real redeploy of BOTH services is required — a code change
+#     only ships to Cloud Run via gcloud run deploy --source, never by writing
+#     BigQuery rows:
+api/scripts/deploy/deploy_api.sh      # live immediately
+api/scripts/deploy/deploy_web.sh      # deploys as a no-traffic PREVIEW only (T13.8) —
+                                       # check the printed preview URL, THEN promote:
+gcloud run services update-traffic epr-web --region=asia-south1 --to-latest
+
+#     On every LATER rerun of (f) alone — new seed-7 numbers, no code change —
+#     only epr-api's cache needs refreshing, which this cheap env-var bump does
+#     (new revision from the SAME already-built image, no Cloud Build):
 gcloud run services update epr-api --region=asia-south1 \
     --update-env-vars="CACHE_REFRESHED_AT=$(date +%s)"
 ```
