@@ -226,6 +226,7 @@ export default function MethodPage() {
           <SectionTitle className="text-method-heading">Data sources and attribution</SectionTitle>
           <p className="mt-2 text-method-body text-ink-muted">Contains modified Copernicus Sentinel data (2023).</p>
           <p className="text-method-body text-ink-muted">Open Buildings v3, Google Research (CC BY 4.0).</p>
+          <p className="text-method-body text-ink-muted">Hero imagery generated with Google Flow.</p>
         </section>
       </div>
   );
