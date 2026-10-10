@@ -32,7 +32,12 @@ export default async function LandingPage() {
 
   return (
     <div className="space-y-16">
-      <FullBleed className="band -mt-8 pb-10 pt-8 sm:-mt-10 sm:pb-14 sm:pt-10">
+      {/* T13.6b plan, Part 3: full-bleed 100svh hero tucks directly under
+          the fixed, transparent-over-hero Nav (Nav.tsx publishes
+          --nav-h; the fallback here matches Nav's own fixed ~64px height
+          for the brief instant before that CSS var is set). No .band/
+          padding — HeroScene owns its own full background now. */}
+      <FullBleed contained={false} className="-mt-[var(--nav-h,4rem)]">
         <HeroScene figures={figures} />
       </FullBleed>
 

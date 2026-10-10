@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -15,16 +15,59 @@ const LINKS = [
   { href: "/method", label: "Method" },
 ];
 
+const SOLID_SCROLL_THRESHOLD_PX = 40;
+
+/** T13.6b plan, Part 3: Nav now overlays the landing page's full-bleed
+ * hero — fixed instead of sticky, transparent over the hero until the
+ * page scrolls past a small threshold (or on every other route, where
+ * there's no hero to sit over). Publishes its own rendered height as
+ * `--nav-h` on the document root via ResizeObserver, so layout.tsx's
+ * <main> and the landing page's hero (its own negative-margin cancel)
+ * both read one source of truth instead of a hardcoded guess that would
+ * drift the moment Nav's own padding changes. */
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [scrollYValue, setScrollYValue] = useState(0);
+  const headerRef = useRef<HTMLElement>(null);
+
+  const isHome = pathname === "/";
+  // Plain scroll-position state, not a "solid" boolean reset per route —
+  // `transparent` below derives straight from isHome + the current
+  // value, so there's no second effect needed just to reset state when
+  // the route changes (avoids react-hooks/set-state-in-effect: setState
+  // inside this callback is the subscribe-to-an-external-system case the
+  // rule itself calls out as fine, not a plain effect body).
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", setScrollYValue);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const setVar = () => document.documentElement.style.setProperty("--nav-h", `${el.offsetHeight}px`);
+    setVar();
+    const observer = new ResizeObserver(setVar);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const transparent = isHome && scrollYValue <= SOLID_SCROLL_THRESHOLD_PX;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface">
+    <header
+      ref={headerRef}
+      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-200 ${
+        transparent ? "border-b border-transparent bg-transparent" : "border-b border-border bg-surface"
+      }`}
+    >
       <PageContainer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
         <Link
           href="/"
-          className="font-display text-xl font-bold tracking-tight text-primary whitespace-nowrap outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={`font-display text-xl font-bold tracking-tight whitespace-nowrap outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            transparent
+              ? "text-white drop-shadow-sm focus-visible:outline-white"
+              : "text-primary focus-visible:outline-primary"
+          }`}
         >
           EPR Integrity Verifier
         </Link>
@@ -38,10 +81,16 @@ export function Nav() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                    active
-                      ? "font-medium text-primary underline decoration-2 underline-offset-4"
-                      : "text-ink-muted hover:text-ink"
+                  className={`outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                    transparent
+                      ? `focus-visible:outline-white ${
+                          active ? "font-medium text-white underline decoration-2 underline-offset-4" : "text-white/80 hover:text-white"
+                        }`
+                      : `focus-visible:outline-primary ${
+                          active
+                            ? "font-medium text-primary underline decoration-2 underline-offset-4"
+                            : "text-ink-muted hover:text-ink"
+                        }`
                   }`}
                 >
                   {link.label}
@@ -49,11 +98,11 @@ export function Nav() {
               );
             })}
           </nav>
-          <ThemeToggle />
+          <ThemeToggle variant={transparent ? "overlay" : "default"} />
         </div>
 
         <div className="flex items-center gap-2 sm:hidden">
-          <ThemeToggle />
+          <ThemeToggle variant={transparent ? "overlay" : "default"} />
           <button
             type="button"
             aria-expanded={open}
@@ -63,7 +112,11 @@ export function Nav() {
             onKeyDown={(e) => {
               if (e.key === "Escape") setOpen(false);
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink outline-none transition-transform duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96]"
+            className={`flex h-10 w-10 items-center justify-center rounded-md border outline-none transition-transform duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:active:scale-[0.96] ${
+              transparent
+                ? "border-white/40 text-white focus-visible:outline-white"
+                : "border-border text-ink focus-visible:outline-primary"
+            }`}
           >
             {/* T13.5c plan, Audit Batch 1: Lucide Menu/X, cross-faded per
                 the make-interfaces-feel-better skill's exact contextual
@@ -85,6 +138,9 @@ export function Nav() {
       </PageContainer>
 
       {open ? (
+        // Always solid regardless of `transparent` — this is a dropdown
+        // overlay sitting on top of whatever's behind it, not the bar
+        // itself, so it needs its own legible background either way.
         <nav
           id="primary-nav-mobile"
           aria-label="Primary"

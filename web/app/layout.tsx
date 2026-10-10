@@ -21,7 +21,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-screen flex-col bg-page font-sans text-ink">
         <ThemeProvider>
           <Nav />
-          <main className="flex-1">
+          {/* T13.6b plan, Part 3: Nav is now fixed (overlays the landing
+              page's full-bleed hero), out of document flow — every page
+              needs this top padding to avoid sitting under it. Nav
+              itself publishes --nav-h via ResizeObserver; the 4rem
+              fallback matches Nav's own current rendered height for the
+              instant before that JS runs. */}
+          <main className="flex-1 pt-[var(--nav-h,4rem)]">
             <PageContainer className="py-8">{children}</PageContainer>
           </main>
           <Footer />

@@ -16,8 +16,27 @@ import { Moon, Sun } from "lucide-react";
  * toggle per the make-interfaces-feel-better skill's exact contextual
  * icon-animation spec: scale 0.25->1, opacity 0->1, blur 4px->0px,
  * {type:"spring", duration:0.3, bounce:0}. initial={false} so the
- * mount/hydration transition itself doesn't animate — only a real click. */
-export function ThemeToggle({ className = "" }: { className?: string }) {
+ * mount/hydration transition itself doesn't animate — only a real click.
+ *
+ * `variant="overlay"` (T13.6b plan, Part 3: Nav transparent over the
+ * hero) swaps the border/text colour set outright rather than appending
+ * an overriding className — this file's own lib/utils.ts documents that
+ * `cn()` is plain clsx, no tailwind-merge, specifically because this
+ * app's components never pass conflicting Tailwind classes into a
+ * className prop; a trailing override here would fight that convention
+ * and depend on unstable stylesheet-order luck. */
+const VARIANT_CLASSES = {
+  default: "border-border text-ink-muted hover:bg-surface-sunk hover:text-ink focus-visible:outline-primary",
+  overlay: "border-white/40 text-white hover:bg-white/10 hover:text-white focus-visible:outline-white",
+} as const;
+
+export function ThemeToggle({
+  className = "",
+  variant = "default",
+}: {
+  className?: string;
+  variant?: keyof typeof VARIANT_CLASSES;
+}) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   // Standard next-themes hydration guard: the server always renders the
@@ -34,7 +53,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       aria-pressed={isDark}
-      className={`flex h-10 w-10 items-center justify-center rounded-md border border-border text-ink-muted outline-none transition-[color,background-color,scale] duration-150 hover:bg-surface-sunk hover:text-ink focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-safe:active:scale-[0.96] ${className}`}
+      className={`flex h-10 w-10 items-center justify-center rounded-md border outline-none transition-[color,background-color,scale] duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:active:scale-[0.96] ${VARIANT_CLASSES[variant]} ${className}`}
     >
       {mounted ? (
         <AnimatePresence initial={false} mode="popLayout">
