@@ -10,6 +10,14 @@ import type { NextConfig } from "next";
 // client fetch in components/ goes through this app's own /api/* route
 // handlers, never straight to a different origin (CLAUDE.md's Next.js
 // conventions).
+// Dev-only: React Refresh reconstructs component stacks with eval() in
+// `next dev` (never in a production build — React's own eval() use is
+// dev-only, per React's error message). script-src without 'unsafe-eval'
+// blocks that and breaks the dev overlay, so it's added only when
+// NODE_ENV !== "production" — the deployed Cloud Run image always builds
+// with `next build`, so this never reaches production traffic.
+const isDev = process.env.NODE_ENV !== "production";
+
 const cspHeader = [
   "default-src 'self'",
   // 'unsafe-inline' here isn't optional without a nonce (which forces
@@ -20,7 +28,7 @@ const cspHeader = [
   // React hydration failed completely (console showed CSP violations on
   // every inline script plus React error #412), silently breaking the
   // whole app rather than "just" fonts/images.
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
