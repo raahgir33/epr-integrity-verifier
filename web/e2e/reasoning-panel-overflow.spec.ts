@@ -27,6 +27,31 @@ async function setTheme(page: Page, theme: "light" | "dark") {
   await page.addInitScript((t) => window.localStorage.setItem("theme", t), theme);
 }
 
+/** T13.8 flake fix: a fixed `waitForTimeout` after load/expand is a guess
+ * at how long entrance animations (e.g. MetricTile's CountUp, round 7's
+ * own font-swap concern) take to settle — on a cold worker (first test
+ * in a freshly-launched browser, uncached fonts/JS) that guess runs out
+ * before the page actually finishes animating, so `docHeightBefore` gets
+ * captured mid-animation (taller) and compared against an `after` value
+ * that's always had enough time to settle (shorter) — a deterministic,
+ * 100%-reproducible-in-isolation false "the page grew/shrank" diff that
+ * has nothing to do with the reasoning panel at all (confirmed: `aside`'s
+ * own height was identical in both snapshots; a *sibling* block's
+ * one-time entrance animation was still finishing). Polling for two
+ * consecutive identical reads is robust to this regardless of which
+ * animation or asset is slow, instead of guessing a bigger fixed delay. */
+async function waitForStableHeight(page: Page, timeoutMs = 5_000): Promise<number> {
+  const deadline = Date.now() + timeoutMs;
+  let previous = await page.evaluate(() => document.documentElement.scrollHeight);
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(150);
+    const current = await page.evaluate(() => document.documentElement.scrollHeight);
+    if (current === previous) return current;
+    previous = current;
+  }
+  return previous;
+}
+
 async function expandSteps(page: Page, count: number) {
   for (let i = 0; i < count; i++) {
     await page.locator('aside button[aria-expanded="false"]').first().click();
@@ -36,7 +61,7 @@ async function expandSteps(page: Page, count: number) {
   }
   // Let the row-expand transition settle so measurements read the final,
   // not mid-animation, geometry.
-  await page.waitForTimeout(400);
+  await waitForStableHeight(page);
 }
 
 async function assertContained(page: Page, expectedClientHeight: number) {
@@ -92,14 +117,22 @@ for (const width of WIDTHS) {
       for (const count of [1, 2, "all"] as const) {
         test(`stays contained with ${count} step(s) expanded`, async ({ page }, testInfo) => {
           await page.goto("/processors/PWP-05", { waitUntil: "networkidle" });
-          // Let web-font swap-in settle before measuring — otherwise a
-          // fallback-font layout, mid flash-of-unstyled-text, gets
-          // compared against the final post-swap layout and the heights
-          // legitimately differ for reasons that have nothing to do with
-          // the reasoning panel.
-          await page.waitForTimeout(300);
-
-          const docHeightBefore = await page.evaluate(() => document.documentElement.scrollHeight);
+          // Root cause of the old flake, found by diffing the DOM tree
+          // before/after: ProcessorTabs' `useIsBreakpointUp(1024)` is
+          // deliberately `false` on the server and on first client
+          // render (documented in lib/useIsBreakpointUp.ts, to avoid a
+          // hydration mismatch), then flips `true` in a post-mount
+          // effect at every width this spec tests (all >= 1024) — which
+          // removes the "Agent reasoning" tab, reflowing the tab list
+          // from 2 rows to 1 and shrinking the page by exactly the tab
+          // row's height. That one-time swap is a deliberate app
+          // tradeoff, not a bug; a generic settle-timeout can still race
+          // it, so wait for its own concrete, known end state (the tab
+          // gone) instead of guessing how long it takes.
+          await expect(page.getByRole("tab", { name: /agent reasoning/i })).toHaveCount(0);
+          // Let web-font swap-in and entrance animations (e.g.
+          // MetricTile's CountUp) settle too before measuring.
+          const docHeightBefore = await waitForStableHeight(page);
           const toggleCount = await page.locator('aside button[aria-expanded="false"]').count();
           expect(toggleCount).toBeGreaterThan(2);
 
