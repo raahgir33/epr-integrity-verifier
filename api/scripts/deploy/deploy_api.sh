@@ -5,7 +5,12 @@
 # PUSH_TOKEN (T13's live event path, POST /events/certificate-batch) is
 # now required — generate one with `openssl rand -hex 32`, add it to
 # api/.env, and create/update the push subscription with the SAME value
-# (docs/GCP_SETUP.md §8) before relying on this endpoint.
+# (docs/GCP_SETUP.md §8) before relying on this endpoint. PUSH_TOKEN also
+# now gates POST /admin/reset-demo (T13.8).
+#
+# CORS_ALLOWED_ORIGINS (T13.8) is also required — comma-separated, no
+# wildcard; set it in api/.env to the deployed epr-web URL(s) plus any
+# local dev origin (see api/.env.example).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -29,7 +34,7 @@ if [[ -z "${GCP_PROJECT:-}" ]]; then
   GCP_PROJECT="$(gcloud config get-value project 2>/dev/null || true)"
 fi
 
-for var in GCP_PROJECT VERTEX_LOCATION GEMINI_MODEL BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET PUBSUB_TOPIC PUSH_TOKEN; do
+for var in GCP_PROJECT VERTEX_LOCATION GEMINI_MODEL BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET PUBSUB_TOPIC PUSH_TOKEN CORS_ALLOWED_ORIGINS; do
   if [[ -z "${!var:-}" ]]; then
     echo "error: $var is not set in $ENV_FILE (and no gcloud fallback available for it)" >&2
     exit 1
@@ -65,6 +70,7 @@ ENV_VARS+=",DOSSIER_BUCKET=${DOSSIER_BUCKET}"
 ENV_VARS+=",ARTIFACT_BUCKET=${ARTIFACT_BUCKET}"
 ENV_VARS+=",PUBSUB_TOPIC=${PUBSUB_TOPIC}"
 ENV_VARS+=",PUSH_TOKEN=${PUSH_TOKEN}"
+ENV_VARS+=",CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}"
 ENV_VARS+=",DEFAULT_SEED=${DEFAULT_SEED}"
 ENV_VARS+=",DEFAULT_FACTS_SOURCE=${DEFAULT_FACTS_SOURCE}"
 ENV_VARS+=",AGENT_HYPOTHESIS_TIMEOUT_MS=${AGENT_HYPOTHESIS_TIMEOUT_MS}"

@@ -11,13 +11,13 @@ def test_get_processor_documents_happy_path(api_client, monkeypatch):
         "get_documents_for_processor",
         lambda seed, pid: [
             {
-                "doc_id": "DOC-INV-1",
+                "doc_id": "PWP-01-INV-0001",
                 "doc_type": "inbound_invoice",
                 "lang": "en",
                 "extraction_status": "ok",
             },
             {
-                "doc_id": "DOC-WB-1",
+                "doc_id": "PWP-01-WB-0001",
                 "doc_type": "weighbridge_slip",
                 "lang": "en",
                 "extraction_status": "not_extracted",
@@ -47,14 +47,14 @@ def test_get_document_file_streams_bytes_with_cache_headers(api_client, monkeypa
         "get_document",
         lambda seed, doc_id: {
             "doc_id": doc_id,
-            "gcs_path": "seed-42/PWP-01/DOC-INV-1.pdf",
+            "gcs_path": "seed-42/PWP-01/PWP-01-INV-0001.pdf",
             "mime_type": "application/pdf",
         },
     )
     monkeypatch.setattr(gcs, "get_client", lambda: object())
     monkeypatch.setattr(gcs, "download_bytes", lambda client, bucket, path: b"%PDF-fake-bytes")
 
-    response = api_client.get("/documents/DOC-INV-1/file")
+    response = api_client.get("/documents/PWP-01-INV-0001/file")
 
     assert response.status_code == 200
     assert response.content == b"%PDF-fake-bytes"
@@ -74,7 +74,7 @@ def test_get_document_file_404_unknown_doc_never_reads_gcs(api_client, monkeypat
 
     monkeypatch.setattr(gcs, "download_bytes", _fail_if_called)
 
-    response = api_client.get("/documents/DOC-DOES-NOT-EXIST/file")
+    response = api_client.get("/documents/PWP-01-INV-9999/file")
 
     assert response.status_code == 404
 
@@ -91,7 +91,7 @@ def test_get_document_facts_not_extracted(api_client, monkeypatch):
         },
     )
 
-    response = api_client.get("/documents/DOC-WB-1/facts")
+    response = api_client.get("/documents/PWP-01-WB-0001/facts")
 
     assert response.status_code == 200
     body = response.json()
@@ -118,7 +118,7 @@ def test_get_document_facts_ok(api_client, monkeypatch):
         },
     )
 
-    response = api_client.get("/documents/DOC-INV-1/facts")
+    response = api_client.get("/documents/PWP-01-INV-0001/facts")
 
     assert response.status_code == 200
     assert response.json()["fields"][0]["field_name"] == "invoice_no"
@@ -127,6 +127,6 @@ def test_get_document_facts_ok(api_client, monkeypatch):
 def test_get_document_facts_404_unknown_doc(api_client, monkeypatch):
     monkeypatch.setattr(cache, "get_document", lambda seed, doc_id: None)
 
-    response = api_client.get("/documents/DOC-DOES-NOT-EXIST/facts")
+    response = api_client.get("/documents/PWP-01-INV-9999/facts")
 
     assert response.status_code == 404

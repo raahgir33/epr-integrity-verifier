@@ -43,7 +43,7 @@ def test_portfolio_happy_path_apportions_by_verifiable_ratio(api_client, monkeyp
 
     monkeypatch.setattr(cache, "get_processor_assessments", fake_assessments)
 
-    response = api_client.get("/portfolio/BR-01")
+    response = api_client.get("/portfolio/BRAND-01")
 
     assert response.status_code == 200
     body = response.json()
@@ -58,6 +58,6 @@ def test_portfolio_happy_path_apportions_by_verifiable_ratio(api_client, monkeyp
 def test_portfolio_404_unknown_brand(api_client, monkeypatch):
     monkeypatch.setattr(cache, "get_brand", lambda seed, bid: None)
 
-    response = api_client.get("/portfolio/BR-99")
+    response = api_client.get("/portfolio/BRAND-99")
 
     assert response.status_code == 404

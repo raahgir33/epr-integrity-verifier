@@ -12,9 +12,15 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Path, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.admin import reset_demo as admin_reset_demo
 from app.checks import params as check_params
 from app.config import settings
 from app.events import pubsub
@@ -39,8 +45,15 @@ from app.models.api import (
     StatsResponse,
 )
 from app.store import bq, cache
+from app.validation import BRAND_ID_PATTERN, DOC_ID_PATTERN, PROCESSOR_ID_PATTERN
 
 logger = logging.getLogger(__name__)
+
+# T13.8: shared path-parameter types so every route validates the same way
+# (FastAPI returns 422 on a mismatch before any cache lookup runs).
+ProcessorIdPath = Annotated[str, Path(pattern=PROCESSOR_ID_PATTERN)]
+DocIdPath = Annotated[str, Path(pattern=DOC_ID_PATTERN)]
+BrandIdPath = Annotated[str, Path(pattern=BRAND_ID_PATTERN)]
 
 # Set by the lifespan hook after preload, from cache.check_consistency() —
 # whether the reconstructed agent findings reproduce every processor's
@@ -67,6 +80,76 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="epr-api", lifespan=lifespan)
 
+# T13.8: browser-facing CORS — explicit allow-list only, never a wildcard.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins_list,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+    allow_credentials=False,
+)
+
+
+@app.middleware("http")
+async def request_context(request: Request, call_next):
+    """Per-request ID (echoed to the client and included in every error
+    body below, so a report can be matched to a log line) plus baseline
+    security response headers (T13.8) — applied to every response, not
+    just error ones."""
+    request.state.request_id = str(uuid.uuid4())
+    response = await call_next(request)
+    response.headers["X-Request-Id"] = request.state.request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+
+def _request_id(request: Request) -> str | None:
+    return getattr(request.state, "request_id", None)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    """Every HTTPException raised in this file already carries a short,
+    safe `detail` string (e.g. "processor not found", "invalid push
+    token") — never a traceback or internal path — so it's passed through
+    as-is, just reshaped into the uniform {error, request_id} body."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "request_id": _request_id(request)},
+        headers=exc.headers,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    logger.info(
+        "422 request_id=%s path=%s errors=%s",
+        _request_id(request),
+        request.url.path,
+        exc.errors(),
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"error": "invalid request", "request_id": _request_id(request)},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all: full traceback to logs only, a generic body to the
+    client — never a stack trace or internal path over the wire."""
+    logger.exception(
+        "unhandled exception request_id=%s path=%s", _request_id(request), request.url.path
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"error": "internal error", "request_id": _request_id(request)},
+    )
+
 
 def _meta() -> dict:
     return {"seed": settings.default_seed, "facts_source": settings.default_facts_source}
@@ -74,14 +157,11 @@ def _meta() -> dict:
 
 @app.get("/health")
 def health() -> dict:
-    return {
-        "status": "ok",
-        "model": settings.gemini_model,
-        "region": settings.vertex_location,
-        # None before the first preload (e.g. a request racing startup);
-        # a dashboard/alert should treat that as "not yet known", not "ok".
-        "consistency_ok": _consistency_status["ok"] if _consistency_status else None,
-    }
+    """T13.8: deliberately minimal — no version, model, region or project
+    ID over the wire. _consistency_status is still computed and logged at
+    startup (see lifespan() above) for an operator tailing logs; it's just
+    no longer exposed here."""
+    return {"status": "ok"}
 
 
 @app.get("/processors", response_model=ProcessorListResponse)
@@ -91,7 +171,7 @@ def list_processors() -> dict:
 
 
 @app.get("/processors/{processor_id}", response_model=ProcessorDetailResponse)
-def get_processor(processor_id: str) -> dict:
+def get_processor(processor_id: ProcessorIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     profile = cache.get_processor_profile(seed, processor_id)
     if profile is None:
@@ -117,7 +197,7 @@ def get_processor(processor_id: str) -> dict:
 
 
 @app.get("/processors/{processor_id}/documents", response_model=DocumentsResponse)
-def get_processor_documents(processor_id: str) -> dict:
+def get_processor_documents(processor_id: ProcessorIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_processor_profile(seed, processor_id) is None:
         raise HTTPException(status_code=404, detail="processor not found")
@@ -129,7 +209,7 @@ def get_processor_documents(processor_id: str) -> dict:
 
 
 @app.get("/documents/{doc_id}/file")
-def get_document_file(doc_id: str) -> Response:
+def get_document_file(doc_id: DocIdPath) -> Response:
     """doc_id is validated against the documents table for the configured
     seed before any GCS read (docs/BUILD_PLAN.md T11) — no arbitrary
     paths; the GCS blob path always comes from the row we looked up, never
@@ -148,7 +228,7 @@ def get_document_file(doc_id: str) -> Response:
 
 
 @app.get("/documents/{doc_id}/facts", response_model=DocumentFactsResponse)
-def get_document_facts(doc_id: str) -> dict:
+def get_document_facts(doc_id: DocIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_document(seed, doc_id) is None:
         raise HTTPException(status_code=404, detail="document not found")
@@ -156,7 +236,7 @@ def get_document_facts(doc_id: str) -> dict:
 
 
 @app.get("/processors/{processor_id}/reasoning", response_model=ReasoningResponse)
-def get_processor_reasoning(processor_id: str) -> dict:
+def get_processor_reasoning(processor_id: ProcessorIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     if cache.get_processor_profile(seed, processor_id) is None:
         raise HTTPException(status_code=404, detail="processor not found")
@@ -173,18 +253,17 @@ def get_processor_reasoning(processor_id: str) -> dict:
 
 
 @app.get("/processors/{processor_id}/memo", response_model=MemoResponse)
-def get_processor_memo(processor_id: str, lang: str = "en") -> dict:
+def get_processor_memo(processor_id: ProcessorIdPath, lang: Literal["en", "hi"] = "en") -> dict:
     """app/agents/memo.py's clarification memo (flagged processors) or
     verification statement (clean ones) — exactly one document type per
     processor, written by scripts/run_pipeline.py's --stage memo. A
     Hindi ("hi") row only exists when generate_hindi_memo's guards
     passed; has_hindi tells the caller whether to offer the toggle even
-    when they requested "en"."""
+    when they requested "en". T13.8: lang's own validation is now
+    FastAPI's (422 on anything else), not a manual 400 check."""
     seed, facts_source = settings.default_seed, settings.default_facts_source
     if cache.get_processor_profile(seed, processor_id) is None:
         raise HTTPException(status_code=404, detail="processor not found")
-    if lang not in ("en", "hi"):
-        raise HTTPException(status_code=400, detail="lang must be 'en' or 'hi'")
     row = cache.get_memo(seed, facts_source, processor_id, lang)
     if row is None:
         raise HTTPException(status_code=404, detail="memo not available for this processor/lang")
@@ -201,7 +280,7 @@ def get_processor_memo(processor_id: str, lang: str = "en") -> dict:
 
 
 @app.get("/processors/{processor_id}/site", response_model=SiteResponse)
-def get_processor_site(processor_id: str) -> dict:
+def get_processor_site(processor_id: ProcessorIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_processor_profile(seed, processor_id) is None:
         raise HTTPException(status_code=404, detail="processor not found")
@@ -232,7 +311,7 @@ def get_processor_site(processor_id: str) -> dict:
 
 
 @app.get("/site-images/{processor_id}")
-def get_site_image(processor_id: str) -> Response:
+def get_site_image(processor_id: ProcessorIdPath) -> Response:
     """Same validation-before-read pattern as /documents/{doc_id}/file —
     the GCS blob path always comes from the looked-up row. All ten of
     seed 42's thumbnails are preloaded into memory at startup
@@ -257,7 +336,7 @@ def list_brands() -> dict:
 
 
 @app.get("/portfolio/{brand_id}", response_model=PortfolioResponse)
-def get_portfolio(brand_id: str) -> dict:
+def get_portfolio(brand_id: BrandIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     brand = cache.get_brand(seed, brand_id)
     if brand is None:
@@ -472,8 +551,11 @@ def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
     if not pubsub.verify_push_token(token):
         raise HTTPException(status_code=401, detail="invalid push token")
 
-    payload = pubsub.decode_push_envelope(body)
-    run_id = payload["run_id"]
+    try:
+        payload = pubsub.decode_push_envelope(body)
+        run_id = payload["run_id"]
+    except (KeyError, ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="malformed push envelope") from None
     bq_client = bq.get_client()
     run_row = live_run_processor.get_run(bq_client, run_id)
     if run_row is None:
@@ -485,3 +567,21 @@ def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
 
     live_run_processor.run_certificate_batch(run_id)
     return {"status": "ok"}
+
+
+@app.post("/admin/reset-demo")
+def post_admin_reset_demo(token: str | None = None) -> dict:
+    """T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a
+    Cloud Scheduler nightly job (the deployed container never has
+    data/synthetic/ on disk — see app/admin/reset_demo.py). Same
+    PUSH_TOKEN gate as the push endpoint. Idempotent: app.admin.
+    reset_demo.run_reset_live deletes-then-loads every touched row, so
+    calling this twice back-to-back converges to the same state."""
+    if not pubsub.verify_push_token(token):
+        raise HTTPException(status_code=401, detail="invalid push token")
+
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    restored = admin_reset_demo.run_reset_live(seed)
+    cache.invalidate()
+    cache.preload(seed, facts_source)
+    return {"status": "ok", "processors_restored": restored}

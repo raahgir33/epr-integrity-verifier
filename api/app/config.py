@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     pubsub_topic: str = "certificate-batches"
     push_token: str | None = None
 
+    # T13.8 hardening: comma-separated list of origins the browser is
+    # allowed to make cross-origin requests from (app/main.py's
+    # CORSMiddleware). No wildcard — an explicit allow-list only. Default
+    # covers local web dev; deploy_api.sh sets the real production origin.
+    cors_allowed_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
+
     # Gemini pricing, USD per million tokens — developer-provided rate,
     # 2026-10-07, for scripts/cost_report.py. Not a regulatory threshold;
     # update if Vertex AI pricing changes. Thinking tokens are billed as

@@ -10,6 +10,7 @@ made to this topic.
 """
 
 import base64
+import hmac
 import json
 
 from google.cloud import pubsub_v1
@@ -32,8 +33,12 @@ def publish_certificate_batch(run_id: str, batch_id: str) -> str:
 def verify_push_token(token: str | None) -> bool:
     """A missing or empty configured push_token must never silently
     accept every request — settings.push_token is Optional only because
-    nothing checks it before T13 exists (app/config.py's comment)."""
-    return bool(settings.push_token) and token == settings.push_token
+    nothing checks it before T13 exists (app/config.py's comment).
+    T13.8: constant-time compare (hmac.compare_digest) so a wrong token's
+    length/prefix can't be inferred from response timing."""
+    if not settings.push_token or token is None:
+        return False
+    return hmac.compare_digest(token, settings.push_token)
 
 
 def decode_push_envelope(body: dict) -> dict:

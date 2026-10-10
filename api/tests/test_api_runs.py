@@ -107,7 +107,7 @@ def test_post_demo_batch_blocked_by_an_active_run(api_client, monkeypatch):
     response = api_client.post("/demo/certificate-batch", json={"batch_id": "BATCH-PWP-01-001"})
 
     assert response.status_code == 429
-    assert "already running" in response.json()["detail"]
+    assert "already running" in response.json()["error"]
 
 
 def test_post_demo_batch_allows_through_a_stale_non_terminal_run(api_client, monkeypatch):
@@ -132,7 +132,7 @@ def test_post_demo_batch_cooldown_blocks_a_quick_second_click(api_client, monkey
     response = api_client.post("/demo/certificate-batch", json={"batch_id": "BATCH-PWP-01-001"})
 
     assert response.status_code == 429
-    assert "cooldown" in response.json()["detail"]
+    assert "cooldown" in response.json()["error"]
 
 
 def test_post_demo_batch_daily_cap_reached(api_client, monkeypatch):
@@ -145,7 +145,7 @@ def test_post_demo_batch_daily_cap_reached(api_client, monkeypatch):
     response = api_client.post("/demo/certificate-batch", json={"batch_id": "BATCH-PWP-01-001"})
 
     assert response.status_code == 429
-    assert "daily demo limit" in response.json()["detail"]
+    assert "daily demo limit" in response.json()["error"]
 
 
 # ---------- GET /runs/{run_id} ----------
@@ -290,6 +290,35 @@ def test_push_handler_processes_a_fresh_queued_run_once(api_client, monkeypatch)
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert calls == ["RUN-1"]
+
+
+def test_push_handler_rejects_missing_token(api_client):
+    """T13.8: verify_push_token must fail closed when no token is sent at
+    all, not just a wrong one — exercises the real function, not a mock."""
+    response = api_client.post(
+        "/events/certificate-batch",
+        json={"message": {"data": "", "messageId": "1"}},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["error"] == "invalid push token"
+
+
+def test_push_handler_malformed_envelope_returns_400_not_500(api_client, monkeypatch):
+    """T13.8: pubsub.decode_push_envelope's KeyError/ValueError/
+    JSONDecodeError on a malformed envelope must surface as a 400, not an
+    unhandled 500 (the module's own docstring already promised this; the
+    route didn't actually catch it before this task)."""
+    monkeypatch.setattr(pubsub, "verify_push_token", lambda token: True)
+
+    response = api_client.post(
+        "/events/certificate-batch",
+        params={"token": "x"},
+        json={"message": {"not_data": "oops"}},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "malformed push envelope"
 
 
 def _b64(payload: dict) -> str:

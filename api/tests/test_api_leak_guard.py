@@ -100,7 +100,7 @@ _SHIPMENT = {
 _CERTIFICATE = {
     "certificate_id": "CERT-08-0001",
     "processor_id": "PWP-08",
-    "brand_id": "BR-01",
+    "brand_id": "BRAND-01",
     "category": "I",
     "quantity_t": 100.0,
     "generation_date": datetime.date(2026, 1, 15),
@@ -112,7 +112,7 @@ _CERTIFICATE = {
 
 FAKE_DB = {
     "processors": [_PWP08, _PWP09],
-    "brands": [{"brand_id": "BR-01", "name": "Example Brand"}],
+    "brands": [{"brand_id": "BRAND-01", "name": "Example Brand"}],
     "certificates": [_CERTIFICATE],
     "shipments": [_SHIPMENT],
     "check_results": [
@@ -237,7 +237,7 @@ def test_no_endpoint_leaks_ground_truth_only_fields(monkeypatch):
             client.get("/processors/PWP-08/memo"),
             client.get("/processors/PWP-08/memo?lang=hi"),
             client.get("/processors/PWP-09/site"),
-            client.get("/portfolio/BR-01"),
+            client.get("/portfolio/BRAND-01"),
             client.get("/evaluation"),
             client.get("/alerts"),
         ]

@@ -97,12 +97,14 @@ def test_memo_404_unknown_processor(api_client, monkeypatch):
     assert response.status_code == 404
 
 
-def test_memo_400_bad_lang(api_client, monkeypatch):
+def test_memo_422_bad_lang(api_client, monkeypatch):
+    """T13.8: lang is now a FastAPI Literal["en", "hi"] — an invalid value
+    is rejected by request validation (422) before the route body runs."""
     monkeypatch.setattr(cache, "get_processor_profile", lambda seed, pid: {"processor_id": pid})
 
     response = api_client.get("/processors/PWP-08/memo?lang=fr")
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_memo_404_not_generated_yet(api_client, monkeypatch):
