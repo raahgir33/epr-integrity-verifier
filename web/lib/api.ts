@@ -31,6 +31,7 @@ export type FindingOut = components["schemas"]["FindingOut"];
 export type CheckResultOut = components["schemas"]["CheckResultOut"];
 export type StageAssessment = components["schemas"]["StageAssessment"];
 export type MemoResponse = components["schemas"]["MemoResponse"];
+export type StatsResponse = components["schemas"]["StatsResponse"];
 
 export class ApiError extends Error {
   status: number;
@@ -130,6 +131,20 @@ export function getPortfolio(brandId: string): Promise<PortfolioResponse> {
 
 export function getEvaluation(): Promise<EvaluationResponse> {
   return getJson<EvaluationResponse>("/evaluation");
+}
+
+/** Returns null (never throws) on ANY failure — unlike every other getter
+ * here, which propagates into app/error.tsx. T13.6's hero figures and
+ * proof strip read /stats for numbers that used to be computed client-
+ * side with a safe fallback (an empty metrics row); the brief is explicit
+ * that a /stats outage must hide those labels gracefully, not break the
+ * landing page. */
+export async function getStats(): Promise<StatsResponse | null> {
+  try {
+    return await getJson<StatsResponse>("/stats");
+  } catch {
+    return null;
+  }
 }
 
 export function getAlerts(): Promise<AlertsResponse> {

@@ -12,29 +12,48 @@ import type { LandingFigures } from "@/lib/landing";
 import { formatTonnesValue } from "@/lib/format";
 
 /** Live portfolio figures (T13.5 plan, Part 3, section 2; MetricTile swap
- * T13.5b plan, Part 1) — same four figures as HeroScene's small inline
- * row, restated here for emphasis; both read from the same
- * lib/landing.ts figures object, so the two never disagree with each
- * other. */
-export function ProofStrip({ figures }: { figures: LandingFigures }) {
+ * T13.5b plan, Part 1; /stats-sourced T13.6 plan) — same figures as
+ * HeroScene's small inline row, restated here for emphasis; both read
+ * from the same lib/landing.ts getLandingFigures() (GET /stats under the
+ * hood), so the two never disagree with each other. `figures` is null
+ * when /stats failed — renders nothing rather than a half-populated
+ * strip, per the T13.6 brief ("labels hide gracefully; nothing on the
+ * page breaks"). */
+export function ProofStrip({ figures }: { figures: LandingFigures | null }) {
+  if (!figures) return null;
+
   return (
-    <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-      <MetricTile countUp value={figures.processorsVerified} label="Processors verified" />
-      <MetricTile
-        countUp
-        value={figures.certifiedTonnes}
-        formatter={formatTonnesValue}
-        unit="t"
-        label="Certified tonnes reviewed"
-      />
-      <MetricTile
-        countUp
-        value={figures.unverifiableTonnes}
-        formatter={formatTonnesValue}
-        unit="t"
-        label="Tonnes unverifiable"
-      />
-      <MetricTile countUp value={figures.documentsRead} label="Documents read" />
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-3 lg:grid-cols-5">
+        <MetricTile countUp value={figures.processorsVerified} label="Processors verified" />
+        <MetricTile
+          countUp
+          value={figures.certifiedTonnes}
+          formatter={formatTonnesValue}
+          unit="t"
+          label="Certified tonnes reviewed"
+        />
+        <MetricTile
+          countUp
+          value={figures.unverifiableTonnes}
+          formatter={formatTonnesValue}
+          unit="t"
+          label="Tonnes unverifiable"
+        />
+        <MetricTile countUp value={figures.documentsRead} label="Documents read" />
+        {figures.fieldReadAccuracyValue !== null ? (
+          <MetricTile
+            countUp
+            value={figures.fieldReadAccuracyValue}
+            formatter={(n) => n.toFixed(2)}
+            unit="%"
+            label="Of key document fields read correctly"
+          />
+        ) : null}
+      </div>
+      {figures.fyLabel ? (
+        <p className="text-center text-xs text-ink-muted">{figures.fyLabel}</p>
+      ) : null}
     </div>
   );
 }

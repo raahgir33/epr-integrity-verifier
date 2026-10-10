@@ -28,10 +28,12 @@ from google.cloud import bigquery
 
 from app.agents.orchestrator import reconstruct_agent_findings
 from app.agents.scorer import score_processor
+from app.checks.capacity import fy_start_month
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.mass_balance import verified_inbound_tonnes
 from app.checks.params import CHECK_SOURCE_LABELS
 from app.config import settings
+from app.eval.evaluate import format_accuracy_pct
 from app.models.checks import CheckResult
 from app.store import bq, gcs
 
@@ -419,6 +421,82 @@ def _stage_assessment(row: dict) -> dict:
         "verifiable_t": row["verifiable_t"],
         "unverifiable_t": row["unverifiable_t"],
         "risk_band": row["risk_band"],
+    }
+
+
+def _eval_metrics(seed: int, metric: str) -> list[dict]:
+    """eval_metrics isn't a whole-table cache like the others — it's keyed
+    by dataset_label, not seed, so this reads just the one (dataset_label,
+    metric) a given seed's /stats needs, newest first (see
+    bq.fetch_eval_metrics)."""
+    dataset_label = f"dev-seed{seed}"
+    return get_or_load(
+        f"eval_metrics:{dataset_label}:{metric}",
+        lambda: bq.fetch_eval_metrics(bq.get_client(), dataset_label, metric),
+        ttl=NO_EXPIRY,
+    )
+
+
+def _fy_label(as_of_month: str) -> str:
+    """ "2026-03" -> "FY 2025-26 to date" — same fy_start_month rule T8's
+    checks and scripts/run_pipeline.py's as_of_month default already use,
+    just formatted for display."""
+    fy_start = fy_start_month(as_of_month)
+    start_year = int(fy_start.split("-")[0])
+    return f"FY {start_year}-{str(start_year + 1)[-2:]} to date"
+
+
+def get_stats(seed: int, facts_source: str) -> dict:
+    """GET /stats's single cached read (T13.6) — every figure here is
+    built from tables preload() already warms (list_processors,
+    _documents, _extracted_facts, _certificates, _eval_metrics), so this
+    never issues a BigQuery query of its own. certified_t_total/
+    unverifiable_t_total use exactly the formula lib/landing.ts used to
+    compute client-side (Σ checks_only.certified_t, Σ (full ??
+    checks_only).unverifiable_t) — moved server-side so there's one
+    source, not two that can drift. field_read_accuracy_* come from
+    _eval_metrics and are all None together until the developer runs
+    scripts/report_extraction_mismatches.py --write-bq (no fallback
+    constant — see that script's docstring)."""
+    processors = list_processors(seed, facts_source)
+    certified_t_total = sum(p["checks_only"]["certified_t"] for p in processors)
+    unverifiable_t_total = sum(
+        (p["full"] or p["checks_only"])["unverifiable_t"] for p in processors
+    )
+
+    certificates = _certificates(seed)
+    periods = [c["period_month"] for c in certificates if c["period_month"]]
+    as_of_month = max(periods) if periods else None
+
+    accuracy_rows = _eval_metrics(seed, "key_field_read_accuracy")
+    accuracy = accuracy_rows[0] if accuracy_rows else None
+    # format_accuracy_pct's truncation (never rounds up to 100.00%) is the
+    # single source of truth for this number — parsed back out of its own
+    # string rather than re-deriving the rounding rule a second time, so
+    # the numeric value shown in a CountUp animation can never disagree
+    # with the "%"-suffixed string a tooltip might also show.
+    accuracy_pct_str = (
+        format_accuracy_pct(accuracy["numerator"], accuracy["denominator"]) if accuracy else None
+    )
+    accuracy_value = (
+        float(accuracy_pct_str.rstrip("%"))
+        if accuracy_pct_str and accuracy_pct_str != "n/a"
+        else None
+    )
+
+    return {
+        "processors_count": len(processors),
+        "documents_read": len(_documents(seed)),
+        "fields_read": len(_extracted_facts(seed)),
+        "certified_t_total": round(certified_t_total, 2),
+        "unverifiable_t_total": round(unverifiable_t_total, 2),
+        "as_of": as_of_month,
+        "fy_label": _fy_label(as_of_month) if as_of_month else None,
+        "field_read_accuracy_pct": accuracy_pct_str,
+        "field_read_accuracy_value": accuracy_value,
+        "field_read_correct": accuracy["numerator"] if accuracy else None,
+        "field_read_total": accuracy["denominator"] if accuracy else None,
+        "field_read_dataset_label": accuracy["dataset_label"] if accuracy else None,
     }
 
 
@@ -1075,6 +1153,7 @@ def preload(seed: int, facts_source: str) -> None:
     _memos(seed, facts_source)
     _alerts(seed, facts_source)
     _demo_batches(seed)
+    get_stats(seed, facts_source)
 
     for p in processors:
         pid = p["processor_id"]

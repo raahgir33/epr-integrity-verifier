@@ -25,7 +25,7 @@ export default async function LandingPage() {
   const details = await Promise.all(processorIds.map((id) => getProcessor(id)));
 
   const [figures, examples] = await Promise.all([
-    getLandingFigures(processors),
+    getLandingFigures(),
     pickRealExamples(processorIds, details),
   ]);
   const checkCatalog = buildCheckCatalog(details);

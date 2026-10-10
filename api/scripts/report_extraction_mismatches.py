@@ -8,13 +8,23 @@ A post-hoc read of extracted_facts (no Gemini call) — run any time after
 --stage extract has completed, to recover the per-field detail
 --stage extract's own one-shot console report doesn't persist anywhere.
 
-Run by the developer — never by the agent (reads real BigQuery).
+--write-bq (T13.6) additionally writes the overall accuracy to the
+eval_metrics table — GET /stats's field_read_accuracy_pct reads it back
+(T14's real /evaluation endpoint doesn't exist yet, and ground_truth.json,
+what this number is measured against, never ships to the deployed
+container, so this script is the only place that can compute it).
+
+Run by the developer — never by the agent (reads/writes real BigQuery).
 
 Usage: uv run python scripts/report_extraction_mismatches.py --seed 42
        uv run python scripts/report_extraction_mismatches.py --seed 42 --processor PWP-02
+       uv run python scripts/report_extraction_mismatches.py --seed 42 --write-bq
 """
 
 import argparse
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
 
 from app.eval.evaluate import (
     extraction_field_accuracy,
@@ -24,13 +34,54 @@ from app.eval.evaluate import (
 from app.store import bq
 from scripts.run_pipeline import _fetch_bq_rows, load_ground_truth
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+EVAL_METRIC = "key_field_read_accuracy"
+
+
+def _git_commit() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def write_accuracy_metric(
+    bq_client, seed: int, overall: dict, git_commit: str | None = None
+) -> dict:
+    """Builds and writes the one eval_metrics row --write-bq produces.
+    Separated from main() so it's unit-testable with a fake bq client,
+    without going through argv parsing or a real ground_truth.json read.
+    Returns the row written, for the test/caller to assert against."""
+    row = {
+        "dataset_label": f"dev-seed{seed}",
+        "metric": EVAL_METRIC,
+        "numerator": overall["correct"],
+        "denominator": overall["total"],
+        "computed_at": datetime.now(UTC).isoformat(),
+        "source_script": "scripts/report_extraction_mismatches.py",
+        "git_commit": git_commit,
+    }
+    bq.delete_eval_metrics(bq_client, row["dataset_label"], row["metric"])
+    bq.load_rows(bq_client, "eval_metrics", [row])
+    return row
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--processor", help="Only report this processor_id (e.g. PWP-02)")
+    parser.add_argument(
+        "--write-bq",
+        action="store_true",
+        help="Write the overall accuracy to the eval_metrics table (dataset_label dev-seed<seed>)",
+    )
     args = parser.parse_args()
     seed = args.seed
+    if args.write_bq and args.processor:
+        parser.error("--write-bq reports the whole dataset's accuracy — drop --processor")
 
     ground_truth = load_ground_truth(seed)
     documents = ground_truth["documents"]
@@ -68,6 +119,13 @@ def main() -> None:
     overall = report["overall"]
     overall_acc = format_accuracy_pct(overall["correct"], overall["total"])
     print(f"\nOverall: {overall['correct']}/{overall['total']} ({overall_acc})")
+
+    if args.write_bq:
+        row = write_accuracy_metric(bq_client, seed, overall, git_commit=_git_commit())
+        print(
+            f"\nwrote eval_metrics: {row['dataset_label']}/{row['metric']} = "
+            f"{row['numerator']}/{row['denominator']}"
+        )
 
 
 if __name__ == "__main__":

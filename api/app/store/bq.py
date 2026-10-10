@@ -354,6 +354,26 @@ SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("new_finding_summary", "STRING"),
         bigquery.SchemaField("message", "STRING"),
     ],
+    # T13.6: a small, developer-written table of precomputed evaluation
+    # metrics — today just the T6 full-extraction-run's key-field read
+    # accuracy for GET /stats's field_read_accuracy_pct, since T14's real
+    # /evaluation endpoint doesn't exist yet and ground_truth.json (what
+    # the number is measured against) never ships to the deployed
+    # container. Not seed/facts_source-scoped — dataset_label already
+    # encodes that ("dev-seed42"; a future "heldout-seed7" row is the same
+    # shape once T14 lands). Written only by
+    # scripts/report_extraction_mismatches.py's --write-bq flag, one row
+    # per (dataset_label, metric) — see delete_eval_metrics below for the
+    # idempotency key.
+    "eval_metrics": [
+        bigquery.SchemaField("dataset_label", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("metric", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("numerator", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("denominator", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("computed_at", "TIMESTAMP", mode="REQUIRED"),
+        bigquery.SchemaField("source_script", "STRING"),
+        bigquery.SchemaField("git_commit", "STRING"),
+    ],
 }
 
 
@@ -484,6 +504,44 @@ def delete_memos_by_processor(
             bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
             bigquery.ScalarQueryParameter("facts_source", "STRING", facts_source),
             bigquery.ScalarQueryParameter("processor_id", "STRING", processor_id),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
+def fetch_eval_metrics(client: bigquery.Client, dataset_label: str, metric: str) -> list[dict]:
+    """eval_metrics isn't seed-scoped (dataset_label already encodes it),
+    so it can't go through fetch_rows' seed-filtered query — same shape,
+    one extra key column, ordered newest first so the caller can just take
+    row 0 as "the latest" per (dataset_label, metric)."""
+    table_ref = _table_ref("eval_metrics")
+    query = (
+        f"SELECT * FROM `{table_ref}` "
+        "WHERE dataset_label = @dataset_label AND metric = @metric "
+        "ORDER BY computed_at DESC"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("dataset_label", "STRING", dataset_label),
+            bigquery.ScalarQueryParameter("metric", "STRING", metric),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    return [dict(row) for row in job.result()]
+
+
+def delete_eval_metrics(client: bigquery.Client, dataset_label: str, metric: str) -> None:
+    """eval_metrics' idempotency key is (dataset_label, metric) — same
+    two-key-column shape as delete_memos_by_processor — so a rerun of
+    scripts/report_extraction_mismatches.py --write-bq replaces that one
+    row instead of accumulating duplicates."""
+    table_ref = _table_ref("eval_metrics")
+    query = f"DELETE FROM `{table_ref}` WHERE dataset_label = @dataset_label AND metric = @metric"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("dataset_label", "STRING", dataset_label),
+            bigquery.ScalarQueryParameter("metric", "STRING", metric),
         ]
     )
     job = client.query(query, job_config=job_config, location=settings.vertex_location)

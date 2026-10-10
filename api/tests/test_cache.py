@@ -204,6 +204,17 @@ FAKE_DB = {
             "extra_document_ids": ["PWP-01-DEMO-INBOUND_INVOICE-001"],
         }
     ],
+    "eval_metrics": [
+        {
+            "dataset_label": f"dev-seed{SEED}",
+            "metric": "key_field_read_accuracy",
+            "numerator": 5521,
+            "denominator": 5523,
+            "computed_at": datetime.datetime(2026, 10, 8, 12, 0, tzinfo=datetime.UTC),
+            "source_script": "scripts/report_extraction_mismatches.py",
+            "git_commit": "abc123",
+        }
+    ],
 }
 
 
@@ -213,8 +224,18 @@ def _fake_fetch_rows(monkeypatch):
         assert seed == SEED
         return copy.deepcopy(FAKE_DB.get(table, []))
 
+    def fake_eval_metrics(client, dataset_label, metric):
+        return copy.deepcopy(
+            [
+                row
+                for row in FAKE_DB.get("eval_metrics", [])
+                if row["dataset_label"] == dataset_label and row["metric"] == metric
+            ]
+        )
+
     monkeypatch.setattr(cache, "_fetch_rows", fake)
     monkeypatch.setattr(cache.bq, "get_client", lambda: object())
+    monkeypatch.setattr(cache.bq, "fetch_eval_metrics", fake_eval_metrics)
     # Standing rule: never hit real GCP. preload() (A2) now also calls
     # get_site_image_bytes for every processor, which — without this —
     # would call the REAL gcs.download_bytes against this environment's
@@ -316,6 +337,100 @@ def test_get_processor_profile_rounds_coordinates_and_formats_dates():
 
 def test_get_processor_profile_returns_none_for_unknown_processor():
     assert cache.get_processor_profile(SEED, "PWP-99") is None
+
+
+# ---------- stats (T13.6) ----------
+
+
+def test_fy_label_formats_from_as_of_month():
+    assert cache._fy_label("2026-01") == "FY 2025-26 to date"
+    assert cache._fy_label("2025-04") == "FY 2025-26 to date"
+    assert cache._fy_label("2025-03") == "FY 2024-25 to date"
+
+
+def test_get_stats_totals_match_landing_figures_formula():
+    """certified_t_total/unverifiable_t_total must equal exactly what
+    lib/landing.ts computed client-side before T13.6 (Σ checks_only.
+    certified_t, Σ (full ?? checks_only).unverifiable_t) — one source
+    moved server-side, not a different number."""
+    stats = cache.get_stats(SEED, FACTS_SOURCE)
+    processors = cache.list_processors(SEED, FACTS_SOURCE)
+    expected_certified = sum(p["checks_only"]["certified_t"] for p in processors)
+    expected_unverifiable = sum(
+        (p["full"] or p["checks_only"])["unverifiable_t"] for p in processors
+    )
+    assert stats["certified_t_total"] == expected_certified
+    assert stats["unverifiable_t_total"] == expected_unverifiable
+    assert stats["processors_count"] == len(processors)
+
+
+def test_get_stats_counts_documents_and_fields_from_whole_tables():
+    stats = cache.get_stats(SEED, FACTS_SOURCE)
+    assert stats["documents_read"] == len(FAKE_DB["documents"])
+    assert stats["fields_read"] == len(FAKE_DB["extracted_facts"])
+
+
+def test_get_stats_as_of_is_max_certificate_period_month():
+    stats = cache.get_stats(SEED, FACTS_SOURCE)
+    assert stats["as_of"] == "2026-01"
+    assert stats["fy_label"] == "FY 2025-26 to date"
+
+
+def test_get_stats_field_read_accuracy_from_eval_metrics():
+    stats = cache.get_stats(SEED, FACTS_SOURCE)
+    assert stats["field_read_accuracy_pct"] == "99.96%"
+    assert stats["field_read_accuracy_value"] == 99.96
+    assert stats["field_read_correct"] == 5521
+    assert stats["field_read_total"] == 5523
+    assert stats["field_read_dataset_label"] == f"dev-seed{SEED}"
+
+
+def test_get_stats_field_read_accuracy_none_without_an_eval_metrics_row(monkeypatch):
+    monkeypatch.setattr(cache.bq, "fetch_eval_metrics", lambda client, dataset_label, metric: [])
+    stats = cache.get_stats(SEED, FACTS_SOURCE)
+    assert stats["field_read_accuracy_pct"] is None
+    assert stats["field_read_accuracy_value"] is None
+    assert stats["field_read_correct"] is None
+    assert stats["field_read_total"] is None
+    assert stats["field_read_dataset_label"] is None
+
+
+def test_get_stats_totals_recompute_after_a_simulated_demo_batch(monkeypatch):
+    """A live demo run adds a certificate/shipment to one processor and
+    rewrites its assessment rows, then calls cache.invalidate(None) +
+    cache.preload(...) (app/events/run_processor.py). Stats must reflect
+    that new state on the next preload, with no separate invalidation path
+    of its own — simulated here by mutating the fake tables directly and
+    re-preloading, the same re-warm a live run triggers."""
+    cache.preload(SEED, FACTS_SOURCE)
+    before = cache.get_stats(SEED, FACTS_SOURCE)
+
+    bumped = copy.deepcopy(FAKE_DB)
+    bumped["assessments"][1]["certified_t"] = 150.0  # full stage for PWP-01
+    bumped["assessments"][1]["unverifiable_t"] = 20.0
+    bumped["assessments"][0]["certified_t"] = 150.0  # checks_only stage
+    monkeypatch.setattr(
+        cache,
+        "_fetch_rows",
+        lambda client, table, columns, seed, facts_source=None: copy.deepcopy(
+            bumped.get(table, [])
+        ),
+    )
+    cache.invalidate(None)
+    cache.preload(SEED, FACTS_SOURCE)
+    after = cache.get_stats(SEED, FACTS_SOURCE)
+
+    assert after["certified_t_total"] == 150.0
+    assert after["unverifiable_t_total"] == 20.0
+    assert after["certified_t_total"] != before["certified_t_total"]
+
+    processors_after = cache.list_processors(SEED, FACTS_SOURCE)
+    assert after["certified_t_total"] == sum(
+        p["checks_only"]["certified_t"] for p in processors_after
+    )
+    assert after["unverifiable_t_total"] == sum(
+        (p["full"] or p["checks_only"])["unverifiable_t"] for p in processors_after
+    )
 
 
 # ---------- check results / documents / facts ----------
@@ -457,6 +572,7 @@ def test_preload_populates_every_expected_key():
         f"memos:{SEED}:{FACTS_SOURCE}",
         f"alerts:{SEED}:{FACTS_SOURCE}",
         f"demo_batches:{SEED}",
+        f"eval_metrics:dev-seed{SEED}:key_field_read_accuracy",
     ]
     for key in expected_prefixes:
         assert key in cache._store, f"missing cache key after preload: {key}"

@@ -36,6 +36,7 @@ from app.models.api import (
     ReasoningResponse,
     RunStatusOut,
     SiteResponse,
+    StatsResponse,
 )
 from app.store import bq, cache
 
@@ -312,6 +313,16 @@ def get_evaluation() -> dict:
     this never queries BigQuery at all, so there's no table-not-found
     failure mode to handle."""
     return {"meta": _meta()}
+
+
+@app.get("/stats", response_model=StatsResponse)
+def get_stats() -> dict:
+    """T13.6: one cached read (app/store/cache.py's get_stats, warmed at
+    startup preload — see preload()'s own docstring) backing the landing
+    page's hero/proof-strip figures and the field-read-accuracy tile. No
+    BigQuery query at request time, same as every other route here."""
+    seed, facts_source = settings.default_seed, settings.default_facts_source
+    return {"meta": _meta(), **cache.get_stats(seed, facts_source)}
 
 
 @app.get("/alerts", response_model=AlertsResponse)

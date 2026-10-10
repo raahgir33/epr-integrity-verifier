@@ -24,7 +24,7 @@ export function HeroScene({
   figures,
   layers = [],
 }: {
-  figures: LandingFigures;
+  figures: LandingFigures | null;
   layers?: HeroImageLayer[];
 }) {
   // Static fallback only — no image layers exist yet (layers is always
@@ -101,35 +101,58 @@ export function HeroScene({
         </div>
 
         {/* T13.5b plan, Part 1: equal-width grid — 2 cols on phones (room
-            for labels to wrap), 4 equal columns from sm (640px) up, well
-            before the "no wrapping at >=1024px" floor; MetricTile keeps
+            for labels to wrap), up to 5 equal columns from lg up once the
+            T13.6 field-read-accuracy tile is present; MetricTile keeps
             value+unit on one shared baseline with the unit styled
-            separately. */}
-        <div className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
-          <MetricTile
-            tone="inverted"
-            countUp
-            value={figures.processorsVerified}
-            label="Processors verified"
-          />
-          <MetricTile
-            tone="inverted"
-            countUp
-            value={figures.certifiedTonnes}
-            formatter={formatTonnesValue}
-            unit="t"
-            label="Certified tonnes reviewed"
-          />
-          <MetricTile
-            tone="inverted"
-            countUp
-            value={figures.unverifiableTonnes}
-            formatter={formatTonnesValue}
-            unit="t"
-            label="Tonnes unverifiable"
-          />
-          <MetricTile tone="inverted" countUp value={figures.documentsRead} label="Documents read" />
-        </div>
+            separately. figures is null when GET /stats failed — the whole
+            row hides rather than showing a half-populated grid. */}
+        {figures ? (
+          <div className="space-y-2">
+            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              <MetricTile
+                tone="inverted"
+                countUp
+                value={figures.processorsVerified}
+                label="Processors verified"
+              />
+              <MetricTile
+                tone="inverted"
+                countUp
+                value={figures.certifiedTonnes}
+                formatter={formatTonnesValue}
+                unit="t"
+                label="Certified tonnes reviewed"
+              />
+              <MetricTile
+                tone="inverted"
+                countUp
+                value={figures.unverifiableTonnes}
+                formatter={formatTonnesValue}
+                unit="t"
+                label="Tonnes unverifiable"
+              />
+              <MetricTile
+                tone="inverted"
+                countUp
+                value={figures.documentsRead}
+                label="Documents read"
+              />
+              {figures.fieldReadAccuracyValue !== null ? (
+                <MetricTile
+                  tone="inverted"
+                  countUp
+                  value={figures.fieldReadAccuracyValue}
+                  formatter={(n) => n.toFixed(2)}
+                  unit="%"
+                  label="Of key document fields read correctly"
+                />
+              ) : null}
+            </div>
+            {figures.fyLabel ? (
+              <p className="text-center text-xs text-[#f4f4f4]/70">{figures.fyLabel}</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

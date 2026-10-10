@@ -283,6 +283,34 @@ class EvaluationResponse(BaseModel):
     message: str = "Evaluation metrics are not yet available — see docs/BUILD_PLAN.md T14."
 
 
+# ---------- site-wide stats (T13.6) ----------
+
+
+class StatsResponse(BaseModel):
+    """GET /stats — cached at startup preload, never queried live per
+    request (app/store/cache.py's get_stats). certified_t_total/
+    unverifiable_t_total use the same formula the landing page's hero and
+    proof strip already showed (Σ checks_only.certified_t, Σ (full ??
+    checks_only).unverifiable_t), moved server-side. field_read_* are all
+    None together until the developer runs
+    scripts/report_extraction_mismatches.py --write-bq — never a fallback
+    constant."""
+
+    meta: Meta
+    processors_count: int
+    documents_read: int
+    fields_read: int
+    certified_t_total: float
+    unverifiable_t_total: float
+    as_of: str | None  # "YYYY-MM", the FY-to-date cutoff month
+    fy_label: str | None  # e.g. "FY 2025-26 to date"
+    field_read_accuracy_pct: str | None  # e.g. "99.96%", app/eval/evaluate.py's format_accuracy_pct
+    field_read_accuracy_value: float | None  # same number, as a float — e.g. 99.96
+    field_read_correct: int | None
+    field_read_total: int | None
+    field_read_dataset_label: str | None  # e.g. "dev-seed42"
+
+
 # ---------- live event path (T13) ----------
 
 

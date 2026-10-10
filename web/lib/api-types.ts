@@ -359,6 +359,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Stats
+         * @description T13.6: one cached read (app/store/cache.py's get_stats, warmed at
+         *     startup preload — see preload()'s own docstring) backing the landing
+         *     page's hero/proof-strip figures and the field-read-accuracy tile. No
+         *     BigQuery query at request time, same as every other route here.
+         */
+        get: operations["get_stats_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -958,6 +981,44 @@ export interface components {
             /** Verified Inbound T */
             verified_inbound_t: number;
         };
+        /**
+         * StatsResponse
+         * @description GET /stats — cached at startup preload, never queried live per
+         *     request (app/store/cache.py's get_stats). certified_t_total/
+         *     unverifiable_t_total use the same formula the landing page's hero and
+         *     proof strip already showed (Σ checks_only.certified_t, Σ (full ??
+         *     checks_only).unverifiable_t), moved server-side. field_read_* are all
+         *     None together until the developer runs
+         *     scripts/report_extraction_mismatches.py --write-bq — never a fallback
+         *     constant.
+         */
+        StatsResponse: {
+            /** As Of */
+            as_of: string | null;
+            /** Certified T Total */
+            certified_t_total: number;
+            /** Documents Read */
+            documents_read: number;
+            /** Field Read Accuracy Pct */
+            field_read_accuracy_pct: string | null;
+            /** Field Read Accuracy Value */
+            field_read_accuracy_value: number | null;
+            /** Field Read Correct */
+            field_read_correct: number | null;
+            /** Field Read Dataset Label */
+            field_read_dataset_label: string | null;
+            /** Field Read Total */
+            field_read_total: number | null;
+            /** Fields Read */
+            fields_read: number;
+            /** Fy Label */
+            fy_label: string | null;
+            meta: components["schemas"]["Meta"];
+            /** Processors Count */
+            processors_count: number;
+            /** Unverifiable T Total */
+            unverifiable_t_total: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1527,6 +1588,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stats_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsResponse"];
                 };
             };
         };

@@ -2,13 +2,13 @@ import {
   getDocumentFacts,
   getProcessorDocuments,
   getProcessorMemo,
+  getStats,
   type CheckResultOut,
   type DocumentFactsResponse,
   type DocumentListItem,
   type FindingOut,
   type MemoResponse,
   type ProcessorDetailResponse,
-  type ProcessorSummary,
 } from "@/lib/api";
 
 /** A document id containing "DEMO" was added by T13's live certificate-
@@ -26,34 +26,32 @@ export type LandingFigures = {
   certifiedTonnes: number;
   unverifiableTonnes: number;
   documentsRead: number;
+  fyLabel: string | null;
+  fieldReadAccuracyPct: string | null;
+  fieldReadAccuracyValue: number | null;
 };
 
-/** Amendment A (T13.5 plan): certifiedTonnes sums checks_only.certified_t
- * (identical across stages); unverifiableTonnes prefers each processor's
- * full stage, falling back to checks_only — the same (full ?? checks_only)
- * pattern used on / (today's Overview totals), /processors/[id] and
- * ProcessorsTable, so this landing page never shows a different number
- * for the same underlying figure. documentsRead is a real count (one
- * GET /processors/{id}/documents per processor, ≤10 processors, same
- * cost class as the portfolio-preview section's own per-processor
- * fetches) — "document fields read" was an API gap flagged in the plan;
- * the developer chose "documents read" (a document count) instead. */
-export async function getLandingFigures(processors: ProcessorSummary[]): Promise<LandingFigures> {
-  const certifiedTonnes = processors.reduce((sum, p) => sum + p.checks_only.certified_t, 0);
-  const unverifiableTonnes = processors.reduce(
-    (sum, p) => sum + (p.full ?? p.checks_only).unverifiable_t,
-    0,
-  );
-  const documentLists = await Promise.all(
-    processors.map((p) => getProcessorDocuments(p.processor_id).catch(() => null)),
-  );
-  const documentsRead = documentLists.reduce((sum, d) => sum + (d?.documents.length ?? 0), 0);
+/** T13.6: a thin reshape of GET /stats into the shape HeroScene/ProofStrip
+ * already render — certified/unverifiable tonnes and the FY-to-date label
+ * are computed server-side now (app/store/cache.py's get_stats), using
+ * the exact same formula this function used to compute client-side (Σ
+ * checks_only.certified_t, Σ (full ?? checks_only).unverifiable_t) — one
+ * source, not two that can drift. Returns null on any /stats failure
+ * (getStats already swallows the error) so the landing page can hide
+ * these figures gracefully instead of breaking — HeroScene/ProofStrip
+ * both render nothing for a null figures prop. */
+export async function getLandingFigures(): Promise<LandingFigures | null> {
+  const stats = await getStats();
+  if (!stats) return null;
 
   return {
-    processorsVerified: processors.length,
-    certifiedTonnes,
-    unverifiableTonnes,
-    documentsRead,
+    processorsVerified: stats.processors_count,
+    certifiedTonnes: stats.certified_t_total,
+    unverifiableTonnes: stats.unverifiable_t_total,
+    documentsRead: stats.documents_read,
+    fyLabel: stats.fy_label,
+    fieldReadAccuracyPct: stats.field_read_accuracy_pct,
+    fieldReadAccuracyValue: stats.field_read_accuracy_value,
   };
 }
 

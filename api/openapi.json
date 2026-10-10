@@ -1534,6 +1534,128 @@
         "title": "StageAssessment",
         "type": "object"
       },
+      "StatsResponse": {
+        "description": "GET /stats \u2014 cached at startup preload, never queried live per\nrequest (app/store/cache.py's get_stats). certified_t_total/\nunverifiable_t_total use the same formula the landing page's hero and\nproof strip already showed (\u03a3 checks_only.certified_t, \u03a3 (full ??\nchecks_only).unverifiable_t), moved server-side. field_read_* are all\nNone together until the developer runs\nscripts/report_extraction_mismatches.py --write-bq \u2014 never a fallback\nconstant.",
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "certified_t_total": {
+            "title": "Certified T Total",
+            "type": "number"
+          },
+          "documents_read": {
+            "title": "Documents Read",
+            "type": "integer"
+          },
+          "field_read_accuracy_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Read Accuracy Pct"
+          },
+          "field_read_accuracy_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Read Accuracy Value"
+          },
+          "field_read_correct": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Read Correct"
+          },
+          "field_read_dataset_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Read Dataset Label"
+          },
+          "field_read_total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Read Total"
+          },
+          "fields_read": {
+            "title": "Fields Read",
+            "type": "integer"
+          },
+          "fy_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fy Label"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "processors_count": {
+            "title": "Processors Count",
+            "type": "integer"
+          },
+          "unverifiable_t_total": {
+            "title": "Unverifiable T Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "meta",
+          "processors_count",
+          "documents_read",
+          "fields_read",
+          "certified_t_total",
+          "unverifiable_t_total",
+          "as_of",
+          "fy_label",
+          "field_read_accuracy_pct",
+          "field_read_accuracy_value",
+          "field_read_correct",
+          "field_read_total",
+          "field_read_dataset_label"
+        ],
+        "title": "StatsResponse",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2268,6 +2390,25 @@
           }
         },
         "summary": "Get Site Image"
+      }
+    },
+    "/stats": {
+      "get": {
+        "description": "T13.6: one cached read (app/store/cache.py's get_stats, warmed at\nstartup preload \u2014 see preload()'s own docstring) backing the landing\npage's hero/proof-strip figures and the field-read-accuracy tile. No\nBigQuery query at request time, same as every other route here.",
+        "operationId": "get_stats_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Stats"
       }
     }
   }
