@@ -320,9 +320,19 @@ def get_stats() -> dict:
     """T13.6: one cached read (app/store/cache.py's get_stats, warmed at
     startup preload — see preload()'s own docstring) backing the landing
     page's hero/proof-strip figures and the field-read-accuracy tile. No
-    BigQuery query at request time, same as every other route here."""
+    BigQuery query at request time, same as every other route here.
+    get_stats already isolates the one sub-metric (field-read-accuracy)
+    that does issue a live BigQuery read, so a failure here means the
+    core totals themselves broke — logged clearly rather than left to
+    FastAPI's default 500, since the web client swallows this into a
+    silent "figures hidden" state (lib/api.ts's getStats())."""
     seed, facts_source = settings.default_seed, settings.default_facts_source
-    return {"meta": _meta(), **cache.get_stats(seed, facts_source)}
+    try:
+        stats = cache.get_stats(seed, facts_source)
+    except Exception:
+        logger.exception("GET /stats failed for seed=%s facts_source=%s", seed, facts_source)
+        raise HTTPException(status_code=500, detail="stats unavailable") from None
+    return {"meta": _meta(), **stats}
 
 
 @app.get("/alerts", response_model=AlertsResponse)

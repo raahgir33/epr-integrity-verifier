@@ -395,6 +395,37 @@ def test_get_stats_field_read_accuracy_none_without_an_eval_metrics_row(monkeypa
     assert stats["field_read_dataset_label"] is None
 
 
+def test_get_stats_degrades_accuracy_fields_only_when_eval_metrics_fails(monkeypatch, caplog):
+    """A live BigQuery failure reading eval_metrics (outage, stale deploy
+    missing the table, etc.) must not take the whole response down —
+    only the five field_read_* fields degrade to None, the same as a
+    merely-absent row; every other figure (the totals every tile but the
+    accuracy one needs) still computes normally, and the failure is
+    logged."""
+    monkeypatch.setattr(
+        cache.bq,
+        "fetch_eval_metrics",
+        lambda client, dataset_label, metric: (_ for _ in ()).throw(RuntimeError("bq unavailable")),
+    )
+
+    with caplog.at_level("ERROR"):
+        stats = cache.get_stats(SEED, FACTS_SOURCE)
+
+    assert stats["field_read_accuracy_pct"] is None
+    assert stats["field_read_accuracy_value"] is None
+    assert stats["field_read_correct"] is None
+    assert stats["field_read_total"] is None
+    assert stats["field_read_dataset_label"] is None
+
+    processors = cache.list_processors(SEED, FACTS_SOURCE)
+    expected_certified = sum(p["checks_only"]["certified_t"] for p in processors)
+    assert stats["certified_t_total"] == expected_certified
+    assert stats["processors_count"] == len(processors)
+    assert stats["documents_read"] == len(FAKE_DB["documents"])
+
+    assert any("field-read-accuracy unavailable" in record.message for record in caplog.records)
+
+
 def test_get_stats_totals_recompute_after_a_simulated_demo_batch(monkeypatch):
     """A live demo run adds a certificate/shipment to one processor and
     rewrites its assessment rows, then calls cache.invalidate(None) +

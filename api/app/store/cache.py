@@ -457,7 +457,13 @@ def get_stats(seed: int, facts_source: str) -> dict:
     source, not two that can drift. field_read_accuracy_* come from
     _eval_metrics and are all None together until the developer runs
     scripts/report_extraction_mismatches.py --write-bq (no fallback
-    constant — see that script's docstring)."""
+    constant — see that script's docstring), OR if the eval_metrics read
+    itself fails (BQ outage, stale deploy missing the table, etc.) — that
+    failure is isolated below so it degrades only the accuracy fields,
+    the same way a merely-absent row already does, rather than taking
+    the whole response (and the totals every other tile needs) down with
+    it. Same failure-isolation shape as run_pipeline.py's per-processor
+    memo guard."""
     processors = list_processors(seed, facts_source)
     certified_t_total = sum(p["checks_only"]["certified_t"] for p in processors)
     unverifiable_t_total = sum(
@@ -468,7 +474,13 @@ def get_stats(seed: int, facts_source: str) -> dict:
     periods = [c["period_month"] for c in certificates if c["period_month"]]
     as_of_month = max(periods) if periods else None
 
-    accuracy_rows = _eval_metrics(seed, "key_field_read_accuracy")
+    try:
+        accuracy_rows = _eval_metrics(seed, "key_field_read_accuracy")
+    except Exception:
+        logger.exception(
+            "get_stats: field-read-accuracy unavailable for seed=%s, degrading to null", seed
+        )
+        accuracy_rows = []
     accuracy = accuracy_rows[0] if accuracy_rows else None
     # format_accuracy_pct's truncation (never rounds up to 100.00%) is the
     # single source of truth for this number — parsed back out of its own

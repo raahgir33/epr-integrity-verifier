@@ -24,7 +24,7 @@ export function ProofStrip({ figures }: { figures: LandingFigures | null }) {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4 text-center sm:grid-cols-3 lg:grid-cols-5">
         <MetricTile countUp value={figures.processorsVerified} label="Processors verified" />
         <MetricTile
           countUp

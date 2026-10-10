@@ -55,3 +55,21 @@ def test_stats_field_read_accuracy_fields_are_none_without_an_eval_metrics_row(
     assert body["field_read_correct"] is None
     assert body["field_read_total"] is None
     assert body["field_read_dataset_label"] is None
+
+
+def test_stats_whole_call_failure_returns_500_and_logs(api_client, monkeypatch, caplog):
+    """cache.get_stats already isolates the one sub-metric that issues a
+    live BigQuery read (see test_cache.py's
+    test_get_stats_degrades_accuracy_fields_only_when_eval_metrics_fails),
+    so a failure reaching the route means a core computation itself broke
+    — the route must log it clearly and return a proper 500, not fall
+    into FastAPI's default handler silently."""
+    monkeypatch.setattr(
+        cache, "get_stats", lambda seed, fs: (_ for _ in ()).throw(RuntimeError("boom"))
+    )
+
+    with caplog.at_level("ERROR"):
+        response = api_client.get("/stats")
+
+    assert response.status_code == 500
+    assert any("GET /stats failed" in record.message for record in caplog.records)
