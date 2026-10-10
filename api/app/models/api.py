@@ -274,13 +274,38 @@ class PortfolioResponse(BaseModel):
     certificates: list[PortfolioCertificateRow]
 
 
-# ---------- evaluation (explicit empty state until T14) ----------
+# ---------- evaluation (T14) ----------
+
+
+class EvalMetricRow(BaseModel):
+    metric: str
+    numerator: int
+    denominator: int
+    value: float | None  # numerator/denominator; None when denominator is 0
+    computed_at: datetime
 
 
 class EvaluationResponse(BaseModel):
+    """GET /evaluation. `heldout` is the headline — docs/DATA_SPEC.md §7's
+    metrics against the seed-7 test set, `dataset_label="heldout-seed7"` in
+    BigQuery's eval_metrics table. `dev` is seed 42's own numbers — shown
+    secondary and clearly labelled "development set", per docs/DATA_SPEC.md
+    §7's protocol line ("rules tuned on it") — only whatever metrics
+    scripts/report_extraction_mismatches.py --write-bq has actually written
+    there (today just key_field_read_accuracy; asymmetric by design, not a
+    bug). `misses` is derived straight from `heldout`'s own rows
+    (app/eval/evaluate.py's describe_misses) — never a separate hand-written
+    list. `available` is false only when no heldout row exists at all (the
+    developer hasn't run scripts/evaluate.py yet)."""
+
     meta: Meta
     available: bool = False
-    message: str = "Evaluation metrics are not yet available — see docs/BUILD_PLAN.md T14."
+    message: str | None = "Evaluation metrics are not yet available — see docs/BUILD_PLAN.md T14."
+    heldout_dataset_label: str | None = None
+    heldout: list[EvalMetricRow] = []
+    dev_dataset_label: str | None = None
+    dev: list[EvalMetricRow] = []
+    misses: list[str] = []
 
 
 # ---------- site-wide stats (T13.6) ----------

@@ -205,3 +205,52 @@ Your own account needs Cloud Run Source Developer, Service Usage Consumer, and S
 | API service | epr-api | | URL: |
 | Web service | epr-web | | URL: |
 | Earth Engine registration | | | status: |
+
+## 11. T14 — held-out evaluation (seed 7)
+
+Run in this order, from `api/`. Steps (b)-(e) point at a SEPARATE dataset/buckets (`epr_eval`) so nothing from seed 7 reaches the live `epr` dataset or the deployed dashboard — only the final `evaluate.py` step writes across into the live `epr.eval_metrics` table (by design: it's the table `/evaluation` actually reads). **The `eval-freeze` tag already exists** (commit `912641d`) — no action needed there.
+
+```bash
+cd api
+
+# (a) one-time: create the eval dataset + two eval-only buckets
+bq --location=asia-south1 mk --dataset PROJECT_ID:epr_eval
+gcloud storage buckets create gs://PROJECT_ID-epr-eval-dossiers  --location=asia-south1 --uniform-bucket-level-access
+gcloud storage buckets create gs://PROJECT_ID-epr-eval-artifacts --location=asia-south1 --uniform-bucket-level-access
+
+# (b) generate seed 7 locally — free, no cloud calls, uses the frozen generator
+uv run python scripts/generate_dossiers.py --seed 7
+
+# (c) everything from here through (e) targets epr_eval — export once per shell session
+export BQ_DATASET=epr_eval
+export DOSSIER_BUCKET=PROJECT_ID-epr-eval-dossiers
+export ARTIFACT_BUCKET=PROJECT_ID-epr-eval-artifacts
+
+uv run python scripts/deploy/create_tables.py          # creates every table fresh in epr_eval
+uv run python scripts/load_dossiers.py --seed 7        # uploads documents, registers rows
+
+# (d) pipeline — extraction is real Gemini + Vertex; normalize/checks are free/deterministic
+uv run python scripts/run_pipeline.py --seed 7 --stage extract                                 # ~$8 (measured rate: 714 docs cost $8.07 on seed 42, docs/PROGRESS.md T6)
+uv run python scripts/run_pipeline.py --seed 7 --stage normalize --facts-source truth           # $0
+uv run python scripts/run_pipeline.py --seed 7 --stage normalize --facts-source extracted       # $0
+uv run python scripts/run_pipeline.py --seed 7 --stage site                                     # $0 (Earth Engine — API quota only)
+uv run python scripts/run_pipeline.py --seed 7 --stage checks --facts-source truth              # $0
+uv run python scripts/run_pipeline.py --seed 7 --stage checks --facts-source extracted          # $0
+uv run python scripts/run_pipeline.py --seed 7 --stage agents --facts-source truth              # ~$3 (measured rate: $2.90/run, docs/PROGRESS.md T10)
+
+# (e) 3 independent extracted-facts agent runs in one invocation — the last one
+#     becomes the official stage="full"/extracted row; all 3 are also saved locally
+#     (data/synthetic/seed-7/agent_probe_runs/) for the stability/cost/latency metrics
+uv run python scripts/probe_agent_thinking.py --seed 7 --facts-source extracted \
+    --configs no_thinking --runs-per-config 3                                                   # ~$9 (3 x ~$2.90)
+
+# (f) compute + write summary metrics — UNSET the epr_eval env vars first, so this
+#     script's own "live dataset" (where it writes eval_metrics) resolves to your
+#     normal epr dataset from .env, not epr_eval
+unset BQ_DATASET DOSSIER_BUCKET ARTIFACT_BUCKET
+uv run python scripts/evaluate.py --seed 7 --eval-dataset epr_eval
+```
+
+**Expected total cost: ~$19-20** (extraction ~$8 + 4 agent-stage runs ~$3+$9 ≈ $12; everything else deterministic/local/free). This is a projection from seed-42 measured rates, not a guarantee — compare against `uv run python scripts/cost_report.py` (run with `BQ_DATASET=epr_eval` to scope it to this evaluation's own `llm_calls`) once it's done, and paste the actual total back.
+
+`scripts/evaluate.py` prints a summary table and reports how many `eval_metrics` rows it wrote (`dataset_label="heldout-seed7"`) to the live `epr.eval_metrics` table — `/evaluation` reads them from there directly, no redeploy needed.

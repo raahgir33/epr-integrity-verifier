@@ -1,16 +1,75 @@
-"""Tests for GET /evaluation (still an explicit empty state — eval_results
-doesn't exist until T14, so it never touches app/store/cache.py at all)
+"""Tests for GET /evaluation (T14: cache.get_evaluation is monkeypatched
+directly, same pattern as test_api_stats.py's /stats tests — the route
+itself does no BigQuery work, so there's nothing to isolate at this layer)
 and GET /alerts (T13: real now, reads through cache.get_alerts)."""
 
+from app.store import cache
 
-def test_evaluation_returns_explicit_empty_state(api_client):
+
+def test_evaluation_returns_unavailable_state_when_no_heldout_rows(api_client, monkeypatch):
+    monkeypatch.setattr(
+        cache,
+        "get_evaluation",
+        lambda: {
+            "available": False,
+            "message": "Held-out evaluation metrics are not yet available — see "
+            "docs/BUILD_PLAN.md T14.",
+            "heldout_dataset_label": None,
+            "heldout": [],
+            "dev_dataset_label": None,
+            "dev": [],
+            "misses": [],
+        },
+    )
+
     response = api_client.get("/evaluation")
 
     assert response.status_code == 200
     body = response.json()
     assert body["available"] is False
     assert "T14" in body["message"]
+    assert body["heldout"] == []
     assert body["meta"] == {"seed": 42, "facts_source": "truth"}
+
+
+def test_evaluation_returns_heldout_and_dev_rows_when_available(api_client, monkeypatch):
+    fake_evaluation = {
+        "available": True,
+        "message": None,
+        "heldout_dataset_label": "heldout-seed7",
+        "heldout": [
+            {
+                "metric": "issue_recall_F3_truth",
+                "numerator": 0,
+                "denominator": 1,
+                "value": 0.0,
+                "computed_at": "2026-10-11T00:00:00+00:00",
+            }
+        ],
+        "dev_dataset_label": "dev-seed42",
+        "dev": [
+            {
+                "metric": "key_field_read_accuracy",
+                "numerator": 5521,
+                "denominator": 5523,
+                "value": 5521 / 5523,
+                "computed_at": "2026-10-10T00:00:00+00:00",
+            }
+        ],
+        "misses": ["F3 quantity inflation: detected 0/1 planted instance(s) under truth facts."],
+    }
+    monkeypatch.setattr(cache, "get_evaluation", lambda: dict(fake_evaluation))
+
+    response = api_client.get("/evaluation")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["available"] is True
+    assert body["heldout_dataset_label"] == "heldout-seed7"
+    assert body["heldout"][0]["metric"] == "issue_recall_F3_truth"
+    assert body["dev_dataset_label"] == "dev-seed42"
+    assert body["dev"][0]["metric"] == "key_field_read_accuracy"
+    assert body["misses"] == fake_evaluation["misses"]
 
 
 def test_alerts_returns_empty_list_when_none_stored(api_client, monkeypatch):

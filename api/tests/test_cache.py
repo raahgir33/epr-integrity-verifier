@@ -233,9 +233,22 @@ def _fake_fetch_rows(monkeypatch):
             ]
         )
 
+    def fake_eval_metrics_for_label(client, dataset_label):
+        return copy.deepcopy(
+            sorted(
+                (
+                    row
+                    for row in FAKE_DB.get("eval_metrics", [])
+                    if row["dataset_label"] == dataset_label
+                ),
+                key=lambda row: row["metric"],
+            )
+        )
+
     monkeypatch.setattr(cache, "_fetch_rows", fake)
     monkeypatch.setattr(cache.bq, "get_client", lambda: object())
     monkeypatch.setattr(cache.bq, "fetch_eval_metrics", fake_eval_metrics)
+    monkeypatch.setattr(cache.bq, "fetch_eval_metrics_for_label", fake_eval_metrics_for_label)
     # Standing rule: never hit real GCP. preload() (A2) now also calls
     # get_site_image_bytes for every processor, which — without this —
     # would call the REAL gcs.download_bytes against this environment's
@@ -426,6 +439,59 @@ def test_get_stats_degrades_accuracy_fields_only_when_eval_metrics_fails(monkeyp
     assert any("field-read-accuracy unavailable" in record.message for record in caplog.records)
 
 
+def test_get_evaluation_unavailable_when_no_heldout_rows():
+    evaluation = cache.get_evaluation()
+    assert evaluation["available"] is False
+    assert evaluation["heldout"] == []
+    assert evaluation["heldout_dataset_label"] is None
+    assert "T14" in evaluation["message"]
+    # The dev row already in FAKE_DB is still surfaced, even while heldout
+    # is empty — the two reads are independent.
+    assert evaluation["dev_dataset_label"] == f"dev-seed{SEED}"
+    assert evaluation["dev"][0]["metric"] == "key_field_read_accuracy"
+    assert evaluation["misses"] == []
+
+
+def test_get_evaluation_returns_heldout_rows_and_derived_misses(monkeypatch):
+    heldout_rows = FAKE_DB.get("eval_metrics", []) + [
+        {
+            "dataset_label": "heldout-seed7",
+            "metric": "issue_recall_F3_truth",
+            "numerator": 0,
+            "denominator": 1,
+            "computed_at": datetime.datetime(2026, 10, 11, 0, 0, tzinfo=datetime.UTC),
+            "source_script": "scripts/evaluate.py",
+            "git_commit": "def456",
+        }
+    ]
+    monkeypatch.setitem(FAKE_DB, "eval_metrics", heldout_rows)
+
+    evaluation = cache.get_evaluation()
+
+    assert evaluation["available"] is True
+    assert evaluation["heldout_dataset_label"] == "heldout-seed7"
+    assert evaluation["heldout"][0]["metric"] == "issue_recall_F3_truth"
+    assert evaluation["heldout"][0]["value"] == 0.0
+    assert len(evaluation["misses"]) == 1
+    assert "F3 quantity inflation" in evaluation["misses"][0]
+
+
+def test_get_evaluation_degrades_to_empty_on_bigquery_failure(monkeypatch, caplog):
+    monkeypatch.setattr(
+        cache.bq,
+        "fetch_eval_metrics_for_label",
+        lambda client, dataset_label: (_ for _ in ()).throw(RuntimeError("bq unavailable")),
+    )
+
+    with caplog.at_level("ERROR"):
+        evaluation = cache.get_evaluation()
+
+    assert evaluation["available"] is False
+    assert evaluation["heldout"] == []
+    assert evaluation["dev"] == []
+    assert any("metrics unavailable" in record.message for record in caplog.records)
+
+
 def test_get_stats_totals_recompute_after_a_simulated_demo_batch(monkeypatch):
     """A live demo run adds a certificate/shipment to one processor and
     rewrites its assessment rows, then calls cache.invalidate(None) +
@@ -604,6 +670,8 @@ def test_preload_populates_every_expected_key():
         f"alerts:{SEED}:{FACTS_SOURCE}",
         f"demo_batches:{SEED}",
         f"eval_metrics:dev-seed{SEED}:key_field_read_accuracy",
+        "eval_metrics_label:heldout-seed7",
+        f"eval_metrics_label:dev-seed{SEED}",
     ]
     for key in expected_prefixes:
         assert key in cache._store, f"missing cache key after preload: {key}"

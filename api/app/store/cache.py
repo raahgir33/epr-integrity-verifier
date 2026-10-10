@@ -33,7 +33,7 @@ from app.checks.duplicates import find_duplicate_keys
 from app.checks.mass_balance import verified_inbound_tonnes
 from app.checks.params import CHECK_SOURCE_LABELS
 from app.config import settings
-from app.eval.evaluate import format_accuracy_pct
+from app.eval.evaluate import describe_misses, format_accuracy_pct
 from app.models.checks import CheckResult
 from app.store import bq, gcs
 
@@ -435,6 +435,67 @@ def _eval_metrics(seed: int, metric: str) -> list[dict]:
         lambda: bq.fetch_eval_metrics(bq.get_client(), dataset_label, metric),
         ttl=NO_EXPIRY,
     )
+
+
+def _eval_metric_row(row: dict) -> dict:
+    return {
+        "metric": row["metric"],
+        "numerator": row["numerator"],
+        "denominator": row["denominator"],
+        "value": row["numerator"] / row["denominator"] if row["denominator"] else None,
+        "computed_at": row["computed_at"],
+    }
+
+
+def get_evaluation() -> dict:
+    """GET /evaluation's single cached read (T14): "heldout-seed7" (the
+    headline) alongside whatever "dev-seed<default_seed>" rows already
+    exist (today just key_field_read_accuracy, written by scripts/
+    report_extraction_mismatches.py --write-bq — asymmetric by design, not
+    a bug; computing the fuller metric set for the dev set too is out of
+    scope for T14). Each read is isolated the same way get_stats isolates
+    its own eval_metrics read: a BigQuery failure degrades that half to an
+    empty list rather than taking the whole response down. `misses` is
+    derived straight from the heldout rows themselves (app/eval/
+    evaluate.py's describe_misses) — never a separate hand-written list."""
+    heldout_label = "heldout-seed7"
+    dev_label = f"dev-seed{settings.default_seed}"
+
+    try:
+        heldout_rows = get_or_load(
+            f"eval_metrics_label:{heldout_label}",
+            lambda: bq.fetch_eval_metrics_for_label(bq.get_client(), heldout_label),
+            ttl=NO_EXPIRY,
+        )
+    except Exception:
+        logger.exception("get_evaluation: heldout metrics unavailable, degrading to empty")
+        heldout_rows = []
+
+    try:
+        dev_rows = get_or_load(
+            f"eval_metrics_label:{dev_label}",
+            lambda: bq.fetch_eval_metrics_for_label(bq.get_client(), dev_label),
+            ttl=NO_EXPIRY,
+        )
+    except Exception:
+        logger.exception("get_evaluation: dev-set metrics unavailable, degrading to empty")
+        dev_rows = []
+
+    available = bool(heldout_rows)
+    return {
+        "available": available,
+        "message": (
+            None
+            if available
+            else "Held-out evaluation metrics are not yet available — run "
+            "scripts/evaluate.py --seed 7 (see docs/BUILD_PLAN.md T14)."
+        ),
+        "heldout_dataset_label": heldout_label if heldout_rows else None,
+        "heldout": [_eval_metric_row(r) for r in heldout_rows],
+        "dev_dataset_label": dev_label if dev_rows else None,
+        "dev": [_eval_metric_row(r) for r in dev_rows],
+        "misses": describe_misses(heldout_rows),
+    }
 
 
 def _fy_label(as_of_month: str) -> str:
@@ -1166,6 +1227,7 @@ def preload(seed: int, facts_source: str) -> None:
     _alerts(seed, facts_source)
     _demo_batches(seed)
     get_stats(seed, facts_source)
+    get_evaluation()
 
     for p in processors:
         pid = p["processor_id"]

@@ -24,11 +24,17 @@ BigQuery, Cloud Storage). Requires --stage normalize/checks/site to have
 already been run for this seed (agent context is read from their output
 tables) — and, for --facts-source extracted, --stage extract too.
 
+--seed defaults to 42 (the development set); T14's held-out evaluation
+passes --seed 7 — every output path (agent_probe_runs/) and BigQuery
+write (agent_runs/assessments) is seed-scoped, so the two never collide.
+
 Usage: uv run python scripts/probe_agent_thinking.py
        uv run python scripts/probe_agent_thinking.py --processors PWP-01,PWP-03,PWP-07 \\
            --configs no_thinking --runs-per-config 1   # canary, before the full acceptance pair
        uv run python scripts/probe_agent_thinking.py --facts-source extracted \\
            --configs no_thinking --runs-per-config 2
+       uv run python scripts/probe_agent_thinking.py --seed 7 --facts-source extracted \\
+           --configs no_thinking --runs-per-config 3   # T14: 3 independent runs for stability
 """
 
 import argparse
@@ -44,6 +50,24 @@ from app.agents.scorer import (
     score_processor,
 )
 from app.checks import params
+from app.eval.evaluate import (
+    cited_shipment_ids as _cited_shipment_ids,
+)
+from app.eval.evaluate import (
+    f5_processor_ids as _f5_processor_ids,
+)
+from app.eval.evaluate import (
+    f7_neutral_shipment_ids as _f7_neutral_shipment_ids,
+)
+from app.eval.evaluate import (
+    ground_truth_processor as _ground_truth_processor,
+)
+from app.eval.evaluate import (
+    ground_truth_true_positive_shipment_ids as _ground_truth_true_positive_shipment_ids,
+)
+from app.eval.evaluate import (
+    precision_recall_f1 as _precision_recall_f1,
+)
 from app.ingest.normalize import EXTRACTED, TRUTH
 from app.llm import GeminiClient
 from app.models.agent import Objection
@@ -53,50 +77,8 @@ from scripts.cost_report import estimate_cost_usd
 from scripts.run_pipeline import build_processor_context, fetch_agent_inputs, load_ground_truth
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SEED = 42
 CONFIGS = [("no_thinking", None), ("low_thinking", "low")]
 RUNS_PER_CONFIG = 2
-OUTPUT_DIR = REPO_ROOT / "data" / "synthetic" / f"seed-{SEED}" / "agent_probe_runs"
-
-
-def _ground_truth_processor(ground_truth: dict, processor_id: str) -> dict:
-    return next(p for p in ground_truth["processors"] if p["processor_id"] == processor_id)
-
-
-def _ground_truth_true_positive_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
-    """F8 and F9 are both agent-only (no deterministic check sees either),
-    so both count as true positives for this shipment-citation metric —
-    H5's shipment carries neither flag, so it falls out as a false
-    citation through the same cited-minus-true-positive arithmetic
-    H1-H4 already rely on, with no extra special-casing needed."""
-    gt_processor = _ground_truth_processor(ground_truth, processor_id)
-    return {s["shipment_id"] for s in gt_processor["shipments"] if s.get("is_f8") or s.get("is_f9")}
-
-
-def _cited_shipment_ids(processor_record: dict) -> set[str]:
-    """Shipments cited by a confirmed finding, for the F8 precision/
-    recall metric — excluding concurs_with_check_findings (docs/
-    PROGRESS.md): a finding that only restates what a deterministic check
-    already caught is neutral for this metric, neither a true nor a
-    false F8 citation, the same treatment F5/F7 neutrality already gets
-    elsewhere in this module."""
-    concurs_with_check = processor_record["concurs_with_check_findings"]
-    return {
-        sid
-        for finding in processor_record["confirmed_findings"]
-        if finding not in concurs_with_check
-        for sid in finding["cited_shipment_ids"]
-    }
-
-
-def _precision_recall_f1(cited: set[str], true_positive: set[str]) -> dict:
-    tp = len(cited & true_positive)
-    fp = len(cited - true_positive)
-    fn = len(true_positive - cited)
-    precision = tp / (tp + fp) if (tp + fp) else 1.0
-    recall = tp / (tp + fn) if (tp + fn) else 1.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
-    return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall, "f1": f1}
 
 
 def run_one(
@@ -198,43 +180,6 @@ def run_one(
         "processors": processors_record,
         "call_log": llm_client.flush_call_log(),
     }
-
-
-def _f5_processor_ids(ground_truth: dict) -> set[str]:
-    """docs/DATA_SPEC.md §7's cited-shipment scoring rule: F5 (ghost site)
-    has no shipment-level manifestation — it's a site-level finding caught
-    by C8 — so any shipment citation the agent produces on an F5 processor
-    is excluded from the F8 precision/recall metric entirely, rather than
-    counted as a false F8 citation."""
-    return {
-        p["processor_id"] for p in ground_truth["processors"] if "F5" in p.get("issue_types", [])
-    }
-
-
-def _f7_target_month(ground_truth_processor: dict) -> str | None:
-    """The seeded F7 low-energy anomaly's month, found from the data
-    itself — the month with minimum kwh in this processor's own
-    energy_monthly — rather than re-deriving the generator's own
-    f7_target_month selection (docs/DATA_SPEC.md §7)."""
-    energy_monthly = ground_truth_processor.get("energy_monthly") or []
-    if not energy_monthly:
-        return None
-    return min(energy_monthly, key=lambda r: r["kwh"])["month"]
-
-
-def _f7_neutral_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
-    """docs/DATA_SPEC.md §7's cited-shipment scoring rule: a citation of a
-    shipment in an F7 processor's own seeded low-energy month is neutral —
-    like F5, it never counts as a false F8 citation — but only that one
-    month's shipments are excluded, not the whole processor: unlike F5,
-    F7 doesn't invalidate every other month's citation-worthiness."""
-    gt_processor = _ground_truth_processor(ground_truth, processor_id)
-    if "F7" not in gt_processor.get("issue_types", []):
-        return set()
-    target_month = _f7_target_month(gt_processor)
-    if target_month is None:
-        return set()
-    return {s["shipment_id"] for s in gt_processor["shipments"] if s.get("month") == target_month}
 
 
 def compute_run_metrics(run_record: dict, ground_truth: dict) -> dict:
@@ -341,7 +286,7 @@ def _attempts_from_record(record: dict) -> list[dict]:
     return [{"attempt": 1, "trail": record["trail"]}]
 
 
-def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
+def _write_run_to_bigquery(bq_client, run_record: dict, seed: int) -> None:
     """Same shape/idempotency as scripts/run_pipeline.py's run_agents() —
     deliberately duplicated here only for the write, not the fetch (the
     fetch is already shared via fetch_agent_inputs/build_processor_context).
@@ -356,7 +301,7 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
             for step in attempt["trail"]:
                 agent_run_rows.append(
                     {
-                        "seed": SEED,
+                        "seed": seed,
                         "facts_source": facts_source,
                         "processor_id": pid,
                         "attempt": attempt["attempt"],
@@ -378,7 +323,7 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
                 )
         assessment_rows.append(
             {
-                "seed": SEED,
+                "seed": seed,
                 "facts_source": facts_source,
                 "stage": "full",
                 "computed_at": run_record["computed_at"],
@@ -387,9 +332,9 @@ def _write_run_to_bigquery(bq_client, run_record: dict) -> None:
             }
         )
 
-    bq.delete_by_seed_and_source(bq_client, "agent_runs", SEED, facts_source)
+    bq.delete_by_seed_and_source(bq_client, "agent_runs", seed, facts_source)
     bq.load_rows(bq_client, "agent_runs", agent_run_rows)
-    bq.delete_assessments_by_stage(bq_client, SEED, facts_source, "full")
+    bq.delete_assessments_by_stage(bq_client, seed, facts_source, "full")
     bq.load_rows(bq_client, "assessments", assessment_rows)
 
 
@@ -439,7 +384,7 @@ def _print_every_finding(all_runs: list[dict]) -> None:
                 _print_finding(f, "withdrawn (trail only, no scoring effect)")
 
 
-def rescore_and_write(run_path: Path, inputs: dict, gcs_client, bq_client) -> dict:
+def rescore_and_write(run_path: Path, inputs: dict, gcs_client, bq_client, seed: int) -> dict:
     """Re-applies classify_confirmed_findings (a scoring-rule change —
     docs/PROGRESS.md's concurs-with-check rule) to an already-saved run's
     confirmed_findings, against this processor's CURRENT check_results —
@@ -501,34 +446,40 @@ def rescore_and_write(run_path: Path, inputs: dict, gcs_client, bq_client) -> di
         )
 
     run_record["computed_at"] = datetime.now(UTC).isoformat()
-    run_record["metrics"] = compute_run_metrics(run_record, load_ground_truth(SEED))
+    run_record["metrics"] = compute_run_metrics(run_record, load_ground_truth(seed))
     run_path.write_text(json.dumps(run_record, indent=2, default=str), encoding="utf-8")
     print(f"Rescored, saved: {run_path}")
-    _write_run_to_bigquery(bq_client, run_record)
+    _write_run_to_bigquery(bq_client, run_record, seed)
     print("Written to BigQuery as stage='full'.")
     return run_record
 
 
-def _resolve_rescore_path(raw: str) -> Path:
+def _resolve_rescore_path(raw: str, output_dir: Path) -> Path:
     """--rescore accepts a bare filename or a path; resolved against the
     current working directory first (so an explicit relative/absolute
-    path still works), then against OUTPUT_DIR (computed from this
-    script's own location, not the working directory) so a bare filename
-    like "no_thinking_run2.json" works regardless of where this script
-    is invoked from."""
+    path still works), then against output_dir (this seed's own
+    agent_probe_runs directory) so a bare filename like
+    "no_thinking_run2.json" works regardless of where this script is
+    invoked from."""
     as_given = Path(raw)
     if as_given.exists():
         return as_given
-    candidate = OUTPUT_DIR / as_given.name
+    candidate = output_dir / as_given.name
     if candidate.exists():
         return candidate
     raise FileNotFoundError(
-        f"--rescore {raw!r} not found as given ({as_given}) or under OUTPUT_DIR ({candidate})"
+        f"--rescore {raw!r} not found as given ({as_given}) or under output_dir ({candidate})"
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Default: 42 (the development set). T14's held-out evaluation passes --seed 7.",
+    )
     parser.add_argument(
         "--processors",
         help="Comma-separated processor_ids to restrict this run to (e.g. a canary run "
@@ -561,7 +512,8 @@ def main() -> None:
         help="An already-saved agent_probe_runs/*.json to re-classify under the CURRENT "
         "code (e.g. after a scoring-rule change) and write to BigQuery as stage='full' — "
         "no Gemini call at all, just a local reclassify + a BigQuery write. Takes either a "
-        "bare filename (e.g. no_thinking_run2.json, resolved against OUTPUT_DIR regardless "
+        "bare filename (e.g. no_thinking_run2.json, resolved against this seed's own "
+        "agent_probe_runs directory regardless "
         "of the current working directory) or a path, resolved relative to the current "
         "working directory (run this script from api/, same as every other command here). "
         "Mutually exclusive with running new probes.",
@@ -572,18 +524,23 @@ def main() -> None:
     runs_per_config = args.runs_per_config
     requested_processors = set(args.processors.split(",")) if args.processors else None
 
+    seed = args.seed
+    output_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{seed}" / "agent_probe_runs"
+
     bq_client = bq.get_client()
     gcs_client = gcs.get_client()
-    inputs = fetch_agent_inputs(bq_client, SEED, args.facts_source, processor_filter=None)
+    inputs = fetch_agent_inputs(bq_client, seed, args.facts_source, processor_filter=None)
     if inputs is None:
         print("Nothing to probe — run --stage normalize/checks/site first.")
         return
 
     if args.rescore:
-        rescore_and_write(_resolve_rescore_path(args.rescore), inputs, gcs_client, bq_client)
+        rescore_and_write(
+            _resolve_rescore_path(args.rescore, output_dir), inputs, gcs_client, bq_client, seed
+        )
         return
 
-    ground_truth = load_ground_truth(SEED)
+    ground_truth = load_ground_truth(seed)
     if requested_processors is not None:
         inputs["processors"] = [
             p for p in inputs["processors"] if p["processor_id"] in requested_processors
@@ -592,7 +549,7 @@ def main() -> None:
         if missing:
             print(f"Warning: requested processor(s) not found, skipping: {sorted(missing)}")
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     filename_suffix = "" if args.facts_source == TRUTH else f"_{args.facts_source}"
 
@@ -612,14 +569,14 @@ def main() -> None:
             run_record["cost_usd"] = _run_cost_usd(run_record)
             all_runs.append(run_record)
 
-            out_path = OUTPUT_DIR / f"{config_name}{filename_suffix}_run{run_index}.json"
+            out_path = output_dir / f"{config_name}{filename_suffix}_run{run_index}.json"
             out_path.write_text(json.dumps(run_record, indent=2, default=str), encoding="utf-8")
             print(f"Saved: {out_path}")
 
             # Write as it goes (visible progress on a long run); the
             # winning config's run is re-written at the end if it wasn't
             # the last one written.
-            _write_run_to_bigquery(bq_client, run_record)
+            _write_run_to_bigquery(bq_client, run_record, seed)
 
     print("\n=== Per-run summary ===")
     for run_record in all_runs:
@@ -680,11 +637,11 @@ def main() -> None:
             f"Last run written to BigQuery was {last_written_config!r}, not the winner — "
             "re-writing the winning run now."
         )
-        _write_run_to_bigquery(bq_client, winning_runs[-1])
+        _write_run_to_bigquery(bq_client, winning_runs[-1], seed)
     else:
         print("The winning config's run is already the last one written to BigQuery.")
 
-    summary_path = OUTPUT_DIR / f"summary{filename_suffix}.json"
+    summary_path = output_dir / f"summary{filename_suffix}.json"
     summary = {
         "winner": winner,
         "configs": {

@@ -531,6 +531,21 @@ def fetch_eval_metrics(client: bigquery.Client, dataset_label: str, metric: str)
     return [dict(row) for row in job.result()]
 
 
+def fetch_eval_metrics_for_label(client: bigquery.Client, dataset_label: str) -> list[dict]:
+    """Every metric row for one dataset_label (T14's GET /evaluation reads
+    "heldout-seed7" and "dev-seed<N>" this way) — unlike fetch_eval_metrics
+    above, this doesn't need the caller to know every metric name in
+    advance, so scripts/evaluate.py can add or rename metrics without a
+    matching change here. ORDER BY metric for a stable, readable listing."""
+    table_ref = _table_ref("eval_metrics")
+    query = f"SELECT * FROM `{table_ref}` WHERE dataset_label = @dataset_label ORDER BY metric"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("dataset_label", "STRING", dataset_label)]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    return [dict(row) for row in job.result()]
+
+
 def delete_eval_metrics(client: bigquery.Client, dataset_label: str, metric: str) -> None:
     """eval_metrics' idempotency key is (dataset_label, metric) — same
     two-key-column shape as delete_memos_by_processor — so a rerun of

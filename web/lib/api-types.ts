@@ -4,6 +4,31 @@
  */
 
 export interface paths {
+    "/admin/reset-demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Admin Reset Demo
+         * @description T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a
+         *     Cloud Scheduler nightly job (the deployed container never has
+         *     data/synthetic/ on disk — see app/admin/reset_demo.py). Same
+         *     PUSH_TOKEN gate as the push endpoint. Idempotent: app.admin.
+         *     reset_demo.run_reset_live deletes-then-loads every touched row, so
+         *     calling this twice back-to-back converges to the same state.
+         */
+        post: operations["post_admin_reset_demo_admin_reset_demo_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/alerts": {
         parameters: {
             query?: never;
@@ -138,9 +163,9 @@ export interface paths {
         };
         /**
          * Get Evaluation
-         * @description eval_results isn't in app/store/bq.py's SCHEMAS yet (T14 adds it) —
-         *     this never queries BigQuery at all, so there's no table-not-found
-         *     failure mode to handle.
+         * @description T14: cache.get_evaluation() isolates its own two eval_metrics reads
+         *     (heldout-seed7, dev-seed<N>) — a failure there degrades to an empty/
+         *     unavailable response, same pattern as GET /stats, rather than a 500.
          */
         get: operations["get_evaluation_evaluation_get"];
         put?: never;
@@ -181,7 +206,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health */
+        /**
+         * Health
+         * @description T13.8: deliberately minimal — no version, model, region or project
+         *     ID over the wire. _consistency_status is still computed and logged at
+         *     startup (see lifespan() above) for an operator tailing logs; it's just
+         *     no longer exposed here.
+         */
         get: operations["health_health_get"];
         put?: never;
         post?: never;
@@ -273,7 +304,8 @@ export interface paths {
          *     processor, written by scripts/run_pipeline.py's --stage memo. A
          *     Hindi ("hi") row only exists when generate_hindi_memo's guards
          *     passed; has_hindi tells the caller whether to offer the toggle even
-         *     when they requested "en".
+         *     when they requested "en". T13.8: lang's own validation is now
+         *     FastAPI's (422 on anything else), not a manual 400 check.
          */
         get: operations["get_processor_memo_processors__processor_id__memo_get"];
         put?: never;
@@ -372,6 +404,11 @@ export interface paths {
          *     startup preload — see preload()'s own docstring) backing the landing
          *     page's hero/proof-strip figures and the field-read-accuracy tile. No
          *     BigQuery query at request time, same as every other route here.
+         *     get_stats already isolates the one sub-metric (field-read-accuracy)
+         *     that does issue a live BigQuery read, so a failure here means the
+         *     core totals themselves broke — logged clearly rather than left to
+         *     FastAPI's default 500, since the web client swallows this into a
+         *     silent "figures hidden" state (lib/api.ts's getStats()).
          */
         get: operations["get_stats_stats_get"];
         put?: never;
@@ -548,7 +585,36 @@ export interface components {
             /** Processor Id */
             processor_id: string;
         };
-        /** EvaluationResponse */
+        /** EvalMetricRow */
+        EvalMetricRow: {
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            /** Denominator */
+            denominator: number;
+            /** Metric */
+            metric: string;
+            /** Numerator */
+            numerator: number;
+            /** Value */
+            value: number | null;
+        };
+        /**
+         * EvaluationResponse
+         * @description GET /evaluation. `heldout` is the headline — docs/DATA_SPEC.md §7's
+         *     metrics against the seed-7 test set, `dataset_label="heldout-seed7"` in
+         *     BigQuery's eval_metrics table. `dev` is seed 42's own numbers — shown
+         *     secondary and clearly labelled "development set", per docs/DATA_SPEC.md
+         *     §7's protocol line ("rules tuned on it") — only whatever metrics
+         *     scripts/report_extraction_mismatches.py --write-bq has actually written
+         *     there (today just key_field_read_accuracy; asymmetric by design, not a
+         *     bug). `misses` is derived straight from `heldout`'s own rows
+         *     (app/eval/evaluate.py's describe_misses) — never a separate hand-written
+         *     list. `available` is false only when no heldout row exists at all (the
+         *     developer hasn't run scripts/evaluate.py yet).
+         */
         EvaluationResponse: {
             /**
              * Available
@@ -556,11 +622,30 @@ export interface components {
              */
             available: boolean;
             /**
+             * Dev
+             * @default []
+             */
+            dev: components["schemas"]["EvalMetricRow"][];
+            /** Dev Dataset Label */
+            dev_dataset_label?: string | null;
+            /**
+             * Heldout
+             * @default []
+             */
+            heldout: components["schemas"]["EvalMetricRow"][];
+            /** Heldout Dataset Label */
+            heldout_dataset_label?: string | null;
+            /**
              * Message
              * @default Evaluation metrics are not yet available — see docs/BUILD_PLAN.md T14.
              */
-            message: string;
+            message: string | null;
             meta: components["schemas"]["Meta"];
+            /**
+             * Misses
+             * @default []
+             */
+            misses: string[];
         };
         /** ExtractedFieldOut */
         ExtractedFieldOut: {
@@ -1086,6 +1171,39 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    post_admin_reset_demo_admin_reset_demo_post: {
+        parameters: {
+            query?: {
+                token?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_alerts_alerts_get: {
         parameters: {
             query?: never;
@@ -1438,7 +1556,7 @@ export interface operations {
     get_processor_memo_processors__processor_id__memo_get: {
         parameters: {
             query?: {
-                lang?: string;
+                lang?: "en" | "hi";
             };
             header?: never;
             path: {

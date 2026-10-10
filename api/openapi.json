@@ -437,20 +437,115 @@
         "title": "DocumentsResponse",
         "type": "object"
       },
+      "EvalMetricRow": {
+        "properties": {
+          "computed_at": {
+            "format": "date-time",
+            "title": "Computed At",
+            "type": "string"
+          },
+          "denominator": {
+            "title": "Denominator",
+            "type": "integer"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "numerator": {
+            "title": "Numerator",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "metric",
+          "numerator",
+          "denominator",
+          "value",
+          "computed_at"
+        ],
+        "title": "EvalMetricRow",
+        "type": "object"
+      },
       "EvaluationResponse": {
+        "description": "GET /evaluation. `heldout` is the headline \u2014 docs/DATA_SPEC.md \u00a77's\nmetrics against the seed-7 test set, `dataset_label=\"heldout-seed7\"` in\nBigQuery's eval_metrics table. `dev` is seed 42's own numbers \u2014 shown\nsecondary and clearly labelled \"development set\", per docs/DATA_SPEC.md\n\u00a77's protocol line (\"rules tuned on it\") \u2014 only whatever metrics\nscripts/report_extraction_mismatches.py --write-bq has actually written\nthere (today just key_field_read_accuracy; asymmetric by design, not a\nbug). `misses` is derived straight from `heldout`'s own rows\n(app/eval/evaluate.py's describe_misses) \u2014 never a separate hand-written\nlist. `available` is false only when no heldout row exists at all (the\ndeveloper hasn't run scripts/evaluate.py yet).",
         "properties": {
           "available": {
             "default": false,
             "title": "Available",
             "type": "boolean"
           },
+          "dev": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EvalMetricRow"
+            },
+            "title": "Dev",
+            "type": "array"
+          },
+          "dev_dataset_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dev Dataset Label"
+          },
+          "heldout": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EvalMetricRow"
+            },
+            "title": "Heldout",
+            "type": "array"
+          },
+          "heldout_dataset_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heldout Dataset Label"
+          },
           "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "default": "Evaluation metrics are not yet available \u2014 see docs/BUILD_PLAN.md T14.",
-            "title": "Message",
-            "type": "string"
+            "title": "Message"
           },
           "meta": {
             "$ref": "#/components/schemas/Meta"
+          },
+          "misses": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Misses",
+            "type": "array"
           }
         },
         "required": [
@@ -1780,6 +1875,55 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/admin/reset-demo": {
+      "post": {
+        "description": "T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a\nCloud Scheduler nightly job (the deployed container never has\ndata/synthetic/ on disk \u2014 see app/admin/reset_demo.py). Same\nPUSH_TOKEN gate as the push endpoint. Idempotent: app.admin.\nreset_demo.run_reset_live deletes-then-loads every touched row, so\ncalling this twice back-to-back converges to the same state.",
+        "operationId": "post_admin_reset_demo_admin_reset_demo_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Post Admin Reset Demo Admin Reset Demo Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Admin Reset Demo"
+      }
+    },
     "/alerts": {
       "get": {
         "operationId": "get_alerts_alerts_get",
@@ -1884,6 +2028,7 @@
             "name": "doc_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}(-[A-Z0-9_]+)+-\\d+$",
               "title": "Doc Id",
               "type": "string"
             }
@@ -1924,6 +2069,7 @@
             "name": "doc_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}(-[A-Z0-9_]+)+-\\d+$",
               "title": "Doc Id",
               "type": "string"
             }
@@ -1954,7 +2100,7 @@
     },
     "/evaluation": {
       "get": {
-        "description": "eval_results isn't in app/store/bq.py's SCHEMAS yet (T14 adds it) \u2014\nthis never queries BigQuery at all, so there's no table-not-found\nfailure mode to handle.",
+        "description": "T14: cache.get_evaluation() isolates its own two eval_metrics reads\n(heldout-seed7, dev-seed<N>) \u2014 a failure there degrades to an empty/\nunavailable response, same pattern as GET /stats, rather than a 500.",
         "operationId": "get_evaluation_evaluation_get",
         "responses": {
           "200": {
@@ -2034,6 +2180,7 @@
     },
     "/health": {
       "get": {
+        "description": "T13.8: deliberately minimal \u2014 no version, model, region or project\nID over the wire. _consistency_status is still computed and logged at\nstartup (see lifespan() above) for an operator tailing logs; it's just\nno longer exposed here.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -2061,6 +2208,7 @@
             "name": "brand_id",
             "required": true,
             "schema": {
+              "pattern": "^BRAND-\\d{2}$",
               "title": "Brand Id",
               "type": "string"
             }
@@ -2118,6 +2266,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2157,6 +2306,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2189,7 +2339,7 @@
     },
     "/processors/{processor_id}/memo": {
       "get": {
-        "description": "app/agents/memo.py's clarification memo (flagged processors) or\nverification statement (clean ones) \u2014 exactly one document type per\nprocessor, written by scripts/run_pipeline.py's --stage memo. A\nHindi (\"hi\") row only exists when generate_hindi_memo's guards\npassed; has_hindi tells the caller whether to offer the toggle even\nwhen they requested \"en\".",
+        "description": "app/agents/memo.py's clarification memo (flagged processors) or\nverification statement (clean ones) \u2014 exactly one document type per\nprocessor, written by scripts/run_pipeline.py's --stage memo. A\nHindi (\"hi\") row only exists when generate_hindi_memo's guards\npassed; has_hindi tells the caller whether to offer the toggle even\nwhen they requested \"en\". T13.8: lang's own validation is now\nFastAPI's (422 on anything else), not a manual 400 check.",
         "operationId": "get_processor_memo_processors__processor_id__memo_get",
         "parameters": [
           {
@@ -2197,6 +2347,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2207,6 +2358,10 @@
             "required": false,
             "schema": {
               "default": "en",
+              "enum": [
+                "en",
+                "hi"
+              ],
               "title": "Lang",
               "type": "string"
             }
@@ -2246,6 +2401,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2285,6 +2441,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2364,6 +2521,7 @@
             "name": "processor_id",
             "required": true,
             "schema": {
+              "pattern": "^PWP-\\d{2}$",
               "title": "Processor Id",
               "type": "string"
             }
@@ -2394,7 +2552,7 @@
     },
     "/stats": {
       "get": {
-        "description": "T13.6: one cached read (app/store/cache.py's get_stats, warmed at\nstartup preload \u2014 see preload()'s own docstring) backing the landing\npage's hero/proof-strip figures and the field-read-accuracy tile. No\nBigQuery query at request time, same as every other route here.",
+        "description": "T13.6: one cached read (app/store/cache.py's get_stats, warmed at\nstartup preload \u2014 see preload()'s own docstring) backing the landing\npage's hero/proof-strip figures and the field-read-accuracy tile. No\nBigQuery query at request time, same as every other route here.\nget_stats already isolates the one sub-metric (field-read-accuracy)\nthat does issue a live BigQuery read, so a failure here means the\ncore totals themselves broke \u2014 logged clearly rather than left to\nFastAPI's default 500, since the web client swallows this into a\nsilent \"figures hidden\" state (lib/api.ts's getStats()).",
         "operationId": "get_stats_stats_get",
         "responses": {
           "200": {

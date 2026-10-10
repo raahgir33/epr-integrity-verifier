@@ -18,6 +18,7 @@ export type SiteResponse = components["schemas"]["SiteResponse"];
 export type BrandsResponse = components["schemas"]["BrandsResponse"];
 export type PortfolioResponse = components["schemas"]["PortfolioResponse"];
 export type EvaluationResponse = components["schemas"]["EvaluationResponse"];
+export type EvalMetricRow = components["schemas"]["EvalMetricRow"];
 export type AlertsResponse = components["schemas"]["AlertsResponse"];
 export type AlertOut = components["schemas"]["AlertOut"];
 export type DemoBatchOut = components["schemas"]["DemoBatchOut"];

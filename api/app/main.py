@@ -388,10 +388,10 @@ def get_portfolio(brand_id: BrandIdPath) -> dict:
 
 @app.get("/evaluation", response_model=EvaluationResponse)
 def get_evaluation() -> dict:
-    """eval_results isn't in app/store/bq.py's SCHEMAS yet (T14 adds it) —
-    this never queries BigQuery at all, so there's no table-not-found
-    failure mode to handle."""
-    return {"meta": _meta()}
+    """T14: cache.get_evaluation() isolates its own two eval_metrics reads
+    (heldout-seed7, dev-seed<N>) — a failure there degrades to an empty/
+    unavailable response, same pattern as GET /stats, rather than a 500."""
+    return {"meta": _meta(), **cache.get_evaluation()}
 
 
 @app.get("/stats", response_model=StatsResponse)
