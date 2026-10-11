@@ -71,9 +71,9 @@ export function MetricTile({
         ) : (
           <span className={valueClassName}>{formatter(value)}</span>
         )}
-        {unit ? <span className={`text-sm font-medium ${colors.unit}`}>{unit}</span> : null}
+        {unit ? <span className={`text-lg font-medium ${colors.unit}`}>{unit}</span> : null}
       </div>
-      <div className={`mt-0.5 text-xs font-medium uppercase tracking-wide ${colors.label}`}>{label}</div>
+      <div className={`mt-5 text-md font-medium uppercase tracking-wide ${colors.label}`}>{label}</div>
     </div>
   );
 }

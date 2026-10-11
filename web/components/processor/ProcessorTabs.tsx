@@ -154,7 +154,6 @@ export function ProcessorTabs({
             <StatTile label="Confirmed findings" value={String(confirmedCount)} />
             <StatTile label="Review flags" value={String(reviewCount)} />
           </div>
-          <MonthlyFlowChart rows={monthlyFlow} />
           <div>
             <h2 className="font-display text-base font-semibold text-ink">Findings</h2>
             <div className="mt-3">
@@ -237,13 +236,18 @@ export function ProcessorTabs({
   return (
     <DocumentPanelProvider value={setOpenDocId}>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(420px,35%)] lg:items-start lg:gap-8">
-        <Tabs items={items} value={effectiveTab} onValueChange={handleTabChange} />
-        <ReasoningPanel
-          steps={effectiveReasoningSteps}
-          knownDocIds={knownDocIds}
-          isLive={liveIsActive}
-          currentStageLabel={currentStageLabel}
-        />
+        <div className="flex flex-col gap-6">
+          <MonthlyFlowChart rows={monthlyFlow} />
+          <ReasoningPanel
+            steps={effectiveReasoningSteps}
+            knownDocIds={knownDocIds}
+            isLive={liveIsActive}
+            currentStageLabel={currentStageLabel}
+          />
+        </div>
+        <div className="flex flex-col gap-6">
+          <Tabs items={items} value={effectiveTab} onValueChange={handleTabChange} />
+        </div>
       </div>
 
       <SidePanel

@@ -36,7 +36,7 @@ export function StickyHeader({
   const clean = stage.unverifiable_t <= 0;
 
   return (
-    <div className="card px-4 py-3 lg:sticky lg:top-16 lg:z-30 lg:bg-surface/95 lg:backdrop-blur">
+    <div className="card px-8 py-8 lg:top-20 lg:z-30 lg:bg-surface/95 lg:backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-xs text-ink-muted">{profile.processor_id}</span>

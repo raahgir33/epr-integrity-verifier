@@ -15,6 +15,7 @@ const VARIANT = {
 } as const;
 
 const SIZE = {
+  xl: "rounded-lg px-6 py-4 text-xl",
   lg: "rounded-md px-5 py-3 text-base",
   sm: "rounded-md px-3 py-2.5 text-sm",
   // T13.5c plan, Audit Batch 6: xs stays visually compact (used for

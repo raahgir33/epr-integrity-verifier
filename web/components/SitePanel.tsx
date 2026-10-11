@@ -20,24 +20,24 @@ export function SitePanel({ site, processorId }: { site: SiteResponse; processor
         />
       </div>
 
-      <div className="card mx-auto max-w-full p-4 text-center sm:max-w-[50%]">
+      <div className="card mx-auto max-w-full p-4 text-center">
         <dl className="mx-auto grid max-w-sm grid-cols-3 gap-3 text-sm">
           <div>
-            <dd className="tabular-nums text-center text-ink">{site.building_count}</dd>
-            <dt className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">Buildings</dt>
+            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{site.building_count}</dd>
+            <dt className="mt-2 text-sm uppercase tracking-wide text-ink-muted">Buildings</dt>
           </div>
           <div>
-            <dd className="tabular-nums text-center text-ink">{formatM2(site.total_footprint_m2)}</dd>
-            <dt className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">Footprint</dt>
+            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{formatM2(site.total_footprint_m2)}</dd>
+            <dt className="mt-2 text-sm uppercase font-medium tracking-wide text-ink-muted">Footprint</dt>
           </div>
           <div>
-            <dd className="tabular-nums text-center text-ink">{formatCheckValue("C8", site.measured)}</dd>
-            <dt className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">Capacity / m²</dt>
+            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{formatCheckValue("C8", site.measured)}</dd>
+            <dt className="mt-2 text-sm uppercase font-medium tracking-wide text-ink-muted">Capacity per m²</dt>
           </div>
         </dl>
-        <p className="mt-4 text-sm text-ink">{site.explanation}</p>
-        <p className="mt-3 text-xs text-ink-muted">{site.disclaimer}</p>
-        <p className="mt-1 text-xs text-ink-muted">
+        <p className="mt-4 text-lg text-ink">{site.explanation}</p>
+        <p className="mt-3 text-sm text-ink-muted">{site.disclaimer}</p>
+        <p className="mt-1 text-sm text-ink-muted">
           {site.sentinel_attribution} · {site.open_buildings_attribution}
         </p>
       </div>

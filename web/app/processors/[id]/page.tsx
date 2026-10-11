@@ -91,7 +91,7 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
         hasLiveBatches={ownBatches.length > 0}
       />
 
-      {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null}
+      {/* {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null} */}
 
       <ProcessorLiveRun
         batches={ownBatches}

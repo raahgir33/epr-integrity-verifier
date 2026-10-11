@@ -53,10 +53,10 @@ export default async function LandingPage() {
         <HeroScene figures={figures} />
       </FullBleed>
 
-      <AlertBanner alerts={alerts} />
-      <div id="live-verification" className="scroll-mt-20">
+      <div id="live-verification" className="scroll-mt-16">
         <RunLiveVerification batches={batches} />
       </div>
+      <AlertBanner alerts={alerts} />
 
       <ProofStrip figures={figures} />
 

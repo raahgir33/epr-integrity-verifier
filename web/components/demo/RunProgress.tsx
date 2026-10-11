@@ -30,7 +30,7 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
         <Check aria-hidden size={14} />
       </span>
     ) : state === "in_progress" ? (
-      <AILoadingSpinner className="h-5 w-5 shrink-0" />
+      <AILoadingSpinner className="h-7 w-7 shrink-0" />
     ) : (
       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-ink-muted" />
     );

@@ -24,7 +24,7 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
   }));
 
   return (
-    <div className="h-72 w-full">
+    <div className="h-126 w-full pt-9">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={colors.grid} vertical={false} />

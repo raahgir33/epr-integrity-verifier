@@ -239,15 +239,15 @@ export function annotateMisses(misses: string[], rows: EvalMetricRow[]): string[
 export function groupMetrics(rows: EvalMetricRow[]): { group: string; metrics: DisplayMetric[] }[] {
   const described = rows.map(describeMetric);
   const order = [
+    "Risk-band accuracy",
+    "Unverifiable-tonnes error",
+    "Stability, cost and latency",
     "Extraction",
     "Issue-type recall (rule checks)",
     "Issue-type recall (agents)",
     "Missed-pattern visibility",
     "Finding precision",
     "False flags",
-    "Risk-band accuracy",
-    "Unverifiable-tonnes error",
-    "Stability, cost and latency",
     "Other",
   ];
   return order

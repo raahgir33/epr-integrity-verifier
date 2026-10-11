@@ -58,11 +58,11 @@ export function ProcessorLiveRun({
 
   return (
     <>
-      {batches.length > 0 ? (
+      {/* {batches.length > 0 ? (
         <div id="live-verification" className="scroll-mt-20">
           <RunLiveVerification batches={batches} onRunUpdate={setLiveRun} />
         </div>
-      ) : null}
+      ) : null} */}
 
       <ProcessorTabs
         processorId={processorId}

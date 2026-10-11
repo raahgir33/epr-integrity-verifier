@@ -51,11 +51,11 @@ export function RunLiveVerification({
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-lg border border-border bg-surface p-4 text-center lg:w-1/3">
-      <p className="font-display text-base font-semibold text-ink">{titleCase("Run live verification")}</p>
-      <p className="mt-1 text-sm text-ink-muted">
-        Simulate a new certificate batch arriving for one processor, and watch it get extracted, checked
-        and reviewed by the agent loop end to end.
+    <div className="px-12 py-10 mx-auto max-w-6xl rounded-lg border border-border bg-surface p-4 text-center lg:w-1/2">
+      <p className="mt-4 mb-4 font-display text-xl font-semibold text-ink">{titleCase("Agentic verification - Live!")}</p>
+      <p className="mt-1 mb-8 leading-relaxed tracking-wide text-sm text-ink-muted">
+        Simulate a New Certificate Batch Arriving for Any One Processor <br/> 
+        Watch It Get <b>Extracted, Checked and Reviewed</b> by the Agent Loop End-to-End.
       </p>
 
       <div className="mt-3 flex flex-col items-center gap-3">
@@ -64,7 +64,7 @@ export function RunLiveVerification({
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={running || submitting}
-          className="w-full rounded border border-border px-2 py-2.5 text-sm outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
+          className="w-full rounded border border-border px-5 py-5 text-lg outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
         >
           {batches.map((b) => (
             <option key={b.batch_id} value={b.batch_id}>
@@ -74,8 +74,8 @@ export function RunLiveVerification({
         </select>
         <Button
           variant="glow"
-          size="lg"
-          className="w-full"
+          size="xl"
+          className="w-full mt-5 mb-4"
           onClick={handleRun}
           disabled={running || submitting || !selected}
         >
@@ -98,7 +98,7 @@ export function RunLiveVerification({
       {error ? <p className="mt-2 text-sm text-risk-high">{error}</p> : null}
 
       {runId ? (
-        <div className="mt-4 border-t border-border pt-4 text-left">
+        <div className="mt-4 border-t border-border pt-4 text-center">
           <RunProgress runId={runId} onRunUpdate={onRunUpdate} />
         </div>
       ) : null}

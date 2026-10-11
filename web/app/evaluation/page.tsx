@@ -20,9 +20,9 @@ export default async function EvaluationPage() {
     <div className="space-y-8">
       <div className="text-center">
         <Heading>Evaluation</Heading>
-        <p className="mx-auto mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted">
-          Extraction accuracy and detection precision/recall against a held-out, seeded ground truth.
-          See <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the protocol.
+        <p className="mx-auto mt-1 max-w-[70ch] text-pretty text-sm text-ink-muted tracking-wide leading-loose">
+          Extraction Accuracy and Detection Precision/Recall Against a Held-Out, Seeded Ground Truth.
+          See <a href="/method" className="underline decoration-dotted hover:text-primary">Method</a> for the Protocol.
         </p>
       </div>
 
@@ -31,10 +31,20 @@ export default async function EvaluationPage() {
       ) : (
         <section className="space-y-6">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink">Held-out test set</h2>
+            <h2 className="font-display text-xl tracking-wide font-semibold text-ink">Held-Out Testing Dataset</h2>
             <span className="text-xs text-ink-muted">{evaluation.heldout_dataset_label}</span>
           </div>
 
+          {heldoutGroups.map(({ group, metrics }) => (
+            <div key={group} className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-ink-muted">{group}</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {metrics.map((m) => (
+                  <StatCard key={m.metric} label={m.label} value={m.display} sub={m.sub} />
+                ))}
+              </div>
+            </div>
+          ))}
           {misses.length > 0 ? (
             <div className="card p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Misses</p>
@@ -49,17 +59,6 @@ export default async function EvaluationPage() {
           ) : (
             <p className="text-sm text-ink-muted">No misses: every planted pattern was detected and no clean or hard-negative processor was wrongly flagged.</p>
           )}
-
-          {heldoutGroups.map(({ group, metrics }) => (
-            <div key={group} className="space-y-2">
-              <h3 className="text-xs font-medium uppercase tracking-wide text-ink-muted">{group}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {metrics.map((m) => (
-                  <StatCard key={m.metric} label={m.label} value={m.display} sub={m.sub} />
-                ))}
-              </div>
-            </div>
-          ))}
         </section>
       )}
 
