@@ -32,6 +32,8 @@ htmlcov/
 # Build, Planning & Reference Files
 docs/BUILD_PLAN.md
 docs/PROGRESS.md
+docs/epr-integrity-verifier-context.md
+docs/summary-details.md
 api/ref
 docs/plan-t13-to-submission.md
 
