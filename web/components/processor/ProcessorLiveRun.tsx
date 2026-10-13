@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
+// import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
 import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
 import type {
   CheckResultOut,
@@ -24,7 +24,7 @@ import type {
  * Server Component and can't hold this itself, hence this thin client
  * wrapper around both siblings. */
 export function ProcessorLiveRun({
-  batches,
+  // batches,
   processorId,
   checksOnly,
   full,
