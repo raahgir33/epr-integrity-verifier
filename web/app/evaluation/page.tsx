@@ -50,6 +50,26 @@ export default async function EvaluationPage() {
             <span className="text-xs text-ink-muted">{evaluation.heldout_dataset_label}</span>
           </div>
 
+          {/* Disclosure: the metric definitions changed on 14 Oct while the
+              measured system did not. Stated on the page rather than only in
+              the commit log, since the published figures moved. */}
+          <p className="text-xs leading-relaxed text-ink-muted">
+            <span className="font-medium text-ink">Metric correction (14 Oct):</span> soft-check
+            warnings now count as detections, and as false flags, symmetrically; the expected band
+            now includes the one-step soft-signal adjustment defined in the scoring spec. No checks,
+            thresholds or prompts were changed, and the system&rsquo;s outputs are identical; only
+            the counting changed.{" "}
+            <a
+              href="https://github.com/raahgir33/epr-integrity-verifier/commit/d2fe4db"
+              className="underline decoration-dotted hover:text-primary"
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the commit
+            </a>
+            .
+          </p>
+
           <SummaryRow figures={heldoutSummary} />
 
           {heldoutGroups.map(({ group, metrics }) => (

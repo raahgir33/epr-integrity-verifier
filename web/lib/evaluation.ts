@@ -323,8 +323,20 @@ export function describeMetric(row: EvalMetricRow, rows: EvalMetricRow[] = []): 
  * it at least surfaced as a review flag (docs/DATA_SPEC.md §4a), read
  * from this same response's own issue_surfaced_as_review_flag_<code>
  * row. Leaves the rest of every miss line untouched. */
+/** describe_misses emits one line per stage/facts-source combination
+ * restating risk-band accuracy ("Risk band (checks only, truth facts):
+ * 7/10 processor(s) matched..."). Those are summaries of a metric the
+ * Risk-band accuracy section already shows as its own card, not misses,
+ * and four of them crowd out the real ones. Dropped here, in the display
+ * layer, rather than in app/eval/evaluate.py — that module ships inside
+ * the API image, so changing it would force an API redeploy for a purely
+ * cosmetic change. */
+function isRiskBandSummary(miss: string): boolean {
+  return miss.startsWith("Risk band (");
+}
+
 export function annotateMisses(misses: string[], rows: EvalMetricRow[]): string[] {
-  return misses.map((miss) => {
+  return misses.filter((miss) => !isRiskBandSummary(miss)).map((miss) => {
     const line = rewriteMiss(miss);
 
     for (const issueCode of ["F5", "F7"] as const) {

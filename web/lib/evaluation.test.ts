@@ -213,7 +213,6 @@ describe("no internal taxonomy codes reach the page", () => {
         "F5 ghost site: detected 0/1 planted instance(s) under extracted facts.",
         "F7 energy implausibility: detected 0/1 planted instance(s) under extracted facts.",
         "F8/F9 (agent-only, no deterministic check): recalled 2/3 true shipment citation(s) under extracted facts.",
-        "Risk band (checks only, truth facts): 7/10 processor(s) matched the ground-truth band.",
         "1/3 clean processor(s) wrongly flagged under extracted facts.",
       ],
       HELDOUT
@@ -353,19 +352,17 @@ describe("annotateMisses", () => {
     ]);
   });
 
-  it("normalises the stage wording on a risk-band miss line", () => {
+  it("drops the risk-band summary lines, which belong to their own metric card", () => {
     expect(
       annotateMisses(
         [
           "Risk band (checks only, truth facts): 7/10 processor(s) matched the ground-truth band.",
           "Risk band (checks + agents, extracted facts): 8/10 processor(s) matched the ground-truth band.",
+          "1/3 clean processor(s) wrongly flagged under extracted facts.",
         ],
         []
       )
-    ).toEqual([
-      "Risk band (Rule Checks, truth facts): 7/10 processor(s) matched the true risk band.",
-      "Risk band (Agent Validation, extracted facts): 8/10 processor(s) matched the true risk band.",
-    ]);
+    ).toEqual(["1/3 clean processor(s) wrongly flagged under extracted facts."]);
   });
 
   it("leaves a line it recognises no part of untouched", () => {
