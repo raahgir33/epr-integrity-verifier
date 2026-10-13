@@ -180,6 +180,13 @@ describe("describeMetric", () => {
     expect(described.label).toContain("Ghost Site");
   });
 
+  it("hides a review-flag metric with nothing left to be visible about", () => {
+    // Zero denominator = the rule check missed no instance of that
+    // pattern, so there is no miss for the agents to have surfaced.
+    expect(describeMetric(row("issue_surfaced_as_review_flag_F5", 0, 0))).toBeNull();
+    expect(describeMetric(row("issue_surfaced_as_review_flag_F5", 1, 1))).not.toBeNull();
+  });
+
   it("ignores an unknown metric name instead of rendering its raw key", () => {
     // The stale row T14b's rename left behind in BigQuery.
     expect(describeMetric(row("agent_run_to_run_agreement", 8, 10))).toBeNull();

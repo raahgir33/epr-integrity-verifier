@@ -283,6 +283,13 @@ export function describeMetric(row: EvalMetricRow, rows: EvalMetricRow[] = []): 
     const issueCode = metric.slice("issue_surfaced_as_review_flag_".length);
     const name = ISSUE_NAMES[issueCode];
     if (!name) return null;
+    // "Of the planted instances the rule check missed, how many did the
+    // agents at least surface as a review flag?" — vacuous once the check
+    // misses none, which is what a zero denominator means. Since the
+    // 14 Oct metric correction that is the normal case, and rendering it
+    // would leave a "Missed-pattern visibility" section of n/a cards
+    // describing misses that no longer exist.
+    if (denominator === 0) return null;
     return {
       metric,
       group: "Missed-pattern visibility",
