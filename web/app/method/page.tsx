@@ -203,6 +203,22 @@ export default function MethodPage() {
               page reports these once the held-out run has completed. Development-set numbers, where shown
               anywhere, are always labelled as such.
             </p>
+            <p>
+              <span className="font-medium text-ink">Metric correction (14 Oct):</span> soft-check
+              warnings now count as detections, and as false flags, symmetrically; the expected band
+              now includes the one-step soft-signal adjustment defined in the scoring spec. No
+              checks, thresholds or prompts were changed, and the system&rsquo;s outputs are
+              identical; only the counting changed.{" "}
+              <a
+                href="https://github.com/raahgir33/epr-integrity-verifier/commit/d2fe4db"
+                className="underline decoration-dotted hover:text-primary"
+                target="_blank"
+                rel="noreferrer"
+              >
+                See the commit
+              </a>
+              .
+            </p>
           </div>
         </section>
 
