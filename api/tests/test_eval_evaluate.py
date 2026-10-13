@@ -22,6 +22,13 @@ def _ground_truth(processors: list[dict]) -> dict:
     return {"processors": processors}
 
 
+def _band_from_share(certified_t, true_verifiable_t):
+    share = (certified_t - true_verifiable_t) / certified_t if certified_t else 0.0
+    if share < 0.05:
+        return "Low"
+    return "Medium" if share <= 0.25 else "High"
+
+
 def _processor(
     pid,
     issue_types=None,
@@ -31,7 +38,13 @@ def _processor(
     true_verifiable_t=1000.0,
     shipments=None,
     energy_monthly=None,
+    risk_band=None,
 ):
+    """risk_band defaults to the share-derived band, which is what the
+    generator records whenever no soft signal is present. Pass it
+    explicitly to model a processor whose recorded band carries the
+    one-step soft-signal adjustment (docs/DATA_SPEC.md §4a.5) — that gap
+    is exactly what risk_band_accuracy now reads rather than re-derives."""
     return {
         "processor_id": pid,
         "label": label,
@@ -41,6 +54,7 @@ def _processor(
         "true_verifiable_t": true_verifiable_t,
         "shipments": shipments or [],
         "energy_monthly": energy_monthly or [],
+        "risk_band": risk_band or _band_from_share(certified_t, true_verifiable_t),
     }
 
 
@@ -395,3 +409,80 @@ def test_describe_misses_ignores_cost_and_latency_metrics():
     ]
 
     assert describe_misses(rows) == []
+
+
+# ---------- T14c: soft "warn" counts symmetrically, recorded band is the expectation ----------
+
+
+def test_soft_warn_counts_as_a_detection():
+    """C7/C8 are soft severity and emit "warn", never "fail"
+    (app/geo/site.py). A predicate keyed on "fail" reported both as
+    permanently undetected no matter what they found."""
+    ground_truth = _ground_truth([_processor("PWP-09", issue_types=["F5"])])
+
+    result = issue_type_recall({"PWP-09": [_check("C8", "warn")]}, ground_truth, "F5")
+
+    assert result == {"numerator": 1, "denominator": 1}
+
+
+def test_soft_warn_counts_as_a_flag_on_a_clean_processor():
+    """The other half of the same rule. A warn that counts as a detection
+    on a planted issue must count as a flag on a clean processor, or the
+    metric would only ever be counting warns where they flatter it."""
+    ground_truth = _ground_truth([_processor("PWP-01", label="clean")])
+
+    result = false_flags_on_clean({"PWP-01": [_check("C8", "warn")]}, {"PWP-01": []}, ground_truth)
+
+    assert result == {"numerator": 1, "denominator": 1}
+
+
+def test_soft_warn_counts_as_a_flag_on_a_hard_negative():
+    ground_truth = _ground_truth([_processor("PWP-04", label="clean", hard_negatives=["H3"])])
+
+    result = false_flags_on_hard_negatives(
+        {"PWP-04": [_check("C7", "warn")]}, {"PWP-04": []}, ground_truth
+    )
+
+    assert result == {"numerator": 1, "denominator": 1}
+
+
+def test_a_passing_soft_check_is_still_not_a_flag():
+    ground_truth = _ground_truth([_processor("PWP-01", label="clean")])
+
+    result = false_flags_on_clean(
+        {"PWP-01": [_check("C8", "pass"), _check("C7", "not_evaluable")]},
+        {"PWP-01": []},
+        ground_truth,
+    )
+
+    assert result == {"numerator": 0, "denominator": 1}
+
+
+def test_risk_band_accuracy_uses_the_recorded_band_not_the_share():
+    """Seed 7's PWP-09 in miniature: a 17.4% unverifiable share reads
+    Medium on share alone, but the recorded band is High because its
+    ghost-site check fired and the spec adds one step for a soft signal.
+    The assessed band agrees with the record, so this must score correct."""
+    ground_truth = _ground_truth(
+        [
+            _processor(
+                "PWP-09",
+                issue_types=["F5"],
+                certified_t=359.34,
+                true_verifiable_t=296.77,
+                risk_band="High",
+            )
+        ]
+    )
+    assessments = {"PWP-09": {"risk_band": "High"}}
+
+    assert risk_band_accuracy(assessments, ground_truth) == {"numerator": 1, "denominator": 1}
+
+
+def test_risk_band_accuracy_still_catches_a_genuinely_wrong_band():
+    ground_truth = _ground_truth(
+        [_processor("PWP-09", certified_t=359.34, true_verifiable_t=296.77, risk_band="High")]
+    )
+    assessments = {"PWP-09": {"risk_band": "Low"}}
+
+    assert risk_band_accuracy(assessments, ground_truth) == {"numerator": 0, "denominator": 1}

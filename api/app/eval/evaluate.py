@@ -12,8 +12,6 @@ that fetch real data and write results.
 import itertools
 import math
 
-from app.agents.scorer import risk_band
-
 # docs/DATA_SPEC.md §5: which deterministic check(s) are documented as
 # catching each seeded issue type. F8/F9 have no entry — agent-only, no
 # deterministic check behind either (see issue_recall_F8/F9's own
@@ -288,9 +286,25 @@ def f7_neutral_shipment_ids(ground_truth: dict, processor_id: str) -> set[str]:
 # ---------- T14 held-out evaluation metrics ----------
 
 
+# A check has "fired" when it raised a concern at all. Soft-severity
+# checks (C2b, C7, C8) emit "warn" and NEVER "fail" — app/geo/site.py's
+# own docstring says so — so a predicate keyed on "fail" alone reports a
+# soft check as permanently silent no matter what it found. On seed 7
+# that scored both planted soft issues as undetected while C8 was
+# reporting "no building footprint detected within 150 m" and C7 was
+# reporting a month at 101 kWh/t against a 150-1200 band.
+#
+# This constant is deliberately shared with processor_wrongly_flagged
+# below so the same rule applies in BOTH directions: a warn that counts
+# as a detection on a planted issue must also count as a flag on a clean
+# or hard-negative processor. Counting warns only where they flatter the
+# result would be measurement fraud.
+FIRED_STATUSES = frozenset({"fail", "warn"})
+
+
 def _check_fires_for_issue(check_results: list[dict], issue_code: str) -> bool:
     check_ids = CHECK_IDS_BY_ISSUE_TYPE.get(issue_code, set())
-    return any(r["check_id"] in check_ids and r["status"] == "fail" for r in check_results)
+    return any(r["check_id"] in check_ids and r["status"] in FIRED_STATUSES for r in check_results)
 
 
 def issue_type_recall(
@@ -372,11 +386,16 @@ def finding_precision_checks(
 
 
 def processor_wrongly_flagged(check_results: list[dict], findings: list[dict]) -> bool:
-    """True if any deterministic check failed, or any confirmed agent
+    """True if any deterministic check fired, or any confirmed agent
     finding fired (other than one that only concurs with a check already
     counted) — the shared "was this processor flagged at all" predicate
-    for the false-flag metrics below."""
-    checks_failed = any(r["status"] == "fail" for r in check_results)
+    for the false-flag metrics below.
+
+    Uses the same FIRED_STATUSES as _check_fires_for_issue above, so a
+    soft "warn" counts as a flag here exactly as it counts as a detection
+    there. This is the stricter half of that symmetry: it can only ever
+    increase a measured false-flag rate."""
+    checks_failed = any(r["status"] in FIRED_STATUSES for r in check_results)
     new_agent_findings = any(f["classification"] != "concurs_with_check" for f in findings)
     return checks_failed or new_agent_findings
 
@@ -471,21 +490,31 @@ def agent_citation_metrics(
 
 def risk_band_accuracy(assessments_by_processor: dict[str, dict], ground_truth: dict) -> dict:
     """assessments_by_processor: processor_id -> a StageAssessment-shaped
-    dict (risk_band, certified_t) for one stage/facts_source. Ground-truth-
-    implied band is computed from (certified_t - true_verifiable_t) /
-    certified_t via app.agents.scorer.risk_band — the same frozen scoring
-    function the pipeline itself uses, called read-only here, never
-    re-implemented."""
+    dict (risk_band) for one stage/facts_source.
+
+    The expected band is the one ground_truth.json records for that
+    processor, NOT risk_band(unverifiable_share). The two differ: the
+    scoring spec (docs/DATA_SPEC.md §4a.5) raises a band by at most one
+    step when a soft signal fires, and both the scorer
+    (apply_soft_signal_bump) and the generator
+    (scripts/dossier_gen/ground_truth.py's _risk_band) apply that step,
+    while the share alone does not. Re-deriving the expectation from the
+    share therefore marked a correctly-banded processor wrong wherever a
+    soft signal was the deciding factor: seed 7's PWP-09 sits at a 17.41%
+    unverifiable share (Medium on share alone) and is recorded High in
+    ground truth precisely because its ghost-site check fired. Reading the
+    recorded band keeps this metric aligned with the one spec both the
+    pipeline and the generator already follow, instead of a third rule
+    only this metric used. Applied identically to every stage and facts
+    source."""
     correct = 0
     total = 0
     for p in ground_truth["processors"]:
         row = assessments_by_processor.get(p["processor_id"])
         if row is None:
             continue
-        certified_t = p["certified_t"]
-        true_share = (certified_t - p["true_verifiable_t"]) / certified_t if certified_t else 0.0
         total += 1
-        if row["risk_band"] == risk_band(true_share):
+        if row["risk_band"] == p["risk_band"]:
             correct += 1
     return {"numerator": correct, "denominator": total}
 
