@@ -3,17 +3,32 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { Heading } from "@/components/ui/Heading";
 import { getEvaluation } from "@/lib/api";
-import { annotateMisses, groupMetrics } from "@/lib/evaluation";
+import { annotateMisses, groupMetrics, summaryFigures, type SummaryFigure } from "@/lib/evaluation";
 
 export const metadata: Metadata = {
   title: "Evaluation",
   description: "Extraction accuracy and detection precision/recall against a held-out, seeded ground truth.",
 };
 
+/** The four headline figures, every one derived from this dataset's own
+ * eval_metrics rows (lib/evaluation.ts's summaryFigures) — a figure whose
+ * rows are missing is omitted upstream rather than shown as "n/a". */
+function SummaryRow({ figures }: { figures: SummaryFigure[] }) {
+  if (figures.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {figures.map((f) => (
+        <StatCard key={f.key} label={f.label} value={f.display} sub={f.sub} />
+      ))}
+    </div>
+  );
+}
+
 export default async function EvaluationPage() {
   const evaluation = await getEvaluation();
   const heldoutGroups = groupMetrics(evaluation.heldout);
-  const devGroups = groupMetrics(evaluation.dev);
+  const heldoutSummary = summaryFigures(evaluation.heldout);
+  const devSummary = summaryFigures(evaluation.dev);
   const misses = annotateMisses(evaluation.misses, evaluation.heldout);
 
   return (
@@ -34,6 +49,8 @@ export default async function EvaluationPage() {
             <h2 className="font-display text-xl tracking-wide font-semibold text-ink">Held-Out Testing Dataset</h2>
             <span className="text-xs text-ink-muted">{evaluation.heldout_dataset_label}</span>
           </div>
+
+          <SummaryRow figures={heldoutSummary} />
 
           {heldoutGroups.map(({ group, metrics }) => (
             <div key={group} className="space-y-2">
@@ -62,7 +79,7 @@ export default async function EvaluationPage() {
         </section>
       )}
 
-      {devGroups.length > 0 ? (
+      {devSummary.length > 0 ? (
         <section className="space-y-3 border-t border-border pt-6">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="font-display text-base font-medium text-ink-muted">
@@ -74,13 +91,12 @@ export default async function EvaluationPage() {
             Shown for reference only — these numbers come from the same dataset the rule thresholds and
             prompts were tuned against, so they are not evidence of real-world accuracy.
           </p>
-          {devGroups.map(({ group, metrics }) => (
-            <div key={group} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {metrics.map((m) => (
-                <StatCard key={m.metric} label={m.label} value={m.display} sub={m.sub} />
-              ))}
-            </div>
-          ))}
+          <SummaryRow figures={devSummary} />
+          <p className="text-xs text-ink-muted">
+            Only these headline figures are measured on the development set. Run-to-run stability,
+            cost, latency, finding precision and false-flag rates are not run on the development set:
+            measuring them would need fresh extracted-facts agent runs.
+          </p>
         </section>
       ) : null}
     </div>

@@ -28,6 +28,20 @@ export function formatPercent(ratio: number): string {
   return `${(ratio * 100).toFixed(1)}%`;
 }
 
+/** The percentage rule for /evaluation, and the only one used there.
+ * Mirrors api/app/eval/evaluate.py's format_accuracy_pct — the rule GET
+ * /stats already applies to the landing page's field-read figure: two
+ * decimal places, TRUNCATED rather than rounded, so a not-quite-perfect
+ * ratio can never print as "100%" (5,430/5,431 is 99.98%, not 100%).
+ * Exact equality is the only path to "100%". Trailing zeros are then
+ * trimmed, so 0.7 reads "70%" and 0.019545 reads "1.95%". Kept separate
+ * from formatPercent, which lib/checks.ts uses for check ratios at one
+ * decimal place. */
+export function formatPercentPrecise(ratio: number): string {
+  const pct = ratio === 1 ? 100 : Math.floor(ratio * 10_000) / 100;
+  return `${pct.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}%`;
+}
+
 export function formatKwhPerT(value: number): string {
   return `${tonnesFormatter.format(value)} kWh/t`;
 }
