@@ -90,7 +90,7 @@ export function RunLiveVerification({
               onRunUpdate?.(null);
             }}
           >
-            Run another
+            Run Another
           </Button>
         ) : null}
       </div>
