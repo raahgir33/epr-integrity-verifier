@@ -11,17 +11,49 @@ then, from another terminal:
 
 Hits every GET endpoint twice (cold = first request this script makes to
 that path, warm = second), prints per-endpoint timings, and checks the
-expected shape of the BigQuery-stored no_thinking_run2 acceptance run
-(docs/PROGRESS.md's T10 closing entry and the --rescore write that landed
-it): F8 caught (deductible) on PWP-05/PWP-08 citing their own SHP-001;
-PWP-06/PWP-07/PWP-09 concurring with a deterministic check (C4/F7/F6 —
-same evidence those checks already cited, by design, so no separate
-soft-signal bump); PWP-01 through PWP-04 and PWP-10 clean (no findings —
-run 2's own PWP-10 had no agent finding at all); and GET /health's
-consistency_ok true — the one assertion that stands in for "every
-processor's full-stage verifiable_t matches what app/store/cache.py's
-check_consistency recomputes from the stored agent_runs trail," since the
-smoke script itself has no independent way to recompute that figure.
+shape of the stored EXTRACTED-facts agent run — what the deployed service
+actually serves (DEFAULT_FACTS_SOURCE=extracted).
+
+The expectations here were previously pinned to T10's truth-facts
+`no_thinking_run2` acceptance run, and every one of them failed once the
+live service moved to extracted facts: shipment ids gained an "-EXT-"
+segment and renumbered, and the agent-only findings landed on different
+processors. They are pinned to extracted mode now, and the script asserts
+`meta.facts_source` up front so a service pointed back at truth reports
+that directly instead of as six unexplained finding mismatches.
+
+What is checked, and why each is stable enough to assert:
+
+  * Agent-only (no deterministic check behind them) findings are
+    deductible on PWP-02, PWP-05 and PWP-08 — the three seed-42
+    processors carrying a semantic or handwritten contradiction. PWP-02's
+    is the handwritten Hindi weighbridge remark, which only extracted
+    mode exercises at all: truth mode loads that remark canonically, so
+    the agent never had to read the photo and this processor looked
+    clean. Asserted by classification plus "cites one of its OWN
+    shipments", never by a hardcoded shipment index — positions are
+    seeded-random per processor and the "-EXT-" ids renumber.
+  * PWP-01, PWP-03 and PWP-04 are the genuinely clean processors
+    (docs/DATA_SPEC.md §5) and must raise no deductible finding. A
+    non-deducting review flag is tolerated: the guardrails are designed
+    to keep a weak observation visible rather than silent, and the
+    held-out evaluation measures that false-flag rate properly.
+  * Every cited shipment id belongs to the processor citing it, on every
+    processor — the cited-id guardrail (app/agents/orchestrator.py's
+    _filter_objection), and the one finding-level invariant that holds
+    regardless of what the model said on any given run.
+
+Deliberately NOT asserted: the exact finding count or classification mix
+per processor. Those are a live Gemini call's output; the held-out
+evaluation measures run-to-run finding-set agreement at 47% pooled
+Jaccard, so pinning them would make this script flaky rather than
+informative. Risk bands and tonnes, which ARE stable (9/10 and 10/10
+across three runs), are covered by scripts/check_consistency.py.
+
+GET /health no longer carries consistency_ok — T13.8 reduced it to
+exactly {"status": "ok"}, with _consistency_status still computed and
+logged at startup. Run scripts/check_consistency.py <base-url> for that;
+this script only checks /health's own contract.
 
 Exit code is 0 only if every check passes; a full report is always
 printed first, so a legitimate run-to-run model difference (the agent
@@ -38,9 +70,13 @@ import requests
 DEFAULT_BASE_URL = "http://localhost:8080"
 DEFAULT_BRAND_ID = "BRAND-01"
 
-_F8_DEDUCTIBLE = ["PWP-05", "PWP-08"]
-_CONCURS_WITH_CHECK = ["PWP-06", "PWP-07", "PWP-09"]
-_CLEAN_NO_FINDINGS = ["PWP-01", "PWP-02", "PWP-03", "PWP-04", "PWP-10"]
+# Seeded agent-only contradictions (docs/DATA_SPEC.md §5): a semantic one
+# on PWP-05/PWP-08, a handwritten Hindi weighbridge remark on PWP-02.
+# No deterministic check sees any of them.
+_AGENT_ONLY_DEDUCTIBLE = ["PWP-02", "PWP-05", "PWP-08"]
+# The three processors with nothing seeded at all.
+_CLEAN_NO_DEDUCTIONS = ["PWP-01", "PWP-03", "PWP-04"]
+_EXPECTED_FACTS_SOURCE = "extracted"
 
 
 class Report:
@@ -98,6 +134,21 @@ def _finding_classifications(findings: list[dict]) -> list[str]:
     return [f["classification"] for f in findings]
 
 
+def _own_shipment(processor_id: str, shipment_id: str) -> bool:
+    """Extracted mode numbers a processor's shipments
+    f"{processor_id}-EXT-SHP-{i:03d}" (app/ingest/normalize.py's
+    match_shipments_from_extracted); truth mode omits the "EXT-" segment,
+    and the index differs between the two because positions are
+    seeded-random per processor. Both forms start with the processor's
+    own id, which is the part worth asserting: a finding must never cite
+    another processor's shipment."""
+    return shipment_id.startswith(f"{processor_id}-")
+
+
+def _cited_ids(findings: list[dict]) -> list[str]:
+    return [sid for f in findings for sid in f.get("cited_shipment_ids", [])]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
@@ -109,15 +160,22 @@ def main() -> None:
 
     health = _hit_twice(session, args.base_url, "/health", report).json()
     report.check(
-        "consistency_ok",
-        health.get("consistency_ok") is True,
-        f"GET /health returned consistency_ok={health.get('consistency_ok')!r} — "
-        "every processor's full-stage verifiable_t must match what the stored "
-        "agent_runs trail recomputes (see app/store/cache.py's check_consistency)",
+        "health contract",
+        health == {"status": "ok"},
+        f"GET /health returned {health!r}, expected exactly {{'status': 'ok'}} (T13.8). "
+        "Consistency is scripts/check_consistency.py's job, not this script's.",
     )
 
     processors_body = _hit_twice(session, args.base_url, "/processors", report).json()
     processor_ids = [p["processor_id"] for p in processors_body["processors"]]
+
+    facts_source = (processors_body.get("meta") or {}).get("facts_source")
+    report.check(
+        "facts_source",
+        facts_source == _EXPECTED_FACTS_SOURCE,
+        f"serving {facts_source!r}; every finding expectation below is pinned to "
+        f"{_EXPECTED_FACTS_SOURCE!r}, so they will all fail against another source",
+    )
 
     _hit_twice(session, args.base_url, "/evaluation", report)
     _hit_twice(session, args.base_url, "/alerts", report)
@@ -180,35 +238,44 @@ def main() -> None:
             f"{len(reasoning.get('findings', []))} vs {len(detail.get('findings', []))} findings",
         )
 
-    for pid in _F8_DEDUCTIBLE:
-        classifications = _finding_classifications(findings_by_processor.get(pid, []))
+    for pid in _AGENT_ONLY_DEDUCTIBLE:
+        findings = findings_by_processor.get(pid, [])
         matching = [
             f
-            for f in findings_by_processor.get(pid, [])
+            for f in findings
             if f["classification"] == "deductible"
-            and f"{pid}-SHP-001" in f.get("cited_shipment_ids", [])
+            and any(_own_shipment(pid, sid) for sid in f.get("cited_shipment_ids", []))
         ]
-        cited_ids_seen = [f.get("cited_shipment_ids") for f in findings_by_processor.get(pid, [])]
         report.check(
-            f"{pid}: deductible F8-type finding citing its own SHP-001",
+            f"{pid}: deductible agent-only finding citing one of its own shipments",
             bool(matching),
-            f"classifications found: {classifications}, cited_shipment_ids seen: {cited_ids_seen}",
+            f"classifications found: {_finding_classifications(findings)}, "
+            f"cited_shipment_ids seen: {[f.get('cited_shipment_ids') for f in findings]}",
         )
 
-    for pid in _CONCURS_WITH_CHECK:
-        classifications = _finding_classifications(findings_by_processor.get(pid, []))
-        report.check(
-            f"{pid}: has a concurs_with_check finding",
-            "concurs_with_check" in classifications,
-            f"classifications found: {classifications}",
-        )
-
-    for pid in _CLEAN_NO_FINDINGS:
+    for pid in _CLEAN_NO_DEDUCTIONS:
         findings = findings_by_processor.get(pid, [])
+        deductible = [f for f in findings if f["classification"] == "deductible"]
         report.check(
-            f"{pid}: no findings at all",
-            findings == [],
-            f"classifications found: {_finding_classifications(findings)}",
+            f"{pid}: clean processor, no deductible finding",
+            not deductible,
+            f"classifications found: {_finding_classifications(findings)}"
+            + (" (a non-deducting review flag here is tolerated)" if findings else ""),
+        )
+
+    # Holds on every processor regardless of what the model said: the
+    # cited-id guardrail filters every citation against that processor's
+    # own verified shipments before a finding is ever classified.
+    for pid in processor_ids:
+        foreign = [
+            sid
+            for sid in _cited_ids(findings_by_processor.get(pid, []))
+            if not _own_shipment(pid, sid)
+        ]
+        report.check(
+            f"{pid}: every cited shipment is its own",
+            not foreign,
+            f"foreign ids cited: {foreign}" if foreign else "no cross-processor citations",
         )
 
     report.print_and_exit()
