@@ -135,12 +135,18 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
             />
             <Tooltip content={<FlowTooltip colors={colors} />} />
             <Bar dataKey={CERTIFIED} fill={colors.certifiedBar} radius={[2, 2, 0, 0]} />
-            {/* Same dataKey as the bar, drawn straight (never monotone) so
-                it passes exactly through every bar top rather than
-                curving between them — the point is that the two series
-                are directly comparable as lines. */}
+            {/* Same dataKey as the bar. Both series MUST use the same
+                interpolation: with one straight and one curved, the two
+                lines separate between months even when the underlying
+                figures are identical, and on a clean processor — whose
+                certified and verified are equal every month — that reads
+                as a verification gap that does not exist. Monotone on
+                both, so any visible gap is a real one. A flat certified
+                series (the capacity-ratio basis, where this chart earns
+                its keep) is flat under monotone too, so it still sits
+                exactly on the bar tops. */}
             <Line
-              type="linear"
+              type="monotone"
               dataKey={CERTIFIED}
               stroke={colors.certifiedLine}
               strokeWidth={2}
@@ -149,7 +155,7 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
               isAnimationActive={false}
             />
             <Line
-              type="linear"
+              type="monotone"
               dataKey={VERIFIED}
               stroke={colors.verifiedLine}
               strokeWidth={2}
@@ -160,7 +166,7 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
         </ResponsiveContainer>
       </div>
 
-      <dl className="flex flex-col gap-2 text-xs text-ink-muted sm:flex-row sm:flex-wrap sm:gap-x-6">
+      <dl className="flex flex-col items-center gap-1.5 text-xs text-ink-muted">
         <div className="flex items-start gap-2">
           <KeySwatch>
             <line
@@ -176,7 +182,7 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
           <div>
             <dt className="inline font-medium text-ink">Certified</dt>{" "}
             <dd className="inline">
-              tonnes of recycling claimed for that month. The bars show the same figure.
+              Tonnes of Recycling Claimed for That Month. The Bars Show the Same Figure.
             </dd>
           </div>
         </div>
@@ -185,9 +191,9 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
             <line x1={0} y1={6} x2={28} y2={6} stroke={colors.verifiedLine} strokeWidth={2} />
           </KeySwatch>
           <div>
-            <dt className="inline font-medium text-ink">Verified inbound</dt>{" "}
+            <dt className="inline font-medium text-ink">Verified Inbound</dt>{" "}
             <dd className="inline">
-              tonnes weighed in and matched to an invoice and e-way bill.
+              Tonnes Weighed In and Matched to an Invoice and E-Way Bill.
             </dd>
           </div>
         </div>
@@ -196,13 +202,13 @@ export function MonthlyFlowChart({ rows }: { rows: MonthlyFlowRow[] }) {
             <circle cx={14} cy={6} r={2.5} fill={colors.zeroMarker} />
           </KeySwatch>
           <div>
-            <dt className="inline font-medium text-ink">Marked month</dt>{" "}
-            <dd className="inline">no material was weighed in at all.</dd>
+            <dt className="inline font-medium text-ink">Marked Month</dt>{" "}
+            <dd className="inline">No Material Was Weighed In at All.</dd>
           </div>
         </div>
       </dl>
 
-      <p className="max-w-[80ch] text-pretty text-xs leading-relaxed text-ink-muted">
+      <p className="mx-auto max-w-[80ch] text-pretty text-center text-sm leading-relaxed text-ink-muted">
         Where the certified line sits above the verified line, the gap is tonnage this report could
         not verify from the processor&rsquo;s own documents. A certified line that stays flat while
         the verified line moves means the same tonnage was certified every month regardless of how
