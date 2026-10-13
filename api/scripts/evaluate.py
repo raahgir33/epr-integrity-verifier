@@ -1,13 +1,27 @@
 """T14 held-out evaluation: computes docs/DATA_SPEC.md §7's metrics for a
-seed (seed 7 in practice) against ground_truth.json, and writes them to the
-LIVE epr.eval_metrics table (dataset_label="heldout-seed7") so the deployed
-single-dataset API can serve GET /evaluation without ever pointing at two
-datasets at once.
+seed against ground_truth.json, and writes them to the LIVE
+epr.eval_metrics table so the deployed single-dataset API can serve GET
+/evaluation without ever pointing at two datasets at once.
 
-Reads every seed-7 pipeline table from a SEPARATE BigQuery dataset
-(--eval-dataset, default "epr_eval") — never the live dataset — by
-temporarily pointing app.config.settings.bq_dataset at it for the whole
-read phase, then restoring it to whatever BQ_DATASET already was (normally
+Two modes, chosen by --seed (see DATASET_LABELS):
+
+  --seed 7   dataset_label "heldout-seed7": the headline. Reads every
+             seed-7 pipeline table from a SEPARATE dataset
+             (--eval-dataset, default "epr_eval"), never the live one,
+             and writes the full metric set.
+  --seed 42  dataset_label "dev-seed42": the development set. The
+             developer passes --eval-dataset epr, so this mode reads the
+             LIVE dataset — READ-ONLY; the only writes this script ever
+             makes are to eval_metrics, scoped to (dataset_label, metric).
+             Only the rows behind /evaluation's four summary figures are
+             written (DEV_METRIC_PREFIXES) — everything else is labelled
+             "not run on the development set" by the page. Run it after
+             POST /admin/reset-demo, since a live demo run mutates
+             seed-42's extracted-facts rows for PWP-01/03/05.
+
+The read dataset is selected by temporarily pointing
+app.config.settings.bq_dataset at --eval-dataset for the whole read
+phase, then restoring it to whatever BQ_DATASET already was (normally
 "epr") for the one write phase at the end. Every read/write helper reused
 here (app.store.cache, app.store.bq, scripts.run_pipeline) already resolves
 the dataset dynamically from `settings.bq_dataset` at call time, so this
@@ -37,6 +51,7 @@ Prerequisites (see docs/GCP_SETUP.md's T14 section for the exact commands):
 Run by the developer — never by the agent (reads/writes real BigQuery).
 
 Usage: uv run python scripts/evaluate.py --seed 7
+       uv run python scripts/evaluate.py --seed 42 --eval-dataset epr
 """
 
 import argparse
@@ -44,6 +59,8 @@ import json
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+
+from google.cloud import bigquery
 
 from app.config import settings
 from app.eval import evaluate as ev
@@ -53,8 +70,50 @@ from scripts.cost_report import estimate_cost_usd
 from scripts.run_pipeline import _fetch_bq_rows, load_ground_truth
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASET_LABEL = "heldout-seed7"
 SOURCE_SCRIPT = "scripts/evaluate.py"
+
+# One eval_metrics dataset_label per seed. A seed with no entry here is
+# refused rather than guessed at, so a typo can never write a third label
+# the API and the page know nothing about.
+DATASET_LABELS = {7: "heldout-seed7", 42: "dev-seed42"}
+
+HELDOUT_SEED = 7
+
+# The development set gets only the rows behind /evaluation's four
+# summary figures: risk-band accuracy, tonnage error (percentage plus its
+# companion absolute kilograms), key fields read, and patterns detected
+# (aggregated by the page from the per-issue recall rows and the
+# agent-only citation-recall row). Everything else the held-out label
+# carries is deliberately absent here and labelled "not run on the
+# development set" — it would measure prompts and thresholds against the
+# very data they were tuned on, or (stability/cost/latency) need fresh
+# Gemini runs. Both facts sources are written for band and tonnage so the
+# page can prefer ground-truth facts and fall back to extracted.
+DEV_METRIC_PREFIXES = (
+    "key_field_read_accuracy",
+    "risk_band_accuracy_",
+    "unverifiable_t_abs_error_kg_",
+    "unverifiable_t_pct_error_",
+    "agent_citation_recall_extracted",
+)
+
+
+def dev_metric_allowed(metric: str) -> bool:
+    """True for a metric the dev label is allowed to carry. issue_recall_
+    is extracted-facts-only here: the page's patterns-detected figure
+    reads the extracted rows, and the truth-mode ones would only restate
+    the generator's own planting."""
+    if metric.startswith("issue_recall_"):
+        return metric.endswith("_extracted")
+    return metric.startswith(DEV_METRIC_PREFIXES)
+
+
+def filter_rows_for_label(
+    rows: dict[str, tuple[int, int]], dataset_label: str
+) -> dict[str, tuple[int, int]]:
+    if dataset_label == DATASET_LABELS[HELDOUT_SEED]:
+        return rows
+    return {m: v for m, v in rows.items() if dev_metric_allowed(m)}
 
 
 def _git_commit() -> str | None:
@@ -214,7 +273,7 @@ def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
         print(
             f"Skipping stability/cost/latency metrics: found {len(run_paths)} saved "
             "no_thinking_extracted_run*.json file(s), need >= 2 — run "
-            "scripts/probe_agent_thinking.py --seed 7 --facts-source extracted "
+            f"scripts/probe_agent_thinking.py --seed {seed} --facts-source extracted "
             "--configs no_thinking --runs-per-config 3 first."
         )
 
@@ -229,14 +288,46 @@ def _print_summary(rows: dict[str, tuple[int, int]]) -> None:
         print(f"{metric:42s} {numerator:12d} {denominator:12d} {value:>10s}")
 
 
-def write_rows(
-    write_client, rows: dict[str, tuple[int, int]], git_commit: str | None
+def delete_label_metrics(client, dataset_label: str, metrics: list[str]) -> None:
+    """One DELETE for every metric about to be rewritten, scoped to this
+    dataset_label.
+
+    Deliberately NOT a loop over bq.delete_eval_metrics: that issues one
+    DML statement per metric, and BigQuery caps table update operations
+    at a handful per ten seconds per table — 21 (dev) or 44 (held-out)
+    back-to-back DELETEs trip `429 Exceeded rate limits: too many table
+    update operations for this table` and the load job that follows is
+    rejected, leaving the label's rows deleted but not rewritten. One
+    DELETE plus one load job is two operations, well inside the quota.
+
+    bq.delete_by_ids can't be used here: it matches on the id column
+    alone, with no dataset_label predicate, so it would also delete the
+    identically-named heldout rows. The table reference is built the same
+    way app/store/bq.py builds it, from the same settings, rather than
+    reaching into its private helper."""
+    if not metrics:
+        return
+    table_ref = f"{settings.gcp_project}.{settings.bq_dataset}.eval_metrics"
+    query = (
+        f"DELETE FROM `{table_ref}` "
+        "WHERE dataset_label = @dataset_label AND metric IN UNNEST(@metrics)"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("dataset_label", "STRING", dataset_label),
+            bigquery.ArrayQueryParameter("metrics", "STRING", metrics),
+        ]
+    )
+    client.query(query, job_config=job_config, location=settings.vertex_location).result()
+
+
+def build_rows(
+    rows: dict[str, tuple[int, int]], git_commit: str | None, dataset_label: str
 ) -> list[dict]:
     computed_at = datetime.now(UTC).isoformat()
-    out_rows = []
-    for metric, (numerator, denominator) in rows.items():
-        row = {
-            "dataset_label": DATASET_LABEL,
+    return [
+        {
+            "dataset_label": dataset_label,
             "metric": metric,
             "numerator": numerator,
             "denominator": denominator,
@@ -244,36 +335,53 @@ def write_rows(
             "source_script": SOURCE_SCRIPT,
             "git_commit": git_commit,
         }
-        bq.delete_eval_metrics(write_client, DATASET_LABEL, metric)
-        out_rows.append(row)
+        for metric, (numerator, denominator) in rows.items()
+    ]
+
+
+def write_rows(
+    write_client, rows: dict[str, tuple[int, int]], git_commit: str | None, dataset_label: str
+) -> list[dict]:
+    """Delete-then-load, idempotent on (dataset_label, metric)."""
+    out_rows = build_rows(rows, git_commit, dataset_label)
+    delete_label_metrics(write_client, dataset_label, [r["metric"] for r in out_rows])
     bq.load_rows(write_client, "eval_metrics", out_rows)
     return out_rows
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--seed", type=int, default=HELDOUT_SEED, choices=sorted(DATASET_LABELS))
     parser.add_argument(
         "--eval-dataset",
         default="epr_eval",
         help="BigQuery dataset the seed's pipeline output was loaded into (default: epr_eval). "
-        "Read-only — never the live dataset.",
+        "Read-only. For --seed 42 (the development set) pass the live dataset, epr — this "
+        "script's only writes are to eval_metrics, scoped to (dataset_label, metric).",
     )
     args = parser.parse_args()
 
+    dataset_label = DATASET_LABELS[args.seed]
     live_dataset = settings.bq_dataset
     bq_client = bq.get_client()
 
     settings.bq_dataset = args.eval_dataset
-    print(f"Reading seed {args.seed} from dataset {settings.bq_dataset!r}...")
-    rows = compute_metrics(args.seed, bq_client)
+    print(f"Reading seed {args.seed} from dataset {settings.bq_dataset!r} (read-only)...")
+    all_rows = compute_metrics(args.seed, bq_client)
+    rows = filter_rows_for_label(all_rows, dataset_label)
+    skipped = len(all_rows) - len(rows)
+    if skipped:
+        print(
+            f"Computed {len(all_rows)} metric(s); writing {len(rows)} for {dataset_label!r} and "
+            f"skipping {skipped} not measured on the development set (see DEV_METRIC_PREFIXES)."
+        )
 
     settings.bq_dataset = live_dataset
     print(
         f"\nWriting {len(rows)} metric(s) to dataset {settings.bq_dataset!r}.eval_metrics "
-        f"(dataset_label={DATASET_LABEL!r})..."
+        f"(dataset_label={dataset_label!r})..."
     )
-    written = write_rows(bq_client, rows, _git_commit())
+    written = write_rows(bq_client, rows, _git_commit(), dataset_label)
 
     _print_summary(rows)
     print(f"\nWrote {len(written)} rows to {settings.gcp_project}.{live_dataset}.eval_metrics")
