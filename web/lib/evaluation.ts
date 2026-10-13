@@ -342,9 +342,25 @@ function isRiskBandSummary(miss: string): boolean {
   return miss.startsWith("Risk band (");
 }
 
+/** A wrongly-flagged clean processor says nothing on its own about
+ * whether the flag cost that processor any tonnage — a non-deducting
+ * finding (a review flag, or one the systemic guard caught) leaves the
+ * figures untouched. That IS answerable from this dataset's own
+ * full-stage tonnage-error row, so the note is appended only when that
+ * row actually reads zero, never asserted. Deliberately not naming the
+ * processor or the finding: that detail is real but dataset-specific,
+ * and hardcoding it here would quietly go stale on the next seed. */
+function falseFlagNote(miss: string, rows: EvalMetricRow[]): string {
+  const match = /wrongly flagged under (\w+) facts/.exec(miss);
+  if (!match) return miss;
+  const tonnage = findRow(rows, `unverifiable_t_pct_error_full_${match[1]}`);
+  if (!tonnage || tonnage.numerator !== 0) return miss;
+  return `${miss} The flag did not change any tonnage — verified tonnes at this stage match ground truth exactly.`;
+}
+
 export function annotateMisses(misses: string[], rows: EvalMetricRow[]): string[] {
   return misses.filter((miss) => !isRiskBandSummary(miss)).map((miss) => {
-    const line = rewriteMiss(miss);
+    const line = falseFlagNote(rewriteMiss(miss), rows);
 
     for (const issueCode of ["F5", "F7"] as const) {
       if (!miss.startsWith(MISS_PREFIXES[issueCode])) continue;

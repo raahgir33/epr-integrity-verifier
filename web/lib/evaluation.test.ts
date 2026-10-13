@@ -372,8 +372,24 @@ describe("annotateMisses", () => {
     ).toEqual(["1/3 clean processor(s) wrongly flagged under extracted facts."]);
   });
 
-  it("leaves a line it recognises no part of untouched", () => {
+  it("notes that a false flag cost no tonnage, when the stored row says so", () => {
     const misses = ["1/3 clean processor(s) wrongly flagged under extracted facts."];
+
+    expect(annotateMisses(misses, HELDOUT)[0]).toBe(
+      "1/3 clean processor(s) wrongly flagged under extracted facts. The flag did not change any " +
+        "tonnage — verified tonnes at this stage match ground truth exactly."
+    );
+  });
+
+  it("omits that note when the stage's tonnage error is not zero", () => {
+    const misses = ["1/3 clean processor(s) wrongly flagged under extracted facts."];
+    const rows = [row("unverifiable_t_pct_error_full_extracted", 7096, 1_000_000)];
+
+    expect(annotateMisses(misses, rows)).toEqual(misses);
+  });
+
+  it("leaves a line it recognises no part of untouched", () => {
+    const misses = ["something entirely unexpected from the API."];
     expect(annotateMisses(misses, [])).toEqual(misses);
   });
 });
