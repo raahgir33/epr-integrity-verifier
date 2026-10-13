@@ -109,14 +109,6 @@ function factsSourceLabel(factsSource: string): string {
   return factsSource === EXTRACTED ? "extracted facts" : "ground-truth facts";
 }
 
-/** The same thing as a sub-line suffix: "(EXTRACTED FACTS)". Sub-lines
- * are not uppercased by CSS the way StatCard's label is, so the basis is
- * spelled out in caps here to keep it visually distinct from the
- * title-cased words around it. */
-function factsSourceSuffixLabel(factsSource: string): string {
-  return `(${factsSourceLabel(factsSource).toUpperCase()})`;
-}
-
 function stageLabel(stage: string): string {
   return STAGE_NAMES[stage] ?? stage;
 }
