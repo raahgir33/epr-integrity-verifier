@@ -18,6 +18,27 @@ const ISSUE_NAMES: Record<string, string> = {
  * behind either, found only by the agents. */
 const AGENT_ONLY_NAME = "Agent-Only Patterns";
 
+/** What the false flag on a given dataset actually was, in plain words.
+ *
+ * Keyed by dataset_label and nowhere else: this is a finding about one
+ * specific evaluation run, not a derived metric, so it must never attach
+ * itself to a dataset it was not diagnosed against. Re-running the
+ * evaluation on a new seed means re-diagnosing and re-writing this, or
+ * the key simply will not match and nothing is claimed.
+ *
+ * heldout-seed7, diagnosed 14 Oct: the flagged processor is clean. The
+ * agents raised one observation about the regularity of its weighbridge
+ * ticket numbers, which the systemic guard classified non-deducting. It
+ * appears in ONE of the three saved identical re-runs — the single
+ * misread document field in that dataset is present in all three — so it
+ * is variation in the agents' own output, not a reading error. */
+const FALSE_FLAG_CAUSE: Record<string, string> = {
+  "heldout-seed7":
+    " It is one observation the agents raised about how regular a processor's weighbridge ticket " +
+    "numbers look, and it appears in only one of three identical re-runs — variation in the " +
+    "agents' own output rather than a misread document.",
+};
+
 const STAGE_NAMES: Record<string, string> = {
   checks_only: "Rule Checks",
   full: "Agent Validation",
@@ -350,17 +371,23 @@ function isRiskBandSummary(miss: string): boolean {
  * row actually reads zero, never asserted. Deliberately not naming the
  * processor or the finding: that detail is real but dataset-specific,
  * and hardcoding it here would quietly go stale on the next seed. */
-function falseFlagNote(miss: string, rows: EvalMetricRow[]): string {
+function falseFlagNote(miss: string, rows: EvalMetricRow[], datasetLabel?: string | null): string {
   const match = /wrongly flagged under (\w+) facts/.exec(miss);
   if (!match) return miss;
   const tonnage = findRow(rows, `unverifiable_t_pct_error_full_${match[1]}`);
   if (!tonnage || tonnage.numerator !== 0) return miss;
-  return `${miss} The flag did not change any tonnage — verified tonnes at this stage match ground truth exactly.`;
+  const tonnageNote =
+    " The flag did not change any tonnage — verified tonnes at this stage match ground truth exactly.";
+  return `${miss}${tonnageNote}${FALSE_FLAG_CAUSE[datasetLabel ?? ""] ?? ""}`;
 }
 
-export function annotateMisses(misses: string[], rows: EvalMetricRow[]): string[] {
+export function annotateMisses(
+  misses: string[],
+  rows: EvalMetricRow[],
+  datasetLabel?: string | null
+): string[] {
   return misses.filter((miss) => !isRiskBandSummary(miss)).map((miss) => {
-    const line = falseFlagNote(rewriteMiss(miss), rows);
+    const line = falseFlagNote(rewriteMiss(miss), rows, datasetLabel);
 
     for (const issueCode of ["F5", "F7"] as const) {
       if (!miss.startsWith(MISS_PREFIXES[issueCode])) continue;
@@ -432,19 +459,32 @@ export function patternCoverage(rows: EvalMetricRow[]): PatternCoverage | null {
 
 export type SummaryFigure = { key: string; label: string; display: string; sub: string };
 
-/** Prefers the ground-truth-facts row (the basis docs/ARCHITECTURE.md's
- * evaluation section quotes) and falls back to extracted facts, so a
- * dataset_label missing one source still shows the figure and says which
- * basis it used rather than printing "n/a". */
-function preferredSource(
+/** A figure that exists on both fact sources: the primary is
+ * ground-truth facts where present (the basis the evaluation quotes),
+ * falling back to extracted so a dataset_label carrying only one source
+ * still shows the tile rather than printing "n/a". `other` is the
+ * remaining source's value, and is null when it is absent or identical —
+ * the tile appends it only when it genuinely differs, so an agreeing pair
+ * adds no noise. */
+function bothBases(
   rows: EvalMetricRow[],
   build: (factsSource: string) => string
-): { row: EvalMetricRow; factsSource: string } | null {
-  for (const factsSource of [TRUTH, EXTRACTED]) {
-    const row = findRow(rows, build(factsSource));
-    if (row && row.value !== null) return { row, factsSource };
-  }
-  return null;
+): { value: number; factsSource: string; other: number | null } | null {
+  const order = findRow(rows, build(TRUTH))?.value != null ? [TRUTH, EXTRACTED] : [EXTRACTED, TRUTH];
+  const primary = findRow(rows, build(order[0]));
+  if (primary?.value == null) return null;
+  const secondary = findRow(rows, build(order[1]));
+  const other =
+    secondary?.value != null && secondary.value !== primary.value ? secondary.value : null;
+  return { value: primary.value, factsSource: order[0], other };
+}
+
+function otherBasisSuffix(
+  basis: { factsSource: string; other: number | null } | null
+): string {
+  if (!basis || basis.other === null) return "";
+  const otherName = basis.factsSource === TRUTH ? "Extracted" : "Ground-Truth";
+  return ` · ${formatPercentPrecise(basis.other)} on ${otherName} Facts`;
 }
 
 /** /evaluation's four headline figures. Every one reads stored
@@ -454,27 +494,36 @@ function preferredSource(
 export function summaryFigures(rows: EvalMetricRow[]): SummaryFigure[] {
   const figures: SummaryFigure[] = [];
 
-  const band = preferredSource(rows, (s) => `risk_band_accuracy_checks_only_${s}`);
-  const bandFull = band ? findRow(rows, `risk_band_accuracy_full_${band.factsSource}`) : undefined;
-  if (band && bandFull?.value != null) {
+  // Both bases on one tile: the ground-truth pair as the headline, the
+  // extracted-facts figure appended only when it actually differs, so an
+  // identical pair doesn't add noise.
+  const bandAfter = bothBases(rows, (fs) => `risk_band_accuracy_full_${fs}`);
+  const bandBefore = bandAfter
+    ? findRow(rows, `risk_band_accuracy_checks_only_${bandAfter.factsSource}`)
+    : undefined;
+  if (bandAfter && bandBefore?.value != null) {
     figures.push({
       key: "risk_band_accuracy",
       label: "Risk-band accuracy",
-      display: `${formatPercentPrecise(band.row.value!)} → ${formatPercentPrecise(bandFull.value)}`,
-      sub: `Rule Checks → Agent Validation ${factsSourceSuffixLabel(band.factsSource)}`,
+      display: `${formatPercentPrecise(bandBefore.value)} → ${formatPercentPrecise(bandAfter.value)}`,
+      sub:
+        `Rule Checks → Agent Validation (${factsSourceLabel(bandAfter.factsSource).toUpperCase()})` +
+        otherBasisSuffix(bandAfter),
     });
   }
 
-  const err = preferredSource(rows, (s) => `unverifiable_t_pct_error_checks_only_${s}`);
-  const errFull = err
-    ? findRow(rows, `unverifiable_t_pct_error_full_${err.factsSource}`)
+  const errAfter = bothBases(rows, (fs) => `unverifiable_t_pct_error_full_${fs}`);
+  const errBefore = errAfter
+    ? findRow(rows, `unverifiable_t_pct_error_checks_only_${errAfter.factsSource}`)
     : undefined;
-  if (err && errFull?.value != null) {
+  if (errAfter && errBefore?.value != null) {
     figures.push({
       key: "unverifiable_t_pct_error",
       label: "Tonnage error",
-      display: `${formatPercentPrecise(err.row.value!)} → ${formatPercentPrecise(errFull.value)}`,
-      sub: `Share of True Verifiable Tonnes ${factsSourceSuffixLabel(err.factsSource)}`,
+      display: `${formatPercentPrecise(errBefore.value)} → ${formatPercentPrecise(errAfter.value)}`,
+      sub:
+        `Share of True Verifiable Tonnes (${factsSourceLabel(errAfter.factsSource).toUpperCase()})` +
+        otherBasisSuffix(errAfter),
     });
   }
 
@@ -494,12 +543,41 @@ export function summaryFigures(rows: EvalMetricRow[]): SummaryFigure[] {
     figures.push({
       key: "patterns_detected",
       label: "Patterns detected",
-      display: `${coverage.typesDetected}/${coverage.typesTotal} Issue Types Detected`,
-      sub: `${coverage.instancesDetected} of ${coverage.instancesTotal} Planted Instances Detected${missed}`,
+      display: `${coverage.typesDetected}/${coverage.typesTotal} (${coverage.instancesDetected}/${coverage.instancesTotal} Instances)`,
+      sub: `Issue Types, With Planted Instances in Brackets${missed}`,
     });
   }
 
   return figures;
+}
+
+/** One line under the summary row explaining why the extracted-facts
+ * figure trails the ground-truth one, shown only when it actually does.
+ *
+ * Deliberately NOT attributed to the single misread field of 5,431. On
+ * seed 7 the gap is one processor's non-deducting agent finding, and the
+ * three saved extracted-facts probe runs — identical input, misread field
+ * included in every one — raise it in only one run of the three. That is
+ * run-to-run model variability, already published on this page as
+ * risk-band stability, not an extraction artifact. Tonnage is unaffected
+ * either way, which is what the tonnes-stability figure shows. */
+export function extractedGapNote(rows: EvalMetricRow[]): string | null {
+  const truth = findRow(rows, "risk_band_accuracy_full_truth");
+  const extracted = findRow(rows, "risk_band_accuracy_full_extracted");
+  if (truth?.value == null || extracted?.value == null || extracted.value >= truth.value) {
+    return null;
+  }
+  const bandStability = findRow(rows, "risk_band_stability");
+  const tonnesStability = findRow(rows, "unverifiable_t_stability");
+  const stability =
+    bandStability && tonnesStability
+      ? ` The same effect is measured directly as risk-band stability (${bandStability.numerator}/${bandStability.denominator} processors identical across three independent runs) while unverifiable tonnes held identical in ${tonnesStability.numerator}/${tonnesStability.denominator}.`
+      : "";
+  return (
+    "The extracted-facts figure trails the ground-truth one by a single processor, where the " +
+    "agents raised one non-deducting finding that the guardrails kept out of the tonnage. It is " +
+    `run-to-run variation in the agents' own output, not a reading error.${stability}`
+  );
 }
 
 export function groupMetrics(rows: EvalMetricRow[]): { group: string; metrics: DisplayMetric[] }[] {

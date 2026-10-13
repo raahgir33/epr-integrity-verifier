@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   annotateMisses,
   describeMetric,
+  extractedGapNote,
   groupMetrics,
   patternCoverage,
   summaryFigures,
@@ -48,6 +49,8 @@ const HELDOUT: EvalMetricRow[] = [
   row("unverifiable_t_pct_error_checks_only_extracted", 19545, 1_000_000),
   row("unverifiable_t_abs_error_kg_full_extracted", 0, 1),
   row("unverifiable_t_pct_error_full_extracted", 0, 1_000_000),
+  row("risk_band_stability", 9, 10),
+  row("unverifiable_t_stability", 10, 10),
   row("agent_cost_micro_usd_per_processor", 290_000, 1),
   row("agent_latency_ms_per_processor", 72_700, 1),
 ];
@@ -295,18 +298,17 @@ describe("summaryFigures", () => {
       "patterns_detected",
     ]);
     expect(byKey.risk_band_accuracy.display).toBe("70% → 90%");
-    expect(byKey.risk_band_accuracy.sub).toBe(
-      "Rule Checks → Agent Validation (GROUND-TRUTH FACTS)"
-    );
+    expect(byKey.risk_band_accuracy.sub).toContain("80% on Extracted Facts");
+    expect(byKey.risk_band_accuracy.sub).toContain("Rule Checks → Agent Validation (GROUND-TRUTH FACTS)");
     expect(byKey.unverifiable_t_pct_error.display).toBe("1.95% → 0%");
     expect(byKey.unverifiable_t_pct_error.sub).toBe(
       "Share of True Verifiable Tonnes (GROUND-TRUTH FACTS)"
-    );
+    );  // identical on both bases here, so no suffix
     expect(byKey.key_field_read_accuracy.display).toBe("99.98%");
     expect(byKey.key_field_read_accuracy.sub).toBe("5,430/5,431 Key Fields");
-    expect(byKey.patterns_detected.display).toBe("6/8 Issue Types Detected");
+    expect(byKey.patterns_detected.display).toBe("6/8 (9/11 Instances)");
     expect(byKey.patterns_detected.sub).toBe(
-      "9 of 11 Planted Instances Detected · Missed: Ghost Site, Energy Implausibility"
+      "Issue Types, With Planted Instances in Brackets · Missed: Ghost Site, Energy Implausibility"
     );
   });
 
@@ -381,6 +383,22 @@ describe("annotateMisses", () => {
     );
   });
 
+  it("adds the diagnosed cause for the dataset it was diagnosed against", () => {
+    const misses = ["1/3 clean processor(s) wrongly flagged under extracted facts."];
+    const line = annotateMisses(misses, HELDOUT, "heldout-seed7")[0];
+
+    expect(line).toContain("weighbridge ticket");
+    expect(line).toContain("one of three identical re-runs");
+    expect(line).toContain("rather than a misread document");
+  });
+
+  it("never attaches that cause to a dataset it was not diagnosed against", () => {
+    const misses = ["1/3 clean processor(s) wrongly flagged under extracted facts."];
+
+    expect(annotateMisses(misses, HELDOUT, "dev-seed42")[0]).not.toContain("weighbridge ticket");
+    expect(annotateMisses(misses, HELDOUT, "heldout-seed9")[0]).not.toContain("weighbridge ticket");
+  });
+
   it("omits that note when the stage's tonnage error is not zero", () => {
     const misses = ["1/3 clean processor(s) wrongly flagged under extracted facts."];
     const rows = [row("unverifiable_t_pct_error_full_extracted", 7096, 1_000_000)];
@@ -391,5 +409,24 @@ describe("annotateMisses", () => {
   it("leaves a line it recognises no part of untouched", () => {
     const misses = ["something entirely unexpected from the API."];
     expect(annotateMisses(misses, [])).toEqual(misses);
+  });
+});
+
+
+describe("extractedGapNote", () => {
+  it("explains the gap as agent variation, never as a reading error", () => {
+    const note = extractedGapNote(HELDOUT)!;
+
+    expect(note).toContain("run-to-run variation in the agents' own output, not a reading error");
+    expect(note).toContain("9/10");
+    expect(note).not.toMatch(/misread|extraction error|field/i);
+  });
+
+  it("says nothing when extracted matches ground-truth facts", () => {
+    const rows = [
+      row("risk_band_accuracy_full_truth", 10, 10),
+      row("risk_band_accuracy_full_extracted", 10, 10),
+    ];
+    expect(extractedGapNote(rows)).toBeNull();
   });
 });

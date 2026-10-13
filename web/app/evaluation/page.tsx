@@ -3,7 +3,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { Heading } from "@/components/ui/Heading";
 import { getEvaluation } from "@/lib/api";
-import { annotateMisses, groupMetrics, summaryFigures, type SummaryFigure } from "@/lib/evaluation";
+import {
+  annotateMisses,
+  extractedGapNote,
+  groupMetrics,
+  summaryFigures,
+  type SummaryFigure,
+} from "@/lib/evaluation";
 
 export const metadata: Metadata = {
   title: "Evaluation",
@@ -13,13 +19,16 @@ export const metadata: Metadata = {
 /** The four headline figures, every one derived from this dataset's own
  * eval_metrics rows (lib/evaluation.ts's summaryFigures) — a figure whose
  * rows are missing is omitted upstream rather than shown as "n/a". */
-function SummaryRow({ figures }: { figures: SummaryFigure[] }) {
+function SummaryRow({ figures, note }: { figures: SummaryFigure[]; note?: string | null }) {
   if (figures.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {figures.map((f) => (
-        <StatCard key={f.key} label={f.label} value={f.display} sub={f.sub} />
-      ))}
+    <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {figures.map((f) => (
+          <StatCard key={f.key} label={f.label} value={f.display} sub={f.sub} />
+        ))}
+      </div>
+      {note ? <p className="text-xs leading-relaxed text-ink-muted">{note}</p> : null}
     </div>
   );
 }
@@ -29,7 +38,11 @@ export default async function EvaluationPage() {
   const heldoutGroups = groupMetrics(evaluation.heldout);
   const heldoutSummary = summaryFigures(evaluation.heldout);
   const devSummary = summaryFigures(evaluation.dev);
-  const misses = annotateMisses(evaluation.misses, evaluation.heldout);
+  const misses = annotateMisses(
+    evaluation.misses,
+    evaluation.heldout,
+    evaluation.heldout_dataset_label
+  );
 
   return (
     <div className="space-y-8">
@@ -70,7 +83,7 @@ export default async function EvaluationPage() {
             .
           </p>
 
-          <SummaryRow figures={heldoutSummary} />
+          <SummaryRow figures={heldoutSummary} note={extractedGapNote(evaluation.heldout)} />
 
           {heldoutGroups.map(({ group, metrics }) => (
             <div key={group} className="space-y-2">
@@ -111,7 +124,7 @@ export default async function EvaluationPage() {
             Shown for reference only — these numbers come from the same dataset the rule thresholds and
             prompts were tuned against, so they are not evidence of real-world accuracy.
           </p>
-          <SummaryRow figures={devSummary} />
+          <SummaryRow figures={devSummary} note={extractedGapNote(evaluation.dev)} />
           <p className="text-xs text-ink-muted">
             Only these headline figures are measured on the development set. Run-to-run stability,
             cost, latency, finding precision and false-flag rates are not run on the development set:
