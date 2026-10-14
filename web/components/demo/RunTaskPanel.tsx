@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRunAlert } from "@/lib/useRunAlert";
 import { useScrollFade } from "@/lib/useScrollFade";
 import { RunPanelFooter } from "@/components/demo/RunPanelFooter";
 import { RunTaskRow } from "@/components/demo/RunTaskRow";
@@ -56,6 +57,10 @@ export function RunTaskPanel({
     onScroll: onListScroll,
   } = useScrollFade<HTMLOListElement>(`${run?.status}:${run?.steps.length}:${Object.values(toggled).join(",")}`);
 
+  // One source of truth for this run's alert: the rows, the live region
+  // and the footer must never disagree about whether one fired.
+  const alert = useRunAlert(run);
+
   if (error && !run) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl p-2">
@@ -72,14 +77,14 @@ export function RunTaskPanel({
     );
   }
 
-  const rows = buildRunRows(run, batch);
+  const rows = buildRunRows(run, batch, alert);
   const isOpen = (row: RunRow) => toggled[row.id] ?? row.state === "in_progress";
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl p-2">
       {/* Announced only when the text changes — see describeRun. */}
       <p aria-live="polite" className="sr-only">
-        {describeRun(rows, run)}
+        {describeRun(rows, run, alert)}
       </p>
 
       <ol
@@ -102,7 +107,7 @@ export function RunTaskPanel({
         ))}
       </ol>
 
-      <RunPanelFooter run={run} onViewProcessor={onViewProcessor} onTryAgain={onTryAgain} />
+      <RunPanelFooter run={run} alert={alert} onViewProcessor={onViewProcessor} onTryAgain={onTryAgain} />
     </div>
   );
 }

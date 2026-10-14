@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
-import { buildRunRows, failedStage, type RunRowId, type RunRowState } from "@/lib/runRows";
+import { buildRunRows, describeRun, failedStage, type RunRowId, type RunRowState } from "@/lib/runRows";
 
 const BATCH: DemoBatchOut = {
   batch_id: "BATCH-PWP-05-001",
@@ -485,5 +485,45 @@ describe("buildRunRows — expanded body lines", () => {
     for (const r of points) {
       for (const row of buildRunRows(r, BATCH)) expect(row.lines.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("buildRunRows — an alert resolved outside the run", () => {
+  // GET /runs can report no alert for one that exists, when the run goes
+  // terminal just before its alert row becomes queryable. The panel looks
+  // it up and passes it in; the row must agree with the footer.
+  const base = {
+    reading_documents: timing(12, 12),
+    checking: timing(30, 18),
+    reasoning: timing(90, 60),
+    drafting_memo: timing(100, 10),
+  };
+  const withheld = run({
+    status: "done",
+    updated_at: new Date(Date.parse(START) + 103 * 1000).toISOString(),
+    stage_timestamps: base,
+    alert: null,
+  });
+
+  it("says No change when the run has no alert and none was found", () => {
+    const row = buildRunRows(withheld, BATCH, null)[3];
+    expect(row.detail).toBe("No change");
+  });
+
+  it("uses a resolved alert the run itself did not carry", () => {
+    const row = buildRunRows(withheld, BATCH, ALERT)[3];
+    expect(row.detail).toBe("Medium → High");
+    expect(row.lines[0].label).toBe(ALERT.message);
+  });
+
+  it("defaults to the run's own alert when none is passed", () => {
+    const carried = run({ status: "done", stage_timestamps: base, alert: ALERT });
+    expect(buildRunRows(carried, BATCH)[3].detail).toBe("Medium → High");
+  });
+
+  it("announces the resolved alert rather than claiming none fired", () => {
+    const rows = buildRunRows(withheld, BATCH, ALERT);
+    expect(describeRun(rows, withheld, ALERT)).toContain(ALERT.message);
+    expect(describeRun(rows, withheld, null)).toContain("No alert");
   });
 });

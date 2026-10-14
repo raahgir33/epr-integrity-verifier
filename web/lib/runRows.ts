@@ -1,4 +1,4 @@
-import type { DemoBatchOut, ReasoningStepOut, RunStatusOut } from "@/lib/api";
+import type { AlertOut, DemoBatchOut, ReasoningStepOut, RunStatusOut } from "@/lib/api";
 import { formatIstTime, formatMonth, formatSignedTonnes } from "@/lib/format";
 import { stepActionLine } from "@/lib/reasoning";
 import { STAGE_ORDER, STAGE_SHORT_LABEL } from "@/lib/runStages";
@@ -146,10 +146,10 @@ function reasoningDetail(run: RunStatusOut): string | null {
   return tools > 0 ? `${stepText} · ${tools} tool call${tools === 1 ? "" : "s"}` : stepText;
 }
 
-function alertDetail(run: RunStatusOut): string | null {
+function alertDetail(run: RunStatusOut, alert: AlertOut | null): string | null {
   if (!run.stage_timestamps.reasoning) return null;
-  if (!run.alert) return "No change";
-  const { risk_band_before: before, risk_band_after: after } = run.alert;
+  if (!alert) return "No change";
+  const { risk_band_before: before, risk_band_after: after } = alert;
   return before && after ? `${before} → ${after}` : "Alert raised";
 }
 
@@ -228,12 +228,12 @@ function reasoningLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
  * what a short detail cannot: the alert's full sentence and the finding
  * behind it. Repeating "Medium → High" in both places would spend the
  * body's only lines on something already on screen. */
-function alertLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
+function alertLines(state: RunRowState, alert: AlertOut | null): RunRowLine[] {
   if (state !== "done") return [statusLine(state)];
-  if (!run.alert) return [{ label: "Risk band unchanged, no new finding.", value: null }];
-  const finding = run.alert.new_finding_summary;
+  if (!alert) return [{ label: "Risk band unchanged, no new finding.", value: null }];
+  const finding = alert.new_finding_summary;
   return [
-    { label: run.alert.message, value: null },
+    { label: alert.message, value: null },
     ...(finding ? [{ label: `New finding: ${finding}`, value: null }] : []),
   ];
 }
@@ -252,12 +252,17 @@ function refreshingLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
   return [statusLine(state)];
 }
 
-function linesFor(id: RunRowId, run: RunStatusOut, state: RunRowState): RunRowLine[] {
+function linesFor(
+  id: RunRowId,
+  run: RunStatusOut,
+  state: RunRowState,
+  alert: AlertOut | null,
+): RunRowLine[] {
   switch (id) {
     case "reasoning":
       return reasoningLines(run, state);
     case "alert_decision":
-      return alertLines(run, state);
+      return alertLines(state, alert);
     case "refreshing_results":
       return refreshingLines(run, state);
     default:
@@ -265,7 +270,15 @@ function linesFor(id: RunRowId, run: RunStatusOut, state: RunRowState): RunRowLi
   }
 }
 
-export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): RunRow[] {
+/** `alert` is passed in rather than read off the run: GET /runs can
+ * report no alert for one that exists (see lib/useRunAlert.ts), and the
+ * row must not say "No change" while the footer shows the alert. Defaults
+ * to whatever the run itself carries. */
+export function buildRunRows(
+  run: RunStatusOut,
+  batch: DemoBatchOut | null,
+  alert: AlertOut | null = run.alert,
+): RunRow[] {
   const spec: { id: RunRowId; state: RunRowState; detail: string | null; derived: boolean }[] = [
     {
       id: "reading_documents",
@@ -288,7 +301,7 @@ export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): Run
     {
       id: "alert_decision",
       state: alertDecisionState(run),
-      detail: alertDetail(run),
+      detail: alertDetail(run, alert),
       derived: true,
     },
     {
@@ -313,7 +326,7 @@ export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): Run
     state: row.state,
     tag: tagFor(row.state),
     derived: row.derived,
-    lines: linesFor(row.id, run, row.state),
+    lines: linesFor(row.id, run, row.state, alert),
   }));
 }
 
@@ -326,10 +339,14 @@ export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): Run
  * re-announces when its text actually changes. Without that, a screen
  * reader would repeat the same stage every poll for the length of the
  * run. */
-export function describeRun(rows: RunRow[], run: RunStatusOut): string {
+export function describeRun(
+  rows: RunRow[],
+  run: RunStatusOut,
+  resolvedAlert: AlertOut | null = run.alert,
+): string {
   if (run.status === "done") {
-    const alert = run.alert
-      ? ` ${run.alert.message}`
+    const alert = resolvedAlert
+      ? ` ${resolvedAlert.message}`
       : " No alert: risk band unchanged, no new finding.";
     return `Verification complete.${alert}`;
   }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AlertBanner } from "@/components/demo/AlertBanner";
 import { LiveVerificationSection } from "@/components/demo/LiveVerificationSection";
 import { AudienceTabs } from "@/components/landing/AudienceTabs";
 import { CloudStrip } from "@/components/landing/CloudStrip";
@@ -12,7 +11,7 @@ import { WhatWeCheck } from "@/components/landing/WhatWeCheck";
 import { FullBleed } from "@/components/ui/FullBleed";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { TextReveal } from "@/components/ui/TextReveal";
-import { getAlerts, getDemoBatches, getProcessor, getProcessors } from "@/lib/api";
+import { getDemoBatches, getProcessor, getProcessors } from "@/lib/api";
 import { buildCheckCatalog, getLandingFigures, pickRealExamples } from "@/lib/landing";
 
 export const metadata: Metadata = {
@@ -22,11 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LandingPage() {
-  const [{ processors }, { batches }, { alerts }] = await Promise.all([
-    getProcessors(),
-    getDemoBatches(),
-    getAlerts(),
-  ]);
+  const [{ processors }, { batches }] = await Promise.all([getProcessors(), getDemoBatches()]);
 
   const processorIds = processors.map((p) => p.processor_id);
   const details = await Promise.all(processorIds.map((id) => getProcessor(id)));
@@ -53,10 +48,15 @@ export default async function LandingPage() {
         <HeroScene figures={figures} />
       </FullBleed>
 
+      {/* T16b: the page-level alert banner is gone. It was server-rendered
+          from GET /alerts at page load, so it could not show the alert a
+          run had just produced — it only appeared on the next navigation,
+          detached from the run that caused it, and then stayed for every
+          later visit. An alert now lives in the run panel's own footer:
+          it arrives with the verification steps and leaves with them. */}
       <div id="live-verification" className="scroll-mt-16">
         <LiveVerificationSection batches={batches} />
       </div>
-      <AlertBanner alerts={alerts} />
 
       <ProofStrip figures={figures} />
 

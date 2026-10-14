@@ -4,15 +4,31 @@ import Link from "next/link";
 import type { MouseEvent } from "react";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { alertTone } from "@/components/demo/alertTone";
-import type { RunStatusOut } from "@/lib/api";
+import type { AlertOut, RunStatusOut } from "@/lib/api";
+
+/** The run's own alert, in its band's colour — the same per-band tones a
+ * page-level banner would use, so an alert reads identically wherever it
+ * appears. It lives here rather than on the page because an alert only
+ * means something beside the run that produced it: it arrives with the
+ * verification steps and leaves with them. */
+function AlertLine({ alert }: { alert: AlertOut }) {
+  const tone = alertTone(alert);
+  return (
+    <p
+      className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-xs text-alert-ink ${tone.border} ${tone.surface}`}
+    >
+      <tone.Icon aria-hidden size={14} className={`mt-px shrink-0 ${tone.accent}`} />
+      <span className="text-pretty">{alert.message}</span>
+    </p>
+  );
+}
 
 /** Closing state for a settled run (T16b), pinned at the bottom of the
  * task panel so it never scrolls out of view.
  *
- * On a run that finished this carries the alert outcome — the line that
- * used to render inside the card via RunProgress — plus the way through
- * to the processor it just verified. On a run that failed it carries the
- * backend's error and a way to start over.
+ * On a run that finished this carries the alert it produced plus the way
+ * through to the processor it just verified. On a run that failed it
+ * carries the backend's error and a way to start over.
  *
  * The processor link stays a real `Link` with an href rather than a
  * button, so middle-click, cmd-click and "open in new tab" all behave.
@@ -20,10 +36,13 @@ import type { RunStatusOut } from "@/lib/api";
  * away before the route changes. */
 export function RunPanelFooter({
   run,
+  alert,
   onViewProcessor,
   onTryAgain,
 }: {
   run: RunStatusOut;
+  /** Resolved by the panel, not read off the run — see lib/useRunAlert.ts. */
+  alert: AlertOut | null;
   onViewProcessor: (processorId: string) => void;
   onTryAgain: () => void;
 }) {
@@ -41,17 +60,13 @@ export function RunPanelFooter({
     <div className="mt-2 shrink-0 border-t border-border px-3 pb-1 pt-3">
       {run.status === "done" ? (
         <>
-          <p className="flex items-start gap-2 text-xs text-ink">
-            {run.alert ? (
-              (() => {
-                const tone = alertTone(run.alert);
-                return <tone.Icon aria-hidden size={14} className={`mt-px shrink-0 ${tone.accent}`} />;
-              })()
-            ) : null}
-            <span className="text-pretty">
-              {run.alert?.message ?? "No alert — risk band unchanged, no new finding."}
-            </span>
-          </p>
+          {alert ? (
+            <AlertLine alert={alert} />
+          ) : (
+            <p className="text-pretty text-xs text-ink-muted">
+              No alert — risk band unchanged, no new finding.
+            </p>
+          )}
           <Link
             href={href}
             onClick={handleClick}

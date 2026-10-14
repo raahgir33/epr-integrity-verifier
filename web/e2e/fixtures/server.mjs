@@ -313,6 +313,7 @@ const ALERT = {
 };
 
 const runs = new Map();
+const lateAlerts = new Map();
 let runSeq = 0;
 
 function stageMsFor(runState, stage) {
@@ -394,6 +395,14 @@ function runResponse(runId) {
   const runState = runs.get(runId);
   if (!runState) return null;
   const snap = runSnapshot(runState);
+  // WITHHOLD_RUN_ALERT reproduces what the deployed API does when a run
+  // goes terminal just before its own alert row becomes queryable:
+  // GET /runs reports no alert for one that exists. The alert is still
+  // served by /alerts, keyed to this run.
+  if (process.env.WITHHOLD_RUN_ALERT === "1" && snap.alert) {
+    lateAlerts.set(runId, { ...snap.alert, run_id: runId });
+    snap.alert = null;
+  }
   return {
     meta: META,
     run_id: runId,
@@ -444,6 +453,7 @@ const LANDING_ROUTES = {
   "/alerts": () => ({
     meta: META,
     alerts: [
+      ...lateAlerts.values(),
       ALERT,
       { ...ALERT, alert_id: "ALERT-DEMO-0002", risk_band_before: "High", risk_band_after: "Medium",
         message: "Risk band eased from High to Medium after the new certificate batch." },
