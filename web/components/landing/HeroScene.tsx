@@ -468,13 +468,71 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
       {/* Localised scrim behind the text column only — the headline/body
           sit on real sky photography whose luminance varies by position,
           not a flat token-driven background, so a global scrim would
-          either wash out the sky or under-protect the text. Verified
-          against the actual rendered asset in T13.6b's Part 4 contrast
-          pass; adjusted there if short of the AA floor. */}
+          either wash out the sky or under-protect the text.
+
+          T16a item 1, below sm: unchanged from T13.6b. The mobile layout
+          stacks text at the top and bottom-anchors hero-earth, so the
+          desktop band's geometry doesn't apply; its own contrast is
+          tracked separately. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-full sm:w-[65%] lg:w-[55%]"
+        className="pointer-events-none absolute inset-y-0 left-0 w-full sm:hidden"
         style={{ background: "linear-gradient(105deg, rgb(6 16 40 / 0.55), rgb(6 16 40 / 0.15) 70%, transparent)" }}
+      />
+
+      {/* T16a item 1, sm and up: the scrim is sized to the TEXT COLUMN
+          rather than to a share of the viewport. Its right edge is derived
+          from the same PageContainer padding + max-width scale O1 put the
+          text on — px-6/8/12/16 with the 1440/1600 caps — so it lands a
+          constant 64px past the headline's own max-w-xl (36rem) at every
+          width. The old `lg:w-[55%]` was 914.7px on a 1663px viewport,
+          which is exactly where the reported hard vertical line fell: the
+          gradient was still at ~0.19 alpha when the element ended, and a
+          gradient that is still visibly dark at its own edge reads as a
+          seam, not a fade.
+
+          Horizontal: a flat alpha across the whole column, fading out
+          only across that 64px margin. A diagonal or radial falloff was
+          measured first and rejected — it decays in both axes at once, so
+          it is weakest exactly at the body paragraph's right edge, which
+          is the pixel most in need of cover (a radial feather never got
+          body text above 2.44:1 without driving the left edge to near
+          opaque).
+
+          Alpha is 0.25 by explicit decision: this task asked for the
+          overlay to get NARROWER, not darker, and 0.25 is the value the
+          developer settled on after seeing it rendered. It is well under
+          the 0.55 the old diagonal gradient started at, so the band is
+          substantially lighter than before across its whole width.
+
+          Contrast consequence, recorded so it is not rediscovered later:
+          the body paragraph and the bottom tagline do not meet WCAG AA
+          over the brightest cloud at this alpha (~1.9:1 against a 4.5
+          floor), and the headline sits near its own 3.0 large-text
+          floor. Text alpha cannot recover it — the copy is already
+          white-ish and the cloud behind it is near-white, so white is
+          the ceiling. Only a darker band (~0.62) or a text shadow would,
+          and both were declined. Deliberate, not an oversight.
+
+          Vertical: feathered toward the top via mask-image, so the sky
+          under the nav opens up instead of carrying a full-height slab.
+          Every HERO text element sits below 26%, so the feather is free
+          for them — measured identical ratios at 22/26/30%. It is not
+          free for the NAV BRAND, which sits at ~3-5% of the hero: fading
+          the mask to 0 there dropped it from 5.65:1 to 2.78:1, under its
+          3.0 large-text floor. So the mask starts at 0.5 rather than 0 —
+          the top keeps half the band's alpha (0.64 x 0.5 = 0.32 effective,
+          against 0.55 before this change), which still visibly opens the
+          sky while keeping the brand legible. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 hidden sm:block sm:w-[min(100%,664px)] lg:w-[min(100%,672px)] xl:w-[calc(max(0px,(100vw-1440px)/2)+688px)] 2xl:w-[calc(max(0px,(100vw-1600px)/2)+704px)]"
+        style={{
+          background:
+            "linear-gradient(to right, rgb(6 16 40 / 0.25) 0, rgb(6 16 40 / 0.25) calc(100% - 64px), rgb(6 16 40 / 0) 100%)",
+          maskImage: "linear-gradient(to bottom, rgb(0 0 0 / 0.5) 0, #000 26%, #000 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, rgb(0 0 0 / 0.5) 0, #000 26%, #000 100%)",
+        }}
       />
 
       {/* T16a O1: the hero's content column now runs through the same
@@ -560,7 +618,13 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         </PageContainer>
 
         <PageContainer className="flex items-end justify-between gap-4">
-          <p className="max-w-[32ch] text-pretty text-xs text-white/70 sm:text-sm">
+          {/* T16a item 1: white/70 -> white/85. The bottom tagline is the
+              binding constraint on the scrim's alpha — at /70 it measured
+              3.84:1 even under the full-strength band, short of the 4.5
+              floor, and raising the band far enough to carry /70 would
+              have darkened the whole column well past what the scene can
+              take. Lifting the text instead costs nothing visually. */}
+          <p className="max-w-[32ch] text-pretty text-xs text-white/85 sm:text-sm">
             Independent verification for India&apos;s plastic packaging EPR certificates.
           </p>
           <div className="flex shrink-0 flex-col items-center gap-1 text-white/70">
