@@ -38,7 +38,7 @@ export function RunLiveVerification({
    * container — without this the card would end up a quarter-width. */
   fill?: boolean;
   isRunning?: boolean;
-  onRunStart?: (runId: string) => void;
+  onRunStart?: (runId: string, batchId: string) => void;
 }) {
   const [selected, setSelected] = useState(batches[0]?.batch_id ?? "");
   const [runId, setRunId] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function RunLiveVerification({
         return;
       }
       if (data.run_id) {
-        if (controlled) onRunStart(data.run_id);
+        if (controlled) onRunStart(data.run_id, selected);
         else setRunId(data.run_id);
       }
     } catch {

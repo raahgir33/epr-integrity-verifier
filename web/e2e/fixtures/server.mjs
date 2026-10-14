@@ -260,13 +260,20 @@ function monthlyFlow() {
 //   * the alert is attached when the reasoning stage finishes;
 //   * stage_timestamps.drafting_memo exists while status is still
 //     "drafting_memo" -- the cache invalidate + preload window.
+// Each stage must outlast the web app's 2.5s poll interval
+// (lib/useRunPolling.ts), otherwise several stages complete between two
+// polls and the intermediate states are never rendered at all -- the run
+// jumps from "reading" to "everything done". A real run's stages take
+// tens of seconds, so polling resolves every transition there; these are
+// compressed, but not past the point where the thing being tested stops
+// being observable.
 const STAGE_MS = {
-  reading_documents: 1200,
-  checking: 900,
-  reasoning: 3000,
-  drafting_memo: 1100,
+  reading_documents: 3200,
+  checking: 2800,
+  reasoning: 6000,
+  drafting_memo: 3000,
 };
-const REFRESH_MS = 700;
+const REFRESH_MS = 2600;
 const STAGE_SEQUENCE = ["reading_documents", "checking", "reasoning", "drafting_memo"];
 
 // A batch with no extra documents: the backend still calls
@@ -299,6 +306,7 @@ const ALERT = {
   processor_id: "PWP-05",
   risk_band_after: "High",
   risk_band_before: "Medium",
+  run_id: "run-1",
 };
 
 const runs = new Map();

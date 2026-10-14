@@ -3,9 +3,11 @@
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
+import { RunTaskPanel } from "@/components/demo/RunTaskPanel";
 import type { DemoBatchOut } from "@/lib/api";
 import { useElementHeight } from "@/lib/useElementHeight";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
+import { useRunPolling } from "@/lib/useRunPolling";
 
 /** Landing-page shell for "Run Live Verification" (T16b).
  *
@@ -47,13 +49,22 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
  * that centres a half-width box in the column. */
 export function LiveVerificationSection({ batches }: { batches: DemoBatchOut[] }) {
   const [runId, setRunId] = useState<string | null>(null);
+  const [batchId, setBatchId] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardHeight = useElementHeight(cardRef);
   const reducedMotion = usePrefersReducedMotion();
+  const { run, error } = useRunPolling(runId);
 
   const open = runId !== null;
+  // The batch supplies the reading_documents row's detail. It comes from
+  // the picker rather than the run, because GET /runs/{id} does not echo
+  // the batch's tonnage or period -- only its id.
+  const batch = batches.find((b) => b.batch_id === batchId) ?? null;
 
-  const handleRunStart = useCallback((id: string) => setRunId(id), []);
+  const handleRunStart = useCallback((id: string, startedBatchId: string) => {
+    setRunId(id);
+    setBatchId(startedBatchId);
+  }, []);
 
   if (batches.length === 0) return null;
 
@@ -84,7 +95,7 @@ export function LiveVerificationSection({ batches }: { batches: DemoBatchOut[] }
             style={cardHeight ? ({ "--card-h": `${cardHeight}px` } as React.CSSProperties) : undefined}
             className={cardHeight ? "max-h-[var(--card-h)] lg:h-[var(--card-h)]" : undefined}
           >
-            <div className="h-full rounded-xl p-2" />
+            <RunTaskPanel run={run} batch={batch} error={error} />
           </motion.div>
         ) : null}
       </AnimatePresence>
