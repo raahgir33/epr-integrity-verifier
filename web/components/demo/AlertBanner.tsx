@@ -22,7 +22,7 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
         // single red for every alert overstated the Low and Medium cases.
         // The banner now takes the colour of the band the processor
         // landed on — see components/demo/alertTone.ts, which both this
-        // and RunProgress's identical in-card line share.
+        // and the live-run panel's footer line share.
         //
         // The surfaces are solid, not the usual `/10` tint: 10% red over
         // --color-page's light blue composites to rgb(230,226,229), a

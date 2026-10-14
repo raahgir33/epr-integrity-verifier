@@ -1,57 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { RunProgress } from "@/components/demo/RunProgress";
 import { Button } from "@/components/ui/Button";
-import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
+import type { DemoBatchOut } from "@/lib/api";
 import { titleCase } from "@/lib/titleCase";
 
-/** "Run live verification" button + batch picker + progress view
- * (docs/BUILD_PLAN.md T13). batches is pre-filtered by the caller
- * (all batches on /, just this processor's own batch(es) on
- * /processors/[id]).
+/** "Run live verification" button + batch picker (docs/BUILD_PLAN.md
+ * T13). The caller owns the run: this reports the started run id and
+ * takes its disabled state back as a prop.
  *
- * `onRunUpdate` (T13.5b plan, Part 4) is forwarded straight to RunProgress
- * — see that component's own doc comment for what it's for.
- *
- * T16b added three opt-in props, all defaulted so that the uncontrolled
- * behaviour below — and therefore the processor page, which still renders
- * this component directly via ProcessorLiveRun — is completely unchanged.
- * Passing `onRunStart` hands ownership of the run to a parent
- * (LiveVerificationSection on the landing page), which displays progress in
- * a task-row panel beside the card instead of inside it; this component
- * then renders neither RunProgress nor its own "Run Another" button, and
- * takes its running state from `isRunning`. The 429 cooldown / daily-cap
- * detail string still surfaces here either way, in the card, which is where
- * a viewer is looking when a run is refused. */
+ * T16b: the uncontrolled path — its own run id, the embedded RunProgress
+ * stage list and a "Run Another" button — is gone along with the
+ * processor page's live-run control, which was its only caller. The
+ * landing page's LiveVerificationSection displays progress in a task-row
+ * panel beside the card instead. The 429 cooldown / daily-cap detail
+ * still surfaces here, in the card, which is where a viewer is looking
+ * when a run is refused. */
 export function RunLiveVerification({
   batches,
-  onRunUpdate,
   fill = false,
   isRunning = false,
   busyLabel,
   onRunStart,
 }: {
   batches: DemoBatchOut[];
-  onRunUpdate?: (run: RunStatusOut | null) => void;
   /** Fill the parent's width instead of the stand-alone `lg:w-1/2`. Set by
    * LiveVerificationSection, whose grid track is already exactly half the
    * container — without this the card would end up a quarter-width. */
   fill?: boolean;
-  isRunning?: boolean;
+  isRunning: boolean;
   /** Overrides the "Running…" label once a controlled run has settled —
    * the panel keeps its results on screen after the run ends, and a
    * button still claiming to be running would be saying something untrue.
    * The next action lives in the panel's footer, so this stays disabled. */
   busyLabel?: string;
-  onRunStart?: (runId: string, batchId: string) => void;
+  onRunStart: (runId: string, batchId: string) => void;
 }) {
   const [selected, setSelected] = useState(batches[0]?.batch_id ?? "");
-  const [runId, setRunId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const controlled = onRunStart !== undefined;
-  const running = controlled ? isRunning : runId !== null;
+  const running = isRunning;
 
   if (batches.length === 0) return null;
 
@@ -69,10 +57,7 @@ export function RunLiveVerification({
         setError(data.detail ?? "Could not start the run.");
         return;
       }
-      if (data.run_id) {
-        if (controlled) onRunStart(data.run_id, selected);
-        else setRunId(data.run_id);
-      }
+      if (data.run_id) onRunStart(data.run_id, selected);
     } catch {
       setError("Could not reach the API.");
     } finally {
@@ -115,30 +100,10 @@ export function RunLiveVerification({
         >
           {submitting ? "Starting…" : running ? (busyLabel ?? "Running…") : "Run live verification"}
         </Button>
-        {/* Controlled (landing) callers drive "run another" from the task
-            panel's own footer once a run settles, so this duplicate action
-            is uncontrolled-only. */}
-        {running && !controlled ? (
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => {
-              setRunId(null);
-              onRunUpdate?.(null);
-            }}
-          >
-            Run Another
-          </Button>
-        ) : null}
       </div>
 
       {error ? <p className="mt-2 text-sm text-risk-high">{error}</p> : null}
 
-      {runId && !controlled ? (
-        <div className="mt-4 border-t border-border pt-4 text-center">
-          <RunProgress runId={runId} onRunUpdate={onRunUpdate} />
-        </div>
-      ) : null}
     </div>
   );
 }

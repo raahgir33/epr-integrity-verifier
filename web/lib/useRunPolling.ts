@@ -10,9 +10,8 @@ type PollState = { runId: string; run: RunStatusOut | null; error: string | null
 /** Polls GET /api/runs/{runId} until the run goes terminal (T16b).
  *
  * Lifted out of RunProgress, which owned this loop when progress rendered
- * inside the card. The landing page's task panel needs the same run data
- * without that component's markup, and RunProgress still serves the
- * processor page unchanged, so the loop lives here and both can use it.
+ * inside the card; that component has since gone with the processor
+ * page's live-run control, so this is now the only poller.
  *
  * The stored state carries the run id it belongs to, and the hook returns
  * nothing unless that id still matches the one being asked for. Two things

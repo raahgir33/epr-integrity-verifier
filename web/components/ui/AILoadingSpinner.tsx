@@ -10,7 +10,7 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
  * something that can be fixed by re-skinning it, since the fabricated
  * content is the component's entire design. This is purely a decorative
  * spinner (no text of its own); callers pair it with a real stage label
- * (STAGE_LABEL from lib/runStages.ts) via ShimmerText. A single static
+ * (STAGE_SHORT_LABEL from lib/runStages.ts) via ShimmerText. A single static
  * ring under reduced motion, rather than the rotating rings. */
 export function AILoadingSpinner({ className = "h-5 w-5" }: { className?: string }) {
   const reducedMotion = usePrefersReducedMotion();

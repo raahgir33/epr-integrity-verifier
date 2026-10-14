@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AlertBanner } from "@/components/demo/AlertBanner";
-import { ProcessorLiveRun } from "@/components/processor/ProcessorLiveRun";
+import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
 import { StickyHeader } from "@/components/processor/StickyHeader";
 import {
   ApiError,
   getAlerts,
-  getDemoBatches,
   getDocumentFacts,
   getProcessor,
   getProcessorDocuments,
@@ -33,15 +32,14 @@ export async function generateMetadata({
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let processor, documents, reasoning, site, memoEn, demoBatches, alerts;
+  let processor, documents, reasoning, site, memoEn, alerts;
   try {
-    [processor, documents, reasoning, site, memoEn, demoBatches, alerts] = await Promise.all([
+    [processor, documents, reasoning, site, memoEn, alerts] = await Promise.all([
       getProcessor(id),
       getProcessorDocuments(id),
       getProcessorReasoning(id),
       getProcessorSite(id),
       getProcessorMemo(id, "en"),
-      getDemoBatches(),
       getAlerts(),
     ]);
   } catch (error) {
@@ -53,7 +51,6 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
   // Amendment C (T13.5 plan): the Hindi memo is no longer fetched here —
   // ClarificationMemoLetter/VerificationStatementLetter fetch it lazily,
   // client-side, only once the viewer clicks the HI toggle.
-  const ownBatches = demoBatches.batches.filter((b) => b.processor_id === id);
   const ownAlerts = alerts.alerts.filter((a) => a.processor_id === id);
 
   const facts = await Promise.all(
@@ -88,13 +85,11 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
         profile={processor.profile}
         certifiedT={processor.checks_only.certified_t}
         stage={stage}
-        hasLiveBatches={ownBatches.length > 0}
       />
 
       {/* {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null} */}
 
-      <ProcessorLiveRun
-        batches={ownBatches}
+      <ProcessorTabs
         processorId={id}
         checksOnly={processor.checks_only}
         full={processor.full}

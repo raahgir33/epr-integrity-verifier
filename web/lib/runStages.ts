@@ -1,24 +1,19 @@
 /** Real pipeline stage names from the live-run API (RunStatusOut.status),
- * shared by RunProgress's stage list and ProcessorTabs' docked reasoning
- * panel — a single source of truth so neither ever shows a label the
- * other doesn't recognize. Never fabricated: these are exactly the
- * stage identifiers app/events/run_processor.py reports. */
+ * used by the landing page's live-run task rows — a single source of
+ * truth so nothing ever shows a label the API doesn't report. Never
+ * fabricated: these are exactly the
+ * stage identifiers app/events/run_processor.py reports.
+ *
+ * T16b: the long-form STAGE_LABEL map that used to sit here went with
+ * the processor page's live-run control — its only two render sites were
+ * reached through it. STAGE_SHORT_LABEL below is what the landing
+ * page's task rows use. */
 export const STAGE_ORDER = ["reading_documents", "checking", "reasoning", "drafting_memo"] as const;
 
-export const STAGE_LABEL: Record<string, string> = {
-  reading_documents: "Extract & Read Documents",
-  checking: "Perform Rule-based Checks",
-  reasoning: "Review & Grade Findings — Hypothesis and Critic",
-  drafting_memo: "Draft Memo, Verification Statement & Findings",
-};
 
 /** Short titles for the landing page's task rows (T16b), which are pill
- * shaped and truncate: STAGE_LABEL's sentences are written for the
- * processor page's wider stage list and would be ellipsed to nothing
- * here. Deliberately a second map beside STAGE_LABEL rather than a
- * replacement for it — the two render in different places at different
- * widths — but kept in this same file so there is still one place to
- * look when a stage name changes. Same keys, same order, same source:
+ * shaped and truncate. Same keys, same order, same source as
+ * STAGE_ORDER:
  * these are the stage identifiers app/events/run_processor.py reports. */
 export const STAGE_SHORT_LABEL: Record<(typeof STAGE_ORDER)[number], string> = {
   reading_documents: "Reading documents",

@@ -3,8 +3,8 @@ import type { AlertOut } from "@/lib/api";
 import { riskBandTone } from "@/lib/format";
 
 /** Per-band styling for a live-verification alert (T16b), shared by the
- * page-level AlertBanner and the identical line RunProgress renders
- * inside the card, so the two can never disagree.
+ * page-level AlertBanner and the identical line the live-run panel's
+ * footer renders, so the two can never disagree.
  *
  * An alert fires whenever a run moved a processor's risk band or surfaced
  * a new finding — which is not always bad news — so the banner takes the

@@ -10,13 +10,11 @@ import type {
   MemoResponse,
   MonthlyFlowRow,
   ReasoningStepOut,
-  RunStatusOut,
   SiteResponse,
   StageAssessment,
 } from "@/lib/api";
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
-import { STAGE_LABEL } from "@/lib/runStages";
 import { useIsBreakpointUp } from "@/lib/useIsBreakpointUp";
 import { Tabs } from "@/components/ui/Tabs";
 import { SidePanel } from "@/components/ui/SidePanel";
@@ -69,7 +67,6 @@ export function ProcessorTabs({
   site,
   memoEn,
   knownDocIds,
-  liveRun = null,
 }: {
   processorId: string;
   checksOnly: StageAssessment;
@@ -85,10 +82,10 @@ export function ProcessorTabs({
   memoEn: MemoResponse | null;
   knownDocIds: ReadonlySet<string>;
   /** T13.5b plan, Part 4 — the active live-verification run, if any
-   * (ProcessorLiveRun lifts this from RunLiveVerification/RunProgress).
+   * (T16b: the live-run mirroring this once supported is gone with the
+   * processor page's run control; the steps are the page-load snapshot.)
    * While present, the reasoning tab/docked panel mirror its steps live
    * instead of the page-load-time reasoningSteps snapshot. */
-  liveRun?: RunStatusOut | null;
 }) {
   const searchParams = useSearchParams();
   const urlTab = validateTab(searchParams.get("tab"));
@@ -139,9 +136,6 @@ export function ProcessorTabs({
   // (done/failed), its own final steps keep showing (frozen, isLive
   // false) rather than silently reverting to the now-stale pre-run
   // snapshot still sitting in `reasoningSteps`.
-  const liveIsActive = liveRun !== null && liveRun.status !== "done" && liveRun.status !== "failed";
-  const effectiveReasoningSteps = liveRun ? liveRun.steps : reasoningSteps;
-  const currentStageLabel = liveIsActive ? (STAGE_LABEL[liveRun.status] ?? liveRun.status) : undefined;
 
   const items = [
     {
@@ -195,9 +189,8 @@ export function ProcessorTabs({
             label: "Agent reasoning",
             content: (
               <ReasoningTimeline
-                steps={effectiveReasoningSteps}
+                steps={reasoningSteps}
                 knownDocIds={knownDocIds}
-                isLive={liveIsActive}
               />
             ),
           },
@@ -239,10 +232,8 @@ export function ProcessorTabs({
         <div className="flex flex-col gap-6">
           <MonthlyFlowChart rows={monthlyFlow} />
           <ReasoningPanel
-            steps={effectiveReasoningSteps}
+            steps={reasoningSteps}
             knownDocIds={knownDocIds}
-            isLive={liveIsActive}
-            currentStageLabel={currentStageLabel}
           />
         </div>
         <div className="flex flex-col gap-6">

@@ -18,10 +18,8 @@ import { useRunPolling } from "@/lib/useRunPolling";
  * task-row panel opens beside it, capped to the card's own height, so the
  * section is exactly as tall before, during and after a run.
  *
- * Landing page only. The processor page keeps rendering
- * RunLiveVerification directly (components/processor/ProcessorLiveRun.tsx),
- * which is why every prop this shell passes down is opt-in with a
- * backwards-compatible default rather than a change to the card itself.
+ * Landing page only — and, since T16b removed the processor page's own
+ * live-run control, the only place a run is started at all.
  *
  * **Why the card's slide is CSS and not `motion`.** The translate must
  * apply only at `lg` and up, and a JS breakpoint hook

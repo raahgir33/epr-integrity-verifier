@@ -26,12 +26,10 @@ export function StickyHeader({
   profile,
   certifiedT,
   stage,
-  hasLiveBatches,
 }: {
   profile: ProcessorProfile;
   certifiedT: number;
   stage: StageAssessment;
-  hasLiveBatches: boolean;
 }) {
   const clean = stage.unverifiable_t <= 0;
 
@@ -51,14 +49,6 @@ export function StickyHeader({
             >
               {titleCase("View memo")}
             </Link>
-            {hasLiveBatches ? (
-              <a
-                href="#live-verification"
-                className="rounded-md bg-glow px-2.5 py-2.5 font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {titleCase("Run live verification")}
-              </a>
-            ) : null}
           </div>
         </div>
       </div>
