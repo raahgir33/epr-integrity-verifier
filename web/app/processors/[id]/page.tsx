@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { AlertBanner } from "@/components/demo/AlertBanner";
 import { ProcessorTabs } from "@/components/processor/ProcessorTabs";
 import { StickyHeader } from "@/components/processor/StickyHeader";
 import {
   ApiError,
-  getAlerts,
   getDocumentFacts,
   getProcessor,
   getProcessorDocuments,
@@ -32,15 +30,14 @@ export async function generateMetadata({
 export default async function ProcessorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let processor, documents, reasoning, site, memoEn, alerts;
+  let processor, documents, reasoning, site, memoEn;
   try {
-    [processor, documents, reasoning, site, memoEn, alerts] = await Promise.all([
+    [processor, documents, reasoning, site, memoEn] = await Promise.all([
       getProcessor(id),
       getProcessorDocuments(id),
       getProcessorReasoning(id),
       getProcessorSite(id),
       getProcessorMemo(id, "en"),
-      getAlerts(),
     ]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
@@ -51,7 +48,6 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
   // Amendment C (T13.5 plan): the Hindi memo is no longer fetched here —
   // ClarificationMemoLetter/VerificationStatementLetter fetch it lazily,
   // client-side, only once the viewer clicks the HI toggle.
-  const ownAlerts = alerts.alerts.filter((a) => a.processor_id === id);
 
   const facts = await Promise.all(
     documents.documents.map((d) => getDocumentFacts(d.doc_id).catch(() => null)),
@@ -86,8 +82,6 @@ export default async function ProcessorDetailPage({ params }: { params: Promise<
         certifiedT={processor.checks_only.certified_t}
         stage={stage}
       />
-
-      {/* {ownAlerts.length > 0 ? <AlertBanner alerts={ownAlerts} /> : null} */}
 
       <ProcessorTabs
         processorId={id}

@@ -35,7 +35,7 @@
      Because every surface here is light in both themes, text and icon
      cannot use --color-ink / --color-risk-*: in dark those go near-white
      and fall to around 1.1:1. They get fixed values instead, each checked
-     against the real painted pixel — see AlertBanner.tsx for the measured
+     against the real painted pixel — see RunPanelFooter.tsx for the measured
      table. */
   --color-alert-ink: #071952;
   --color-alert-low-surface: #c2ffd0;
