@@ -8,7 +8,7 @@ export const STAGE_ORDER = ["reading_documents", "checking", "reasoning", "draft
 export const STAGE_LABEL: Record<string, string> = {
   reading_documents: "Extract & Read Documents",
   checking: "Perform Rule-based Checks",
-  reasoning: "Review & Grade Findings - HYPTHOSES and CRITIC",
+  reasoning: "Review & Grade Findings — Hypothesis and Critic",
   drafting_memo: "Draft Memo, Verification Statement & Findings",
 };
 
