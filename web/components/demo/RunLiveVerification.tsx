@@ -29,6 +29,7 @@ export function RunLiveVerification({
   onRunUpdate,
   fill = false,
   isRunning = false,
+  busyLabel,
   onRunStart,
 }: {
   batches: DemoBatchOut[];
@@ -38,6 +39,11 @@ export function RunLiveVerification({
    * container — without this the card would end up a quarter-width. */
   fill?: boolean;
   isRunning?: boolean;
+  /** Overrides the "Running…" label once a controlled run has settled —
+   * the panel keeps its results on screen after the run ends, and a
+   * button still claiming to be running would be saying something untrue.
+   * The next action lives in the panel's footer, so this stays disabled. */
+  busyLabel?: string;
   onRunStart?: (runId: string, batchId: string) => void;
 }) {
   const [selected, setSelected] = useState(batches[0]?.batch_id ?? "");
@@ -107,7 +113,7 @@ export function RunLiveVerification({
           onClick={handleRun}
           disabled={running || submitting || !selected}
         >
-          {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
+          {submitting ? "Starting…" : running ? (busyLabel ?? "Running…") : "Run live verification"}
         </Button>
         {/* Controlled (landing) callers drive "run another" from the task
             panel's own footer once a run settles, so this duplicate action

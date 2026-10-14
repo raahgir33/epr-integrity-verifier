@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useScrollFade } from "@/lib/useScrollFade";
+import { RunPanelFooter } from "@/components/demo/RunPanelFooter";
 import { RunTaskRow } from "@/components/demo/RunTaskRow";
 import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
 import { buildRunRows, type RunRow, type RunRowId } from "@/lib/runRows";
@@ -35,10 +36,14 @@ export function RunTaskPanel({
   run,
   batch,
   error,
+  onViewProcessor,
+  onTryAgain,
 }: {
   run: RunStatusOut | null;
   batch: DemoBatchOut | null;
   error: string | null;
+  onViewProcessor: (processorId: string) => void;
+  onTryAgain: () => void;
 }) {
   // Only rows the viewer has actually clicked appear here; everything
   // else follows the run.
@@ -90,6 +95,8 @@ export function RunTaskPanel({
           />
         ))}
       </ol>
+
+      <RunPanelFooter run={run} onViewProcessor={onViewProcessor} onTryAgain={onTryAgain} />
     </div>
   );
 }

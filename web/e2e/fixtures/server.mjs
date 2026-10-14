@@ -288,6 +288,9 @@ const DEMO_BATCHES = [
   { batch_id: "BATCH-PWP-05-001", period_month: "2026-03", processor_id: "PWP-05", pushes_over_verifiable: true, quantity_t: 8.45 },
   { batch_id: "BATCH-PWP-05-NODOCS", period_month: "2026-04", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 1.92 },
   { batch_id: "BATCH-PWP-05-FAIL", period_month: "2026-02", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 3.07 },
+  // Always refused with 429, mirroring the real API's cooldown gate, so
+  // the card's error path can be exercised without a cooldown clock.
+  { batch_id: "BATCH-PWP-05-COOLDOWN", period_month: "2026-01", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 0.64 },
 ];
 
 // batch_id -> scenario. "fail:<stage>" dies in that stage; "fail:refresh"
@@ -493,7 +496,17 @@ const ROUTES = {
 
 function notFound(res) {
   res.writeHead(404, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ detail: "not found" }));
+  res.end(JSON.stringify({ error: "not found", request_id: "fixture" }));
+}
+
+/** The real API reshapes every error into {error, request_id} -- see
+ * app/main.py's http_exception_handler -- and lib/api.ts reads
+ * `data.error`. A fixture that answers {detail} silently drops the
+ * user-facing message from an abuse-gate 429, which is exactly the text
+ * the card is supposed to show. */
+function sendError(res, status, message) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: message, request_id: "fixture" }));
 }
 
 if (MODE === "landing") Object.assign(ROUTES, LANDING_ROUTES);
@@ -516,15 +529,15 @@ const server = http.createServer((req, res) => {
       try {
         batchId = JSON.parse(raw).batch_id;
       } catch {
-        return sendJson(res, 400, { detail: "batch_id is required" });
+        return sendError(res, 400, "batch_id is required");
       }
       const batch = DEMO_BATCHES.find((b) => b.batch_id === batchId);
-      if (!batch) return sendJson(res, 404, { detail: `unknown batch ${batchId}` });
+      if (!batch) return sendError(res, 404, `unknown batch ${batchId}`);
       // The real API's abuse gates return 429 with a user-facing detail
       // string the card shows verbatim; a reserved batch id exercises
       // that path without a cooldown clock in the fixture.
-      if (url.searchParams.get("gate") === "cooldown") {
-        return sendJson(res, 429, { detail: "cooldown active — try again in 47s" });
+      if (batchId === "BATCH-PWP-05-COOLDOWN" || url.searchParams.get("gate") === "cooldown") {
+        return sendError(res, 429, "cooldown active — try again in 47s");
       }
       const runId = `run-${++runSeq}`;
       runs.set(runId, {
