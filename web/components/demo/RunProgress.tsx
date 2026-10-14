@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, OctagonAlert } from "lucide-react";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
@@ -131,11 +131,16 @@ export function RunProgress({
       ) : null}
 
       {run.status === "done" && run.alert ? (
-        <p className="glow-pulse rounded-md border border-risk-medium/30 bg-risk-medium/10 px-3 py-2 text-sm text-ink">
-          {/* text-ink, not text-risk-medium — see AlertBanner.tsx's identical
-              comment: Lighthouse caught that pairing at 4.12:1, short of
-              AA's 4.5:1 floor on this tinted background. */}
-          <span className="font-medium">Alert:</span> {run.alert.message}
+        <p className="glow-pulse flex items-start gap-2 rounded-md border border-alert-accent/40 bg-alert-surface px-3 py-2 text-sm text-alert-ink">
+          {/* Same tokens and the same reasoning as AlertBanner.tsx — see its
+              comment. These two render the same kind of alert in two places,
+              so they move together; text-ink, not text-risk-high, because
+              Lighthouse caught the coloured-text pairing at 4.12:1 against
+              AA's 4.5:1 floor on a tint like this. */}
+          <OctagonAlert aria-hidden size={16} className="mt-0.5 shrink-0 text-alert-accent" />
+          <span>
+            <span className="font-medium">Alert:</span> {run.alert.message}
+          </span>
         </p>
       ) : null}
       {run.status === "done" && !run.alert ? (

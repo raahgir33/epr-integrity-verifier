@@ -15,6 +15,26 @@
   --color-risk-high: #b91c1c;
   --color-risk-unknown: #475569;
 
+  /* T16b: the live-verification alert surface, at the developer's request.
+     Deliberately NOT redefined in the dark block below — these three are
+     the one place in the palette that is theme-independent, so the alert
+     reads as the same object in both themes.
+
+     Why it is a solid colour and not the usual `bg-risk-high/10` tint: a
+     10% red over --color-page's light-blue (#ebf9fc) composites to
+     rgb(230,226,229), a muddy grey-pink with no red left in it. Measured,
+     not guessed.
+
+     Because the surface is light in both themes, the text and icon cannot
+     use --color-ink / --color-risk-high: in dark those are #f4f4f4 and
+     #f87171, which fall to 1.1:1 and 1.8:1 on this background. They get
+     their own fixed values instead, both verified against the real painted
+     pixel: ink 10.8:1 (AA text needs 4.5:1), accent 4.2:1 (AA non-text
+     needs 3:1). */
+  --color-alert-surface: #ffc2c2;
+  --color-alert-ink: #071952;
+  --color-alert-accent: #b91c1c;
+
   /* T13.5 plan, Part 1: fluid type scale. These override Tailwind's own
      fixed-rem --text-* tokens, so every existing text-xs/sm/base/lg/...
      className becomes fluid with no className changes anywhere else in
