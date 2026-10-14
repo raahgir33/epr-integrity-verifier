@@ -1,4 +1,4 @@
-import { Google_Sans, Google_Sans_Code } from "next/font/google";
+import { Google_Sans, Google_Sans_Code, Inter } from "next/font/google";
 import localFont from "next/font/local";
 
 // T13.5c plan, Batch 0.14: Google Sans replaces Source Serif 4 (headings)
@@ -27,6 +27,20 @@ export const monoFont = Google_Sans_Code({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-mono-code",
+  display: "swap",
+});
+
+// T16a O2: Inter, for the hero HUD chips' figure line only, at the
+// developer's request. Scoped deliberately — --font-sans/-display stay
+// Google Sans everywhere else, and this is exposed as its own `font-ui`
+// utility rather than being folded into an existing token, so nothing
+// else picks it up by accident. Confirmed present in next/font/google's
+// bundled data before writing this, the same check the Google Sans swap
+// used.
+export const uiFont = Inter({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-ui-figure",
   display: "swap",
 });
 

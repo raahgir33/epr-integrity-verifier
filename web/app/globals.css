@@ -7,6 +7,8 @@
      no more serif intent. */
   --font-display: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-code), ui-monospace, SFMono-Regular, monospace;
+  /* T16a O2: Inter, used only on the hero HUD chips' figure line. */
+  --font-ui: var(--font-ui-figure), ui-sans-serif, system-ui, sans-serif;
 
   --color-risk-low: #15803d;
   --color-risk-medium: #b45309;

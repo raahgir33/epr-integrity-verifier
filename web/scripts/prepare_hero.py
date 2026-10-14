@@ -85,9 +85,42 @@ FRAGMENT_SRC = {
     "pellets-a": "l3-pellets.jpg",
     "pellets-b": "l3-pellets-2.jpg",
     "hero-earth": "hero-earth.jpg",
+    # T16a item 2b: the distant floating-island band along the bottom of
+    # the hero — the most distant layer, restoring what T13.6b dropped
+    # when it replaced the old distant-islands source. Needs the per-row
+    # background model below; the flat-mean key leaves most of this
+    # image's sky opaque.
+    "distant-1": "l1-distant-1.jpg",
 }
 
+# T16a item 2b: fragments whose backdrop is a smooth GRADIENT rather than
+# the near-uniform studio grey every other source here sits on. For those,
+# one global background colour (the border mean) is wrong at both ends of
+# the gradient at once: on l1-distant-1.jpg the border mean is RGB ~214
+# while the actual backdrop runs ~230 at the top to ~192 at the bottom, so
+# at BG_THRESHOLD the flood fill left 34.6% of the pure-sky upper half
+# opaque — a grey slab, not a cutout. Estimating the background per ROW,
+# from the outer columns on each side, tracks the gradient exactly and
+# drops that to 0.000 (measured; see PER_ROW_THRESHOLD). Opt-in per
+# fragment name, mirroring CORNER_STAMP_FRAGMENTS, so every existing
+# fragment keeps its current code path and stays byte-identical.
+PER_ROW_BG_FRAGMENTS = {"distant-1"}
+PER_ROW_EDGE_COLS = 12  # columns sampled at each side to estimate a row's background
+# Swept 40/44/48/50 on l1-distant-1.jpg. 40 already clears the sky
+# completely but leaves 2.3% of the bottom edge opaque (the densest mist);
+# 48 is the lowest value where BOTH the sky and the bottom edge reach
+# 0.000 while the islands keep 25.7% of the band opaque.
+PER_ROW_THRESHOLD = 48.0
+
 MASK_WORK_SIZE = 480  # longest-edge size the flood-fill mask is computed at
+# T16a item 2b: 480 is fine while the export is 240-560px wide — the mask
+# is upscaled by at most ~1.2x and BILINEAR hides the steps. distant-1
+# exports at 2200px, a 4.6x upscale, which turns every one-pixel step in
+# the 480px mask into a ~5px block: the mist between the islands came out
+# with hard stair-stepped polygon edges, clearly visible against the dark
+# theme. Computing this one fragment's mask at 1400 brings the upscale
+# back to ~1.6x and the edge back to a natural feather.
+MASK_WORK_SIZE_OVERRIDES = {"distant-1": 1400}
 # RGB euclidean distance treated as "background-like". 28 (the flat
 # background's own corner-to-corner vignette range) left a soft off-axis
 # light glow baked into several of these renders connected to the object
@@ -127,7 +160,18 @@ FRAGMENT_WIDTHS = {"1x": 240, "2x": 480}  # on-screen target widths
 # fragment, so it gets its own export size rather than FRAGMENT_WIDTHS'
 # small-fragment default. 1120px at 2x stays within the 2048px source, so
 # the 2x density is never upscaled.
-FRAGMENT_WIDTH_OVERRIDES = {"hero-earth": {"1x": 560, "2x": 1120}}
+# distant-1 trims to a wide, short strip (~2430x485, aspect 0.20) because
+# the islands occupy only the lower third of its frame. It renders as a
+# full-width band, so it needs real width — 2200 at 2x stays inside the
+# 2430 trimmed source, never upscaled.
+FRAGMENT_WIDTH_OVERRIDES = {
+    "hero-earth": {"1x": 560, "2x": 1120},
+    "distant-1": {"1x": 1100, "2x": 2200},
+}
+# Soft, distant, mostly-transparent layer that also sits behind the mist —
+# it does not need the detail the foreground fragments do. At q68 the pair
+# measured 101.5 KB against 131.8 KB at the fragment default.
+FRAGMENT_QUALITY_OVERRIDES = {"distant-1": 68}  # same value as MIST_QUALITY, defined below
 FRAGMENT_QUALITY = 85  # lossy WebP — these are organic/textured, not flat graphics
 BACKDROP_WIDTHS = {"1x": 900, "2x": 1800}  # legacy default, unused now sky is the only backdrop
 # Sky is now full-bleed behind a 100svh hero (up to 1920px+ viewports),
@@ -174,7 +218,20 @@ def _background_color(im_rgb: np.ndarray) -> np.ndarray:
     return border.mean(axis=0)
 
 
-def chroma_key(src_path: Path, threshold: float = BG_THRESHOLD) -> Image.Image:
+def _background_color_per_row(im_rgb: np.ndarray, cols: int = PER_ROW_EDGE_COLS) -> np.ndarray:
+    """One background colour per row, from the outer `cols` columns on each
+    side. Valid only where those columns really are backdrop at every row —
+    true for l1-distant-1.jpg, whose content spans x 9.4%-92.1%. Returns
+    (h, 3), broadcast against the image as (h, 1, 3)."""
+    return np.concatenate([im_rgb[:, :cols, :], im_rgb[:, -cols:, :]], axis=1).mean(axis=1)
+
+
+def chroma_key(
+    src_path: Path,
+    threshold: float = BG_THRESHOLD,
+    per_row_bg: bool = False,
+    work_size: int = MASK_WORK_SIZE,
+) -> Image.Image:
     """True = background in the mask below. Seeds from every border pixel
     that already looks like background, then grows through any
     4-connected neighbor within `threshold` of the sampled background
@@ -195,11 +252,14 @@ def chroma_key(src_path: Path, threshold: float = BG_THRESHOLD) -> Image.Image:
     ~200 iterations for every fragment in this set)."""
     full = Image.open(src_path).convert("RGB")
     w, h = full.size
-    scale = MASK_WORK_SIZE / max(w, h)
+    scale = work_size / max(w, h)
     small = full.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
     im_rgb = np.asarray(small)
 
-    bg_color = _background_color(im_rgb)
+    if per_row_bg:
+        bg_color = _background_color_per_row(im_rgb)[:, None, :]
+    else:
+        bg_color = _background_color(im_rgb)
     diff = im_rgb.astype(np.float32) - bg_color
     dist = np.sqrt((diff * diff).sum(axis=-1))
     candidate = dist < threshold
@@ -295,11 +355,12 @@ def export_fragment(im: Image.Image, out_dir: Path, name: str, widths: dict | No
     sizes = {}
     aspect = im.height / im.width
     target_widths = widths or FRAGMENT_WIDTHS
+    quality = FRAGMENT_QUALITY_OVERRIDES.get(name, FRAGMENT_QUALITY)
     for density, target_w in target_widths.items():
         target_h = max(1, round(target_w * aspect))
         resized = resize_rgba(im, (target_w, target_h))
         path = out_dir / f"{name}-{density}.webp"
-        resized.save(path, "WEBP", quality=FRAGMENT_QUALITY, method=6)
+        resized.save(path, "WEBP", quality=quality, method=6)
         sizes[density] = path.stat().st_size
     return sizes
 
@@ -351,7 +412,11 @@ def process_backdrop(
 
 
 def build_poster(
-    sky: Image.Image, hero_earth: Image.Image, accents: list[Image.Image], out_dir: Path
+    sky: Image.Image,
+    hero_earth: Image.Image,
+    accents: list[Image.Image],
+    out_dir: Path,
+    distant: Image.Image | None = None,
 ) -> int:
     """Flattened full-scene composite for the no-JS / reduced-motion
     fallback — a representative static arrangement, not pixel-identical to
@@ -361,6 +426,17 @@ def build_poster(
     scene's "no mist in the poster" simplicity."""
     canvas_h = round(POSTER_WIDTH * POSTER_ASPECT)
     base = sky.convert("RGBA").resize((POSTER_WIDTH, canvas_h), Image.LANCZOS)
+
+    # T16a item 2b: the distant band sits directly on the sky, behind
+    # everything else, so the reduced-motion poster matches the live
+    # scene's new layer order instead of losing its most distant layer.
+    if distant is not None:
+        band_w = POSTER_WIDTH
+        band_h = round(band_w * distant.height / distant.width)
+        band = resize_rgba(distant, (band_w, band_h))
+        faded = band.copy()
+        faded.putalpha(band.split()[-1].point(lambda v: round(v * 0.65)))
+        base.alpha_composite(faded, (0, canvas_h - band_h))
 
     earth_h = round(canvas_h * 0.5)
     earth_w = round(earth_h * hero_earth.width / hero_earth.height)
@@ -431,7 +507,12 @@ def main() -> None:
 
     report.add("-- fragments (chroma key + trim) --")
     for name, src_name in FRAGMENT_SRC.items():
-        rgba = chroma_key(src_dir / src_name)
+        rgba = chroma_key(
+            src_dir / src_name,
+            threshold=PER_ROW_THRESHOLD if name in PER_ROW_BG_FRAGMENTS else BG_THRESHOLD,
+            per_row_bg=name in PER_ROW_BG_FRAGMENTS,
+            work_size=MASK_WORK_SIZE_OVERRIDES.get(name, MASK_WORK_SIZE),
+        )
         if name in CORNER_STAMP_FRAGMENTS:
             rgba = stamp_corner_transparent(rgba)
         rgba = trim_to_content(rgba)
@@ -464,7 +545,13 @@ def main() -> None:
         for name in ("pebble-a", "pellets-rock-a", "soil-moss-a")
         if name in fragment_rgba
     ]
-    poster_bytes = build_poster(sky_cropped, fragment_rgba["hero-earth"], accents, out_dir)
+    poster_bytes = build_poster(
+        sky_cropped,
+        fragment_rgba["hero-earth"],
+        accents,
+        out_dir,
+        distant=fragment_rgba.get("distant-1"),
+    )
     total_bytes += poster_bytes
     report.add(f"  poster.webp  {poster_bytes}B")
 

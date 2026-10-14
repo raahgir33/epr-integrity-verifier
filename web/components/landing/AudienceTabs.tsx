@@ -152,7 +152,16 @@ export function AudienceTabs({
               onClick={() => setValue(a.value)}
               className={`flex items-center gap-3 rounded-md border px-5 py-4 text-left outline-none transition-colors duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 isActive
-                  ? "border-primary bg-primary text-primary-foreground"
+                  // T16a: literal #00b7b5 rather than bg-primary, matching
+                  // the hero's Run Live Verification CTA. A token cannot
+                  // express it — --color-primary is #005461 in light and
+                  // #00b7b5 in dark, and the developer wants the same
+                  // colour in both. Light therefore moves from 8.60:1
+                  // (white on #005461) to 2.49:1 (white on #00b7b5), below
+                  // the AA floor; dark is unchanged at 6.65:1. Deliberate,
+                  // same decision as the hero CTA. The border matches the
+                  // fill so the active tab reads as one solid block.
+                  ? "border-[#00b7b5] bg-[#00b7b5] text-primary-foreground"
                   : "border-border bg-surface text-ink hover:bg-surface-sunk"
               }`}
             >

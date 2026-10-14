@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PageContainer } from "@/components/ui/PageContainer";
-import { bodyFont, devanagariFont, headingFont, monoFont } from "@/lib/fonts";
+import { bodyFont, devanagariFont, headingFont, monoFont, uiFont } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`antialiased ${bodyFont.variable} ${headingFont.variable} ${monoFont.variable} ${devanagariFont.variable}`}
+      className={`antialiased ${bodyFont.variable} ${headingFont.variable} ${monoFont.variable} ${uiFont.variable} ${devanagariFont.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-page font-sans text-ink">
         <ThemeProvider>

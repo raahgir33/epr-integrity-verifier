@@ -18,7 +18,7 @@ const HEADLINE = "Every certified tonne, verified against the paper trail.";
 // (was 35ms/char) at the developer's explicit request.
 const TYPING_DURATION_MS = Math.round(35 * 1.25);
 
-type DepthTier = "sky" | "mistBack" | "far" | "mid" | "near" | "earth" | "mistFront";
+type DepthTier = "sky" | "distant" | "mistBack" | "far" | "mid" | "near" | "earth" | "mistFront";
 
 // T13.6b plan, Part 3's layer & depth table: pointer-parallax depth (fed
 // to useParallaxLayers, unchanged engine) and a separate scroll-drift
@@ -29,6 +29,14 @@ type DepthTier = "sky" | "mistBack" | "far" | "mid" | "near" | "earth" | "mistFr
 // of hooks require.
 const TIERS: Record<DepthTier, { depth: number; scrollMultiplier: number }> = {
   sky: { depth: 0.04, scrollMultiplier: 0.2 },
+  // T16a item 2b: the floating-island band. Still the slowest SOLID
+  // layer — well under `far` (0.4) and the fragments above it — but
+  // raised from the original 0.08/0.25 at the developer's request: at
+  // 0.08 the pointer response was arithmetically present and visually
+  // invisible, which read as a static backdrop rather than a distant
+  // one. 0.16/0.35 is roughly double, enough to register as movement
+  // while staying clearly behind everything else in the stack.
+  distant: { depth: 0.16, scrollMultiplier: 0.35 },
   mistBack: { depth: 0.12, scrollMultiplier: 0.35 },
   far: { depth: 0.4, scrollMultiplier: 0.5 },
   mid: { depth: 0.55, scrollMultiplier: 0.6 },
@@ -53,31 +61,126 @@ type Fragment = {
   mobile?: boolean; // one of the 2 kept below md
 };
 
-// Far-to-near follows the brief's rule directly: far fragments smaller,
-// blurred and slightly faded; near fragments larger and sharp. Positions
-// scatter toward edges/corners — one or two cropped by the viewport edge
-// (soil-moss-a, pellets-b below) — keeping the left column clear for the
-// text block and the centre-right clear for the hero-earth + HUD group.
+// T16a items 2a + 3. Far-to-near still follows the brief's rule — far
+// fragments smaller, blurred and slightly faded; near fragments larger
+// and sharp — and the sizes below stay monotonic by tier (near 150/130 >
+// mid 118/110/96 > far 92/84), which is what makes the depth order read
+// without any extra cue.
+//
+// What changed is grouping. The fragments previously scattered toward
+// whichever edge was free, which reads as random rather than composed.
+// They now sit in three deliberate clusters that frame the content:
+//
+//   lower-left anchor   pebble-a (near, sharp) + soil-moss-a (mid)
+//                       in the gap between the CTA row and the bottom
+//                       tagline, closing the composition's bottom-left
+//                       corner without touching either.
+//   upper-right frame   pellets-a (mid) + soil-moss-b (far, smallest,
+//                       most blurred) above and outboard of the globe.
+//   right-field accent  pellets-b (near) low on the right, below the
+//                       HUD chip stack, as the near-field counterweight.
+//
+// strata-a and pellets-rock-a leave this scatter entirely and become the
+// mirrored pair around the globe (item 3, Composition A): one shared
+// right-[30%] offset and symmetric 12% vertical offsets, so they read as
+// one vertical axis through the globe. They keep their own tiers and
+// sizes (far/92 above, mid/118 below), so the mirror carries a slight,
+// deliberate depth tilt rather than being a flat reflection.
+//
+// Every position below was checked arithmetically at 1280/1440/1663/1920
+// against the globe box, the HUD chip column, both corner brackets, the
+// text column, the bottom tagline, "Scroll to Discover" — and against
+// each OTHER fragment, which caught two collisions in the first pass:
+// strata-a overlapped pellets-a in the top right, and pellets-b ran
+// straight through the chip stack.
+//
+// Nothing is cropped by the viewport edge any more. T13.6b deliberately
+// bled soil-moss-a and pellets-b off the left and right edges; this task
+// reverses that, confirmed by the developer.
 const FRAGMENTS: Fragment[] = [
+  // --- mirrored pair around the globe (item 3, Composition A) ---
   {
     src: "/hero/strata-a",
     alt: "",
     widthPx: 92,
     aspect: 1140 / 1554,
-    className: "-top-3 left-[6%] sm:left-[9%]",
+    // Beside the globe, not above it, with a constant 48px gap. A fixed
+    // right-% cannot do this: the globe's left edge is
+    // (82vw - its own height), so it slides with BOTH viewport width and
+    // height, and a percentage that gapped correctly at 1663 sat on top
+    // of the globe at 1280. Deriving the offset from the same geometry
+    // the globe uses keeps the gap constant at every size —
+    // 92px width + 48px gap = 140px back from the globe's left edge.
+    // Vertical centring is done as top: calc(50% - half-height) rather
+    // than -translate-y-1/2, because motion/react writes its scroll
+    // drift into this element's own transform and a Tailwind translate
+    // would be overwritten by it.
+    // Below the globe and to its left, both offsets derived from the
+    // globe's own geometry (right-[18%], h-46svh) so the relationship
+    // holds at any viewport size rather than drifting with a fixed %.
+    // 16px under the globe's bottom edge; 80px back from its left edge.
+    //
+    // Hidden below 2xl, and that is a real constraint rather than a
+    // preference: the band under the globe is bounded by the CTA row
+    // (ends y707) and pebble-a (starts y774) — 67px, exactly this
+    // image's height, so there is zero slack. Below 1536 the CTA row
+    // still extends far enough right that this element lands on top of
+    // it, and no combination of the two offsets clears both the CTAs and
+    // pebble-a at 1280/1440. From 1536 the CTA row no longer reaches
+    // that far right and it clears everything with 7px to spare.
+    className:
+      "hidden 2xl:block 2xl:top-[calc(50%+23svh+16px)] 2xl:left-[calc(82vw-46svh-172px)]",
+    // Unblurred and near-opaque at the developer's request — it was
+    // blurPx 2 / 70% as a far-tier element. The tier itself is unchanged,
+    // so its parallax and scroll speed are exactly what has already been
+    // reviewed; only its rendering is sharper.
     tier: "far",
-    blurPx: 2,
-    opacityPct: 70,
+    opacityPct: 95,
     floatPeriodMs: 7800,
     floatAmpPx: 5,
     floatPhase: 0,
+  },
+  {
+    src: "/hero/pellets-rock-a",
+    alt: "",
+    widthPx: 118,
+    aspect: 1055 / 1554,
+    // Below the globe, mirroring strata-a: same right offset, same 12%
+    // inset from the opposite edge. Clears the globe's bottom by ~61px
+    // and the bottom-right corner bracket entirely.
+    className: "hidden sm:block sm:bottom-[12%] sm:right-[30%]",
+    tier: "mid",
+    blurPx: 1.5,
+    opacityPct: 85,
+    floatPeriodMs: 7000,
+    floatAmpPx: 5,
+    floatPhase: 3.4,
+  },
+
+  // --- upper-right frame ---
+  {
+    src: "/hero/pellets-a",
+    alt: "",
+    widthPx: 96,
+    aspect: 1536 / 1560,
+    // Pushed up and outboard from its old top-[26%]: at that offset it
+    // overlapped strata-a's new position in the top right.
+    className: "top-[6%] right-[12%] hidden lg:block",
+    tier: "mid",
+    blurPx: 1.5,
+    opacityPct: 82,
+    floatPeriodMs: 9000,
+    floatAmpPx: 5,
+    floatPhase: 4.6,
   },
   {
     src: "/hero/soil-moss-b",
     alt: "",
     widthPx: 84,
     aspect: 1727 / 1715,
-    className: "bottom-[3%] right-[2%] sm:right-[4%]",
+    // Outboard of pellets-a and well above the chip stack. Fully inside
+    // the viewport at every width.
+    className: "hidden sm:block sm:top-[18%] sm:right-[4%]",
     tier: "far",
     blurPx: 2.5,
     opacityPct: 72,
@@ -85,16 +188,39 @@ const FRAGMENTS: Fragment[] = [
     floatAmpPx: 6,
     floatPhase: 2.1,
   },
+
+  // --- right-field accent ---
+  {
+    src: "/hero/pellets-b",
+    alt: "",
+    widthPx: 130,
+    aspect: 1536 / 1711,
+    // Dropped from top-[52%] to top-[74%], in two moves. 52% ran through
+    // the HUD chip stack; 66% cleared it at the time, but O2 then made
+    // the chips materially taller — larger figures, wider gaps, and
+    // three-line labels now that the live fy_label is "FY 2025-26 to
+    // date" — taking the stack from ~200px to ~358px and putting this
+    // fragment back inside it by 29px at every width from 1280 to 1920.
+    // 74% clears the stack's new lower edge by ~45px, with margin for the
+    // label wrapping to vary with the data.
+    className: "hidden sm:block sm:top-[74%] sm:right-[2%]",
+    mirror: true,
+    tier: "near",
+    floatPeriodMs: 7400,
+    floatAmpPx: 6,
+    floatPhase: 5.2,
+  },
+
+  // --- lower-left anchor ---
   {
     src: "/hero/soil-moss-a",
     alt: "",
     widthPx: 110,
     aspect: 1383 / 2192,
-    // mobile: true below means this must actually render under 640px —
-    // bottom-anchored there (in the stacked-layout's scene band, not the
-    // desktop overlay's 40%-from-top position, which would land inside
-    // the text column on a narrow phone viewport instead).
-    className: "bottom-[1%] -left-5 sm:bottom-auto sm:top-[40%] sm:-left-7",
+    // Moved out of the text column: at sm:top-[40%] it sat behind the
+    // body paragraph. Now in the clear band between the CTA row and the
+    // tagline, and fully on-screen (was -left-7).
+    className: "bottom-[3%] left-[2%] sm:bottom-[12%] sm:left-[3%]",
     mirror: true,
     tier: "mid",
     blurPx: 1.5,
@@ -105,58 +231,35 @@ const FRAGMENTS: Fragment[] = [
     mobile: true,
   },
   {
-    src: "/hero/pellets-rock-a",
-    alt: "",
-    widthPx: 118,
-    aspect: 1055 / 1554,
-    className: "bottom-[4%] left-[16%] hidden sm:block",
-    tier: "mid",
-    blurPx: 1.5,
-    opacityPct: 85,
-    floatPeriodMs: 7000,
-    floatAmpPx: 5,
-    floatPhase: 3.4,
-  },
-  {
-    src: "/hero/pellets-a",
-    alt: "",
-    widthPx: 96,
-    aspect: 1536 / 1560,
-    className: "top-[10%] right-[26%] hidden lg:block",
-    tier: "mid",
-    blurPx: 1.5,
-    opacityPct: 82,
-    floatPeriodMs: 9000,
-    floatAmpPx: 5,
-    floatPhase: 4.6,
-  },
-  {
     src: "/hero/pebble-a",
     alt: "",
     widthPx: 150,
     aspect: 1031 / 1330,
-    className: "bottom-[4%] left-[34%] sm:left-[30%]",
+    // The near-field anchor: largest and the only unblurred fragment.
+    // Sits right of the tagline's text box at every width.
+    // Base offset is 32% not 30%: at 390px the two mobile fragments
+    // touched by ~1px, since soil-moss-a's box ends at x=118 and this
+    // one started at x=117. 32% opens a 7px gap.
+    className: "bottom-[5%] left-[32%] sm:left-[26%]",
     tier: "near",
     floatPeriodMs: 6600,
     floatAmpPx: 7,
     floatPhase: 0.8,
     mobile: true,
   },
-  {
-    src: "/hero/pellets-b",
-    alt: "",
-    widthPx: 130,
-    aspect: 1536 / 1711,
-    className: "top-[52%] -right-6",
-    mirror: true,
-    tier: "near",
-    floatPeriodMs: 7400,
-    floatAmpPx: 6,
-    floatPhase: 5.2,
-  },
 ];
 
 const MOBILE_FRAGMENTS = FRAGMENTS.filter((f) => f.mobile);
+
+// Longest period of any layer — a distant object drifts slowly, it does
+// not bob like the near fragments. The amplitude is small but no longer
+// the smallest: 4px was imperceptible across a band this wide.
+const DISTANT_LAYER: ParallaxLayerConfig = {
+  depth: TIERS.distant.depth,
+  floatPeriodMs: 14000,
+  floatAmpPx: 7,
+  floatPhase: 1.7,
+};
 
 const MIST_LAYERS: { tier: DepthTier; config: ParallaxLayerConfig }[] = [
   { tier: "mistBack", config: { depth: TIERS.mistBack.depth, floatPeriodMs: 11000, floatAmpPx: 8, floatPhase: 0.5 } },
@@ -202,10 +305,14 @@ function buildHudChips(figures: LandingFigures): HudChip[] {
       mobile: false,
     });
   }
+  // T16a O2: "2 Agents · Both Must Agree" was one 26-character string in
+  // the value slot, which broke across three ragged lines in a 160px
+  // column. Every other chip puts the quantity in `value` and the
+  // description in `label`; this one now does too.
   chips.push({
     key: "agents",
-    label: "Hypothesis vs. Critic",
-    value: "2 Agents · Both Must Agree",
+    label: "Hypothesis vs. Critic · Both Must Agree",
+    value: "2 Agents",
     mobile: false,
   });
   return chips;
@@ -241,7 +348,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
       floatAmpPx: f.floatAmpPx,
       floatPhase: f.floatPhase,
     })),
-    ...(isMdUp ? MIST_LAYERS.map((m) => m.config) : []),
+    ...(isMdUp ? [DISTANT_LAYER, ...MIST_LAYERS.map((m) => m.config)] : []),
   ];
   const setLayerRef = useParallaxLayers(containerRef, pointerLayers, !reducedMotion);
   let layerIndex = 0;
@@ -249,6 +356,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
   const earthLayerIndex = layerIndex++;
   const fragmentLayerStart = layerIndex;
   layerIndex += activeFragments.length;
+  const distantLayerIndex = isMdUp ? layerIndex++ : -1;
   const mistBackLayerIndex = isMdUp ? layerIndex++ : -1;
   const mistFrontLayerIndex = isMdUp ? layerIndex++ : -1;
 
@@ -259,6 +367,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, SCROLL_FADE_END], [1, 0]);
   const driftSky = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.sky.scrollMultiplier]);
+  const driftDistant = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.distant.scrollMultiplier]);
   const driftMistBack = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.mistBack.scrollMultiplier]);
   const driftFar = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.far.scrollMultiplier]);
   const driftMid = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.mid.scrollMultiplier]);
@@ -267,6 +376,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
   const driftMistFront = useTransform(scrollYProgress, [0, 1], [0, -SCROLL_DRIFT_PX * TIERS.mistFront.scrollMultiplier]);
   const driftByTier: Record<DepthTier, typeof driftSky> = {
     sky: driftSky,
+    distant: driftDistant,
     mistBack: driftMistBack,
     far: driftFar,
     mid: driftMid,
@@ -296,7 +406,15 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         />
       ) : (
         <div aria-hidden className="absolute inset-0">
-          <motion.div style={{ y: driftByTier.sky }} className="absolute inset-0">
+          {/* T16a: the backdrop layers are taller than the hero rather
+              than exactly its height. Each one is translated UPWARD by
+              its scroll drift, so an inset-0 layer uncovers the section's
+              own #061028 background along the bottom as the page scrolls
+              — a dark band that grows with scroll position, which is what
+              it looked like. Sky drifts at most 110 x 0.2 = 22px (plus
+              4px float and 0.7px pointer), so 64px of overhang is the fix
+              with room to spare. */}
+          <motion.div style={{ y: driftByTier.sky }} className="absolute inset-x-0 top-0 -bottom-16">
             <div ref={setLayerRef(skyLayerIndex)} className="absolute inset-0 will-change-transform">
               <img
                 src="/hero/sky-1x.webp"
@@ -317,8 +435,46 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
             </div>
           </motion.div>
 
+          {/* T16a item 2b: the distant floating-island band, restoring the
+              most-distant layer T13.6b dropped. Sits directly on the sky
+              and BEHIND the mist, so the mist softens it the way depth
+              should. Full-bleed along the bottom edge, where a horizon
+              belongs; hidden below md alongside the mist, because on a
+              phone this band and the bottom-anchored hero-earth would
+              occupy the same strip. Lazy + async: it must not become the
+              LCP element.
+
+              Pushed 14% below the hero's bottom edge at the developer's
+              request, so the nearest islands run off the bottom instead
+              of all floating clear of it — the section's own
+              overflow-hidden does the trimming. It also keeps the band's
+              own lower edge safely out of frame: total upward travel is
+              ~48px (scroll drift 110 x 0.35 = 38.5, idle float 7, pointer
+              0.16 x MAX_SHIFT_PX 18 = 2.9), against a 14% offset that is
+              ~131px on a 937px-tall hero. */}
           {isMdUp ? (
-            <motion.div style={{ y: driftByTier.mistBack }} className="absolute inset-0">
+            <motion.div style={{ y: driftByTier.distant }} className="absolute inset-x-0 -bottom-[14%]">
+              <div
+                ref={setLayerRef(distantLayerIndex)}
+                className="will-change-transform"
+                style={{ opacity: 0.65, filter: "blur(2px)" }}
+              >
+                <img
+                  src="/hero/distant-1-1x.webp"
+                  srcSet={srcSet("/hero/distant-1")}
+                  alt=""
+                  width={1100}
+                  height={231}
+                  decoding="async"
+                  loading="lazy"
+                  className="h-auto w-full"
+                />
+              </div>
+            </motion.div>
+          ) : null}
+
+          {isMdUp ? (
+            <motion.div style={{ y: driftByTier.mistBack }} className="absolute inset-x-0 top-0 -bottom-24">
               <div
                 ref={setLayerRef(mistBackLayerIndex)}
                 className="absolute inset-0 opacity-25 will-change-transform"
@@ -417,8 +573,15 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
                 className="pointer-events-none absolute -bottom-3 -right-3 h-10 w-10 border-b-2 border-r-2 border-white/70"
               />
 
+              {/* T16a O2: ml-3 -> ml-5. The spacing was already constant
+                  (left-full is the globe image's own right edge, so the
+                  gap never drifted with breakpoint), just tight. The
+                  corner bracket does NOT collide with this column — it
+                  sits 88px below the lowest chip — so nothing moved on
+                  its account. w-40 stays: w-48 would leave only 14px to
+                  the viewport edge at 1280. */}
               {hudChips.length > 0 ? (
-                <div className="absolute left-full top-1/2 ml-3 hidden w-40 -translate-y-1/2 space-y-2 lg:block">
+                <div className="absolute left-full top-1/2 ml-5 hidden w-40 -translate-y-1/2 space-y-3.5 lg:block">
                   {hudChips.map((chip) => (
                     <div key={chip.key} className="flex items-center gap-2">
                       <span aria-hidden className="h-px w-4 shrink-0 bg-white/50" />
@@ -431,9 +594,23 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
                           hardcoded-hex architecture as MetricTile's
                           "inverted" tone for this exact kind of
                           image-band content. */}
-                      <div className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2 py-1.5 text-[#071952] shadow-sm backdrop-blur-sm">
-                        <div className="font-mono text-xs font-semibold leading-tight">{chip.value}</div>
-                        <div className="text-[9px] font-medium uppercase leading-tight tracking-wide text-[#071952]/70">
+                      {/* T16a O2 readability. Contrast was never the
+                          problem here — the label measured 5.53:1 at its
+                          worst even on the darkest sky — the problem was
+                          size: a 9px label is below what anyone should be
+                          asked to read, whatever its ratio. Label 9->10px
+                          with a heavier weight and navy/80 instead of /70
+                          (8.6:1), value 12->13px, and the surface from
+                          white/85 to /92 so it stops shifting with
+                          whatever sky is behind it. tabular-nums keeps the
+                          figures aligned down the column, and text-balance
+                          stops the long labels (the live fy_label is
+                          "FY 2025-26 to date") leaving an orphan word. */}
+                      <div className="rounded-md border border-[#00b7b5]/40 bg-white/92 px-2.5 py-2 text-[#071952] shadow-sm backdrop-blur-sm">
+                        <div className="font-ui text-[15px] font-semibold leading-tight tabular-nums">
+                          {chip.value}
+                        </div>
+                        <div className="mt-0.5 text-balance text-[10px] font-semibold uppercase leading-snug tracking-wider text-[#071952]/80">
                           {chip.label}
                         </div>
                       </div>
@@ -445,7 +622,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
           </motion.div>
 
           {isMdUp ? (
-            <motion.div style={{ y: driftByTier.mistFront }} className="absolute inset-0">
+            <motion.div style={{ y: driftByTier.mistFront }} className="absolute inset-x-0 top-0 -bottom-32">
               <div
                 ref={setLayerRef(mistFrontLayerIndex)}
                 className="absolute inset-0 opacity-20 will-change-transform"
@@ -546,6 +723,36 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
           Only horizontal padding moves here; the vertical py-6/sm:py-10
           and the h-full justify-between flow stay on this element,
           since the two PageContainers below are its flex children. */}
+      {/* T16a: bottom fade into the page, so the hero hands off to the
+          section below instead of ending on a hard horizontal cut
+          between sky photography and the page colour. Uses
+          var(--color-page) rather than a literal, so it lands on the
+          right colour in both themes.
+
+          Painted LAST of the decorative layers — after the scrims, not
+          before them. The text-column scrim is inset-y-0 at 0.25 navy,
+          so with the fade underneath it the left side kept a navy cast
+          all the way to the hero's edge and never reached the page
+          colour: the fade worked on the right of the hero and visibly
+          failed on the left. Ordering it above both scrims makes the
+          hand-off uniform across the full width. Still before the
+          content layer (relative z-10), so the tagline and scroll
+          indicator stay crisp on top of it.
+
+          The ramp deliberately stays transparent through the first 45%:
+          the bottom tagline's baseline sits ~40px above the hero's lower
+          edge, inside this band, and a fade that started at its top edge
+          would put near-page-colour behind white text. Holding it clear
+          until 45% keeps the colour in the strip below the text. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent 0%, transparent 45%, var(--color-page) 100%)",
+        }}
+      />
+
       <motion.div
         style={reducedMotion ? undefined : { opacity: heroOpacity }}
         className="relative z-10 flex h-full flex-col justify-between py-6 sm:py-10"
@@ -570,16 +777,40 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               </TypingAnimation>
             )}
           </h1>
-          <p className="mt-4 max-w-md text-pretty text-sm text-white/85 sm:text-base">
+          {/* T16a: semibold, matching the bottom tagline. With the scrim
+              at 0.25 this is the only lever left that lifts the body's
+              legibility without darkening the band — text alpha is
+              already near its ceiling against the bright cloud behind
+              it. */}
+          <p className="mt-4 max-w-md text-pretty text-sm font-semibold text-white/85 sm:text-base">
             We reconstruct a processor&apos;s material flow from its own paper trail, test it against
             physical and documentary constraints, and report how many certified tonnes are verifiable,
             with evidence for every finding.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
+            {/* T16a item D, then revised: the fill is a literal #00b7b5
+                rather than a token, because the two themes need the SAME
+                colour here and no single token provides it —
+                --color-primary is #005461 in light and #00b7b5 in dark,
+                --color-glow is #00b7b5 in light and #90ddf0 in dark. A
+                literal pins both to #00b7b5, which is what was asked for:
+                light changes, dark is left exactly as it was. The
+                foreground stays tokenised, so it still flips white/navy
+                per theme. Hardcoded hex is this file's existing
+                convention for theme-invariant surfaces (see the HUD
+                chips).
+
+                Contrast, recorded so it is not rediscovered as a
+                surprise: light is white on #00b7b5 = 2.49:1, under the
+                4.5 floor, and axe reports it as a serious violation on
+                `/` at 1440 and 390. This is a deliberate choice by the
+                developer, who saw the 8.60:1 alternative (#005461) and
+                preferred this colour. Dark is unchanged at navy #071952
+                on #00b7b5 = 6.65:1. */}
             <a
               href="#live-verification"
-              className="rounded-md bg-glow px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="rounded-md bg-[#00b7b5] px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {titleCase("Run live verification")}
             </a>
@@ -598,17 +829,19 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
           </div>
 
           {mobileChips.length > 0 ? (
-            <div className="mt-7 grid max-w-xs grid-cols-2 gap-2 lg:hidden">
+            <div className="mt-7 grid max-w-xs grid-cols-2 gap-3 lg:hidden">
               {mobileChips.map((chip) => (
                 <div
                   key={chip.key}
                   // Fixed navy, not text-ink — see the desktop HUD
                   // column's identical comment; this surface is always
                   // light, regardless of site theme.
-                  className="rounded-md border border-[#00b7b5]/40 bg-white/85 px-2.5 py-1.5 text-[#071952] shadow-sm backdrop-blur-sm"
+                  className="rounded-md border border-[#00b7b5]/40 bg-white/92 px-2.5 py-2 text-[#071952] shadow-sm backdrop-blur-sm"
                 >
-                  <div className="font-mono text-sm font-semibold leading-tight">{chip.value}</div>
-                  <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-[#071952]/70">
+                  <div className="font-ui text-base font-semibold leading-tight tabular-nums">
+                    {chip.value}
+                  </div>
+                  <div className="mt-0.5 text-balance text-[10px] font-semibold uppercase leading-snug tracking-wider text-[#071952]/80">
                     {chip.label}
                   </div>
                 </div>
@@ -618,17 +851,24 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         </PageContainer>
 
         <PageContainer className="flex items-end justify-between gap-4">
-          {/* T16a item 1: white/70 -> white/85. The bottom tagline is the
-              binding constraint on the scrim's alpha — at /70 it measured
-              3.84:1 even under the full-strength band, short of the 4.5
-              floor, and raising the band far enough to carry /70 would
-              have darkened the whole column well past what the scene can
-              take. Lifting the text instead costs nothing visually. */}
-          <p className="max-w-[32ch] text-pretty text-xs text-white/85 sm:text-sm">
+          {/* T16a: white/70 -> /85 (item 1, to claw back contrast under a
+              lighter scrim) -> fully opaque white at the developer's
+              request. This is the most legible this line can be made
+              without touching the scrim: white is the ceiling against the
+              bright cloud behind it. */}
+          <p className="max-w-[32ch] text-pretty text-xs font-semibold text-white sm:text-sm">
             Independent verification for India&apos;s plastic packaging EPR certificates.
           </p>
-          <div className="flex shrink-0 flex-col items-center gap-1 text-white/70">
-            <span className="text-[10px] font-medium uppercase tracking-widest">Scroll to Discover</span>
+          {/* T16a: white/70 -> /90, in two steps at the developer's
+              request. Raised on the wrapper, not the span, so the chevron
+              keeps pace with the label — splitting them would leave the
+              icon visibly faded against its own text. */}
+          <div className="flex shrink-0 flex-col items-center gap-1 text-white/90">
+            {/* T16a: 10px/medium -> 11px/semibold at the developer's
+                request (12px first, then back 1px). Same weight the HUD
+                chip labels now use, so the two smallest pieces of type in
+                the hero read as one system. */}
+            <span className="text-[11px] font-semibold uppercase tracking-widest">Scroll to Discover</span>
             <ChevronDown aria-hidden size={16} className={reducedMotion ? undefined : "motion-safe:animate-bounce"} />
           </div>
         </PageContainer>
