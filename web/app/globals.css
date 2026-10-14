@@ -225,6 +225,30 @@
    since nothing redefined it there). The 1px solid border stays — it's
    structural (the card's own boundary), not a depth-only border, so
    surfaces.md's "convert to shadow" rule doesn't apply to it. */
+/* T16b: a quieter scrollbar for the live-run panel's two scroll areas
+   (the row list and each expanded row's body). Deliberately styled rather
+   than hidden: the scrollbar is the only cue that a capped region has
+   more content below it, and removing it makes that content
+   undiscoverable -- the design principle that a channel carrying real
+   information should be made quieter, not switched off.
+
+   Standard properties only, no ::-webkit-scrollbar pseudo-elements:
+   Chromium ignores those once scrollbar-width is set, so specifying both
+   would be dead code in this app's own browser. The thumb is mixed from
+   --color-ink, so it follows the theme without introducing a colour. */
+/* Applied by a capped scroll region only while content continues below
+   it (lib/useScrollFade.ts) — softens the cut-off edge into a signal
+   that there is more, rather than a line sliced in half. */
+.fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.25rem), transparent);
+}
+
+.scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 20%, transparent) transparent;
+}
+
 .card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

@@ -377,3 +377,113 @@ describe("buildRunRows — without a batch", () => {
     expect(buildRunRows(run({ status: "reading_documents" }), null)[0].detail).toBeNull();
   });
 });
+
+describe("buildRunRows — expanded body lines", () => {
+  const base = {
+    reading_documents: timing(12, 12),
+    checking: timing(30, 18),
+    reasoning: timing(90, 60),
+  };
+
+  it("shows when a finished stage finished, and how long it took", () => {
+    const r = run({ status: "checking", stage_timestamps: { reading_documents: timing(12, 12) } });
+    const lines = buildRunRows(r, BATCH)[0].lines;
+    expect(lines.map((l) => l.label)).toEqual(["Finished at", "Took"]);
+    expect(lines[1].value).toBe("12 s");
+    // IST, pinned rather than left to the test runner's zone: the stage
+    // finished at 10:00:12 UTC, which is 15:30:12 in Asia/Kolkata.
+    expect(lines[0].value).toBe("15:30:12 IST");
+  });
+
+  it("says a stage has not started rather than showing an empty body", () => {
+    expect(buildRunRows(run({ status: "queued" }), BATCH)[1].lines).toEqual([
+      { label: "Not started yet", value: null },
+    ]);
+  });
+
+  it("marks the running stage as running", () => {
+    const r = run({ status: "checking", stage_timestamps: { reading_documents: timing(12, 12) } });
+    expect(buildRunRows(r, BATCH)[1].lines).toEqual([{ label: "Running now", value: null }]);
+  });
+
+  it("carries the backend's error onto the stage that failed", () => {
+    const r = run({
+      status: "failed",
+      stage_timestamps: { reading_documents: timing(12, 12) },
+      error_message: "checking failed: boom",
+    });
+    const lines = buildRunRows(r, BATCH)[1].lines;
+    expect(lines[0]).toEqual({ label: "Failed", value: null });
+    expect(lines[1]).toEqual({ label: "Error", value: "checking failed: boom", mono: true });
+  });
+
+  it("fills the reasoning body with the real steps, oldest first, with their latencies", () => {
+    const r = run({
+      status: "reasoning",
+      stage_timestamps: { reading_documents: timing(12, 12), checking: timing(30, 18) },
+      steps: [
+        { ...step(0, "hypothesis"), latency_ms: 1840 },
+        { ...step(1, "critic_tool"), latency_ms: 920 },
+      ],
+    });
+    const lines = buildRunRows(r, BATCH)[2].lines;
+    expect(lines).toHaveLength(2);
+    expect(lines[1].label).toContain("read_document");
+    expect(lines.map((l) => l.value)).toEqual(["1840 ms", "920 ms"]);
+  });
+
+  it("omits a latency the backend did not report rather than inventing one", () => {
+    const r = run({
+      status: "reasoning",
+      stage_timestamps: { reading_documents: timing(12, 12), checking: timing(30, 18) },
+      steps: [step(0, "hypothesis")],
+    });
+    expect(buildRunRows(r, BATCH)[2].lines[0].value).toBeNull();
+  });
+
+  it("spends the alert body on the message and finding, not on the band change already in the detail", () => {
+    const r = run({
+      status: "drafting_memo",
+      stage_timestamps: base,
+      alert: { ...ALERT, new_finding_summary: "Certified tonnes exceed verified inbound waste." },
+    });
+    const row = buildRunRows(r, BATCH)[3];
+    expect(row.detail).toBe("Medium → High");
+    expect(row.lines[0].label).toBe(ALERT.message);
+    expect(row.lines[1].label).toContain("Certified tonnes exceed");
+    // The detail already says it; the body must not repeat it.
+    expect(row.lines.some((l) => l.value === "Medium → High")).toBe(false);
+  });
+
+  it("says so plainly when no alert fired", () => {
+    const r = run({ status: "drafting_memo", stage_timestamps: base, alert: null });
+    expect(buildRunRows(r, BATCH)[3].lines[0].label).toBe("Risk band unchanged, no new finding.");
+  });
+
+  it("gives the re-warm row its derived duration once the run is done", () => {
+    const r = run({
+      status: "done",
+      updated_at: new Date(Date.parse(START) + 103 * 1000).toISOString(),
+      stage_timestamps: { ...base, drafting_memo: timing(100, 10) },
+      alert: ALERT,
+    });
+    expect(buildRunRows(r, BATCH)[5].lines).toEqual([{ label: "Took", value: "3 s", mono: true }]);
+  });
+
+  it("never leaves a row with an empty body", () => {
+    const points = [
+      run({ status: "queued" }),
+      run({ status: "reasoning", stage_timestamps: { reading_documents: timing(12, 12) } }),
+      run({ status: "failed", stage_timestamps: base, error_message: "boom" }),
+      run({
+        status: "done",
+        updated_at: new Date(Date.parse(START) + 103 * 1000).toISOString(),
+        stage_timestamps: { ...base, drafting_memo: timing(100, 10) },
+        alert: ALERT,
+      }),
+    ];
+    for (const r of points) {
+      for (const row of buildRunRows(r, BATCH)) expect(row.lines.length).toBeGreaterThan(0);
+    }
+  });
+});

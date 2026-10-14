@@ -1,6 +1,8 @@
-import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
-import { formatMonth, formatSignedTonnes } from "@/lib/format";
+import type { DemoBatchOut, ReasoningStepOut, RunStatusOut } from "@/lib/api";
+import { formatIstTime, formatMonth, formatSignedTonnes } from "@/lib/format";
+import { stepActionLine } from "@/lib/reasoning";
 import { STAGE_ORDER, STAGE_SHORT_LABEL } from "@/lib/runStages";
+import { titleCase } from "@/lib/titleCase";
 
 /** Derives the live-run task rows from a run (T16b). Pure: data in, rows
  * out, no React and no I/O, so every branch below is unit-testable
@@ -36,6 +38,15 @@ export type RunRowId =
   | "drafting_memo"
   | "refreshing_results";
 
+/** One line in an expanded row's body: a label on the left, an optional
+ * value on the right. `mono` sets the value in the code face, matching
+ * how tool names and measured figures are set elsewhere in the app. */
+export type RunRowLine = {
+  label: string;
+  value: string | null;
+  mono?: boolean;
+};
+
 export type RunRow = {
   id: RunRowId;
   /** 1-based, shown in the waiting state's outline circle. */
@@ -47,6 +58,8 @@ export type RunRow = {
   tag: "Completed" | "Failed" | null;
   /** True for the two rows with no backing stage key of their own. */
   derived: boolean;
+  /** Body content, shown when the row is expanded. */
+  lines: RunRowLine[];
 };
 
 const ROW_TITLE: Record<RunRowId, string> = {
@@ -146,6 +159,112 @@ function tagFor(state: RunRowState): RunRow["tag"] {
   return null;
 }
 
+
+// --- expanded body ------------------------------------------------------
+//
+// Every line below is read off the run itself. There is no document count
+// and no check count anywhere in GET /runs/{run_id}, so neither appears
+// here: what a stage row can honestly show is when it finished, how long
+// it took, and — when it failed — the error the backend reported.
+
+function statusLine(state: RunRowState): RunRowLine {
+  const label =
+    state === "waiting"
+      ? "Not started yet"
+      : state === "in_progress"
+        ? "Running now"
+        : state === "failed"
+          ? "Failed"
+          : "Completed";
+  return { label, value: null };
+}
+
+/** Timing lines shared by the three plain stage rows. */
+function stageLines(stage: string, run: RunStatusOut, state: RunRowState): RunRowLine[] {
+  const timing = run.stage_timestamps[stage];
+  if (timing) {
+    const finished = formatIstTime(timing.at);
+    return [
+      ...(finished ? [{ label: "Finished at", value: finished, mono: true }] : []),
+      { label: "Took", value: seconds(timing.duration_s), mono: true },
+    ];
+  }
+  if (state === "failed") {
+    return [
+      statusLine(state),
+      ...(run.error_message ? [{ label: "Error", value: run.error_message, mono: true }] : []),
+    ];
+  }
+  return [statusLine(state)];
+}
+
+/** The reasoning row's body is the live trail itself — the same steps
+ * ReasoningTimeline renders on the processor page, read from run.steps
+ * rather than from any new field. Oldest first, so an arriving step is
+ * appended at the bottom instead of displacing what is already on
+ * screen. The value is each step's measured latency where the backend
+ * reported one; nothing is shown where it did not. */
+function reasoningLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
+  if (run.steps.length === 0) {
+    return state === "failed"
+      ? [
+          statusLine(state),
+          ...(run.error_message ? [{ label: "Error", value: run.error_message, mono: true }] : []),
+        ]
+      : [statusLine(state)];
+  }
+  const lines: RunRowLine[] = run.steps.map((step: ReasoningStepOut) => ({
+    label: titleCase(stepActionLine(step)),
+    value: step.latency_ms === null ? null : `${Math.round(step.latency_ms)} ms`,
+    mono: true,
+  }));
+  if (state === "failed" && run.error_message) {
+    lines.push({ label: "Error", value: run.error_message, mono: true });
+  }
+  return lines;
+}
+
+/** The row's own detail already carries the band change, so the body adds
+ * what a short detail cannot: the alert's full sentence and the finding
+ * behind it. Repeating "Medium → High" in both places would spend the
+ * body's only lines on something already on screen. */
+function alertLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
+  if (state !== "done") return [statusLine(state)];
+  if (!run.alert) return [{ label: "Risk band unchanged, no new finding.", value: null }];
+  const finding = run.alert.new_finding_summary;
+  return [
+    { label: run.alert.message, value: null },
+    ...(finding ? [{ label: `New finding: ${finding}`, value: null }] : []),
+  ];
+}
+
+/** The re-warm has no stage entry, so its only honest timing is the gap
+ * already derived for the row's own detail. */
+function refreshingLines(run: RunStatusOut, state: RunRowState): RunRowLine[] {
+  const took = refreshingDuration(run);
+  if (took) return [{ label: "Took", value: took, mono: true }];
+  if (state === "failed") {
+    return [
+      statusLine(state),
+      ...(run.error_message ? [{ label: "Error", value: run.error_message, mono: true }] : []),
+    ];
+  }
+  return [statusLine(state)];
+}
+
+function linesFor(id: RunRowId, run: RunStatusOut, state: RunRowState): RunRowLine[] {
+  switch (id) {
+    case "reasoning":
+      return reasoningLines(run, state);
+    case "alert_decision":
+      return alertLines(run, state);
+    case "refreshing_results":
+      return refreshingLines(run, state);
+    default:
+      return stageLines(id, run, state);
+  }
+}
+
 export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): RunRow[] {
   const spec: { id: RunRowId; state: RunRowState; detail: string | null; derived: boolean }[] = [
     {
@@ -194,5 +313,6 @@ export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): Run
     state: row.state,
     tag: tagFor(row.state),
     derived: row.derived,
+    lines: linesFor(row.id, run, row.state),
   }));
 }

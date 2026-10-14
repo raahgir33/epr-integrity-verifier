@@ -60,6 +60,24 @@ export function formatMonth(month: string): string {
   });
 }
 
+/** Clock time in IST (T16b). Stage timestamps come back as UTC — the API
+ * stores every document time as UTC and the project displays IST — so the
+ * zone is pinned rather than left to the viewer's locale, which would
+ * otherwise show a demo run's stages in whatever zone the browser is set
+ * to. Time only, no date: these are stages of a single run minutes long,
+ * where a date would be noise. */
+export function formatIstTime(iso: string): string | null {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return `${parsed.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  })} IST`;
+}
+
 export type RiskBand = "Low" | "Medium" | "High" | string;
 
 export function riskBandTone(band: RiskBand): "low" | "medium" | "high" | "unknown" {
