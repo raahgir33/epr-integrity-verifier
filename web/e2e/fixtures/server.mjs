@@ -438,7 +438,18 @@ const LANDING_ROUTES = {
   "/demo-batches": () => ({ meta: META, batches: DEMO_BATCHES }),
   // One historical alert, so the page-level AlertBanner (app/page.tsx)
   // renders and can be asserted untouched by the live-run panel.
-  "/alerts": () => ({ meta: META, alerts: [ALERT] }),
+  "/alerts": () => ({
+    meta: META,
+    alerts: [
+      ALERT,
+      { ...ALERT, alert_id: "ALERT-DEMO-0002", risk_band_before: "High", risk_band_after: "Medium",
+        message: "Risk band eased from High to Medium after the new certificate batch." },
+      { ...ALERT, alert_id: "ALERT-DEMO-0003", risk_band_before: "Medium", risk_band_after: "Low",
+        message: "Risk band eased from Medium to Low after the new certificate batch." },
+      { ...ALERT, alert_id: "ALERT-DEMO-0004", risk_band_before: null, risk_band_after: null,
+        message: "A new finding surfaced; risk band unchanged." },
+    ],
+  }),
 };
 
 const ROUTES = {

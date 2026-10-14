@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, OctagonAlert } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { alertTone } from "@/components/demo/alertTone";
 import type { AlertOut } from "@/lib/api";
 
 /** Shown on / (every alert) and /processors/[id] (that processor's own
@@ -10,36 +11,40 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
 
   return (
     <div className="space-y-2">
-      {alerts.map((alert) => (
+      {alerts.map((alert) => {
+        const tone = alertTone(alert);
+        return (
         // T13.5b plan, Part 5 replaced the original hard-coded amber-*
         // classes with theme-aware risk tokens. T16b replaces those again,
-        // at the developer's request: risk-medium's amber read as a milder
-        // signal than the thing it reports (an alert only ever fires
-        // because a risk band rose or a new finding surfaced), and the
-        // obvious fix of swapping in bg-risk-high/10 was worse, not better
-        // -- 10% red over --color-page's light blue composites to
-        // rgb(230,226,229), a muddy grey-pink. The alert now uses its own
-        // solid surface, --color-alert-* (globals.css), which is the one
-        // deliberately theme-independent group in the palette: the banner
-        // is the same object in light and dark rather than a tint that
-        // depends on what is behind it.
+        // at the developer's request, and makes them follow the band: an
+        // alert fires whenever a run moved a processor's risk band or
+        // surfaced a new finding, which is not always bad news, so a
+        // single red for every alert overstated the Low and Medium cases.
+        // The banner now takes the colour of the band the processor
+        // landed on — see components/demo/alertTone.ts, which both this
+        // and RunProgress's identical in-card line share.
         //
-        // Text and icon use --color-alert-ink / --color-alert-accent, not
-        // --color-ink / --color-risk-high, because the surface is light in
-        // both themes and those two go near-white in dark (1.1:1 and
-        // 1.8:1 here). Measured on the real painted pixel: ink 10.8:1,
-        // accent 4.2:1, against AA's 4.5:1 text and 3:1 non-text floors.
-        // The icon is not decoration -- per RiskBadge's own rule the shape
-        // carries the signal in greyscale and for a colour-blind viewer,
-        // so colour is never the only cue. The border communicates state,
+        // The surfaces are solid, not the usual `/10` tint: 10% red over
+        // --color-page's light blue composites to rgb(230,226,229), a
+        // muddy grey-pink with no red left in it. They are also the one
+        // theme-independent group in the palette, so the banner is the
+        // same object in light and dark.
+        //
+        // Text stays --color-alert-ink rather than the band colour.
+        // Lighthouse previously caught coloured text on a tint like this
+        // at 4.12:1, under AA's 4.5:1 floor. Measured on the real painted
+        // pixel, the ink clears every band comfortably — Low 14.6:1,
+        // Medium 14.1:1, High 10.8:1, Unknown 13.6:1 — and each accent
+        // clears the 3:1 non-text floor (4.2-6.2:1). Identical in both
+        // themes, since these surfaces do not flip. The border communicates state,
         // not depth, which is the case surfaces.md's "shadow for
         // elevation" rule exempts, so it stays a border.
         <div
           key={alert.alert_id}
-          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-alert-accent/40 bg-alert-surface px-4 py-3 text-sm"
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm ${tone.border} ${tone.surface}`}
         >
           <p className="flex items-start gap-2 text-pretty text-alert-ink">
-            <OctagonAlert aria-hidden size={16} className="mt-0.5 shrink-0 text-alert-accent" />
+            <tone.Icon aria-hidden size={16} className={`mt-0.5 shrink-0 ${tone.accent}`} />
             <span>
               <span className="font-medium">Live Verification Alert:</span> {alert.message}
             </span>
@@ -52,7 +57,8 @@ export function AlertBanner({ alerts }: { alerts: AlertOut[] }) {
             <ArrowRight aria-hidden size={14} />
           </Link>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, OctagonAlert } from "lucide-react";
+import { Check } from "lucide-react";
+import { alertTone } from "@/components/demo/alertTone";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { AILoadingSpinner } from "@/components/ui/AILoadingSpinner";
 import { ShimmerText } from "@/components/ui/ShimmerText";
@@ -47,6 +48,26 @@ function StageRow({ stage, run }: { stage: string; run: RunStatusOut }) {
       )}
       {timing ? <span className="text-xs tabular-nums text-ink-muted">· {timing.duration_s.toFixed(0)}s</span> : null}
     </li>
+  );
+}
+
+/** The live run's own alert, in the same per-band colours the page-level
+ * AlertBanner uses (components/demo/alertTone.ts) — these two render the
+ * same kind of alert in two places, so they share one source of truth
+ * rather than two copies that drift apart. Text stays --color-alert-ink
+ * rather than the band colour: Lighthouse caught coloured text on a tint
+ * like this at 4.12:1, under AA's 4.5:1 floor. */
+function AlertLine({ alert }: { alert: NonNullable<RunStatusOut["alert"]> }) {
+  const tone = alertTone(alert);
+  return (
+    <p
+      className={`glow-pulse flex items-start gap-2 rounded-md border px-3 py-2 text-sm text-alert-ink ${tone.border} ${tone.surface}`}
+    >
+      <tone.Icon aria-hidden size={16} className={`mt-0.5 shrink-0 ${tone.accent}`} />
+      <span>
+        <span className="font-medium">Alert:</span> {alert.message}
+      </span>
+    </p>
   );
 }
 
@@ -130,19 +151,7 @@ export function RunProgress({
         <p className="text-sm text-risk-high">Run failed: {run.error_message ?? "unknown error"}</p>
       ) : null}
 
-      {run.status === "done" && run.alert ? (
-        <p className="glow-pulse flex items-start gap-2 rounded-md border border-alert-accent/40 bg-alert-surface px-3 py-2 text-sm text-alert-ink">
-          {/* Same tokens and the same reasoning as AlertBanner.tsx — see its
-              comment. These two render the same kind of alert in two places,
-              so they move together; text-ink, not text-risk-high, because
-              Lighthouse caught the coloured-text pairing at 4.12:1 against
-              AA's 4.5:1 floor on a tint like this. */}
-          <OctagonAlert aria-hidden size={16} className="mt-0.5 shrink-0 text-alert-accent" />
-          <span>
-            <span className="font-medium">Alert:</span> {run.alert.message}
-          </span>
-        </p>
-      ) : null}
+      {run.status === "done" && run.alert ? <AlertLine alert={run.alert} /> : null}
       {run.status === "done" && !run.alert ? (
         <p className="text-sm text-ink-muted">Done. No alert (risk band unchanged, no new finding).</p>
       ) : null}
