@@ -551,6 +551,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Reproduces what the deployed API does: the run id is handed back as
+  // soon as the batch is accepted, but the row is not queryable for a
+  // moment, so the first poll 404s. A later poll is dropped too, so the
+  // mid-run blip the developer saw is covered as well.
+  if (MODE === "landing" && url.pathname.startsWith("/runs/") && process.env.FLAKY_RUNS === "1") {
+    const id = decodeURIComponent(url.pathname.slice("/runs/".length));
+    const state = runs.get(id);
+    if (state) {
+      state.polls = (state.polls ?? 0) + 1;
+      if (state.polls === 1 || state.polls === 4) return sendError(res, 404, `run ${id} not found`);
+    }
+  }
+
   if (MODE === "landing" && url.pathname.startsWith("/runs/")) {
     const body = runResponse(decodeURIComponent(url.pathname.slice("/runs/".length)));
     if (!body) return notFound(res);

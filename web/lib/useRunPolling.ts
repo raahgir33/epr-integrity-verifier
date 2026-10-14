@@ -5,6 +5,13 @@ import type { RunStatusOut } from "@/lib/api";
 
 const POLL_INTERVAL_MS = 2500;
 
+/** A single failed poll is not worth showing. The live API hands back a
+ * run_id as soon as the batch is accepted, but the run row is not
+ * queryable for a moment after that, so the very first poll can
+ * legitimately 404 — and any poll can blip. Only a second consecutive
+ * failure means something is actually wrong. */
+const FAILURES_BEFORE_SURFACING = 2;
+
 type PollState = { runId: string; run: RunStatusOut | null; error: string | null };
 
 /** Polls GET /api/runs/{runId} until the run goes terminal (T16b).
@@ -21,8 +28,12 @@ type PollState = { runId: string; run: RunStatusOut | null; error: string | null
  * previous run's rows can never flash in the panel for the moment between
  * a new run starting and its first response arriving.
  *
- * The interval stops once status is done or failed: a settled run is never
- * re-fetched. */
+ * **A failed poll never discards the run it already has.** It used to,
+ * and on a real run against the deployed API that blanked the whole panel
+ * for one tick — the rows vanished, a 404 flashed in their place, and the
+ * next poll put them back. The last good snapshot is kept and the error
+ * is reported alongside it, so the panel can stay up and say something is
+ * wrong rather than replacing itself. */
 export function useRunPolling(runId: string | null): {
   run: RunStatusOut | null;
   error: string | null;
@@ -34,6 +45,17 @@ export function useRunPolling(runId: string | null): {
 
     let cancelled = false;
     let settled = false;
+    let consecutiveFailures = 0;
+
+    function recordFailure(id: string, message: string) {
+      consecutiveFailures += 1;
+      const surface = consecutiveFailures >= FAILURES_BEFORE_SURFACING;
+      setState((previous) => {
+        const keptRun = previous && previous.runId === id ? previous.run : null;
+        if (!surface && !keptRun) return previous;
+        return { runId: id, run: keptRun, error: surface ? message : null };
+      });
+    }
 
     async function poll(id: string) {
       try {
@@ -41,13 +63,14 @@ export function useRunPolling(runId: string | null): {
         const data = (await response.json()) as RunStatusOut & { detail?: string };
         if (cancelled) return;
         if (!response.ok) {
-          setState({ runId: id, run: null, error: data.detail ?? "Could not load run status." });
+          recordFailure(id, data.detail ?? "Could not load run status.");
           return;
         }
+        consecutiveFailures = 0;
         setState({ runId: id, run: data, error: null });
         if (data.status === "done" || data.status === "failed") settled = true;
       } catch {
-        if (!cancelled) setState({ runId: id, run: null, error: "Could not reach the API." });
+        if (!cancelled) recordFailure(id, "Could not reach the API.");
       }
     }
 
