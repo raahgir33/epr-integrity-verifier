@@ -14,6 +14,57 @@ import { useParallaxLayers } from "@/lib/useParallaxLayers";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const HEADLINE = "Every certified tonne, verified against the paper trail.";
+
+/** T16b: replaces the removed text-column scrim. Two layers, both in the
+ * same navy the scrim used (rgb 6 16 40), so the hero's palette is
+ * unchanged: a tight offset that gives each glyph a hard edge against a
+ * bright cloud, and a wider soft halo that lifts the whole line off
+ * busier sky. Applied only to the headline and the body paragraph, the
+ * two elements the developer named.
+ *
+ * Cast down-right at 45 degrees (equal x and y offsets) at 25% more
+ * intensity than the first pass, both at the developer's request. The
+ * 25% is applied to the alpha, not the geometry: offsets and blur are
+ * unchanged, so the shadow reads darker without spreading further from
+ * the glyphs, which is what would start to look like a smear. */
+const HERO_TEXT_SHADOW = "1px 1px 2px rgb(6 16 40 / 0.78), 2px 2px 12px rgb(6 16 40 / 0.63)";
+
+/** The same treatment for the three CTAs directly below that copy, at the
+ * developer's request — a box shadow rather than a text shadow, since on
+ * a button the thing to lift off the sky is the control itself. Same 45
+ * degree cast and the same 25% intensity increase as the text above, so
+ * the five elements read as one light source. Alpha stays lighter than
+ * HERO_TEXT_SHADOW: these have their own fill or border to define them,
+ * so the shadow only has to separate them from the photograph. */
+const HERO_BUTTON_SHADOW = "1px 1px 2px rgb(6 16 40 / 0.44), 4px 4px 14px rgb(6 16 40 / 0.38)";
+
+/** T16b: the two outline CTAs used to carry `backdrop-blur-sm` as well.
+ * It was removed after the developer reported a black patch flashing
+ * across both of them on every scroll out of the hero.
+ *
+ * backdrop-filter samples everything painted beneath the element, and
+ * beneath these buttons is the hero's whole parallax stack — half a dozen
+ * `will-change-transform` layers that motion re-positions on every scroll
+ * frame. When the compositor re-rasterises that stack, the filter can
+ * sample a buffer that has not been painted yet, which comes out as
+ * transparent black: the patch. Adding HERO_BUTTON_SHADOW changed how
+ * these two elements are layerised, which is what surfaced a latent
+ * problem rather than causing a new one.
+ *
+ * The blur was doing no visual work to begin with — these buttons have no
+ * fill, so it blurred sky behind a transparent box — and they are now
+ * defined by a border, a box shadow and a text shadow. Dropping it
+ * removes the entire class of bug rather than papering over it with a
+ * compositing hint. The HUD chips still use backdrop-blur, but over
+ * `bg-white/92`, so there is almost no backdrop left to sample. */
+
+/** The scroll cue pairs a label with a chevron. text-shadow reaches the
+ * label but not the SVG's stroke, so the wrapper also carries a
+ * drop-shadow filter — same 45 degree cast — and the icon stays as
+ * legible as the word above it. A filter is used only here, where there
+ * is non-text vector to cover; everything else uses text-shadow, which
+ * is cheaper and does not create a containing block. */
+const HERO_CHEVRON_SHADOW = "1px 1px 2px rgb(6 16 40 / 0.78)";
 // T13.6 plan, Part B: the typing animation's speed stays, slowed 1.25x
 // (was 35ms/char) at the developer's explicit request.
 const TYPING_DURATION_MS = Math.round(35 * 1.25);
@@ -642,75 +693,25 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         </div>
       )}
 
-      {/* Localised scrim behind the text column only — the headline/body
-          sit on real sky photography whose luminance varies by position,
-          not a flat token-driven background, so a global scrim would
-          either wash out the sky or under-protect the text.
+      {/* T16b: the two scrims that used to sit here — a diagonal one
+          below sm and a text-column band at sm and up — are gone at the
+          developer's request. They were never fully working: the band
+          could not be made dark enough to carry the body text (the T16a
+          note recorded ~1.9:1 over the brightest cloud at 0.25 alpha)
+          without reading as a slab over the sky, and every attempt to
+          soften its edge produced a visible seam instead.
 
-          T16a item 1, below sm: unchanged from T13.6b. The mobile layout
-          stacks text at the top and bottom-anchors hero-earth, so the
-          desktop band's geometry doesn't apply; its own contrast is
-          tracked separately. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-full sm:hidden"
-        style={{ background: "linear-gradient(105deg, rgb(6 16 40 / 0.55), rgb(6 16 40 / 0.15) 70%, transparent)" }}
-      />
+          The headline and body paragraph now carry their own shadow
+          instead — HERO_TEXT_SHADOW below. This is the second of the two
+          options T16a identified and declined at the time ("only a darker
+          band (~0.62) or a text shadow would"); the developer has since
+          chosen it. A shadow protects the glyphs themselves rather than
+          a rectangle of sky, so it works wherever the cloud is bright
+          without flattening the photograph anywhere.
 
-      {/* T16a item 1, sm and up: the scrim is sized to the TEXT COLUMN
-          rather than to a share of the viewport. Its right edge is derived
-          from the same PageContainer padding + max-width scale O1 put the
-          text on — px-6/8/12/16 with the 1440/1600 caps — so it lands a
-          constant 64px past the headline's own max-w-xl (36rem) at every
-          width. The old `lg:w-[55%]` was 914.7px on a 1663px viewport,
-          which is exactly where the reported hard vertical line fell: the
-          gradient was still at ~0.19 alpha when the element ended, and a
-          gradient that is still visibly dark at its own edge reads as a
-          seam, not a fade.
-
-          Horizontal: a flat alpha across the whole column, fading out
-          only across that 64px margin. A diagonal or radial falloff was
-          measured first and rejected — it decays in both axes at once, so
-          it is weakest exactly at the body paragraph's right edge, which
-          is the pixel most in need of cover (a radial feather never got
-          body text above 2.44:1 without driving the left edge to near
-          opaque).
-
-          Alpha is 0.25 by explicit decision: this task asked for the
-          overlay to get NARROWER, not darker, and 0.25 is the value the
-          developer settled on after seeing it rendered. It is well under
-          the 0.55 the old diagonal gradient started at, so the band is
-          substantially lighter than before across its whole width.
-
-          Contrast consequence, recorded so it is not rediscovered later:
-          the body paragraph and the bottom tagline do not meet WCAG AA
-          over the brightest cloud at this alpha (~1.9:1 against a 4.5
-          floor), and the headline sits near its own 3.0 large-text
-          floor. Text alpha cannot recover it — the copy is already
-          white-ish and the cloud behind it is near-white, so white is
-          the ceiling. Only a darker band (~0.62) or a text shadow would,
-          and both were declined. Deliberate, not an oversight.
-
-          Vertical: feathered toward the top via mask-image, so the sky
-          under the nav opens up instead of carrying a full-height slab.
-          Every HERO text element sits below 26%, so the feather is free
-          for them — measured identical ratios at 22/26/30%. It is not
-          free for the NAV BRAND, which sits at ~3-5% of the hero: fading
-          the mask to 0 there dropped it from 5.65:1 to 2.78:1, under its
-          3.0 large-text floor. So the mask starts at 0.5 rather than 0 —
-          the top keeps half the band's alpha (0.64 x 0.5 = 0.32 effective,
-          against 0.55 before this change), which still visibly opens the
-          sky while keeping the brand legible. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 hidden sm:block sm:w-[min(100%,664px)] lg:w-[min(100%,672px)] xl:w-[calc(max(0px,(100vw-1440px)/2)+688px)] 2xl:w-[calc(max(0px,(100vw-1600px)/2)+704px)]"
-        style={{
-          background:
-            "linear-gradient(to right, rgb(6 16 40 / 0.25) 0, rgb(6 16 40 / 0.25) calc(100% - 64px), rgb(6 16 40 / 0) 100%)",
-          maskImage: "linear-gradient(to bottom, rgb(0 0 0 / 0.5) 0, #000 26%, #000 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, rgb(0 0 0 / 0.5) 0, #000 26%, #000 100%)",
-        }}
-      />
+          Everything else in the hero is unchanged, which is a deliberate
+          scope limit rather than an oversight — see the measured
+          consequences recorded in the task handoff. */}
 
       {/* T16a O1: the hero's content column now runs through the same
           PageContainer every other page/Nav/Footer uses, instead of its
@@ -766,7 +767,11 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         <PageContainer className="flex flex-1 flex-col justify-start pt-2 sm:justify-center sm:pt-0">
           <h1
             className="max-w-xl text-pretty font-display font-semibold tracking-tight text-white"
-            style={{ fontSize: "clamp(2.25rem, 1.6rem + 3.2vw, 5rem)", lineHeight: 1.05 }}
+            style={{
+              fontSize: "clamp(2.25rem, 1.6rem + 3.2vw, 5rem)",
+              lineHeight: 1.05,
+              textShadow: HERO_TEXT_SHADOW,
+            }}
           >
             <span className="sr-only">{HEADLINE}</span>
             {reducedMotion ? (
@@ -777,12 +782,15 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               </TypingAnimation>
             )}
           </h1>
-          {/* T16a: semibold, matching the bottom tagline. With the scrim
-              at 0.25 this is the only lever left that lifts the body's
-              legibility without darkening the band — text alpha is
-              already near its ceiling against the bright cloud behind
+          {/* T16a made this semibold to claw back legibility under the
+              old scrim. T16b removes that scrim and gives the line its
+              own shadow instead; the weight stays, since it is now doing
+              the same job alongside the shadow rather than instead of
               it. */}
-          <p className="mt-4 max-w-md text-pretty text-sm font-semibold text-white/85 sm:text-base">
+          <p
+            className="mt-4 max-w-md text-pretty text-sm font-semibold text-white/85 sm:text-base"
+            style={{ textShadow: HERO_TEXT_SHADOW }}
+          >
             We reconstruct a processor&apos;s material flow from its own paper trail, test it against
             physical and documentary constraints, and report how many certified tonnes are verifiable,
             with evidence for every finding.
@@ -811,18 +819,21 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
             <a
               href="#live-verification"
               className="rounded-md bg-[#00b7b5] px-4 py-2.5 text-sm font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              style={{ boxShadow: HERO_BUTTON_SHADOW }}
             >
               {titleCase("Run live verification")}
             </a>
             <a
               href="#portfolio-preview"
-              className="rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white outline-none backdrop-blur-sm transition-colors duration-150 hover:bg-white/10 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white outline-none transition-colors duration-150 hover:bg-white/10 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              style={{ boxShadow: HERO_BUTTON_SHADOW, textShadow: HERO_TEXT_SHADOW }}
             >
               {titleCase("Explore processors")}
             </a>
             <a
               href="#how-it-works"
-              className="rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white outline-none backdrop-blur-sm transition-colors duration-150 hover:bg-white/10 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white outline-none transition-colors duration-150 hover:bg-white/10 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              style={{ boxShadow: HERO_BUTTON_SHADOW, textShadow: HERO_TEXT_SHADOW }}
             >
               {titleCase("How it works")}
             </a>
@@ -856,14 +867,20 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               request. This is the most legible this line can be made
               without touching the scrim: white is the ceiling against the
               bright cloud behind it. */}
-          <p className="max-w-[32ch] text-pretty text-xs font-semibold text-white sm:text-sm">
+          <p
+            className="max-w-[32ch] text-pretty text-xs font-semibold text-white sm:text-sm"
+            style={{ textShadow: HERO_TEXT_SHADOW }}
+          >
             Independent verification for India&apos;s plastic packaging EPR certificates.
           </p>
           {/* T16a: white/70 -> /90, in two steps at the developer's
               request. Raised on the wrapper, not the span, so the chevron
               keeps pace with the label — splitting them would leave the
               icon visibly faded against its own text. */}
-          <div className="flex shrink-0 flex-col items-center gap-1 text-white/90">
+          <div
+            className="flex shrink-0 flex-col items-center gap-1 text-white/90"
+            style={{ textShadow: HERO_TEXT_SHADOW, filter: `drop-shadow(${HERO_CHEVRON_SHADOW})` }}
+          >
             {/* T16a: 10px/medium -> 11px/semibold at the developer's
                 request (12px first, then back 1px). Same weight the HUD
                 chip labels now use, so the two smallest pieces of type in

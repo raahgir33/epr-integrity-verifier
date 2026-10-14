@@ -25,6 +25,17 @@ const SOLID_SCROLL_THRESHOLD_PX = 40;
  * <main> and the landing page's hero (its own negative-margin cancel)
  * both read one source of truth instead of a hardcoded guess that would
  * drift the moment Nav's own padding changes. */
+/** T16b: the hero's text-column scrim is gone (see HeroScene.tsx), and
+ * the nav sits transparent over the sky on the home page. Measured after
+ * the scrim came out, the brand fell to 2.52:1 against the brightest
+ * cloud behind it, under its 3.0 large-text floor; `drop-shadow-sm`
+ * (0 1px 1px at 5% alpha) was never doing real work there. This matches
+ * the 45 degree cast and intensity the hero copy now uses, so the nav and
+ * the headline below it read as one light source. Applied ONLY in the
+ * transparent state — on every other page the nav sits on a solid
+ * surface and needs nothing. */
+const OVER_HERO_TEXT_SHADOW = "1px 1px 2px rgb(6 16 40 / 0.78), 2px 2px 12px rgb(6 16 40 / 0.63)";
+
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -63,9 +74,10 @@ export function Nav() {
       <PageContainer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
         <Link
           href="/"
+          style={transparent ? { textShadow: OVER_HERO_TEXT_SHADOW } : undefined}
           className={`font-display text-xl font-bold tracking-tight whitespace-nowrap outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 ${
             transparent
-              ? "text-white drop-shadow-sm focus-visible:outline-white"
+              ? "text-white focus-visible:outline-white"
               : "text-primary focus-visible:outline-primary"
           }`}
         >
@@ -81,6 +93,7 @@ export function Nav() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
+                  style={transparent ? { textShadow: OVER_HERO_TEXT_SHADOW } : undefined}
                   className={`outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 ${
                     transparent
                       ? `focus-visible:outline-white ${
