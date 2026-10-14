@@ -11,6 +11,15 @@ import http from "node:http";
 const PORT = Number(process.env.FIXTURE_PORT ?? 4100);
 const META = { seed: 42, facts_source: "truth" };
 
+// T16b: two modes from one data set. "processor" (the default) is the
+// original behaviour this file was written for and must not change --
+// e2e/error-boundary.spec.ts depends on "/processors" (the list route)
+// being absent so the home page's getProcessors() 404s and the error
+// boundary renders. "landing" adds exactly the routes the landing page
+// needs, plus the live-run simulation below, and is served on its own
+// port to a second Next instance (see playwright.config.ts).
+const MODE = process.env.FIXTURE_MODE ?? "processor";
+
 const PROFILE = {
   processor_id: "PWP-05",
   name: "Vindhya Waste Processors Pvt Ltd",
@@ -236,6 +245,194 @@ function monthlyFlow() {
   }));
 }
 
+// --- T16b live-run simulation (landing mode only) -------------------
+//
+// A stateful GET /runs/{run_id} so the task-row panel can be driven
+// start -> done and start -> failed without ever touching the deployed
+// API (a real run calls Gemini, counts against the daily cap of 10 and
+// mutates seed-42 demo data). Stage order, the status enum and the
+// stage_timestamps shape are copied from app/events/run_processor.py --
+// nothing here invents a stage the backend doesn't report.
+//
+// Durations are compressed (~1.2s a stage, not ~74s) so the e2e suite
+// stays fast; they are otherwise the real shape, including the two
+// windows the derived rows read:
+//   * the alert is attached when the reasoning stage finishes;
+//   * stage_timestamps.drafting_memo exists while status is still
+//     "drafting_memo" -- the cache invalidate + preload window.
+const STAGE_MS = {
+  reading_documents: 1200,
+  checking: 900,
+  reasoning: 3000,
+  drafting_memo: 1100,
+};
+const REFRESH_MS = 700;
+const STAGE_SEQUENCE = ["reading_documents", "checking", "reasoning", "drafting_memo"];
+
+// A batch with no extra documents: the backend still calls
+// finish_stage("reading_documents") unconditionally (run_processor.py's
+// `if extra_document_ids:` guards only the work, not the timing call),
+// so the stage lands in stage_timestamps with a near-zero duration
+// rather than being absent. Pinned here so buildRunRows is exercised
+// against the real shape.
+const SKIPPED_READ_MS = 120;
+
+const DEMO_BATCHES = [
+  { batch_id: "BATCH-PWP-05-001", period_month: "2026-03", processor_id: "PWP-05", pushes_over_verifiable: true, quantity_t: 8.45 },
+  { batch_id: "BATCH-PWP-05-NODOCS", period_month: "2026-04", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 1.92 },
+  { batch_id: "BATCH-PWP-05-FAIL", period_month: "2026-02", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 3.07 },
+];
+
+// batch_id -> scenario. "fail:<stage>" dies in that stage; "fail:refresh"
+// dies after drafting_memo finished, in the cache re-warm.
+const BATCH_SCENARIO = {
+  "BATCH-PWP-05-001": "done",
+  "BATCH-PWP-05-NODOCS": "nodocs",
+  "BATCH-PWP-05-FAIL": "fail:reasoning",
+};
+
+const ALERT = {
+  alert_id: "ALERT-DEMO-0001",
+  created_at: "2026-03-31T10:04:00Z",
+  message: "Risk band rose from Medium to High after the new certificate batch.",
+  new_finding_summary: "Certified tonnes exceed verified inbound waste for this batch.",
+  processor_id: "PWP-05",
+  risk_band_after: "High",
+  risk_band_before: "Medium",
+};
+
+const runs = new Map();
+let runSeq = 0;
+
+function stageMsFor(runState, stage) {
+  if (stage === "reading_documents" && runState.scenario === "nodocs") return SKIPPED_READ_MS;
+  return STAGE_MS[stage];
+}
+
+/** Rebuilds the run row exactly as GET /runs/{run_id} would report it at
+ * `elapsed` ms into the run. Pure given (runState, elapsed). */
+function runSnapshot(runState) {
+  const elapsed = Date.now() - runState.startedAt;
+  const failStage = runState.scenario.startsWith("fail:") ? runState.scenario.slice(5) : null;
+  const allSteps = reasoningSteps();
+
+  const stage_timestamps = {};
+  let cursor = 0;
+  let status = "queued";
+  let steps = [];
+  let alert = null;
+
+  for (const stage of STAGE_SEQUENCE) {
+    const span = stageMsFor(runState, stage);
+    const startedAtMs = cursor;
+    const endsAtMs = cursor + span;
+
+    if (elapsed < startedAtMs) break;
+
+    status = stage;
+
+    if (stage === "reasoning") {
+      // Steps stream in one at a time across the stage, so the panel's
+      // reasoning sub-lines grow the way they do on a real run.
+      const progress = Math.min(1, Math.max(0, (elapsed - startedAtMs) / span));
+      steps = allSteps.slice(0, Math.max(1, Math.round(progress * allSteps.length)));
+    }
+
+    if (failStage === stage && elapsed >= startedAtMs + span / 2) {
+      return {
+        status: "failed",
+        stage_timestamps,
+        steps,
+        alert,
+        error_message: `${stage} failed: synthetic fixture failure`,
+      };
+    }
+
+    if (elapsed < endsAtMs) {
+      // `alert` is carried, not nulled: it is attached the moment the
+      // reasoning stage finishes, so it is already present while
+      // drafting_memo is still in flight -- which is exactly what the
+      // derived "Alert decision" row reads.
+      return { status, stage_timestamps, steps, alert, error_message: null };
+    }
+
+    stage_timestamps[stage] = {
+      at: new Date(runState.startedAt + endsAtMs).toISOString(),
+      duration_s: Math.round((span / 1000) * 10) / 10,
+    };
+    if (stage === "reasoning") {
+      steps = allSteps;
+      if (runState.scenario !== "noalert") alert = ALERT;
+    }
+    cursor = endsAtMs;
+  }
+
+  // Every stage has finished. status stays "drafting_memo" while the
+  // cache invalidate + preload runs -- the window the "Refreshing
+  // results" row reads -- then flips to done/failed.
+  if (elapsed < cursor + REFRESH_MS) {
+    return { status: "drafting_memo", stage_timestamps, steps, alert, error_message: null };
+  }
+  if (failStage === "refresh") {
+    return { status: "failed", stage_timestamps, steps, alert, error_message: "cache preload failed: synthetic fixture failure" };
+  }
+  return { status: "done", stage_timestamps, steps, alert, error_message: null };
+}
+
+function runResponse(runId) {
+  const runState = runs.get(runId);
+  if (!runState) return null;
+  const snap = runSnapshot(runState);
+  return {
+    meta: META,
+    run_id: runId,
+    batch_id: runState.batchId,
+    processor_id: runState.processorId,
+    status: snap.status,
+    created_at: new Date(runState.startedAt).toISOString(),
+    updated_at: new Date().toISOString(),
+    stage_timestamps: snap.stage_timestamps,
+    steps: snap.steps,
+    error_message: snap.error_message,
+    alert: snap.alert,
+  };
+}
+
+const LANDING_ROUTES = {
+  "/processors": () => ({
+    meta: META,
+    processors: [
+      {
+        processor_id: "PWP-05",
+        name: PROFILE.name,
+        type: PROFILE.type,
+        agent_status: "ok",
+        checks_only: CHECKS_ONLY,
+        full: CHECKS_ONLY,
+      },
+    ],
+  }),
+  "/stats": () => ({
+    meta: META,
+    as_of: "2026-03-31",
+    certified_t_total: 6240.0,
+    unverifiable_t_total: 2672.2,
+    documents_read: 714,
+    fields_read: 5523,
+    processors_count: 1,
+    fy_label: "FY 2025-26",
+    field_read_accuracy_pct: "99.96%",
+    field_read_accuracy_value: 99.96,
+    field_read_correct: 5521,
+    field_read_total: 5523,
+    field_read_dataset_label: "seed 42",
+  }),
+  "/demo-batches": () => ({ meta: META, batches: DEMO_BATCHES }),
+  // One historical alert, so the page-level AlertBanner (app/page.tsx)
+  // renders and can be asserted untouched by the live-run panel.
+  "/alerts": () => ({ meta: META, alerts: [ALERT] }),
+};
+
 const ROUTES = {
   "/processors/PWP-05": () => ({
     meta: META,
@@ -280,8 +477,53 @@ function notFound(res) {
   res.end(JSON.stringify({ detail: "not found" }));
 }
 
+if (MODE === "landing") Object.assign(ROUTES, LANDING_ROUTES);
+
+function sendJson(res, status, body) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(body));
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
+
+  if (MODE === "landing" && req.method === "POST" && url.pathname === "/demo/certificate-batch") {
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      let batchId;
+      try {
+        batchId = JSON.parse(raw).batch_id;
+      } catch {
+        return sendJson(res, 400, { detail: "batch_id is required" });
+      }
+      const batch = DEMO_BATCHES.find((b) => b.batch_id === batchId);
+      if (!batch) return sendJson(res, 404, { detail: `unknown batch ${batchId}` });
+      // The real API's abuse gates return 429 with a user-facing detail
+      // string the card shows verbatim; a reserved batch id exercises
+      // that path without a cooldown clock in the fixture.
+      if (url.searchParams.get("gate") === "cooldown") {
+        return sendJson(res, 429, { detail: "cooldown active — try again in 47s" });
+      }
+      const runId = `run-${++runSeq}`;
+      runs.set(runId, {
+        batchId,
+        processorId: batch.processor_id,
+        scenario: BATCH_SCENARIO[batchId] ?? "done",
+        startedAt: Date.now(),
+      });
+      return sendJson(res, 202, { meta: META, run_id: runId, batch_id: batchId, processor_id: batch.processor_id });
+    });
+    return;
+  }
+
+  if (MODE === "landing" && url.pathname.startsWith("/runs/")) {
+    const body = runResponse(decodeURIComponent(url.pathname.slice("/runs/".length)));
+    if (!body) return notFound(res);
+    return sendJson(res, 200, body);
+  }
 
   if (url.pathname.startsWith("/documents/") && url.pathname.endsWith("/facts")) {
     res.writeHead(200, { "Content-Type": "application/json" });

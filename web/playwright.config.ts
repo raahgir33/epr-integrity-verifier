@@ -12,6 +12,15 @@ const APP_PORT = 4200;
 const API_DOWN_APP_PORT = 4201;
 const UNREACHABLE_PORT = 4199;
 
+// T16b: the landing page needs routes the default fixture deliberately
+// withholds — e2e/error-boundary.spec.ts depends on "/processors" 404ing
+// so the home page's getProcessors() surfaces the error boundary. Rather
+// than weaken that, the same fixture file runs a second time in
+// FIXTURE_MODE=landing (full landing data + the stateful live-run
+// simulation) on its own port, with its own Next instance pointed at it.
+const LANDING_FIXTURE_PORT = 4102;
+const LANDING_APP_PORT = 4202;
+
 /** Committed e2e config (round 7 fix). Starts the plain-Node fixture API
  * (e2e/fixtures/server.mjs — no GCP/Gemini, no real api/ service) and the
  * Next.js dev server pointed at it via API_BASE_URL, then runs the specs
@@ -40,6 +49,23 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
+      command: `node e2e/fixtures/server.mjs`,
+      env: { FIXTURE_PORT: String(LANDING_FIXTURE_PORT), FIXTURE_MODE: "landing" },
+      port: LANDING_FIXTURE_PORT,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: `npx next dev -p ${LANDING_APP_PORT}`,
+      env: {
+        API_BASE_URL: `http://localhost:${LANDING_FIXTURE_PORT}`,
+        // Own distDir, same reason as the api-down instance below.
+        NEXT_DIST_DIR: ".next-landing",
+      },
+      port: LANDING_APP_PORT,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    {
       command: `npx next dev -p ${API_DOWN_APP_PORT}`,
       env: {
         API_BASE_URL: `http://localhost:${UNREACHABLE_PORT}`,
@@ -55,4 +81,4 @@ export default defineConfig({
   ],
 });
 
-export { API_DOWN_APP_PORT };
+export { API_DOWN_APP_PORT, LANDING_APP_PORT };

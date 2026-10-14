@@ -9,6 +9,10 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // T16b: the e2e dev-server instances get their own distDirs
+    // (.next-api-down, .next-landing -- Next refuses two dev servers
+    // sharing one .next/). Generated output, not source.
+    ".next-*/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

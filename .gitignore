@@ -65,6 +65,8 @@ web/.next/
 # T13.8: e2e/api-down.spec.ts's dedicated `next dev` instance uses its
 # own distDir (Next refuses two dev servers sharing one .next/).
 web/.next-api-down/
+# T16b: the landing-fixture `next dev` instance, same reason.
+web/.next-landing/
 web/out/
 
 # production
