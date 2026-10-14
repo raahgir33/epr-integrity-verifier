@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AlertBanner } from "@/components/demo/AlertBanner";
-import { RunLiveVerification } from "@/components/demo/RunLiveVerification";
+import { LiveVerificationSection } from "@/components/demo/LiveVerificationSection";
 import { AudienceTabs } from "@/components/landing/AudienceTabs";
 import { CloudStrip } from "@/components/landing/CloudStrip";
 import { Faq } from "@/components/landing/Faq";
@@ -54,7 +54,7 @@ export default async function LandingPage() {
       </FullBleed>
 
       <div id="live-verification" className="scroll-mt-16">
-        <RunLiveVerification batches={batches} />
+        <LiveVerificationSection batches={batches} />
       </div>
       <AlertBanner alerts={alerts} />
 

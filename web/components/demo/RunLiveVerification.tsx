@@ -12,19 +12,40 @@ import { titleCase } from "@/lib/titleCase";
  * /processors/[id]).
  *
  * `onRunUpdate` (T13.5b plan, Part 4) is forwarded straight to RunProgress
- * — see that component's own doc comment for what it's for. */
+ * — see that component's own doc comment for what it's for.
+ *
+ * T16b added three opt-in props, all defaulted so that the uncontrolled
+ * behaviour below — and therefore the processor page, which still renders
+ * this component directly via ProcessorLiveRun — is completely unchanged.
+ * Passing `onRunStart` hands ownership of the run to a parent
+ * (LiveVerificationSection on the landing page), which displays progress in
+ * a task-row panel beside the card instead of inside it; this component
+ * then renders neither RunProgress nor its own "Run Another" button, and
+ * takes its running state from `isRunning`. The 429 cooldown / daily-cap
+ * detail string still surfaces here either way, in the card, which is where
+ * a viewer is looking when a run is refused. */
 export function RunLiveVerification({
   batches,
   onRunUpdate,
+  fill = false,
+  isRunning = false,
+  onRunStart,
 }: {
   batches: DemoBatchOut[];
   onRunUpdate?: (run: RunStatusOut | null) => void;
+  /** Fill the parent's width instead of the stand-alone `lg:w-1/2`. Set by
+   * LiveVerificationSection, whose grid track is already exactly half the
+   * container — without this the card would end up a quarter-width. */
+  fill?: boolean;
+  isRunning?: boolean;
+  onRunStart?: (runId: string) => void;
 }) {
   const [selected, setSelected] = useState(batches[0]?.batch_id ?? "");
   const [runId, setRunId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const running = runId !== null;
+  const controlled = onRunStart !== undefined;
+  const running = controlled ? isRunning : runId !== null;
 
   if (batches.length === 0) return null;
 
@@ -42,7 +63,10 @@ export function RunLiveVerification({
         setError(data.detail ?? "Could not start the run.");
         return;
       }
-      if (data.run_id) setRunId(data.run_id);
+      if (data.run_id) {
+        if (controlled) onRunStart(data.run_id);
+        else setRunId(data.run_id);
+      }
     } catch {
       setError("Could not reach the API.");
     } finally {
@@ -51,7 +75,11 @@ export function RunLiveVerification({
   }
 
   return (
-    <div className="px-12 py-10 mx-auto max-w-6xl rounded-lg border border-border bg-surface p-4 text-center lg:w-1/2">
+    <div
+      className={`px-12 py-10 mx-auto max-w-6xl rounded-lg border border-border bg-surface p-4 text-center ${
+        fill ? "lg:w-full" : "lg:w-1/2"
+      }`}
+    >
       <p className="mt-4 mb-4 font-display text-xl font-semibold text-ink">{titleCase("Agentic verification - Live!")}</p>
       <p className="mt-1 mb-8 leading-relaxed tracking-wide text-sm text-ink-muted">
         Simulate a New Certificate Batch Arriving for Any One Processor <br/> 
@@ -81,7 +109,10 @@ export function RunLiveVerification({
         >
           {submitting ? "Starting…" : running ? "Running…" : "Run live verification"}
         </Button>
-        {running ? (
+        {/* Controlled (landing) callers drive "run another" from the task
+            panel's own footer once a run settles, so this duplicate action
+            is uncontrolled-only. */}
+        {running && !controlled ? (
           <Button
             variant="secondary"
             className="w-full"
@@ -97,7 +128,7 @@ export function RunLiveVerification({
 
       {error ? <p className="mt-2 text-sm text-risk-high">{error}</p> : null}
 
-      {runId ? (
+      {runId && !controlled ? (
         <div className="mt-4 border-t border-border pt-4 text-center">
           <RunProgress runId={runId} onRunUpdate={onRunUpdate} />
         </div>
