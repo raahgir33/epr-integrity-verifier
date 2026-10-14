@@ -1,0 +1,38 @@
+# Authoritative for what `COPY . .` can see in the Dockerfile.
+#
+# The deploy uploads --source=web, so gcloud builds its ignore list from
+# THIS directory's .gitignore, not the repo root's. The root file excludes
+# build output as "web/.next-landing/" etc., which does not match once web/
+# is the source root — so those directories were reaching the image.
+#
+# That is not cosmetic. Tailwind v4 scans the project for class names and
+# skips git-ignored paths; inside the container nothing is git-ignored, so
+# it parsed stale minified Next bundles, extracted garbage arbitrary-value
+# classes from them and emitted invalid CSS. The build failed with
+# "CssSyntaxError: Missed semicolon" pointing into globals.css.
+#
+# A .dockerignore is the durable guard because it does not depend on
+# gcloud's upload behaviour or on which .gitignore happens to apply.
+
+node_modules
+.git
+
+# Next build output, including the per-instance distDirs the e2e suite
+# creates (playwright.config.ts gives each `next dev` its own, since Next
+# refuses two dev servers sharing one .next/). These regenerate on every
+# e2e run, so excluding them here is what keeps them out for good.
+.next
+.next-*
+out
+build
+
+# Test output and local scratch
+test-results
+playwright-report
+blob-report
+playwright/.cache
+e2e/.scratch
+
+.env*
+*.tsbuildinfo
+.DS_Store

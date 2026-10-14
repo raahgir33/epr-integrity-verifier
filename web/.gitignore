@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/e2e/.scratch/
 /test-results
 /playwright-report
 /blob-report
@@ -19,6 +20,11 @@
 
 # next.js
 /.next/
+# Per-instance distDirs for the e2e suite's extra `next dev` servers
+# (playwright.config.ts). Listed here as well as in the root .gitignore
+# because a deploy uses web/ as its source root, and only this file
+# applies there.
+/.next-*/
 /out/
 
 # production
