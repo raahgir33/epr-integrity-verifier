@@ -45,16 +45,26 @@ function orderedCatalog(catalog: CheckCatalogEntry[]): CheckCatalogEntry[] {
 /** Rebuilt as a card grid (T13.5c plan, Batch 0.12/13), same visual
  * treatment as the Method page's Rule-Based Checks accordion rows
  * (`components/method/RuleBasedChecksAccordion.tsx`, left unchanged,
- * approved as is) — font-mono id, uppercase severity label — but as a
- * static, always-expanded 3/2/1-column grid of cards rather than a
- * collapsible accordion. */
+ * approved as is) — uppercase severity label — but as a static,
+ * always-expanded 3/2/1-column grid of cards rather than a collapsible
+ * accordion.
+ *
+ * T16b: the check id is set in `font-ui` (Inter), larger and bold, with
+ * real spacing before the severity label — all at the developer's
+ * request. It and the Method page's equivalent were both `font-mono`
+ * before; this is scoped to this grid only, so the Method accordion keeps
+ * the code face and the two now differ deliberately. */
 export function WhatWeCheck({ catalog }: { catalog: CheckCatalogEntry[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {orderedCatalog(catalog).map((entry) => (
         <div key={entry.checkId} className="card p-4">
-          <p>
-            <span className="font-mono font-semibold text-ink">{entry.checkId}</span>{" "}
+          {/* Baseline-aligned rather than centred: the id and the severity
+              label are deliberately different sizes, and aligning their
+              boxes would leave the smaller one floating. The gap replaces
+              a bare space, which could not be tuned. */}
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-ui text-lg font-bold text-ink">{entry.checkId}</span>
             <span className="text-xs uppercase tracking-wide text-ink-muted">{entry.severity}</span>
           </p>
           <p className="mt-2 text-sm text-ink-muted">{DESCRIPTIONS[entry.checkId] ?? FALLBACK_DESCRIPTION}</p>

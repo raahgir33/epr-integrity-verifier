@@ -93,7 +93,14 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <FullBleed className="band py-12">
+      {/* T16b: pb-12, not py-12. `.band` paints --color-surface-sunk,
+          which is defined identical to --color-page, so the band is
+          invisible and its top padding read as pure extra space: the
+          heading sat 124px below the previous section where every other
+          section on this page sits at 76px. Dropping the top padding puts
+          it back on the page's rhythm; the bottom padding stays, since it
+          still separates CloudStrip from what follows. */}
+      <FullBleed className="band pb-12">
         <section>
           <TextReveal>
             <SectionTitle className="text-xl">What we check</SectionTitle>
