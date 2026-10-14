@@ -316,3 +316,27 @@ export function buildRunRows(run: RunStatusOut, batch: DemoBatchOut | null): Run
     lines: linesFor(row.id, run, row.state),
   }));
 }
+
+/** One sentence describing where the run is, for the panel's aria-live
+ * region (T16b).
+ *
+ * Derived from the rows rather than tracked separately, so it changes
+ * exactly when a row changes and not on every 2.5s poll — React leaves
+ * an identical string in the DOM untouched, and an aria-live region only
+ * re-announces when its text actually changes. Without that, a screen
+ * reader would repeat the same stage every poll for the length of the
+ * run. */
+export function describeRun(rows: RunRow[], run: RunStatusOut): string {
+  if (run.status === "done") {
+    const alert = run.alert
+      ? ` ${run.alert.message}`
+      : " No alert: risk band unchanged, no new finding.";
+    return `Verification complete.${alert}`;
+  }
+  if (run.status === "failed") {
+    const failed = rows.find((row) => row.state === "failed");
+    return `Verification failed${failed ? ` during ${failed.title.toLowerCase()}` : ""}.`;
+  }
+  const active = rows.find((row) => row.state === "in_progress");
+  return active ? `${active.title}, in progress.` : "Starting verification.";
+}

@@ -5,7 +5,7 @@ import { useScrollFade } from "@/lib/useScrollFade";
 import { RunPanelFooter } from "@/components/demo/RunPanelFooter";
 import { RunTaskRow } from "@/components/demo/RunTaskRow";
 import type { DemoBatchOut, RunStatusOut } from "@/lib/api";
-import { buildRunRows, type RunRow, type RunRowId } from "@/lib/runRows";
+import { buildRunRows, describeRun, type RunRow, type RunRowId } from "@/lib/runRows";
 
 /** The live-run task panel (T16b) — six pill rows beside the card.
  *
@@ -77,8 +77,14 @@ export function RunTaskPanel({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl p-2">
+      {/* Announced only when the text changes — see describeRun. */}
+      <p aria-live="polite" className="sr-only">
+        {describeRun(rows, run)}
+      </p>
+
       <ol
         ref={listRef}
+        aria-label="Verification stages"
         onScroll={onListScroll}
         className={`scrollbar-subtle flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain ${
           listFade ? "fade-bottom" : ""

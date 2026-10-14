@@ -147,8 +147,6 @@ export function RunTaskRow({
 
       <div
         id={bodyId}
-        role="region"
-        aria-labelledby={headerId}
         className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
@@ -156,12 +154,26 @@ export function RunTaskRow({
         <div className="min-h-0 overflow-hidden">
           {/* Capped and scrolled per row, so one long reasoning trail
               cannot push the panel past the card's height. */}
+          {/* Focusable so a keyboard user can scroll it — axe's
+              scrollable-region-focusable, and the real behaviour behind
+              it: a capped region nobody can reach by keyboard hides its
+              overflow from them entirely. Only while open, so a collapsed
+              row adds no phantom tab stop. role="group" rather than
+              "region": a named region is a landmark, and six of them
+              would bury the page's real landmarks. */}
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className={`scrollbar-subtle max-h-28 overflow-y-auto overscroll-contain px-3 pb-3 pl-10 ${
-              fade ? "fade-bottom" : ""
-            }`}
+            tabIndex={open ? 0 : -1}
+            role="group"
+            aria-label={`${row.title} detail`}
+            className={`scrollbar-subtle max-h-28 overscroll-contain px-3 pb-3 pl-10 outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${
+              // A collapsed row is not a scroll region: leaving overflow-y
+              // auto here keeps a zero-height, unreachable scroller in the
+              // tree, which is what axe's scrollable-region-focusable was
+              // actually pointing at once the row auto-collapsed.
+              open ? "overflow-y-auto" : "overflow-hidden"
+            } ${fade ? "fade-bottom" : ""}`}
           >
             <ul className="space-y-1.5 border-l border-border pl-3">
               {row.lines.map((line, i) => (
