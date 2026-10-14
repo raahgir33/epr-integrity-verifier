@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
+import { PageContainer } from "@/components/ui/PageContainer";
 import type { LandingFigures } from "@/lib/landing";
 import { formatTonnesValue } from "@/lib/format";
 import { titleCase } from "@/lib/titleCase";
@@ -476,9 +477,20 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
         style={{ background: "linear-gradient(105deg, rgb(6 16 40 / 0.55), rgb(6 16 40 / 0.15) 70%, transparent)" }}
       />
 
+      {/* T16a O1: the hero's content column now runs through the same
+          PageContainer every other page/Nav/Footer uses, instead of its
+          own px-5/sm:px-10 — the hero was the one surface whose left
+          edge didn't track the nav brand's. Measured before the change:
+          brand 48/48/95.5/224px against hero text flat at 40px for
+          1280/1440/1663/1920, so the gap grew from 8px to 184px as the
+          viewport widened past PageContainer's max-width cap, where the
+          brand starts centering and the hero kept hugging the edge.
+          Only horizontal padding moves here; the vertical py-6/sm:py-10
+          and the h-full justify-between flow stay on this element,
+          since the two PageContainers below are its flex children. */}
       <motion.div
         style={reducedMotion ? undefined : { opacity: heroOpacity }}
-        className="relative z-10 flex h-full flex-col justify-between px-5 py-6 sm:px-10 sm:py-10"
+        className="relative z-10 flex h-full flex-col justify-between py-6 sm:py-10"
       >
         {/* Mobile: text starts at the top and flows down ("stacked
             above" the scene, per the brief) rather than vertically
@@ -486,7 +498,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
             overlapping the headline/CTAs when both were centered during
             T13.6b's own verification pass. sm+ restores the centred
             overlay look. */}
-        <div className="flex flex-1 flex-col justify-start pt-2 sm:justify-center sm:pt-0">
+        <PageContainer className="flex flex-1 flex-col justify-start pt-2 sm:justify-center sm:pt-0">
           <h1
             className="max-w-xl text-pretty font-display font-semibold tracking-tight text-white"
             style={{ fontSize: "clamp(2.25rem, 1.6rem + 3.2vw, 5rem)", lineHeight: 1.05 }}
@@ -545,9 +557,9 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
               ))}
             </div>
           ) : null}
-        </div>
+        </PageContainer>
 
-        <div className="flex items-end justify-between gap-4">
+        <PageContainer className="flex items-end justify-between gap-4">
           <p className="max-w-[32ch] text-pretty text-xs text-white/70 sm:text-sm">
             Independent verification for India&apos;s plastic packaging EPR certificates.
           </p>
@@ -555,7 +567,7 @@ export function HeroScene({ figures }: { figures: LandingFigures | null }) {
             <span className="text-[10px] font-medium uppercase tracking-widest">Scroll to Discover</span>
             <ChevronDown aria-hidden size={16} className={reducedMotion ? undefined : "motion-safe:animate-bounce"} />
           </div>
-        </div>
+        </PageContainer>
       </motion.div>
     </section>
   );
