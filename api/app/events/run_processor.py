@@ -288,6 +288,25 @@ class _RunContext:
         self.run_row["updated_at"] = datetime.now(UTC).isoformat()
         _write_run(self.bq_client, self.run_row)
 
+    def publish_alert_id(self, alert_id: str | None) -> None:
+        """Puts the alert on the run row as soon as the alerts row itself
+        has been written, before finish_stage("reasoning").
+
+        GET /runs/{run_id} only surfaces an alert by resolving the run
+        row's alert_id, so until this ran at finish() the alert was
+        invisible for the whole drafting_memo stage plus the cache
+        re-warm — measured at 39s on the 2026-10-15 run (alert written
+        03:29:17, reasoning timestamp 03:29:19, status done 03:29:58).
+        The web panel's Alert decision row keys off the reasoning
+        timestamp, so it spent those 39s asserting "Risk band unchanged,
+        no new finding" about an alert that had already fired Low ->
+        High. Writing it here closes the window at the source; the web
+        side no longer trusts the reasoning timestamp either (see
+        web/lib/runRows.ts)."""
+        self.run_row["alert_id"] = alert_id
+        self.run_row["updated_at"] = datetime.now(UTC).isoformat()
+        _write_run(self.bq_client, self.run_row)
+
     def finish(
         self, status: str, error_message: str | None = None, alert_id: str | None = None
     ) -> None:
@@ -345,6 +364,25 @@ def run_certificate_batch(run_id: str) -> None:  # noqa: C901
                 processor_id=processor_id,
             )
             new_docs = [d for d in doc_rows if d["doc_id"] in extra_document_ids]
+            # A batch that declares extra documents but finds none (or
+            # only some) registered must fail here, loudly. extract_all
+            # over an empty list returns [] without raising, so this
+            # stage used to report "Completed" having read nothing and
+            # made zero Gemini calls — the run then added a certificate
+            # with no inbound shipment to match it, and the resulting
+            # mass-balance shortfall looked like a finding about the
+            # processor rather than a broken demo fixture. That is
+            # exactly what happened between 2026-10-09 and 2026-10-15,
+            # once a reset had removed the `documents` rows (see
+            # app/admin/reset_demo.py). Internal engineering notes §7.5:
+            # fail visibly, not silently.
+            missing = sorted(set(extra_document_ids) - {d["doc_id"] for d in new_docs})
+            if missing:
+                raise RuntimeError(
+                    f"batch {batch_id} declares {len(extra_document_ids)} extra document(s) but "
+                    f"{len(missing)} are not registered in the documents table: "
+                    f"{', '.join(missing)} — run scripts/load_demo_extra_docs.py --seed {seed}"
+                )
             results = extract_all(
                 llm_client,
                 gcs_client,
@@ -618,6 +656,7 @@ def run_certificate_batch(run_id: str) -> None:  # noqa: C901
                     }
                 ],
             )
+        ctx.publish_alert_id(alert_id)
         ctx.finish_stage("reasoning")
 
         # --- 4. drafting_memo (English only on the live path) ---
