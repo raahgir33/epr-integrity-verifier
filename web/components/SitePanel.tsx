@@ -21,18 +21,25 @@ export function SitePanel({ site, processorId }: { site: SiteResponse; processor
       </div>
 
       <div className="card mx-auto max-w-full p-4 text-center">
+        {/* T16c F14: term-then-description order in the DOM (a <dd> may
+            not precede its own <dt>); the number-above-label look is done
+            visually with flex-col-reverse, so screen readers announce the
+            name before the value while the layout is unchanged.
+            T16c F13: all three labels share one weight, and the third is
+            "Capacity / m²" rather than "Capacity per m²" — the longer
+            wording wrapped and stranded "m²" alone on a second line. */}
         <dl className="mx-auto grid max-w-sm grid-cols-3 gap-3 text-sm">
-          <div>
-            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{site.building_count}</dd>
-            <dt className="mt-2 text-sm uppercase tracking-wide text-ink-muted">Buildings</dt>
+          <div className="flex flex-col-reverse">
+            <dt className="mt-2 text-balance text-sm font-medium uppercase tracking-wide text-ink-muted">Buildings</dt>
+            <dd className="text-center tabular-nums text-lg font-semibold text-ink">{site.building_count}</dd>
           </div>
-          <div>
-            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{formatM2(site.total_footprint_m2)}</dd>
-            <dt className="mt-2 text-sm uppercase font-medium tracking-wide text-ink-muted">Footprint</dt>
+          <div className="flex flex-col-reverse">
+            <dt className="mt-2 text-balance text-sm font-medium uppercase tracking-wide text-ink-muted">Footprint</dt>
+            <dd className="text-center tabular-nums text-lg font-semibold text-ink">{formatM2(site.total_footprint_m2)}</dd>
           </div>
-          <div>
-            <dd className="tabular-nums text-center text-lg font-semibold text-ink">{formatCheckValue("C8", site.measured)}</dd>
-            <dt className="mt-2 text-sm uppercase font-medium tracking-wide text-ink-muted">Capacity per m²</dt>
+          <div className="flex flex-col-reverse">
+            <dt className="mt-2 text-balance text-sm font-medium uppercase tracking-wide text-ink-muted">Capacity / m²</dt>
+            <dd className="text-center tabular-nums text-lg font-semibold text-ink">{formatCheckValue("C8", site.measured)}</dd>
           </div>
         </dl>
         <p className="mt-4 text-lg text-ink">{site.explanation}</p>
