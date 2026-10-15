@@ -40,7 +40,14 @@ export function ProofStrip({ figures }: { figures: LandingFigures | null }) {
           unit="t"
           label="Tonnes unverifiable"
         />
-        <MetricTile countUp value={figures.documentsRead} label="Documents read" />
+        {/* "ingested", not "read": GET /stats counts every registered
+            document row (app/store/cache.py's documents_read), which
+            includes the six demo-batch files staged for the live run.
+            Those are ingested and served, but only extracted once a run
+            reads them, so 720 rows cover 714 actually read. Counting rows
+            is the right figure to show; this label is what makes it a
+            true statement. */}
+        <MetricTile countUp value={figures.documentsRead} label="Documents ingested" />
         {figures.fieldReadAccuracyValue !== null ? (
           <MetricTile
             countUp
