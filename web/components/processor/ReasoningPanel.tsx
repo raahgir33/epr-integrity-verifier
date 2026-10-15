@@ -14,8 +14,18 @@ const STORAGE_KEY = "epr:reasoningPanelCollapsed";
  * xl in T13.5c plan, Batch 0.9, per the developer's note); below lg,
  * ReasoningLog is rendered directly as the "Agent Reasoning" tab instead,
  * with no dock/collapse chrome. Collapse state persists in localStorage
- * so a repeat visitor's choice sticks; top offset matches StickyHeader's
- * own lg:top-16, stacking directly below it rather than overlapping.
+ * so a repeat visitor's choice sticks; lg:top-16 clears the fixed Nav's
+ * own ~64px height, so the panel pins directly below it. (The processor
+ * header above is deliberately not sticky, so there is nothing else to
+ * stack under.)
+
+ * Collapsed state: the card drops its fixed height so collapsing actually
+ * reclaims the space instead of leaving a full-height empty box, and the
+ * aside no longer sets `self-start` — inside this column flex container
+ * that resolved to `align-self: flex-start`, whose cross axis is
+ * horizontal, so the aside shrink-wrapped to its content and the collapsed
+ * card rendered 335px wide against the chart's 842px. Stickiness comes
+ * from `lg:sticky lg:top-16`, never from `self-start`.
  *
  * `currentStageLabel` (Kokonut addendum's "AI Loading" equivalent) — set
  * only while a live run is active and hasn't produced its first reasoning
@@ -93,10 +103,18 @@ export function ReasoningPanel({
   }
 
   const showExpandControls = steps.length > 0 && !(isLive && steps.length === 0);
+  // localStorage is unreadable during SSR, so `collapsed` is only
+  // meaningful once hydrated — both the card's height and its body read
+  // this single flag, never `collapsed` on its own.
+  const isCollapsed = hydrated && collapsed;
 
   return (
-    <aside className="hidden lg:block lg:sticky lg:top-16 lg:self-start">
-      <div className="card flex h-[calc(100dvh-5rem)] flex-col overflow-hidden p-0">
+    <aside className="hidden lg:block lg:sticky lg:top-16">
+      <div
+        className={`card flex flex-col overflow-hidden p-0 ${
+          isCollapsed ? "" : "h-[calc(100dvh-5rem)]"
+        }`}
+      >
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <p className="font-display text-sm font-semibold text-ink">Reasoning</p>
           <div className="flex items-center gap-3">
@@ -139,7 +157,7 @@ export function ReasoningPanel({
             SSR) — the panel renders expanded-but-empty-looking for a
             moment rather than ever showing the stored "collapsed" state
             flipping open right after mount. */}
-        {hydrated && collapsed ? null : (
+        {isCollapsed ? null : (
           <div className="relative min-h-0 flex-1">
             <div
               ref={scrollRef}

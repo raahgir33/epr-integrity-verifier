@@ -11,12 +11,13 @@ import type { ProcessorProfile, StageAssessment } from "@/lib/api";
 import { formatTonnes, formatTonnesValue } from "@/lib/format";
 import { titleCase } from "@/lib/titleCase";
 
-/** Sticky summary header (T13.5 plan, Part 4) — one line of identity plus
- * one line of tonnes. Always visible; only becomes position:sticky at lg
- * and above (where the tabs/rail layout has room for it) — below lg it's
- * a normal card that scrolls away with the rest of the page. top-16
- * matches the global Nav's own ~64px height, so the two sticky bars
- * stack directly rather than overlapping. Amendment A: certified_t
+/** Processor summary header (T13.5 plan, Part 4) — one line of identity
+ * plus one line of tonnes. Deliberately NOT sticky at any width: it
+ * scrolls away with the rest of the page, by the developer's explicit
+ * instruction. It previously carried lg:top-20/z-30/bg-surface/backdrop-
+ * blur with no `sticky` class at all, so those four utilities were dead
+ * (computed position was already `static`); they are gone rather than
+ * left to imply a stickiness that never applied. Amendment A: certified_t
  * always reads checks_only (the figure is identical across stages);
  * verifiable_t/unverifiable_t/risk_band always prefer the full stage,
  * falling back to checks_only — the same (full ?? checks_only) pattern
@@ -34,7 +35,7 @@ export function StickyHeader({
   const clean = stage.unverifiable_t <= 0;
 
   return (
-    <div className="card px-8 py-8 lg:top-20 lg:z-30 lg:bg-surface/95 lg:backdrop-blur">
+    <div className="card px-8 py-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-xs text-ink-muted">{profile.processor_id}</span>
