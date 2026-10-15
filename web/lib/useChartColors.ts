@@ -17,6 +17,18 @@ export type ChartColors = {
   certifiedLine: string;
   verifiedLine: string;
   zeroMarker: string;
+  // /evaluation's charts (T18), read ONLY by Recharts' own SVG props.
+  // Anything a chart renders as ordinary DOM takes its colour from
+  // --color-chart-series / --color-chart-baseline instead: this hook
+  // cannot know the theme until next-themes mounts, so a server-rendered
+  // inline colour hydrates mismatched and React leaves it unpatched.
+  // The two values match certifiedBar/verifiedLine rather than
+  // introducing new hues, so the evaluation charts and the processor
+  // page's flow chart read as one system, and they form a same-hue ramp,
+  // which suits what they encode: a baseline (rule checks alone) and the
+  // same measurement after agent validation.
+  series: string;
+  seriesBaseline: string;
 };
 
 // T13.5c plan, Batch 0.8/0.10: hex values kept in sync by hand with the
@@ -36,6 +48,8 @@ const LIGHT: ChartColors = {
   certifiedLine: "#b91c1c", // --color-risk-high
   verifiedLine: "#005461",
   zeroMarker: "#b91c1c", // --color-risk-high
+  series: "#00b7b5", // same value as certifiedBar
+  seriesBaseline: "#005461", // same value as verifiedLine
 };
 
 const DARK: ChartColors = {
@@ -45,6 +59,12 @@ const DARK: ChartColors = {
   certifiedLine: "#f87171", // dark --color-risk-high
   verifiedLine: "#00b7b5",
   zeroMarker: "#f87171", // dark --color-risk-high
+  // Same two approved hexes as light, assigned by meaning rather than by
+  // token name: the agent-validation series stays the brighter of the
+  // pair in both themes, so the emphasis does not invert when the theme
+  // changes. #00b7b5 is dark --color-primary; #2d5a78 is dark certifiedBar.
+  series: "#00b7b5",
+  seriesBaseline: "#2d5a78",
 };
 
 export function useChartColors(): ChartColors {

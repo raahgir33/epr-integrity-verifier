@@ -590,3 +590,289 @@ export function groupMetrics(rows: EvalMetricRow[]): { group: string; metrics: D
     .map((group) => ({ group, metrics: described.filter((m) => m.group === group) }))
     .filter((g) => g.metrics.length > 0);
 }
+
+// --- chart data (T18) ------------------------------------------------------
+//
+// Every value below is one eval_metrics row's own stored numbers. These
+// selectors choose labels, decode the per-processor metric names and group
+// rows for plotting; they never compute or adjust a figure. Each returns
+// null when its rows are absent, so a chart is hidden rather than drawn
+// with holes or an "n/a".
+
+const PER_PROCESSOR_PREFIX = "per_processor_";
+const ABS_ERROR_PREFIX = `${PER_PROCESSOR_PREFIX}unverifiable_t_abs_error_kg_`;
+const BAND_RUN_PREFIX = `${PER_PROCESSOR_PREFIX}risk_band_run`;
+
+/** Band by the ordinal scripts/evaluate.py encodes into the numerator.
+ * Its own RISK_BAND_ORDER is the source of truth and is asserted there
+ * against the scorer's frozen list; this mirrors it for display. */
+const BAND_BY_ORDINAL = ["Low", "Medium", "High"];
+
+/** Kilograms as tonnes, to three decimal places — the same rule the
+ * tonnage-error sub-line already applies (describeMetric above), so a
+ * per-processor figure and the aggregate beside it read alike. */
+export function formatErrorTonnes(kg: number): string {
+  return `${(kg / 1000).toFixed(3)} t`;
+}
+
+const STAGES = ["checks_only", "full"] as const;
+const FACTS_SOURCES = [TRUTH, EXTRACTED] as const;
+
+/** A per-processor metric name carries its processor id as the final
+ * underscore-separated segment, and a stage name that itself contains an
+ * underscore ("checks_only"). So the id is split off the end first, and
+ * the remainder is matched against the two known facts_source suffixes —
+ * the same guarded approach app/eval/evaluate.py's
+ * _split_facts_source_suffix uses, never a blind split. */
+function parseAbsErrorMetric(
+  metric: string
+): { stage: string; factsSource: string; processorId: string } | null {
+  if (!metric.startsWith(ABS_ERROR_PREFIX)) return null;
+  const rest = metric.slice(ABS_ERROR_PREFIX.length);
+  const split = rest.lastIndexOf("_");
+  if (split <= 0) return null;
+  const processorId = rest.slice(split + 1);
+  const [stage, factsSource] = factsSourceSuffix(rest.slice(0, split));
+  if (!processorId || !factsSource || STAGE_NAMES[stage] === undefined) return null;
+  return { stage, factsSource, processorId };
+}
+
+function parseBandMetric(metric: string): { run: number; processorId: string } | null {
+  if (!metric.startsWith(BAND_RUN_PREFIX)) return null;
+  const rest = metric.slice(BAND_RUN_PREFIX.length);
+  const split = rest.indexOf("_");
+  if (split <= 0) return null;
+  const run = Number(rest.slice(0, split));
+  const processorId = rest.slice(split + 1);
+  if (!Number.isInteger(run) || run < 1 || !processorId) return null;
+  return { run, processorId };
+}
+
+export type StageValue = {
+  stage: string;
+  stageLabel: string;
+  ratio: number;
+  display: string;
+  numerator: number;
+  denominator: number;
+};
+
+export type BasisSeries = {
+  factsSource: string;
+  basisLabel: string;
+  stages: StageValue[];
+};
+
+export type AccuracyComparison = {
+  bandAccuracy: BasisSeries[];
+  tonnageError: BasisSeries[];
+};
+
+function basisSeries(rows: EvalMetricRow[], prefix: string): BasisSeries[] {
+  const series: BasisSeries[] = [];
+  for (const factsSource of FACTS_SOURCES) {
+    const stages: StageValue[] = [];
+    for (const stage of STAGES) {
+      const row = findRow(rows, `${prefix}${stage}_${factsSource}`);
+      if (!row || row.value === null) continue;
+      stages.push({
+        stage,
+        stageLabel: stageLabel(stage),
+        ratio: row.value,
+        display: formatPercentPrecise(row.value),
+        numerator: row.numerator,
+        denominator: row.denominator,
+      });
+    }
+    if (stages.length > 0) {
+      series.push({
+        factsSource,
+        basisLabel: factsSource === EXTRACTED ? "Extracted Facts" : "Ground-Truth Facts",
+        stages,
+      });
+    }
+  }
+  return series;
+}
+
+/** Chart (a): risk-band accuracy and tonnage error, rule checks against
+ * agent validation, on both fact sources. */
+export function accuracyComparison(rows: EvalMetricRow[]): AccuracyComparison | null {
+  const bandAccuracy = basisSeries(rows, "risk_band_accuracy_");
+  const tonnageError = basisSeries(rows, "unverifiable_t_pct_error_");
+  if (bandAccuracy.length === 0 && tonnageError.length === 0) return null;
+  return { bandAccuracy, tonnageError };
+}
+
+export type ProcessorErrorColumn = {
+  key: string;
+  stage: string;
+  factsSource: string;
+  label: string;
+};
+
+export type ProcessorErrors = {
+  processorIds: string[];
+  /** All four stage/facts-source combinations, for the figures table. */
+  columns: ProcessorErrorColumn[];
+  /** processorId -> column key -> error in kilograms. */
+  kg: Record<string, Record<string, number>>;
+};
+
+/** Chart (b): each processor's own |assessed - true| verifiable tonnes.
+ * Returns every combination that has rows; the chart plots the
+ * ground-truth pair and its figures table shows all four. */
+export function processorErrors(rows: EvalMetricRow[]): ProcessorErrors | null {
+  const kg: Record<string, Record<string, number>> = {};
+  const seenColumns = new Set<string>();
+  const processorIds = new Set<string>();
+
+  for (const row of rows) {
+    const parsed = parseAbsErrorMetric(row.metric);
+    if (!parsed) continue;
+    const key = `${parsed.stage}_${parsed.factsSource}`;
+    seenColumns.add(key);
+    processorIds.add(parsed.processorId);
+    kg[parsed.processorId] = { ...(kg[parsed.processorId] ?? {}), [key]: row.numerator };
+  }
+
+  if (processorIds.size === 0) return null;
+
+  const columns: ProcessorErrorColumn[] = [];
+  for (const factsSource of FACTS_SOURCES) {
+    for (const stage of STAGES) {
+      const key = `${stage}_${factsSource}`;
+      if (!seenColumns.has(key)) continue;
+      columns.push({
+        key,
+        stage,
+        factsSource,
+        label: `${stageLabel(stage)} — ${factsSourceLabel(factsSource)}`,
+      });
+    }
+  }
+
+  return { processorIds: [...processorIds].sort(), columns, kg };
+}
+
+export type DetectionCell = {
+  factsSource: string;
+  ok: boolean;
+  detail: string;
+};
+
+export type DetectionRow = {
+  name: string;
+  /** "pattern": ok means every planted instance was found. "false-flag":
+   * ok means nothing clean was flagged, so the polarity is inverted and
+   * the row is labelled accordingly. */
+  kind: "pattern" | "false-flag";
+  cells: DetectionCell[];
+};
+
+export type DetectionMatrix = {
+  bases: { factsSource: string; label: string }[];
+  rows: DetectionRow[];
+};
+
+/** Chart (c): every planted pattern against each facts source, plus the
+ * two false-flag families. */
+export function detectionMatrix(rows: EvalMetricRow[]): DetectionMatrix | null {
+  const bases = FACTS_SOURCES.filter((factsSource) =>
+    rows.some((r) => r.metric.endsWith(`_${factsSource}`))
+  ).map((factsSource) => ({
+    factsSource,
+    label: factsSource === EXTRACTED ? "Extracted Facts" : "Ground-Truth Facts",
+  }));
+  if (bases.length === 0) return null;
+
+  const patternRows: DetectionRow[] = [];
+
+  for (const issueCode of Object.keys(ISSUE_NAMES)) {
+    const cells: DetectionCell[] = [];
+    for (const { factsSource } of bases) {
+      const row = findRow(rows, `issue_recall_${issueCode}_${factsSource}`);
+      if (!row) continue;
+      cells.push({
+        factsSource,
+        ok: row.denominator > 0 && row.numerator >= row.denominator,
+        detail: `${row.numerator}/${row.denominator}`,
+      });
+    }
+    if (cells.length > 0) patternRows.push({ name: ISSUE_NAMES[issueCode], kind: "pattern", cells });
+  }
+
+  const agentCells: DetectionCell[] = [];
+  for (const { factsSource } of bases) {
+    const row = findRow(rows, `agent_citation_recall_${factsSource}`);
+    if (!row) continue;
+    agentCells.push({
+      factsSource,
+      ok: row.denominator > 0 && row.numerator >= row.denominator,
+      detail: `${row.numerator}/${row.denominator}`,
+    });
+  }
+  if (agentCells.length > 0)
+    patternRows.push({ name: AGENT_ONLY_NAME, kind: "pattern", cells: agentCells });
+
+  const falseFlagFamilies: [string, string][] = [
+    ["false_flags_clean_processors_", "No False Flags on Clean Processors"],
+    ["false_flags_hard_negatives_", "No False Flags on Hard-Negative Processors"],
+  ];
+  const falseFlagRows: DetectionRow[] = [];
+  for (const [prefix, name] of falseFlagFamilies) {
+    const cells: DetectionCell[] = [];
+    for (const { factsSource } of bases) {
+      const row = findRow(rows, `${prefix}${factsSource}`);
+      if (!row) continue;
+      cells.push({
+        factsSource,
+        ok: row.numerator === 0,
+        detail:
+          row.numerator === 0
+            ? `0/${row.denominator} flagged`
+            : `${row.numerator}/${row.denominator} flagged`,
+      });
+    }
+    if (cells.length > 0) falseFlagRows.push({ name, kind: "false-flag", cells });
+  }
+
+  const allRows = [...patternRows, ...falseFlagRows];
+  if (allRows.length === 0) return null;
+  return { bases, rows: allRows };
+}
+
+export type StabilityCell = { run: number; band: string | null };
+export type StabilityRow = { processorId: string; cells: StabilityCell[] };
+export type BandStability = { runs: number[]; rows: StabilityRow[] };
+
+/** Chart (d): each processor's assessed band in each of the saved
+ * extracted-facts runs, decoded from the stored ordinal. */
+export function bandStability(rows: EvalMetricRow[]): BandStability | null {
+  const bandByProcessor: Record<string, Record<number, string>> = {};
+  const runs = new Set<number>();
+
+  for (const row of rows) {
+    const parsed = parseBandMetric(row.metric);
+    if (!parsed) continue;
+    const band = BAND_BY_ORDINAL[row.numerator];
+    if (band === undefined) continue;
+    runs.add(parsed.run);
+    bandByProcessor[parsed.processorId] = {
+      ...(bandByProcessor[parsed.processorId] ?? {}),
+      [parsed.run]: band,
+    };
+  }
+
+  const runNumbers = [...runs].sort((a, b) => a - b);
+  const processorIds = Object.keys(bandByProcessor).sort();
+  if (runNumbers.length === 0 || processorIds.length === 0) return null;
+
+  return {
+    runs: runNumbers,
+    rows: processorIds.map((processorId) => ({
+      processorId,
+      cells: runNumbers.map((run) => ({ run, band: bandByProcessor[processorId][run] ?? null })),
+    })),
+  };
+}

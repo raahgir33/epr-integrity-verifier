@@ -1,10 +1,17 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  accuracyComparison,
   annotateMisses,
+  bandStability,
   describeMetric,
+  detectionMatrix,
   extractedGapNote,
+  formatErrorTonnes,
   groupMetrics,
   patternCoverage,
+  processorErrors,
   summaryFigures,
 } from "./evaluation";
 import { formatPercentPrecise } from "./format";
@@ -428,5 +435,232 @@ describe("extractedGapNote", () => {
       row("risk_band_accuracy_full_extracted", 10, 10),
     ];
     expect(extractedGapNote(rows)).toBeNull();
+  });
+});
+
+/** Representative per-processor rows (T18), in the shape and encoding
+ * scripts/evaluate.py writes: absolute error in whole kilograms with
+ * denominator 1, and a band ordinal into ["Low","Medium","High"] with
+ * denominator 3. PWP-02 is the one processor whose band moves between
+ * runs, so stability assertions have something to find. */
+const PER_PROCESSOR: EvalMetricRow[] = [
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_truth_PWP-01", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_truth_PWP-01", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_extracted_PWP-01", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_extracted_PWP-01", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_truth_PWP-02", 12470, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_truth_PWP-02", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_extracted_PWP-02", 12470, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_extracted_PWP-02", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_truth_PWP-03", 9999, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_truth_PWP-03", 0, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_checks_only_extracted_PWP-03", 9999, 1),
+  row("per_processor_unverifiable_t_abs_error_kg_full_extracted_PWP-03", 0, 1),
+  row("per_processor_risk_band_run1_PWP-01", 0, 3),
+  row("per_processor_risk_band_run2_PWP-01", 0, 3),
+  row("per_processor_risk_band_run3_PWP-01", 0, 3),
+  row("per_processor_risk_band_run1_PWP-02", 0, 3),
+  row("per_processor_risk_band_run2_PWP-02", 1, 3),
+  row("per_processor_risk_band_run3_PWP-02", 0, 3),
+  row("per_processor_risk_band_run1_PWP-03", 2, 3),
+  row("per_processor_risk_band_run2_PWP-03", 2, 3),
+  row("per_processor_risk_band_run3_PWP-03", 2, 3),
+];
+
+const WITH_CHARTS: EvalMetricRow[] = [...HELDOUT, ...PER_PROCESSOR];
+
+describe("the new rows are inert for everything that was already on the page", () => {
+  it("changes no metric group, so no Other group can appear", () => {
+    expect(groupMetrics(WITH_CHARTS)).toEqual(groupMetrics(HELDOUT));
+  });
+
+  it("changes no summary figure", () => {
+    expect(summaryFigures(WITH_CHARTS)).toEqual(summaryFigures(HELDOUT));
+  });
+
+  it("changes no pattern-coverage count", () => {
+    expect(patternCoverage(WITH_CHARTS)).toEqual(patternCoverage(HELDOUT));
+  });
+
+  it("is described by no tile, since each per-processor row is unrecognised there", () => {
+    for (const r of PER_PROCESSOR) {
+      expect(describeMetric(r, WITH_CHARTS), r.metric).toBeNull();
+    }
+  });
+});
+
+describe("accuracyComparison", () => {
+  it("pairs rule checks against agent validation on each facts source", () => {
+    const comparison = accuracyComparison(HELDOUT)!;
+    const truth = comparison.bandAccuracy.find((b) => b.factsSource === "truth")!;
+
+    expect(truth.basisLabel).toBe("Ground-Truth Facts");
+    expect(truth.stages.map((s) => [s.stageLabel, s.display])).toEqual([
+      ["Rule Checks", "70%"],
+      ["Agent Validation", "90%"],
+    ]);
+  });
+
+  it("reads tonnage error as the stored millionths, not a recomputation", () => {
+    const comparison = accuracyComparison(HELDOUT)!;
+    const truth = comparison.tonnageError.find((b) => b.factsSource === "truth")!;
+    const ruleChecks = truth.stages.find((s) => s.stage === "checks_only")!;
+
+    expect(ruleChecks.numerator).toBe(19545);
+    expect(ruleChecks.denominator).toBe(1_000_000);
+    expect(ruleChecks.display).toBe(formatPercentPrecise(19545 / 1_000_000));
+  });
+
+  it("returns null when the dataset has neither family", () => {
+    expect(accuracyComparison([row("key_field_read_accuracy", 1, 1)])).toBeNull();
+  });
+});
+
+describe("processorErrors", () => {
+  it("decodes the processor id and every stage/facts-source combination", () => {
+    const errors = processorErrors(WITH_CHARTS)!;
+
+    expect(errors.processorIds).toEqual(["PWP-01", "PWP-02", "PWP-03"]);
+    expect(errors.columns.map((c) => c.key)).toEqual([
+      "checks_only_truth",
+      "full_truth",
+      "checks_only_extracted",
+      "full_extracted",
+    ]);
+    expect(errors.kg["PWP-02"]["checks_only_truth"]).toBe(12470);
+    expect(errors.kg["PWP-02"]["full_truth"]).toBe(0);
+  });
+
+  it("formats kilograms the same way the aggregate sub-line does", () => {
+    expect(formatErrorTonnes(12470)).toBe("12.470 t");
+    expect(formatErrorTonnes(2247)).toBe("2.247 t");
+    expect(formatErrorTonnes(0)).toBe("0.000 t");
+  });
+
+  it("ignores a malformed per-processor name rather than plotting a guess", () => {
+    expect(
+      processorErrors([
+        row("per_processor_unverifiable_t_abs_error_kg_nonsense_PWP-01", 5, 1),
+        row("per_processor_unverifiable_t_abs_error_kg_full_truth_", 5, 1),
+      ])
+    ).toBeNull();
+  });
+
+  it("returns null when no per-processor rows exist", () => {
+    expect(processorErrors(HELDOUT)).toBeNull();
+  });
+});
+
+describe("detectionMatrix", () => {
+  it("names every pattern in plain words and marks a miss as a miss", () => {
+    const matrix = detectionMatrix(HELDOUT)!;
+    const names = matrix.rows.map((r) => r.name);
+
+    expect(names).toContain("Capacity Inflation");
+    expect(names).toContain("Ghost Site");
+    expect(names).toContain("Agent-Only Patterns");
+
+    const ghostSite = matrix.rows.find((r) => r.name === "Ghost Site")!;
+    const extracted = ghostSite.cells.find((c) => c.factsSource === "extracted")!;
+    expect(extracted.ok).toBe(false);
+    expect(extracted.detail).toBe("0/1");
+  });
+
+  it("inverts the polarity for the false-flag rows, where zero is the good number", () => {
+    const matrix = detectionMatrix([
+      ...HELDOUT,
+      row("false_flags_clean_processors_extracted", 1, 3),
+      row("false_flags_hard_negatives_extracted", 0, 2),
+    ])!;
+
+    const clean = matrix.rows.find((r) => r.name === "No False Flags on Clean Processors")!;
+    const hard = matrix.rows.find((r) => r.name === "No False Flags on Hard-Negative Processors")!;
+
+    expect(clean.kind).toBe("false-flag");
+    expect(clean.cells[0].ok).toBe(false);
+    expect(clean.cells[0].detail).toBe("1/3 flagged");
+    expect(hard.cells[0].ok).toBe(true);
+    expect(hard.cells[0].detail).toBe("0/2 flagged");
+  });
+
+  it("returns null with no rows at all", () => {
+    expect(detectionMatrix([])).toBeNull();
+  });
+});
+
+describe("bandStability", () => {
+  it("decodes each run's band from the stored ordinal", () => {
+    const stability = bandStability(WITH_CHARTS)!;
+
+    expect(stability.runs).toEqual([1, 2, 3]);
+    const unstable = stability.rows.find((r) => r.processorId === "PWP-02")!;
+    expect(unstable.cells.map((c) => c.band)).toEqual(["Low", "Medium", "Low"]);
+    const stable = stability.rows.find((r) => r.processorId === "PWP-03")!;
+    expect(stable.cells.map((c) => c.band)).toEqual(["High", "High", "High"]);
+  });
+
+  it("agrees with the published risk-band stability figure", () => {
+    const stability = bandStability(WITH_CHARTS)!;
+    const stable = stability.rows.filter(
+      (r) => new Set(r.cells.map((c) => c.band)).size === 1
+    ).length;
+
+    expect(`${stable}/${stability.rows.length}`).toBe("2/3");
+  });
+
+  it("skips an ordinal outside the band list rather than inventing a band", () => {
+    expect(bandStability([row("per_processor_risk_band_run1_PWP-01", 7, 3)])).toBeNull();
+  });
+
+  it("returns null when no band rows exist", () => {
+    expect(bandStability(HELDOUT)).toBeNull();
+  });
+});
+
+describe("no internal taxonomy codes reach the charts", () => {
+  const CODE = /\b[FH][1-9]\b/;
+
+  it("appears in no chart label this module produces", () => {
+    const comparison = accuracyComparison(WITH_CHARTS)!;
+    for (const series of [...comparison.bandAccuracy, ...comparison.tonnageError]) {
+      expect(series.basisLabel).not.toMatch(CODE);
+      for (const stage of series.stages) {
+        expect(stage.stageLabel).not.toMatch(CODE);
+        expect(stage.display).not.toMatch(CODE);
+      }
+    }
+
+    for (const column of processorErrors(WITH_CHARTS)!.columns) {
+      expect(column.label).not.toMatch(CODE);
+    }
+
+    const matrix = detectionMatrix(WITH_CHARTS)!;
+    for (const basis of matrix.bases) expect(basis.label).not.toMatch(CODE);
+    for (const r of matrix.rows) {
+      expect(r.name).not.toMatch(CODE);
+      for (const cell of r.cells) expect(cell.detail).not.toMatch(CODE);
+    }
+
+    for (const r of bandStability(WITH_CHARTS)!.rows) {
+      expect(r.processorId).not.toMatch(CODE);
+      for (const cell of r.cells) expect(cell.band ?? "").not.toMatch(CODE);
+    }
+  });
+
+  /** The assertions above cover what this module returns. A chart
+   * component's own hardcoded JSX strings are invisible to them, which is
+   * exactly where a stray code would now be easiest to introduce — so the
+   * sources are scanned too. */
+  it("appears in no chart component's own text", () => {
+    const dir = fileURLToPath(new URL("../components/evaluation/", import.meta.url));
+    const files = readdirSync(dir).filter((name) => name.endsWith(".tsx"));
+
+    expect(files.length).toBeGreaterThan(0);
+    for (const name of files) {
+      const source = readFileSync(`${dir}${name}`, "utf-8");
+      for (const text of source.match(/"[^"\n]*"|'[^'\n]*'|>[^<>{}\n]+</g) ?? []) {
+        expect(text, `${name}: ${text}`).not.toMatch(CODE);
+      }
+    }
   });
 });

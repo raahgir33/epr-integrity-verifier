@@ -134,6 +134,15 @@
   --color-surface-sunk: #ebf9fc; /* 18% light-blue (#90ddf0) tint into white — the note's "tinted surfaces" role; now identical to --color-page, deliberately (see above) */
   --color-primary: #005461;
   --color-primary-foreground: #ffffff;
+  /* /evaluation's chart series (T18). Defined here so a chart's DOM
+     elements — key swatches, band cells — pick their colour from CSS and
+     are therefore correct on the server's first paint. Recharts needs
+     literal hex for its SVG props and mirrors these two values in
+     lib/useChartColors.ts; they match --color-glow and --color-primary's
+     light values, so the evaluation charts and the processor page's flow
+     chart stay one system. */
+  --color-chart-series: #00b7b5;
+  --color-chart-baseline: #005461;
   --color-glow: #00b7b5;
   --color-ink: #071952;
   --color-ink-muted: #5a668b;
@@ -198,6 +207,8 @@
   --color-surface-sunk: #061442; /* 20% black mixed into navy — the darkest band; now identical to --color-page, deliberately */
   --color-primary: #00b7b5;
   --color-primary-foreground: #071952;
+  --color-chart-series: #00b7b5;
+  --color-chart-baseline: #2d5a78;
   --color-glow: #90ddf0;
   --color-ink: #f4f4f4;
   --color-ink-muted: #959cb3;

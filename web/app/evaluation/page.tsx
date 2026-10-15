@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import { EmptyState } from "@/components/EmptyState";
+import { AccuracyComparisonChart } from "@/components/evaluation/AccuracyComparisonChart";
+import { BandStabilityChart } from "@/components/evaluation/BandStabilityChart";
+import { DetectionMatrixChart } from "@/components/evaluation/DetectionMatrixChart";
+import { ProcessorErrorChart } from "@/components/evaluation/ProcessorErrorChart";
 import { StatCard } from "@/components/StatCard";
 import { Heading } from "@/components/ui/Heading";
 import { getEvaluation } from "@/lib/api";
 import {
+  accuracyComparison,
   annotateMisses,
+  bandStability,
+  detectionMatrix,
   extractedGapNote,
   groupMetrics,
+  processorErrors,
   summaryFigures,
   type SummaryFigure,
 } from "@/lib/evaluation";
@@ -38,6 +46,13 @@ export default async function EvaluationPage() {
   const heldoutGroups = groupMetrics(evaluation.heldout);
   const heldoutSummary = summaryFigures(evaluation.heldout);
   const devSummary = summaryFigures(evaluation.dev);
+  // Each chart's rows are read straight from this dataset's own
+  // eval_metrics rows, and each selector returns null when its rows are
+  // absent — a chart with no data is omitted, never rendered as "n/a".
+  const comparison = accuracyComparison(evaluation.heldout);
+  const errors = processorErrors(evaluation.heldout);
+  const detection = detectionMatrix(evaluation.heldout);
+  const stability = bandStability(evaluation.heldout);
   const misses = annotateMisses(
     evaluation.misses,
     evaluation.heldout,
@@ -64,6 +79,11 @@ export default async function EvaluationPage() {
           </div>
 
           <SummaryRow figures={heldoutSummary} note={extractedGapNote(evaluation.heldout)} />
+
+          {comparison ? <AccuracyComparisonChart comparison={comparison} /> : null}
+          {errors ? <ProcessorErrorChart errors={errors} /> : null}
+          {detection ? <DetectionMatrixChart matrix={detection} /> : null}
+          {stability ? <BandStabilityChart stability={stability} /> : null}
 
           {heldoutGroups.map(({ group, metrics }) => (
             <div key={group} className="space-y-2">
