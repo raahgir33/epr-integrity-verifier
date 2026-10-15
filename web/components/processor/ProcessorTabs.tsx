@@ -15,6 +15,14 @@ import type {
 } from "@/lib/api";
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
+// Moved from the retired KeyFactsRail (T13.5b plan, Part 4) — same
+// classification buckets, now shared with the tile sub-lines that
+// describe them (T17) rather than declared twice.
+import {
+  CONFIRMED_CLASSIFICATIONS,
+  REVIEW_CLASSIFICATIONS,
+  findingsBreakdown,
+} from "@/lib/findingsBreakdown";
 import { useIsBreakpointUp } from "@/lib/useIsBreakpointUp";
 import { Tabs } from "@/components/ui/Tabs";
 import { SidePanel } from "@/components/ui/SidePanel";
@@ -31,12 +39,6 @@ import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { SitePanel } from "@/components/SitePanel";
 import { StageComparison } from "@/components/StageComparison";
 import { formatTonnes } from "@/lib/format";
-
-// Moved from the retired KeyFactsRail (T13.5b plan, Part 4) — same
-// classification buckets, now shown as two small tiles in the Overview
-// tab instead of a standalone right-hand rail.
-const CONFIRMED_CLASSIFICATIONS = new Set(["deductible", "concurs_with_check"]);
-const REVIEW_CLASSIFICATIONS = new Set(["systemic", "no_own_evidence", "review_flag"]);
 
 const TAB_KEYS = ["overview", "checks", "reasoning", "documents", "site", "memo"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
@@ -123,6 +125,15 @@ export function ProcessorTabs({
   // sticky header use — so the Findings tab cannot describe a different
   // reality from the tonnage shown directly above it.
   const headline = full ?? checksOnly;
+  // T17: the checks that did not pass, named, so the Findings section
+  // explains the band instead of only denying that it has findings. The
+  // one real case this covers is a processor whose tonnes are unverifiable
+  // on mass balance alone (a certificate batch with no matching inbound):
+  // the agent loop has nothing to say, and "no findings" next to a High
+  // badge reads as a contradiction unless the failing check is named.
+  const unmetChecks = checkResults
+    .filter((c) => c.status === "fail" || c.status === "warn")
+    .map((c) => c.check_id);
   const openDocument = documents.find((d) => d.doc_id === openDocId) ?? null;
   const openFacts = openDocId ? factsByDocId[openDocId] : undefined;
 
@@ -135,6 +146,7 @@ export function ProcessorTabs({
   const isLgUp = useIsBreakpointUp(1024);
   const confirmedCount = findings.filter((f) => CONFIRMED_CLASSIFICATIONS.has(f.classification)).length;
   const reviewCount = findings.filter((f) => REVIEW_CLASSIFICATIONS.has(f.classification)).length;
+  const { confirmedBreakdown, reviewBreakdown } = findingsBreakdown(findings, checksOnly, full);
 
   // While a live run is active, the reasoning tab/docked panel mirror its
   // steps instead of the static page-load snapshot — once it settles
@@ -150,8 +162,12 @@ export function ProcessorTabs({
         <div className="space-y-6">
           <StageComparison checksOnly={checksOnly} full={full} agentStatus={agentStatus} />
           <div className="grid grid-cols-2 gap-3 sm:w-fit sm:grid-cols-2">
-            <StatTile label="Confirmed findings" value={String(confirmedCount)} />
-            <StatTile label="Review flags" value={String(reviewCount)} />
+            <StatTile
+              label="Confirmed findings"
+              value={String(confirmedCount)}
+              sub={confirmedBreakdown}
+            />
+            <StatTile label="Review flags" value={String(reviewCount)} sub={reviewBreakdown} />
           </div>
           <div>
             <h2 className="font-display text-base font-semibold text-ink">Findings</h2>
@@ -181,7 +197,7 @@ export function ProcessorTabs({
                   }
                   message={
                     headline.unverifiable_t > 0
-                      ? `The agent loop raised no finding of its own. ${formatTonnes(headline.unverifiable_t)} of certified tonnes are still unverifiable on the rule-based checks alone — see the Checks tab for which one falls short.`
+                      ? `The agent loop raised no finding of its own. ${formatTonnes(headline.unverifiable_t)} of certified tonnes are still unverifiable on the rule-based checks alone${unmetChecks.length > 0 ? `, which ${unmetChecks.length === 1 ? "is" : "are"} why the risk band reads ${headline.risk_band}: ${unmetChecks.join(", ")}` : ""}. See the Rule-Based Checks tab for the evidence.`
                       : "The agent loop raised no findings for this processor, and its certified tonnes are fully accounted for by the rule-based checks."
                   }
                 />
