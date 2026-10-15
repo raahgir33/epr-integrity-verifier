@@ -15,6 +15,7 @@ import type {
 } from "@/lib/api";
 import { DocumentPanelProvider } from "@/lib/document-panel-context";
 import { isDisplayedFinding } from "@/lib/findings";
+import { checkNameWithCode, docTypeName } from "@/lib/labels";
 // Moved from the retired KeyFactsRail (T13.5b plan, Part 4) — same
 // classification buckets, now shared with the tile sub-lines that
 // describe them (T17) rather than declared twice.
@@ -133,7 +134,7 @@ export function ProcessorTabs({
   // badge reads as a contradiction unless the failing check is named.
   const unmetChecks = checkResults
     .filter((c) => c.status === "fail" || c.status === "warn")
-    .map((c) => c.check_id);
+    .map((c) => checkNameWithCode(c.check_id));
   const openDocument = documents.find((d) => d.doc_id === openDocId) ?? null;
   const openFacts = openDocId ? factsByDocId[openDocId] : undefined;
 
@@ -285,7 +286,7 @@ export function ProcessorTabs({
         onOpenChange={(open) => {
           if (!open) setOpenDocId(null);
         }}
-        title={openDocument ? `${openDocument.doc_type} · ${openDocument.doc_id}` : "Document"}
+        title={openDocument ? `${docTypeName(openDocument.doc_type)} · ${openDocument.doc_id}` : "Document"}
       >
         {openDocument ? (
           <div className="space-y-4">
@@ -293,13 +294,13 @@ export function ProcessorTabs({
               // eslint-disable-next-line @next/next/no-img-element -- proxied Cloud Run file stream, not a build-time asset
               <img
                 src={`/files/${encodeURIComponent(openDocument.doc_id)}`}
-                alt={`${openDocument.doc_type} image`}
+                alt={`${docTypeName(openDocument.doc_type)} image`}
                 className="w-full rounded border border-border"
               />
             ) : (
               <iframe
                 src={`/files/${encodeURIComponent(openDocument.doc_id)}`}
-                title={`${openDocument.doc_type} preview`}
+                title={`${docTypeName(openDocument.doc_type)} preview`}
                 className="h-[60vh] w-full rounded border border-border"
               />
             )}

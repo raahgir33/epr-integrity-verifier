@@ -26,8 +26,10 @@ export function StageComparison({
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-ink-muted">
             <th className="py-2 pr-4 font-medium">Measure</th>
             <th className="py-2 pr-4 text-right font-medium">Rule Checks</th>
+            {/* T16c F26: the raw status string used to render straight
+                into the header as "AGENT VALIDATION (OK)". */}
             <th className="py-2 text-right font-medium">
-              Agent Validation {agentStatus ? `(${agentStatus})` : "(not yet run)"}
+              Agent Validation {agentStatus === "ok" ? "(complete)" : agentStatus ? `(${agentStatus})` : "(not yet run)"}
             </th>
           </tr>
         </thead>
