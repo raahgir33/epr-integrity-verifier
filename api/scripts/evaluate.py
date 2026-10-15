@@ -34,6 +34,48 @@ schema (dataset_label, metric, numerator, denominator, computed_at,
 source_script, git_commit) already fits every metric below; no ALTER TABLE
 is needed.
 
+Per-processor metrics and their encoding
+---------------------------------------
+eval_metrics has no column for a processor id, so the two per-processor
+families below fold it into the metric NAME, the way stage, facts_source
+and issue_code already are. Both sit under a "per_processor_" prefix so
+they can never be confused with — or matched by a prefix test meant for —
+an aggregate row: DEV_METRIC_PREFIXES, dev_metric_allowed and
+app/eval/evaluate.py's describe_misses all leave them alone.
+
+  per_processor_unverifiable_t_abs_error_kg_{stage}_{facts_source}_{pid}
+      numerator   = |assessed verifiable_t - true_verifiable_t| for that
+                    one processor, in whole kilograms
+      denominator = 1
+      4 stage/facts_source combinations x 10 processors = 40 rows.
+
+  per_processor_risk_band_run{n}_{pid}
+      numerator   = index into RISK_BAND_ORDER ("Low" 0, "Medium" 1,
+                    "High" 2) of the band that run assessed
+      denominator = len(RISK_BAND_ORDER), so the scale is self-describing
+                    rather than something a reader has to know
+      3 saved extracted-facts runs x 10 processors = 30 rows.
+
+Neither family re-implements a frozen metric. Each is asserted against
+the aggregate app/eval/evaluate.py already computes from the same inputs
+(see compute_metrics), so a drift between the two is a hard failure
+rather than a quietly wrong chart.
+
+Write modes
+-----------
+The default mode writes the label's full metric set, as it always has.
+Two safer modes exist for adding metrics to a label whose published
+numbers must not move:
+
+  --dry-run    Recomputes everything and compares against the stored
+               rows (or an exported file, with --expected). Writes
+               nothing. Exits non-zero if any metric present in both
+               differs.
+  --only-new   Runs that same comparison first and refuses to write if
+               anything would change, then writes ONLY metric names the
+               label does not already have. Existing rows are never
+               deleted or rewritten.
+
 Prerequisites (see docs/GCP_SETUP.md's T14 section for the exact commands):
   1. scripts/generate_dossiers.py --seed 7 (local)
   2. scripts/deploy/create_tables.py and scripts/load_dossiers.py --seed 7,
@@ -52,9 +94,13 @@ Run by the developer — never by the agent (reads/writes real BigQuery).
 
 Usage: uv run python scripts/evaluate.py --seed 7
        uv run python scripts/evaluate.py --seed 42 --eval-dataset epr
+       uv run python scripts/evaluate.py --seed 7 --dry-run
+       uv run python scripts/evaluate.py --seed 7 --only-new
 """
 
 import argparse
+import csv
+import io
 import json
 import subprocess
 from datetime import UTC, datetime
@@ -78,6 +124,17 @@ SOURCE_SCRIPT = "scripts/evaluate.py"
 DATASET_LABELS = {7: "heldout-seed7", 42: "dev-seed42"}
 
 HELDOUT_SEED = 7
+
+# Every metric name under this prefix carries a processor id as its last
+# underscore-separated segment. Kept distinct from every aggregate prefix
+# so no existing prefix test picks these up (see the module docstring).
+PER_PROCESSOR_PREFIX = "per_processor_"
+
+# Band order, lowest risk first — the encoding behind
+# per_processor_risk_band_run{n}_{pid}'s numerator. Mirrors
+# app/agents/scorer.py's own band list, which is frozen; a test asserts
+# the two stay identical rather than trusting this copy.
+RISK_BAND_ORDER = ("Low", "Medium", "High")
 
 # The development set gets only the rows behind /evaluation's four
 # summary figures: risk-band accuracy, tonnage error (percentage plus its
@@ -140,6 +197,92 @@ def _assessments_for_stage(
 def _stability_run_paths(seed: int) -> list[Path]:
     runs_dir = REPO_ROOT / "data" / "synthetic" / f"seed-{seed}" / "agent_probe_runs"
     return sorted(runs_dir.glob("no_thinking_extracted_run*.json"))
+
+
+class MetricDrift(Exception):
+    """A per-processor family disagreed with the frozen aggregate computed
+    from the same inputs. Never expected — raised rather than written."""
+
+
+def _per_processor_abs_error_rows(
+    assessments_by_processor: dict[str, dict],
+    ground_truth: dict,
+    stage: str,
+    facts_source: str,
+    aggregate_abs_error_kg: int,
+) -> dict[str, tuple[int, int]]:
+    """One |assessed - true| verifiable-tonnes row per processor, in kg.
+
+    Applies exactly the expression app/eval/evaluate.py's
+    verifiable_t_error applies per processor, over exactly the processors
+    it iterates, and then checks the mean of the UNROUNDED per-processor
+    errors against that function's own rounded aggregate. Rounding each
+    processor first and averaging those would not reproduce it, so the
+    comparison deliberately uses the unrounded values; only the stored
+    numerators are rounded. A mismatch means the two have diverged on
+    which processors are in scope, and stops the run."""
+    rows: dict[str, tuple[int, int]] = {}
+    errors_kg: list[float] = []
+    for processor in ground_truth["processors"]:
+        processor_id = processor["processor_id"]
+        assessment = assessments_by_processor.get(processor_id)
+        if assessment is None:
+            continue
+        error_kg = abs(assessment["verifiable_t"] - processor["true_verifiable_t"]) * 1000.0
+        errors_kg.append(error_kg)
+        metric = (
+            f"{PER_PROCESSOR_PREFIX}unverifiable_t_abs_error_kg_"
+            f"{stage}_{facts_source}_{processor_id}"
+        )
+        rows[metric] = (round(error_kg), 1)
+
+    if errors_kg:
+        recomputed = round(sum(errors_kg) / len(errors_kg))
+        if recomputed != aggregate_abs_error_kg:
+            raise MetricDrift(
+                f"per-processor absolute error for {stage}/{facts_source} averages "
+                f"{recomputed} kg across {len(errors_kg)} processor(s), but the aggregate "
+                f"metric reads {aggregate_abs_error_kg} kg"
+            )
+    return rows
+
+
+def _per_processor_band_rows(
+    processors_by_run: list[dict], aggregate_stability: dict
+) -> dict[str, tuple[int, int]]:
+    """One band row per processor per saved run, for the stability strip.
+
+    Reads the same field risk_band_stability reads, then recomputes that
+    metric from the encoded numerators and checks it against the stored
+    aggregate — so the strip cannot disagree with the stability figure
+    published beside it. An unrecognised band raises instead of being
+    encoded as something arbitrary."""
+    rows: dict[str, tuple[int, int]] = {}
+    ordinals_by_processor: dict[str, set[int]] = {}
+    for run_number, processors in enumerate(processors_by_run, start=1):
+        for processor_id, record in processors.items():
+            band = record["score"]["risk_band"]
+            if band not in RISK_BAND_ORDER:
+                raise MetricDrift(
+                    f"run {run_number} assessed {processor_id} as band {band!r}, which is not "
+                    f"one of {RISK_BAND_ORDER}"
+                )
+            ordinal = RISK_BAND_ORDER.index(band)
+            rows[f"{PER_PROCESSOR_PREFIX}risk_band_run{run_number}_{processor_id}"] = (
+                ordinal,
+                len(RISK_BAND_ORDER),
+            )
+            ordinals_by_processor.setdefault(processor_id, set()).add(ordinal)
+
+    stable = sum(1 for ordinals in ordinals_by_processor.values() if len(ordinals) == 1)
+    recomputed = (stable, len(ordinals_by_processor))
+    aggregate = (aggregate_stability["numerator"], aggregate_stability["denominator"])
+    if recomputed != aggregate:
+        raise MetricDrift(
+            f"per-processor bands imply risk-band stability {recomputed[0]}/{recomputed[1]}, "
+            f"but the aggregate metric reads {aggregate[0]}/{aggregate[1]}"
+        )
+    return rows
 
 
 def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
@@ -235,6 +378,11 @@ def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
                 tv["pct_error_micro"],
                 1_000_000,
             )
+            rows.update(
+                _per_processor_abs_error_rows(
+                    assessments, ground_truth, stage, facts_source, tv["abs_error_kg"]
+                )
+            )
 
     # Run-to-run stability, cost and latency — from the 3 independent
     # extracted-mode probe runs' own saved JSON (see module docstring).
@@ -247,6 +395,7 @@ def compute_metrics(seed: int, bq_client) -> dict[str, tuple[int, int]]:
 
         rb_stability = ev.risk_band_stability(processors_by_run)
         rows["risk_band_stability"] = (rb_stability["numerator"], rb_stability["denominator"])
+        rows.update(_per_processor_band_rows(processors_by_run, rb_stability))
         vt_stability = ev.unverifiable_t_stability(processors_by_run)
         rows["unverifiable_t_stability"] = (
             vt_stability["numerator"],
@@ -286,6 +435,94 @@ def _print_summary(rows: dict[str, tuple[int, int]]) -> None:
         numerator, denominator = rows[metric]
         value = f"{numerator / denominator:.4f}" if denominator else "n/a"
         print(f"{metric:42s} {numerator:12d} {denominator:12d} {value:>10s}")
+
+
+def parse_expected_rows(text: str) -> dict[str, tuple[int, int]]:
+    """Stored metrics from an exported SELECT, so a comparison can be run
+    against a copy the developer pasted rather than a live read. Accepts
+    `bq query --format=json` output (a list of objects) or the same
+    columns as CSV with a header row; both spell the columns metric,
+    numerator, denominator and may carry extra columns, which are
+    ignored."""
+    stripped = text.strip()
+    if not stripped:
+        return {}
+
+    if stripped[0] in "[{":
+        payload = json.loads(stripped)
+        records = payload if isinstance(payload, list) else [payload]
+    else:
+        records = list(csv.DictReader(io.StringIO(stripped)))
+
+    rows: dict[str, tuple[int, int]] = {}
+    for record in records:
+        missing = {"metric", "numerator", "denominator"} - set(record)
+        if missing:
+            raise SystemExit(f"export row is missing column(s) {sorted(missing)}: {record!r}")
+        rows[str(record["metric"])] = (int(record["numerator"]), int(record["denominator"]))
+    return rows
+
+
+def fetch_stored_rows(client, dataset_label: str) -> dict[str, tuple[int, int]]:
+    """The label's current rows, read-only, in this script's own
+    {metric: (numerator, denominator)} shape."""
+    return {
+        row["metric"]: (row["numerator"], row["denominator"])
+        for row in bq.fetch_eval_metrics_for_label(client, dataset_label)
+    }
+
+
+def compare_metrics(
+    computed: dict[str, tuple[int, int]], stored: dict[str, tuple[int, int]]
+) -> dict[str, list]:
+    """Splits a recomputation against what is stored three ways.
+
+    `changed` is the only one that signals a problem: a metric present in
+    both whose value moved. `new` is what --only-new would write.
+    `stored_only` is a stored metric this run did not recompute — a
+    renamed or retired metric, left exactly as it is by every mode here,
+    so it is reported rather than treated as a failure."""
+    changed = [
+        (metric, stored[metric], computed[metric])
+        for metric in sorted(stored.keys() & computed.keys())
+        if stored[metric] != computed[metric]
+    ]
+    return {
+        "changed": changed,
+        "new": sorted(computed.keys() - stored.keys()),
+        "stored_only": sorted(stored.keys() - computed.keys()),
+        "unchanged": sorted(
+            metric
+            for metric in stored.keys() & computed.keys()
+            if stored[metric] == computed[metric]
+        ),
+    }
+
+
+def print_comparison(comparison: dict[str, list], computed: dict[str, tuple[int, int]]) -> None:
+    print(
+        f"\nRecomputed {len(comparison['unchanged']) + len(comparison['changed'])} stored "
+        f"metric(s): {len(comparison['unchanged'])} identical, "
+        f"{len(comparison['changed'])} changed."
+    )
+    if comparison["changed"]:
+        print(f"\n{'metric':72s} {'stored':>16s} {'recomputed':>16s}")
+        for metric, stored_value, computed_value in comparison["changed"]:
+            stored_ratio = f"{stored_value[0]}/{stored_value[1]}"
+            computed_ratio = f"{computed_value[0]}/{computed_value[1]}"
+            print(f"{metric:72s} {stored_ratio:>16s} {computed_ratio:>16s}")
+    if comparison["stored_only"]:
+        print(
+            f"\n{len(comparison['stored_only'])} stored metric(s) this run does not recompute "
+            "(left untouched):"
+        )
+        for metric in comparison["stored_only"]:
+            print(f"  {metric}")
+    if comparison["new"]:
+        print(f"\n{len(comparison['new'])} new metric(s) not yet stored:")
+        for metric in comparison["new"]:
+            numerator, denominator = computed[metric]
+            print(f"  {metric:72s} {f'{numerator}/{denominator}':>16s}")
 
 
 def delete_label_metrics(client, dataset_label: str, metrics: list[str]) -> None:
@@ -359,7 +596,31 @@ def main() -> None:
         "Read-only. For --seed 42 (the development set) pass the live dataset, epr — this "
         "script's only writes are to eval_metrics, scoped to (dataset_label, metric).",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Recompute everything and compare against the stored rows without writing "
+        "anything. Exits non-zero if any metric present in both differs.",
+    )
+    parser.add_argument(
+        "--only-new",
+        action="store_true",
+        help="Write ONLY metric names this dataset_label does not already have, after "
+        "confirming no existing metric would change. Existing rows are never deleted or "
+        "rewritten.",
+    )
+    parser.add_argument(
+        "--expected",
+        type=Path,
+        help="Compare against an exported SELECT (bq --format=json, or CSV with a header) "
+        "instead of reading the stored rows live. Use with --dry-run or --only-new.",
+    )
     args = parser.parse_args()
+
+    if args.dry_run and args.only_new:
+        raise SystemExit("--dry-run and --only-new are alternatives; pass one or the other.")
+    if args.expected and not (args.dry_run or args.only_new):
+        raise SystemExit("--expected only applies to --dry-run or --only-new.")
 
     dataset_label = DATASET_LABELS[args.seed]
     live_dataset = settings.bq_dataset
@@ -377,6 +638,39 @@ def main() -> None:
         )
 
     settings.bq_dataset = live_dataset
+
+    # Both guarded modes compare before they do anything else. Reading the
+    # stored rows happens after bq_dataset is restored, since eval_metrics
+    # always lives in the live dataset, never in the read-only eval one.
+    if args.dry_run or args.only_new:
+        if args.expected:
+            print(f"\nComparing against the export at {args.expected}...")
+            stored = parse_expected_rows(args.expected.read_text(encoding="utf-8"))
+        else:
+            print(
+                f"\nComparing against stored rows in {settings.bq_dataset!r}.eval_metrics "
+                f"(dataset_label={dataset_label!r}, read-only)..."
+            )
+            stored = fetch_stored_rows(bq_client, dataset_label)
+
+        comparison = compare_metrics(rows, stored)
+        print_comparison(comparison, rows)
+
+        if comparison["changed"]:
+            raise SystemExit(
+                f"\nSTOPPING: {len(comparison['changed'])} existing metric(s) would change. "
+                "Nothing was written. Investigate before publishing anything."
+            )
+
+        if args.dry_run:
+            print("\nDry run: nothing written. No existing metric would change.")
+            return
+
+        rows = {metric: rows[metric] for metric in comparison["new"]}
+        if not rows:
+            print("\nNothing to write: every computed metric is already stored.")
+            return
+
     print(
         f"\nWriting {len(rows)} metric(s) to dataset {settings.bq_dataset!r}.eval_metrics "
         f"(dataset_label={dataset_label!r})..."
