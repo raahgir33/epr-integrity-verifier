@@ -17,6 +17,12 @@ from app.ingest import units
 TRUTH = "truth"
 EXTRACTED = "extracted"
 
+# Infix that marks a T13 demo-extra document (e.g.
+# "PWP-03-DEMO-INBOUND_INVOICE-001") apart from a dossier document
+# ("PWP-03-INBOUND_INVOICE-003"). Also the key app/admin/reset_demo.py
+# uses to find the shipments a demo run created.
+_DEMO_DOC_MARKER = "-DEMO-"
+
 
 def _safe_number(printed: str | None) -> float | None:
     if printed is None:
@@ -156,9 +162,31 @@ def match_shipments_from_extracted(
     """documents: this processor's {doc_id, doc_type} records.
     facts: doc_id -> {field_name: printed_value}, from facts_by_doc_id.
     """
-    invoices = [d for d in documents if d["doc_type"] == "inbound_invoice"]
-    eway_bills = [d for d in documents if d["doc_type"] == "eway_bill"]
-    weighbridge_slips = [d for d in documents if d["doc_type"] == "weighbridge_slip"]
+    # Sorted by doc_id, and demo-extra invoices held back into their own
+    # numbering below. Both matter because the shipment_id is positional
+    # (`enumerate(invoices)`), while `documents` arrives straight off a
+    # BigQuery SELECT with no ORDER BY — so row order, and therefore every
+    # shipment_id, was whatever that query happened to return. Confirmed
+    # live (2026-10-15): a run on PWP-03 renumbered its shipments against
+    # the pre-demo snapshot with no demo documents involved at all
+    # (SHP-001 moved from INBOUND_INVOICE-003 to -009, SHP-008 the other
+    # way), which silently repoints the restored snapshot's agent findings
+    # at different physical shipments.
+    #
+    # doc_id order is the canonical numbering, not an arbitrary choice:
+    # every shipment_id currently stored satisfies SHP-{i} <->
+    # INBOUND_INVOICE-{3i}, verified against PWP-01/02/03/05/08's own
+    # stored findings and trails, so sorting here reproduces the IDs
+    # already in BigQuery rather than renaming them.
+    invoices = sorted(
+        (d for d in documents if d["doc_type"] == "inbound_invoice"), key=lambda d: d["doc_id"]
+    )
+    eway_bills = sorted(
+        (d for d in documents if d["doc_type"] == "eway_bill"), key=lambda d: d["doc_id"]
+    )
+    weighbridge_slips = sorted(
+        (d for d in documents if d["doc_type"] == "weighbridge_slip"), key=lambda d: d["doc_id"]
+    )
 
     # Rule 1: invoice <-> e-way bill, by invoice number + supplier GSTIN.
     eway_by_key: dict[tuple[str | None, str | None], list[dict]] = {}
@@ -170,7 +198,26 @@ def match_shipments_from_extracted(
     used_weighbridge_doc_ids: set[str] = set()
     shipments = []
 
-    for i, inv in enumerate(invoices, start=1):
+    # T13's demo-extra invoices get their own numbering, so adding one
+    # never shifts an existing -EXT-SHP- id. Without this, the demo
+    # invoice sorts ahead of every real one ("-DEMO-" < "-INBOUND_") and
+    # takes SHP-001, pushing the whole dossier down by one — and the
+    # pre-demo snapshot's restored findings cite those ids. The id this
+    # produces is the one the generator's own manifest already declares
+    # for the shipment ("PWP-03-DEMO-SHP-001"), so the two now agree.
+    # Plain invoices are numbered and matched first, leaving their
+    # weighbridge-slip claims (used_weighbridge_doc_ids) in exactly the
+    # order they had before demo documents existed.
+    plain_invoices = [d for d in invoices if _DEMO_DOC_MARKER not in d["doc_id"]]
+    demo_invoices = [d for d in invoices if _DEMO_DOC_MARKER in d["doc_id"]]
+    numbered = [
+        (f"{processor_id}-EXT-SHP-{i:03d}", inv) for i, inv in enumerate(plain_invoices, start=1)
+    ]
+    numbered += [
+        (f"{processor_id}-DEMO-SHP-{i:03d}", inv) for i, inv in enumerate(demo_invoices, start=1)
+    ]
+
+    for shipment_id, inv in numbered:
         inv_facts = facts.get(inv["doc_id"], {})
         key = (inv_facts.get("invoice_no"), inv_facts.get("supplier_gstin"))
         candidates = eway_by_key.get(key, [])
@@ -226,7 +273,7 @@ def match_shipments_from_extracted(
             {
                 "seed": seed,
                 "facts_source": EXTRACTED,
-                "shipment_id": f"{processor_id}-EXT-SHP-{i:03d}",
+                "shipment_id": shipment_id,
                 "processor_id": processor_id,
                 "month": month,
                 "invoice_doc_id": inv["doc_id"],
