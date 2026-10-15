@@ -40,6 +40,7 @@ from app.agents.scorer import (
     build_systemic_finding_check_result,
     score_processor,
 )
+from app.agents.text_guard import clean_model_text
 from app.checks import params
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.runner import run_checks_for_processor
@@ -220,7 +221,11 @@ def _classified_findings(loop_result: dict) -> list[dict]:
                     "effect": f.effect,
                     "cited_shipment_ids": list(f.cited_shipment_ids),
                     "evidence_ids": list(f.evidence_ids),
-                    "explanation": f.explanation,
+                    # Guarded here, at the one place these findings enter
+                    # the run, so neither the alert's new_finding_summary
+                    # nor the memo context can carry a degenerate
+                    # repetition (T17). The raw text stays in agent_runs.
+                    "explanation": clean_model_text(f.explanation),
                 }
             )
     return flat

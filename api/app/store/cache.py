@@ -28,6 +28,7 @@ from google.cloud import bigquery
 
 from app.agents.orchestrator import reconstruct_agent_findings
 from app.agents.scorer import score_processor
+from app.agents.text_guard import clean_model_text
 from app.checks.capacity import fy_start_month
 from app.checks.duplicates import find_duplicate_keys
 from app.checks.mass_balance import verified_inbound_tonnes
@@ -908,11 +909,19 @@ def findings_from_trail(
                 "effect": finding.effect,
                 "cited_shipment_ids": finding.cited_shipment_ids,
                 "evidence_ids": finding.evidence_ids,
-                "explanation": finding.explanation,
+                # Every free-text field below is model-authored, so each
+                # goes through the repetition guard (T17 — a Hypothesis
+                # explanation arrived 3,012 characters long, ~170 copies
+                # of one mis-transliterated fragment).
+                "explanation": clean_model_text(finding.explanation),
                 "origin": entry["origin"],
                 "proposed_by": entry["origin"],
                 "verdict": (
-                    {"by": "critic", "verdict": verdict.verdict, "reason": verdict.reason}
+                    {
+                        "by": "critic",
+                        "verdict": verdict.verdict,
+                        "reason": clean_model_text(verdict.reason),
+                    }
                     if verdict is not None
                     else None
                 ),
@@ -921,7 +930,7 @@ def findings_from_trail(
                         "by": "hypothesis",
                         "decision": getattr(revision, "decision", None)
                         or ("accept" if getattr(revision, "accepted", False) else "reject"),
-                        "explanation": revision.explanation,
+                        "explanation": clean_model_text(revision.explanation),
                     }
                     if revision is not None
                     else None
@@ -1003,6 +1012,19 @@ def _reasoning_step(step_index: int, step_type: str, **fields) -> dict:
     return base
 
 
+def _clean_model_text_tree(value):
+    """clean_model_text applied to every string in a parsed model
+    response, at any depth. The guard is idempotent and a no-op on clean
+    text, so running it on every cache rebuild costs nothing."""
+    if isinstance(value, str):
+        return clean_model_text(value)
+    if isinstance(value, list):
+        return [_clean_model_text_tree(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _clean_model_text_tree(v) for k, v in value.items()}
+    return value
+
+
 def _merge_tool_steps(trail: list[dict]) -> list[dict]:
     """Merges each critic_tool_call row with its following critic_tool_
     result row(s) into one step_type="critic_tool" step (docs/
@@ -1020,7 +1042,16 @@ def _merge_tool_steps(trail: list[dict]) -> list[dict]:
     while i < len(trail):
         row = trail[i]
         if row["step_type"] != "critic_tool_call":
-            output = json.loads(row["output_json"]) if row.get("output_json") else None
+            # Model-authored content (hypothesis, critic_final, revision,
+            # score), so it goes through the repetition guard. The
+            # critic_tool branch below deliberately does not: `result` is
+            # a tool's own code-generated return value, and the guard's
+            # length cap would truncate a legitimate shipment dump.
+            output = (
+                _clean_model_text_tree(json.loads(row["output_json"]))
+                if row.get("output_json")
+                else None
+            )
             steps.append(
                 _reasoning_step(
                     row["step_index"],
