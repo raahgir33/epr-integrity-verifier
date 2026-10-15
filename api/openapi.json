@@ -1880,57 +1880,9 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/admin/reset-demo": {
-      "post": {
-        "description": "T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a\nCloud Scheduler nightly job (the deployed container never has\ndata/synthetic/ on disk \u2014 see app/admin/reset_demo.py). Same\nPUSH_TOKEN gate as the push endpoint. Idempotent: app.admin.\nreset_demo.run_reset_live deletes-then-loads every touched row, so\ncalling this twice back-to-back converges to the same state.",
-        "operationId": "post_admin_reset_demo_admin_reset_demo_post",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Post Admin Reset Demo Admin Reset Demo Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Post Admin Reset Demo"
-      }
-    },
     "/alerts": {
       "get": {
+        "description": "Alerts raised by live verification runs, each naming the processor, the risk band before and after, and any newly raised finding.",
         "operationId": "get_alerts_alerts_get",
         "responses": {
           "200": {
@@ -1944,12 +1896,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Get Alerts"
+        "summary": "List alerts"
       }
     },
     "/brands": {
       "get": {
-        "description": "T12: lets the web app offer a brand picker for /portfolio, which\notherwise only has GET /portfolio/{brand_id} (needs an ID already in\nhand).",
+        "description": "Every brand in the served dataset, so a caller can pick one before requesting a portfolio.",
         "operationId": "list_brands_brands_get",
         "responses": {
           "200": {
@@ -1963,12 +1915,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "List Brands"
+        "summary": "List brands"
       }
     },
     "/demo-batches": {
       "get": {
-        "description": "Lets the web app offer a batch picker for the live-verification\nbutton (docs/BUILD_PLAN.md T13).",
+        "description": "The certificate batches the live-verification demo knows about, each flagged with whether it is enabled for a run. Only an enabled batch can be submitted.",
         "operationId": "list_demo_batches_demo_batches_get",
         "responses": {
           "200": {
@@ -1982,12 +1934,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "List Demo Batches"
+        "summary": "List demo batches"
       }
     },
     "/demo/certificate-batch": {
       "post": {
-        "description": "Creates a run record and publishes the scripted batch event\n(docs/ARCHITECTURE.md \u00a73.2). Abuse gates (one run at a time, a\ncooldown between runs, a daily cap) protect the public demo button's\nGemini cost/quota \u2014 docs/BUILD_PLAN.md T13.",
+        "description": "Submits one certificate batch for live verification and returns the identifier of the run it started; poll the run endpoint for progress. This starts real work rather than returning a stored result. Only allow-listed batch identifiers are accepted, and an unknown identifier is rejected separately from a known but disabled one. Beyond that, one run may be in flight at a time, runs are separated by a 60-second cooldown, and no more than 10 runs are accepted per day; each of those three returns 429.",
         "operationId": "post_demo_certificate_batch_demo_certificate_batch_post",
         "requestBody": {
           "content": {
@@ -2021,11 +1973,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Post Demo Certificate Batch"
+        "summary": "Start a verification run"
       }
     },
     "/documents/{doc_id}/facts": {
       "get": {
+        "description": "The fields read from one document, each with the confidence and page number recorded for it. Returned regardless of which facts source the service is scoring from.",
         "operationId": "get_document_facts_documents__doc_id__facts_get",
         "parameters": [
           {
@@ -2061,12 +2014,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Document Facts"
+        "summary": "Document facts"
       }
     },
     "/documents/{doc_id}/file": {
       "get": {
-        "description": "doc_id is validated against the documents table for the configured\nseed before any GCS read (docs/BUILD_PLAN.md T11) \u2014 no arbitrary\npaths; the GCS blob path always comes from the row we looked up, never\nfrom the request. Served from an LRU in-memory cache after the first\nrequest for a given doc_id (app/store/cache.py's get_document_file,\nA2) \u2014 Cache-Control below also tells the browser not to ask again.",
+        "description": "Streams one document's own file. The identifier is checked against the served dataset before the file is read, so only documents in that dataset can be fetched. Cacheable for one day.",
         "operationId": "get_document_file_documents__doc_id__file_get",
         "parameters": [
           {
@@ -2100,12 +2053,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Document File"
+        "summary": "Document file"
       }
     },
     "/evaluation": {
       "get": {
-        "description": "T14: cache.get_evaluation() isolates its own two eval_metrics reads\n(heldout-seed7, dev-seed<N>) \u2014 a failure there degrades to an empty/\nunavailable response, same pattern as GET /stats, rather than a 500.",
+        "description": "Measured accuracy against the seeded ground-truth datasets \u2014 the held-out test set and the development set the rules were tuned on \u2014 as metric rows carrying a numerator and denominator, together with a plain-language list of the shortfalls those rows imply. Reports available as false when no held-out results have been computed yet.",
         "operationId": "get_evaluation_evaluation_get",
         "responses": {
           "200": {
@@ -2119,73 +2072,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Get Evaluation"
-      }
-    },
-    "/events/certificate-batch": {
-      "post": {
-        "description": "Pub/Sub push endpoint (docs/ARCHITECTURE.md \u00a73.2). Synchronous\nwithin the request (internal engineering notes \u00a79's CPU-throttling trap) and\nidempotent on run_id \u2014 a re-delivered push for an already-terminal\nrun is a no-op, never a duplicate alert.",
-        "operationId": "post_events_certificate_batch_events_certificate_batch_post",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": true,
-                "title": "Body",
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Post Events Certificate Batch Events Certificate Batch Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Post Events Certificate Batch"
+        "summary": "Evaluation results"
       }
     },
     "/health": {
       "get": {
-        "description": "T13.8: deliberately minimal \u2014 no version, model, region or project\nID over the wire. _consistency_status is still computed and logged at\nstartup (see lifespan() above) for an operator tailing logs; it's just\nno longer exposed here.",
+        "description": "Liveness check. Returns a status of ok while the service is running.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -2201,11 +2093,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Health"
+        "summary": "Service health"
       }
     },
     "/portfolio/{brand_id}": {
       "get": {
+        "description": "One brand's certificates across processors, with its total certified tonnes and the share of those tonnes that is verifiable. The verifiable share is each certificate's quantity scaled by its own processor's verifiable ratio, so it is an apportionment across the brand's certificates rather than a figure traced to each one.",
         "operationId": "get_portfolio_portfolio__brand_id__get",
         "parameters": [
           {
@@ -2241,11 +2134,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Portfolio"
+        "summary": "Brand portfolio"
       }
     },
     "/processors": {
       "get": {
+        "description": "Every processor in the served dataset, each with both assessment stages side by side \u2014 rule checks alone, and rule checks plus agent validation \u2014 and the status of its agent run. The agent stage is null for a processor the agents have not run on.",
         "operationId": "list_processors_processors_get",
         "responses": {
           "200": {
@@ -2259,11 +2153,12 @@
             "description": "Successful Response"
           }
         },
-        "summary": "List Processors"
+        "summary": "List processors"
       }
     },
     "/processors/{processor_id}": {
       "get": {
+        "description": "Everything held about one processor: its profile, monthly material flow, every rule-check result, both assessment stages, and the agent findings. Returns 404 when the processor is not in the served dataset, or is present but has not been scored.",
         "operationId": "get_processor_processors__processor_id__get",
         "parameters": [
           {
@@ -2299,11 +2194,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Processor"
+        "summary": "Processor dossier"
       }
     },
     "/processors/{processor_id}/documents": {
       "get": {
+        "description": "The documents belonging to one processor, each with its document type and extraction status.",
         "operationId": "get_processor_documents_processors__processor_id__documents_get",
         "parameters": [
           {
@@ -2339,12 +2235,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Processor Documents"
+        "summary": "Processor documents"
       }
     },
     "/processors/{processor_id}/memo": {
       "get": {
-        "description": "app/agents/memo.py's clarification memo (flagged processors) or\nverification statement (clean ones) \u2014 exactly one document type per\nprocessor, written by scripts/run_pipeline.py's --stage memo. A\nHindi (\"hi\") row only exists when generate_hindi_memo's guards\npassed; has_hindi tells the caller whether to offer the toggle even\nwhen they requested \"en\". T13.8: lang's own validation is now\nFastAPI's (422 on anything else), not a manual 400 check.",
+        "description": "The processor's clarification memo when findings were raised, or its verification statement when none were \u2014 exactly one of the two per processor. Use lang to choose English or Hindi; has_hindi reports whether a Hindi version exists, so a caller asking for English still knows whether to offer it. Returns 404 when no memo exists for that processor and language.",
         "operationId": "get_processor_memo_processors__processor_id__memo_get",
         "parameters": [
           {
@@ -2394,11 +2290,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Processor Memo"
+        "summary": "Clarification memo"
       }
     },
     "/processors/{processor_id}/reasoning": {
       "get": {
+        "description": "How the agents reached their conclusion for one processor: the opening hypothesis, one step per critic tool call, the critic's verdicts, the revision round or an explicit note that none was needed, and a closing score step. The resulting findings are included, as is whether the critic reached its tool-call limit.",
         "operationId": "get_processor_reasoning_processors__processor_id__reasoning_get",
         "parameters": [
           {
@@ -2434,11 +2331,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Processor Reasoning"
+        "summary": "Agent reasoning trail"
       }
     },
     "/processors/{processor_id}/site": {
       "get": {
+        "description": "What the satellite view of one processor's site shows: the building count and total footprint found, the measured value against the threshold it was tested against, an explanation, and the attribution required for the satellite and building-footprint data. Bounding-box coordinates are rounded to two decimal places.",
         "operationId": "get_processor_site_processors__processor_id__site_get",
         "parameters": [
           {
@@ -2474,11 +2372,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Processor Site"
+        "summary": "Site plausibility"
       }
     },
     "/runs/{run_id}": {
       "get": {
+        "description": "Progress of one verification run: its stage \u2014 queued, reading documents, checking, reasoning, drafting the memo, done or failed \u2014 the timestamps of the stages it has passed, the reasoning steps produced so far, any alert it raised, and an error message when it failed.",
         "operationId": "get_run_runs__run_id__get",
         "parameters": [
           {
@@ -2513,12 +2412,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Run"
+        "summary": "Verification run status"
       }
     },
     "/site-images/{processor_id}": {
       "get": {
-        "description": "Same validation-before-read pattern as /documents/{doc_id}/file \u2014\nthe GCS blob path always comes from the looked-up row. All ten of\nseed 42's thumbnails are preloaded into memory at startup\n(app/store/cache.py's get_site_image_bytes, A2), so this never hits\nGCS at request time in practice.",
+        "description": "Streams the processor's satellite thumbnail as a PNG. The identifier is checked against the served dataset before the image is read. Cacheable for one day.",
         "operationId": "get_site_image_site_images__processor_id__get",
         "parameters": [
           {
@@ -2552,12 +2451,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Site Image"
+        "summary": "Site thumbnail"
       }
     },
     "/stats": {
       "get": {
-        "description": "T13.6: one cached read (app/store/cache.py's get_stats, warmed at\nstartup preload \u2014 see preload()'s own docstring) backing the landing\npage's hero/proof-strip figures and the field-read-accuracy tile. No\nBigQuery query at request time, same as every other route here.\nget_stats already isolates the one sub-metric (field-read-accuracy)\nthat does issue a live BigQuery read, so a failure here means the\ncore totals themselves broke \u2014 logged clearly rather than left to\nFastAPI's default 500, since the web client swallows this into a\nsilent \"figures hidden\" state (lib/api.ts's getStats()).",
+        "description": "Dataset-wide figures: total certified and unverifiable tonnes, the number of processors, documents read and fields read, the financial year covered, and the measured field-read accuracy.",
         "operationId": "get_stats_stats_get",
         "responses": {
           "200": {
@@ -2571,7 +2470,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Get Stats"
+        "summary": "Portfolio totals"
       }
     }
   }

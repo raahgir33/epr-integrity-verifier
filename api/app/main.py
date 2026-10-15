@@ -155,7 +155,11 @@ def _meta() -> dict:
     return {"seed": settings.default_seed, "facts_source": settings.default_facts_source}
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Service health",
+    description=("Liveness check. Returns a status of ok while the service is running."),
+)
 def health() -> dict:
     """T13.8: deliberately minimal — no version, model, region or project
     ID over the wire. _consistency_status is still computed and logged at
@@ -164,13 +168,31 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/processors", response_model=ProcessorListResponse)
+@app.get(
+    "/processors",
+    response_model=ProcessorListResponse,
+    summary="List processors",
+    description=(
+        "Every processor in the served dataset, each with both assessment stages side by side — "
+        "rule checks alone, and rule checks plus agent validation — and the status of its agent "
+        "run. The agent stage is null for a processor the agents have not run on."
+    ),
+)
 def list_processors() -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     return {"meta": _meta(), "processors": cache.list_processors(seed, facts_source)}
 
 
-@app.get("/processors/{processor_id}", response_model=ProcessorDetailResponse)
+@app.get(
+    "/processors/{processor_id}",
+    response_model=ProcessorDetailResponse,
+    summary="Processor dossier",
+    description=(
+        "Everything held about one processor: its profile, monthly material flow, every "
+        "rule-check result, both assessment stages, and the agent findings. Returns 404 when the "
+        "processor is not in the served dataset, or is present but has not been scored."
+    ),
+)
 def get_processor(processor_id: ProcessorIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     profile = cache.get_processor_profile(seed, processor_id)
@@ -196,7 +218,15 @@ def get_processor(processor_id: ProcessorIdPath) -> dict:
     }
 
 
-@app.get("/processors/{processor_id}/documents", response_model=DocumentsResponse)
+@app.get(
+    "/processors/{processor_id}/documents",
+    response_model=DocumentsResponse,
+    summary="Processor documents",
+    description=(
+        "The documents belonging to one processor, each with its document type and extraction "
+        "status."
+    ),
+)
 def get_processor_documents(processor_id: ProcessorIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_processor_profile(seed, processor_id) is None:
@@ -208,7 +238,15 @@ def get_processor_documents(processor_id: ProcessorIdPath) -> dict:
     }
 
 
-@app.get("/documents/{doc_id}/file")
+@app.get(
+    "/documents/{doc_id}/file",
+    summary="Document file",
+    description=(
+        "Streams one document's own file. The identifier is checked against the served dataset "
+        "before the file is read, so only documents in that dataset can be fetched. Cacheable for "
+        "one day."
+    ),
+)
 def get_document_file(doc_id: DocIdPath) -> Response:
     """doc_id is validated against the documents table for the configured
     seed before any GCS read (docs/BUILD_PLAN.md T11) — no arbitrary
@@ -227,7 +265,15 @@ def get_document_file(doc_id: DocIdPath) -> Response:
     )
 
 
-@app.get("/documents/{doc_id}/facts", response_model=DocumentFactsResponse)
+@app.get(
+    "/documents/{doc_id}/facts",
+    response_model=DocumentFactsResponse,
+    summary="Document facts",
+    description=(
+        "The fields read from one document, each with the confidence and page number recorded for "
+        "it. Returned regardless of which facts source the service is scoring from."
+    ),
+)
 def get_document_facts(doc_id: DocIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_document(seed, doc_id) is None:
@@ -235,7 +281,17 @@ def get_document_facts(doc_id: DocIdPath) -> dict:
     return {"meta": _meta(), "doc_id": doc_id, **cache.get_document_facts(seed, doc_id)}
 
 
-@app.get("/processors/{processor_id}/reasoning", response_model=ReasoningResponse)
+@app.get(
+    "/processors/{processor_id}/reasoning",
+    response_model=ReasoningResponse,
+    summary="Agent reasoning trail",
+    description=(
+        "How the agents reached their conclusion for one processor: the opening hypothesis, one "
+        "step per critic tool call, the critic's verdicts, the revision round or an explicit note "
+        "that none was needed, and a closing score step. The resulting findings are included, as "
+        "is whether the critic reached its tool-call limit."
+    ),
+)
 def get_processor_reasoning(processor_id: ProcessorIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     if cache.get_processor_profile(seed, processor_id) is None:
@@ -252,7 +308,18 @@ def get_processor_reasoning(processor_id: ProcessorIdPath) -> dict:
     }
 
 
-@app.get("/processors/{processor_id}/memo", response_model=MemoResponse)
+@app.get(
+    "/processors/{processor_id}/memo",
+    response_model=MemoResponse,
+    summary="Clarification memo",
+    description=(
+        "The processor's clarification memo when findings were raised, or its verification "
+        "statement when none were — exactly one of the two per processor. Use lang to choose "
+        "English or Hindi; has_hindi reports whether a Hindi version exists, so a caller asking "
+        "for English still knows whether to offer it. Returns 404 when no memo exists for that "
+        "processor and language."
+    ),
+)
 def get_processor_memo(processor_id: ProcessorIdPath, lang: Literal["en", "hi"] = "en") -> dict:
     """app/agents/memo.py's clarification memo (flagged processors) or
     verification statement (clean ones) — exactly one document type per
@@ -279,7 +346,17 @@ def get_processor_memo(processor_id: ProcessorIdPath, lang: Literal["en", "hi"] 
     }
 
 
-@app.get("/processors/{processor_id}/site", response_model=SiteResponse)
+@app.get(
+    "/processors/{processor_id}/site",
+    response_model=SiteResponse,
+    summary="Site plausibility",
+    description=(
+        "What the satellite view of one processor's site shows: the building count and total "
+        "footprint found, the measured value against the threshold it was tested against, an "
+        "explanation, and the attribution required for the satellite and building-footprint data. "
+        "Bounding-box coordinates are rounded to two decimal places."
+    ),
+)
 def get_processor_site(processor_id: ProcessorIdPath) -> dict:
     seed = settings.default_seed
     if cache.get_processor_profile(seed, processor_id) is None:
@@ -310,7 +387,14 @@ def get_processor_site(processor_id: ProcessorIdPath) -> dict:
     }
 
 
-@app.get("/site-images/{processor_id}")
+@app.get(
+    "/site-images/{processor_id}",
+    summary="Site thumbnail",
+    description=(
+        "Streams the processor's satellite thumbnail as a PNG. The identifier is checked against "
+        "the served dataset before the image is read. Cacheable for one day."
+    ),
+)
 def get_site_image(processor_id: ProcessorIdPath) -> Response:
     """Same validation-before-read pattern as /documents/{doc_id}/file —
     the GCS blob path always comes from the looked-up row. All ten of
@@ -327,7 +411,14 @@ def get_site_image(processor_id: ProcessorIdPath) -> Response:
     )
 
 
-@app.get("/brands", response_model=BrandsResponse)
+@app.get(
+    "/brands",
+    response_model=BrandsResponse,
+    summary="List brands",
+    description=(
+        "Every brand in the served dataset, so a caller can pick one before requesting a portfolio."
+    ),
+)
 def list_brands() -> dict:
     """T12: lets the web app offer a brand picker for /portfolio, which
     otherwise only has GET /portfolio/{brand_id} (needs an ID already in
@@ -335,7 +426,17 @@ def list_brands() -> dict:
     return {"meta": _meta(), "brands": cache.list_brands(settings.default_seed)}
 
 
-@app.get("/portfolio/{brand_id}", response_model=PortfolioResponse)
+@app.get(
+    "/portfolio/{brand_id}",
+    response_model=PortfolioResponse,
+    summary="Brand portfolio",
+    description=(
+        "One brand's certificates across processors, with its total certified tonnes and the "
+        "share of those tonnes that is verifiable. The verifiable share is each certificate's "
+        "quantity scaled by its own processor's verifiable ratio, so it is an apportionment "
+        "across the brand's certificates rather than a figure traced to each one."
+    ),
+)
 def get_portfolio(brand_id: BrandIdPath) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     brand = cache.get_brand(seed, brand_id)
@@ -386,7 +487,17 @@ def get_portfolio(brand_id: BrandIdPath) -> dict:
     }
 
 
-@app.get("/evaluation", response_model=EvaluationResponse)
+@app.get(
+    "/evaluation",
+    response_model=EvaluationResponse,
+    summary="Evaluation results",
+    description=(
+        "Measured accuracy against the seeded ground-truth datasets — the held-out test set and "
+        "the development set the rules were tuned on — as metric rows carrying a numerator and "
+        "denominator, together with a plain-language list of the shortfalls those rows imply. "
+        "Reports available as false when no held-out results have been computed yet."
+    ),
+)
 def get_evaluation() -> dict:
     """T14: cache.get_evaluation() isolates its own two eval_metrics reads
     (heldout-seed7, dev-seed<N>) — a failure there degrades to an empty/
@@ -394,7 +505,16 @@ def get_evaluation() -> dict:
     return {"meta": _meta(), **cache.get_evaluation()}
 
 
-@app.get("/stats", response_model=StatsResponse)
+@app.get(
+    "/stats",
+    response_model=StatsResponse,
+    summary="Portfolio totals",
+    description=(
+        "Dataset-wide figures: total certified and unverifiable tonnes, the number of processors, "
+        "documents read and fields read, the financial year covered, and the measured field-read "
+        "accuracy."
+    ),
+)
 def get_stats() -> dict:
     """T13.6: one cached read (app/store/cache.py's get_stats, warmed at
     startup preload — see preload()'s own docstring) backing the landing
@@ -414,13 +534,29 @@ def get_stats() -> dict:
     return {"meta": _meta(), **stats}
 
 
-@app.get("/alerts", response_model=AlertsResponse)
+@app.get(
+    "/alerts",
+    response_model=AlertsResponse,
+    summary="List alerts",
+    description=(
+        "Alerts raised by live verification runs, each naming the processor, the risk band before "
+        "and after, and any newly raised finding."
+    ),
+)
 def get_alerts() -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     return {"meta": _meta(), "alerts": cache.get_alerts(seed, facts_source)}
 
 
-@app.get("/demo-batches", response_model=DemoBatchesResponse)
+@app.get(
+    "/demo-batches",
+    response_model=DemoBatchesResponse,
+    summary="List demo batches",
+    description=(
+        "The certificate batches the live-verification demo knows about, each flagged with "
+        "whether it is enabled for a run. Only an enabled batch can be submitted."
+    ),
+)
 def list_demo_batches() -> dict:
     """Lets the web app offer a batch picker for the live-verification
     button (docs/BUILD_PLAN.md T13)."""
@@ -431,7 +567,20 @@ def _active_or_recent_runs(seed: int) -> list[dict]:
     return bq.fetch_rows(bq.get_client(), "runs", "*", seed)
 
 
-@app.post("/demo/certificate-batch", response_model=DemoCertificateBatchResponse, status_code=202)
+@app.post(
+    "/demo/certificate-batch",
+    response_model=DemoCertificateBatchResponse,
+    status_code=202,
+    summary="Start a verification run",
+    description=(
+        "Submits one certificate batch for live verification and returns the identifier of the "
+        "run it started; poll the run endpoint for progress. This starts real work rather than "
+        "returning a stored result. Only allow-listed batch identifiers are accepted, and an "
+        "unknown identifier is rejected separately from a known but disabled one. Beyond that, "
+        "one run may be in flight at a time, runs are separated by a 60-second cooldown, and no "
+        "more than 10 runs are accepted per day; each of those three returns 429."
+    ),
+)
 def post_demo_certificate_batch(body: DemoCertificateBatchRequest) -> dict:
     """Creates a run record and publishes the scripted batch event
     (docs/ARCHITECTURE.md §3.2). Abuse gates (one run at a time, a
@@ -535,7 +684,17 @@ def post_demo_certificate_batch(body: DemoCertificateBatchRequest) -> dict:
     return {"run_id": run_id, "status": "queued"}
 
 
-@app.get("/runs/{run_id}", response_model=RunStatusOut)
+@app.get(
+    "/runs/{run_id}",
+    response_model=RunStatusOut,
+    summary="Verification run status",
+    description=(
+        "Progress of one verification run: its stage — queued, reading documents, checking, "
+        "reasoning, drafting the memo, done or failed — the timestamps of the stages it has "
+        "passed, the reasoning steps produced so far, any alert it raised, and an error message "
+        "when it failed."
+    ),
+)
 def get_run(run_id: str) -> dict:
     seed, facts_source = settings.default_seed, settings.default_facts_source
     bq_client = bq.get_client()
@@ -573,7 +732,7 @@ def get_run(run_id: str) -> dict:
     }
 
 
-@app.post("/events/certificate-batch")
+@app.post("/events/certificate-batch", include_in_schema=False)
 def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
     """Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
     within the request (internal engineering notes §9's CPU-throttling trap) and
@@ -600,7 +759,7 @@ def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
     return {"status": "ok"}
 
 
-@app.post("/admin/reset-demo")
+@app.post("/admin/reset-demo", include_in_schema=False)
 def post_admin_reset_demo(token: str | None = None) -> dict:
     """T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a
     Cloud Scheduler nightly job (the deployed container never has

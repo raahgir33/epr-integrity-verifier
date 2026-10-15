@@ -4,31 +4,6 @@
  */
 
 export interface paths {
-    "/admin/reset-demo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Post Admin Reset Demo
-         * @description T13.8: HTTP-reachable equivalent of scripts/reset_demo.py, for a
-         *     Cloud Scheduler nightly job (the deployed container never has
-         *     data/synthetic/ on disk — see app/admin/reset_demo.py). Same
-         *     PUSH_TOKEN gate as the push endpoint. Idempotent: app.admin.
-         *     reset_demo.run_reset_live deletes-then-loads every touched row, so
-         *     calling this twice back-to-back converges to the same state.
-         */
-        post: operations["post_admin_reset_demo_admin_reset_demo_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/alerts": {
         parameters: {
             query?: never;
@@ -36,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Alerts */
+        /**
+         * List alerts
+         * @description Alerts raised by live verification runs, each naming the processor, the risk band before and after, and any newly raised finding.
+         */
         get: operations["get_alerts_alerts_get"];
         put?: never;
         post?: never;
@@ -54,10 +32,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Brands
-         * @description T12: lets the web app offer a brand picker for /portfolio, which
-         *     otherwise only has GET /portfolio/{brand_id} (needs an ID already in
-         *     hand).
+         * List brands
+         * @description Every brand in the served dataset, so a caller can pick one before requesting a portfolio.
          */
         get: operations["list_brands_brands_get"];
         put?: never;
@@ -76,9 +52,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Demo Batches
-         * @description Lets the web app offer a batch picker for the live-verification
-         *     button (docs/BUILD_PLAN.md T13).
+         * List demo batches
+         * @description The certificate batches the live-verification demo knows about, each flagged with whether it is enabled for a run. Only an enabled batch can be submitted.
          */
         get: operations["list_demo_batches_demo_batches_get"];
         put?: never;
@@ -99,11 +74,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Post Demo Certificate Batch
-         * @description Creates a run record and publishes the scripted batch event
-         *     (docs/ARCHITECTURE.md §3.2). Abuse gates (one run at a time, a
-         *     cooldown between runs, a daily cap) protect the public demo button's
-         *     Gemini cost/quota — docs/BUILD_PLAN.md T13.
+         * Start a verification run
+         * @description Submits one certificate batch for live verification and returns the identifier of the run it started; poll the run endpoint for progress. This starts real work rather than returning a stored result. Only allow-listed batch identifiers are accepted, and an unknown identifier is rejected separately from a known but disabled one. Beyond that, one run may be in flight at a time, runs are separated by a 60-second cooldown, and no more than 10 runs are accepted per day; each of those three returns 429.
          */
         post: operations["post_demo_certificate_batch_demo_certificate_batch_post"];
         delete?: never;
@@ -119,7 +91,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Document Facts */
+        /**
+         * Document facts
+         * @description The fields read from one document, each with the confidence and page number recorded for it. Returned regardless of which facts source the service is scoring from.
+         */
         get: operations["get_document_facts_documents__doc_id__facts_get"];
         put?: never;
         post?: never;
@@ -137,13 +112,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Document File
-         * @description doc_id is validated against the documents table for the configured
-         *     seed before any GCS read (docs/BUILD_PLAN.md T11) — no arbitrary
-         *     paths; the GCS blob path always comes from the row we looked up, never
-         *     from the request. Served from an LRU in-memory cache after the first
-         *     request for a given doc_id (app/store/cache.py's get_document_file,
-         *     A2) — Cache-Control below also tells the browser not to ask again.
+         * Document file
+         * @description Streams one document's own file. The identifier is checked against the served dataset before the file is read, so only documents in that dataset can be fetched. Cacheable for one day.
          */
         get: operations["get_document_file_documents__doc_id__file_get"];
         put?: never;
@@ -162,37 +132,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Evaluation
-         * @description T14: cache.get_evaluation() isolates its own two eval_metrics reads
-         *     (heldout-seed7, dev-seed<N>) — a failure there degrades to an empty/
-         *     unavailable response, same pattern as GET /stats, rather than a 500.
+         * Evaluation results
+         * @description Measured accuracy against the seeded ground-truth datasets — the held-out test set and the development set the rules were tuned on — as metric rows carrying a numerator and denominator, together with a plain-language list of the shortfalls those rows imply. Reports available as false when no held-out results have been computed yet.
          */
         get: operations["get_evaluation_evaluation_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/events/certificate-batch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Post Events Certificate Batch
-         * @description Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
-         *     within the request (internal engineering notes §9's CPU-throttling trap) and
-         *     idempotent on run_id — a re-delivered push for an already-terminal
-         *     run is a no-op, never a duplicate alert.
-         */
-        post: operations["post_events_certificate_batch_events_certificate_batch_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -207,11 +152,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Health
-         * @description T13.8: deliberately minimal — no version, model, region or project
-         *     ID over the wire. _consistency_status is still computed and logged at
-         *     startup (see lifespan() above) for an operator tailing logs; it's just
-         *     no longer exposed here.
+         * Service health
+         * @description Liveness check. Returns a status of ok while the service is running.
          */
         get: operations["health_health_get"];
         put?: never;
@@ -229,7 +171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Portfolio */
+        /**
+         * Brand portfolio
+         * @description One brand's certificates across processors, with its total certified tonnes and the share of those tonnes that is verifiable. The verifiable share is each certificate's quantity scaled by its own processor's verifiable ratio, so it is an apportionment across the brand's certificates rather than a figure traced to each one.
+         */
         get: operations["get_portfolio_portfolio__brand_id__get"];
         put?: never;
         post?: never;
@@ -246,7 +191,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Processors */
+        /**
+         * List processors
+         * @description Every processor in the served dataset, each with both assessment stages side by side — rule checks alone, and rule checks plus agent validation — and the status of its agent run. The agent stage is null for a processor the agents have not run on.
+         */
         get: operations["list_processors_processors_get"];
         put?: never;
         post?: never;
@@ -263,7 +211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Processor */
+        /**
+         * Processor dossier
+         * @description Everything held about one processor: its profile, monthly material flow, every rule-check result, both assessment stages, and the agent findings. Returns 404 when the processor is not in the served dataset, or is present but has not been scored.
+         */
         get: operations["get_processor_processors__processor_id__get"];
         put?: never;
         post?: never;
@@ -280,7 +231,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Processor Documents */
+        /**
+         * Processor documents
+         * @description The documents belonging to one processor, each with its document type and extraction status.
+         */
         get: operations["get_processor_documents_processors__processor_id__documents_get"];
         put?: never;
         post?: never;
@@ -298,14 +252,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Processor Memo
-         * @description app/agents/memo.py's clarification memo (flagged processors) or
-         *     verification statement (clean ones) — exactly one document type per
-         *     processor, written by scripts/run_pipeline.py's --stage memo. A
-         *     Hindi ("hi") row only exists when generate_hindi_memo's guards
-         *     passed; has_hindi tells the caller whether to offer the toggle even
-         *     when they requested "en". T13.8: lang's own validation is now
-         *     FastAPI's (422 on anything else), not a manual 400 check.
+         * Clarification memo
+         * @description The processor's clarification memo when findings were raised, or its verification statement when none were — exactly one of the two per processor. Use lang to choose English or Hindi; has_hindi reports whether a Hindi version exists, so a caller asking for English still knows whether to offer it. Returns 404 when no memo exists for that processor and language.
          */
         get: operations["get_processor_memo_processors__processor_id__memo_get"];
         put?: never;
@@ -323,7 +271,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Processor Reasoning */
+        /**
+         * Agent reasoning trail
+         * @description How the agents reached their conclusion for one processor: the opening hypothesis, one step per critic tool call, the critic's verdicts, the revision round or an explicit note that none was needed, and a closing score step. The resulting findings are included, as is whether the critic reached its tool-call limit.
+         */
         get: operations["get_processor_reasoning_processors__processor_id__reasoning_get"];
         put?: never;
         post?: never;
@@ -340,7 +291,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Processor Site */
+        /**
+         * Site plausibility
+         * @description What the satellite view of one processor's site shows: the building count and total footprint found, the measured value against the threshold it was tested against, an explanation, and the attribution required for the satellite and building-footprint data. Bounding-box coordinates are rounded to two decimal places.
+         */
         get: operations["get_processor_site_processors__processor_id__site_get"];
         put?: never;
         post?: never;
@@ -357,7 +311,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Run */
+        /**
+         * Verification run status
+         * @description Progress of one verification run: its stage — queued, reading documents, checking, reasoning, drafting the memo, done or failed — the timestamps of the stages it has passed, the reasoning steps produced so far, any alert it raised, and an error message when it failed.
+         */
         get: operations["get_run_runs__run_id__get"];
         put?: never;
         post?: never;
@@ -375,12 +332,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Site Image
-         * @description Same validation-before-read pattern as /documents/{doc_id}/file —
-         *     the GCS blob path always comes from the looked-up row. All ten of
-         *     seed 42's thumbnails are preloaded into memory at startup
-         *     (app/store/cache.py's get_site_image_bytes, A2), so this never hits
-         *     GCS at request time in practice.
+         * Site thumbnail
+         * @description Streams the processor's satellite thumbnail as a PNG. The identifier is checked against the served dataset before the image is read. Cacheable for one day.
          */
         get: operations["get_site_image_site_images__processor_id__get"];
         put?: never;
@@ -399,16 +352,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Stats
-         * @description T13.6: one cached read (app/store/cache.py's get_stats, warmed at
-         *     startup preload — see preload()'s own docstring) backing the landing
-         *     page's hero/proof-strip figures and the field-read-accuracy tile. No
-         *     BigQuery query at request time, same as every other route here.
-         *     get_stats already isolates the one sub-metric (field-read-accuracy)
-         *     that does issue a live BigQuery read, so a failure here means the
-         *     core totals themselves broke — logged clearly rather than left to
-         *     FastAPI's default 500, since the web client swallows this into a
-         *     silent "figures hidden" state (lib/api.ts's getStats()).
+         * Portfolio totals
+         * @description Dataset-wide figures: total certified and unverifiable tonnes, the number of processors, documents read and fields read, the financial year covered, and the measured field-read accuracy.
          */
         get: operations["get_stats_stats_get"];
         put?: never;
@@ -1173,39 +1118,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    post_admin_reset_demo_admin_reset_demo_post: {
-        parameters: {
-            query?: {
-                token?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_alerts_alerts_get: {
         parameters: {
             query?: never;
@@ -1377,45 +1289,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvaluationResponse"];
-                };
-            };
-        };
-    };
-    post_events_certificate_batch_events_certificate_batch_post: {
-        parameters: {
-            query?: {
-                token?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
