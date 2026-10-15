@@ -285,12 +285,12 @@ const STAGE_SEQUENCE = ["reading_documents", "checking", "reasoning", "drafting_
 const SKIPPED_READ_MS = 120;
 
 const DEMO_BATCHES = [
-  { batch_id: "BATCH-PWP-05-001", period_month: "2026-03", processor_id: "PWP-05", pushes_over_verifiable: true, quantity_t: 8.45 },
-  { batch_id: "BATCH-PWP-05-NODOCS", period_month: "2026-04", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 1.92 },
-  { batch_id: "BATCH-PWP-05-FAIL", period_month: "2026-02", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 3.07 },
+  { batch_id: "BATCH-PWP-05-001", period_month: "2026-03", processor_id: "PWP-05", pushes_over_verifiable: true, quantity_t: 8.45, enabled: true },
+  { batch_id: "BATCH-PWP-05-NODOCS", period_month: "2026-04", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 1.92, enabled: true },
+  { batch_id: "BATCH-PWP-05-FAIL", period_month: "2026-02", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 3.07, enabled: true },
   // Always refused with 429, mirroring the real API's cooldown gate, so
   // the card's error path can be exercised without a cooldown clock.
-  { batch_id: "BATCH-PWP-05-COOLDOWN", period_month: "2026-01", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 0.64 },
+  { batch_id: "BATCH-PWP-05-COOLDOWN", period_month: "2026-01", processor_id: "PWP-05", pushes_over_verifiable: false, quantity_t: 0.64, enabled: true },
 ];
 
 // batch_id -> scenario. "fail:<stage>" dies in that stage; "fail:refresh"

@@ -13,11 +13,20 @@ import { titleCase } from "@/lib/titleCase";
  * drafting_memo. The panel shows six rows. The extra two are **derived
  * from observable signals**, never from a timer or invented progress:
  *
- * - **Alert decision.** The alert row is written at the end of the
- *   reasoning stage, before finish_stage("reasoning"), so it has no
- *   in-flight window of its own. This row therefore never reports
- *   "in_progress": it goes straight from waiting to done the moment
- *   reasoning completes, carrying the real band change.
+ * - **Alert decision.** Done only once the decision is actually
+ *   *readable*: either an alert has resolved, or the run has settled
+ *   with none (which is itself a real answer). It used to flip to done
+ *   on stage_timestamps.reasoning alone, on the reasoning that the
+ *   alerts row is written just before that timestamp. That is true of
+ *   the alerts table but not of the API: GET /runs/{run_id} surfaces an
+ *   alert only by resolving the run row's alert_id, which the backend
+ *   set much later, at finish(). Measured on the 2026-10-15 run, the gap
+ *   was 39s — and for all 39s this row read "Completed · No change"
+ *   about an alert that had already fired Low → High. So the row now
+ *   reports in_progress through that window instead of asserting a
+ *   negative it cannot yet support. The backend publishes alert_id
+ *   earlier now too (app/events/run_processor.py's publish_alert_id),
+ *   but this does not depend on that landing first.
  *
  * - **Refreshing results.** cache.invalidate + cache.preload run after
  *   finish_stage("drafting_memo") and before finish("done"), so there is
@@ -89,10 +98,23 @@ function realStageState(stage: string, run: RunStatusOut): RunRowState {
   return "waiting";
 }
 
-function alertDecisionState(run: RunStatusOut): RunRowState {
-  if (run.stage_timestamps.reasoning) return "done";
-  if (run.status === "failed") return failedStage(run) === "reasoning" ? "failed" : "waiting";
-  return "waiting";
+function alertDecisionState(run: RunStatusOut, alert: AlertOut | null): RunRowState {
+  if (!run.stage_timestamps.reasoning) {
+    // Reasoning never finished, so no decision was ever made. Follow the
+    // stage it depends on rather than inventing a state.
+    if (run.status === "failed") return failedStage(run) === "reasoning" ? "failed" : "waiting";
+    return "waiting";
+  }
+  // An alert resolved, so the decision is readable and it fired.
+  if (alert) return "done";
+  // The run is terminal with none: "no alert" is now a real answer, not
+  // an unread one. A run that failed *after* reasoning still made the
+  // decision, so it reads done here, not failed — the failure belongs to
+  // whichever later row owns it.
+  if (run.status === "done" || run.status === "failed") return "done";
+  // Reasoning is over and the decision has been made, but nothing can
+  // read it yet. Do not claim it.
+  return "in_progress";
 }
 
 function refreshingState(run: RunStatusOut): RunRowState {
@@ -146,8 +168,10 @@ function reasoningDetail(run: RunStatusOut): string | null {
   return tools > 0 ? `${stepText} · ${tools} tool call${tools === 1 ? "" : "s"}` : stepText;
 }
 
-function alertDetail(run: RunStatusOut, alert: AlertOut | null): string | null {
-  if (!run.stage_timestamps.reasoning) return null;
+/** Keyed off the row's own state, not the reasoning timestamp, so
+ * "No change" is only ever printed once that is actually the answer. */
+function alertDetail(state: RunRowState, alert: AlertOut | null): string | null {
+  if (state !== "done") return null;
   if (!alert) return "No change";
   const { risk_band_before: before, risk_band_after: after } = alert;
   return before && after ? `${before} → ${after}` : "Alert raised";
@@ -298,12 +322,10 @@ export function buildRunRows(
       detail: reasoningDetail(run),
       derived: false,
     },
-    {
-      id: "alert_decision",
-      state: alertDecisionState(run),
-      detail: alertDetail(run, alert),
-      derived: true,
-    },
+    ((): { id: RunRowId; state: RunRowState; detail: string | null; derived: boolean } => {
+      const state = alertDecisionState(run, alert);
+      return { id: "alert_decision", state, detail: alertDetail(state, alert), derived: true };
+    })(),
     {
       id: "drafting_memo",
       state: realStageState("drafting_memo", run),

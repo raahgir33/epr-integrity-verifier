@@ -21,7 +21,18 @@ export const metadata: Metadata = {
 };
 
 export default async function LandingPage() {
-  const [{ processors }, { batches }] = await Promise.all([getProcessors(), getDemoBatches()]);
+  const [{ processors }, { batches: allBatches }] = await Promise.all([
+    getProcessors(),
+    getDemoBatches(),
+  ]);
+
+  // T17: only the batches the API will actually run. `enabled` comes from
+  // the API's own allow-list (settings.demo_enabled_batch_ids), so the
+  // picker and POST /demo/certificate-batch cannot drift apart — offering
+  // one the endpoint would reject with a 400 is the failure this avoids.
+  // The listing endpoint still reports every batch; this only filters the
+  // picker.
+  const batches = allBatches.filter((b) => b.enabled);
 
   const processorIds = processors.map((p) => p.processor_id);
   const details = await Promise.all(processorIds.map((id) => getProcessor(id)));

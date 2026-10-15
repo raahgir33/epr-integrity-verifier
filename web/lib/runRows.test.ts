@@ -8,6 +8,7 @@ const BATCH: DemoBatchOut = {
   processor_id: "PWP-05",
   pushes_over_verifiable: true,
   quantity_t: 8.45,
+  enabled: true,
 };
 
 const ALERT = {
@@ -150,7 +151,7 @@ describe("buildRunRows — a run that completes", () => {
 });
 
 describe("buildRunRows — the derived rows never invent a state", () => {
-  it("never reports the alert row as in progress, at any point in a run", () => {
+  it("leaves the alert row waiting until reasoning has finished", () => {
     const points = [
       run({ status: "queued" }),
       run({ status: "reading_documents" }),
@@ -159,20 +160,11 @@ describe("buildRunRows — the derived rows never invent a state", () => {
         status: "reasoning",
         stage_timestamps: { reading_documents: timing(12, 12), checking: timing(30, 18) },
       }),
-      run({
-        status: "drafting_memo",
-        stage_timestamps: {
-          reading_documents: timing(12, 12),
-          checking: timing(30, 18),
-          reasoning: timing(90, 60),
-        },
-        alert: ALERT,
-      }),
     ];
-    for (const r of points) expect(states(r).alert_decision).not.toBe("in_progress");
+    for (const r of points) expect(states(r).alert_decision).toBe("waiting");
   });
 
-  it("completes the alert row together with reasoning, not later", () => {
+  it("completes the alert row with reasoning once the alert is readable", () => {
     const s = states(
       run({
         status: "drafting_memo",
@@ -187,6 +179,47 @@ describe("buildRunRows — the derived rows never invent a state", () => {
     expect(s.reasoning).toBe("done");
     expect(s.alert_decision).toBe("done");
     expect(s.drafting_memo).toBe("in_progress");
+  });
+
+  // T17. On the 2026-10-15 live run the alerts row was written at
+  // 03:29:17 and the reasoning timestamp landed at 03:29:19, but the run
+  // row did not carry alert_id until it went terminal at 03:29:58 — so
+  // GET /runs reported alert: null for 39s after reasoning finished. The
+  // row used to read "Completed · No change" through all of it, about an
+  // alert that had already fired Low → High.
+  describe("reasoning finished but the alert is not readable yet", () => {
+    const midRun = run({
+      status: "drafting_memo",
+      stage_timestamps: {
+        reading_documents: timing(12, 12),
+        checking: timing(30, 18),
+        reasoning: timing(90, 60),
+      },
+      alert: null,
+    });
+
+    it("reports in progress, not done", () => {
+      expect(states(midRun).alert_decision).toBe("in_progress");
+    });
+
+    it("never prints 'No change' before the run has settled", () => {
+      expect(detail(midRun, "alert_decision")).toBeNull();
+    });
+
+    it("carries no Completed tag while the decision is unread", () => {
+      const row = buildRunRows(midRun, BATCH).find((r) => r.id === "alert_decision")!;
+      expect(row.tag).toBeNull();
+      expect(row.lines).toEqual([{ label: "Running now", value: null }]);
+    });
+
+    it("settles as soon as the alert resolves, without waiting for the run", () => {
+      // lib/useRunAlert.ts resolves it out of /api/alerts; buildRunRows
+      // takes it as its third argument rather than off the run.
+      const rows = buildRunRows(midRun, BATCH, ALERT);
+      const row = rows.find((r) => r.id === "alert_decision")!;
+      expect(row.state).toBe("done");
+      expect(row.detail).toBe("Medium → High");
+    });
   });
 
   it("spins the re-warm row only in its real window", () => {
@@ -455,8 +488,14 @@ describe("buildRunRows — expanded body lines", () => {
     expect(row.lines.some((l) => l.value === "Medium → High")).toBe(false);
   });
 
-  it("says so plainly when no alert fired", () => {
-    const r = run({ status: "drafting_memo", stage_timestamps: base, alert: null });
+  it("says so plainly when no alert fired, once the run has settled", () => {
+    // Settled, deliberately: mid-run the decision is not yet readable,
+    // and the row must not assert a negative then (T17).
+    const r = run({
+      status: "done",
+      stage_timestamps: { ...base, drafting_memo: timing(100, 10) },
+      alert: null,
+    });
     expect(buildRunRows(r, BATCH)[3].lines[0].label).toBe("Risk band unchanged, no new finding.");
   });
 

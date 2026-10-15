@@ -521,6 +521,8 @@ export interface components {
         DemoBatchOut: {
             /** Batch Id */
             batch_id: string;
+            /** Enabled */
+            enabled: boolean;
             /** Period Month */
             period_month: string;
             /** Processor Id */
