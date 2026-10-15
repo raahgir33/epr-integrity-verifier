@@ -68,7 +68,8 @@ export default async function PortfolioPage({
               <th className="py-2 pr-4 font-medium">Processor</th>
               <th className="py-2 pr-4 font-medium">Category</th>
               <th className="py-2 pr-4 font-medium">Period</th>
-              <th className="py-2 pr-4 font-medium">Quantity</th>
+              {/* T16c F9: right-aligned to match its own num-cell column. */}
+              <th className="py-2 pr-4 text-right font-medium">Quantity</th>
               <th className="py-2 font-medium">Processor risk</th>
             </tr>
           </thead>
@@ -84,7 +85,8 @@ export default async function PortfolioPage({
                     {c.processor_id}
                   </Link>
                 </td>
-                <td className="py-2 pr-4 text-ink-muted">{c.category}</td>
+                {/* T16c F22: the bare code ("I", "III") read as a stray letter under a "Category" header. */}
+                <td className="py-2 pr-4 text-ink-muted">Category {c.category}</td>
                 <td className="py-2 pr-4 text-ink-muted">{formatMonth(c.period_month)}</td>
                 <td className="num-cell py-2 pr-4 tabular-nums">{formatTonnes(c.quantity_t)}</td>
                 <td className="py-2">{c.processor_risk_band ? <RiskBadge band={c.processor_risk_band} /> : "—"}</td>

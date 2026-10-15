@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Accordion, type AccordionItemData } from "@/components/ui/Accordion";
 import type { DocumentFactsResponse, DocumentListItem } from "@/lib/api";
 import { useDocumentPanel } from "@/lib/document-panel-context";
+import { docTypeName } from "@/lib/labels";
 
 const EXTRACTION_LABEL: Record<string, string> = {
   ok: "Extracted",
@@ -33,7 +34,11 @@ function DocumentRow({
 
   return (
     <li className="border-b border-border py-3 last:border-0">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      {/* T16c F18: a grid at sm and up, so lang/status/actions line up
+          down the list instead of being pushed around by each doc_id's
+          own width (one longer id used to wrap its whole row). Still a
+          plain wrapping flex below sm. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:grid sm:grid-cols-[minmax(0,1fr)_3rem_8rem_auto_auto] sm:items-center sm:gap-x-4">
         <span className="font-mono text-xs text-ink-muted">{document.doc_id}</span>
         <span className="text-xs uppercase tracking-wide text-ink-muted">{document.lang}</span>
         <span className={isFlagged(document) ? "text-xs font-medium text-risk-high" : "text-xs text-ink-muted"}>
@@ -83,8 +88,9 @@ function DocumentRow({
 
 /** Grouped by doc_type (T13.5b plan, Part 5) — each group shows the type,
  * a count and a flagged-count badge; groups containing a flagged document
- * start open. doc_type's own display name comes straight off the API
- * (already a readable string, e.g. "invoice", "weighbridge_slip"). */
+ * start open. T16c F8: the heading renders docTypeName(doc_type), not the
+ * raw API enum — "weighbridge_slip"/"cto" were reaching the screen as-is.
+ * Grouping and sort order still key on the raw doc_type. */
 export function DocumentsTable({
   documents,
   facts,
@@ -108,8 +114,11 @@ export function DocumentsTable({
       id: type,
       trigger: (
         <span className="flex items-center gap-2">
-          <span className="text-ink">{type}</span>
-          <span className="rounded-full bg-surface-sunk px-2 py-0.5 text-xs font-medium text-ink-muted">
+          <span className="text-ink">{docTypeName(type)}</span>
+          {/* T16c F17: a border, because bg-surface-sunk is now the same
+              value as --color-page — on the tab background the pill was
+              invisible and the count read as a bare number. */}
+          <span className="rounded-full border border-border bg-surface-sunk px-2 py-0.5 text-xs font-medium text-ink-muted">
             {docs.length}
           </span>
           {flaggedCount > 0 ? (
