@@ -10,6 +10,15 @@ export const metadata: Metadata = {
 
 export default function MethodPage() {
   return (
+    // T16c (F6/F23/F25): the cards stay centred, but body copy no longer
+    // does — it ran 129 characters a line at 1440 and 159 in the intro,
+    // and centring at that measure is what made the page read garbled.
+    // Narrative sections now set their prose left-aligned in a centred
+    // 64ch column; Guardrails and "Verifiable tonnes and risk band" are
+    // label+definition pairs, not prose, so they are real <dl> lists in
+    // two columns (which also fixes their heading/body grouping). The
+    // page intro was text-sm, i.e. smaller than the body it introduces.
+    //
     // Developer review note, 2026-10-10: the FullBleed/.band wrapper this
     // page used is gone — --color-page is now the same light-blue tint
     // .band used to apply, so the root layout's own background already
@@ -18,7 +27,7 @@ export default function MethodPage() {
     <div className="space-y-8">
       <div className="text-center">
         <Heading>Method</Heading>
-        <p className="mx-auto mt-1 text-pretty text-sm text-ink-muted">
+        <p className="mx-auto mt-2 max-w-[64ch] text-pretty text-method-body text-ink-muted">
           How the agent loop reasons, the real limits placed on its output, what each deterministic
           check does, how verifiable tonnes are computed, and what this system does not (yet) prove.
         </p>
@@ -26,7 +35,7 @@ export default function MethodPage() {
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Agent reasoning</SectionTitle>
-          <div className="mt-2 space-y-2 text-pretty text-method-body text-ink-muted">
+          <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
               Deterministic checks catch what arithmetic and document fields can prove. The agent loop
               exists for what they can&apos;t: reading meaning in free text, connecting evidence across a
@@ -63,74 +72,48 @@ export default function MethodPage() {
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Guardrails</SectionTitle>
-          <p className="mt-2 text-pretty text-method-body text-ink-muted">
+          <p className="mx-auto mt-2 max-w-[64ch] text-pretty text-method-body text-ink-muted">
             Real limits placed on AI output, enforced in code, never left to the prompt alone.
           </p>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="font-semibold text-method-body text-ink">Evidence and shipment IDs are validated</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Every shipment and evidence ID a finding cites is checked against the processor&apos;s own
-                verified documents and shipments, never taken on trust from the model.
-              </p>
+          <dl className="mx-auto mt-4 max-w-4xl divide-y divide-border text-left">
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Evidence and shipment IDs are validated</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Every shipment and evidence ID a finding cites is checked against the processor&apos;s own verified documents and shipments, never taken on trust from the model.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">A finding counts only when both agents agree</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                The Hypothesis and Critic must independently concur before a finding is deducted.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">A finding counts only when both agents agree</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">The Hypothesis and Critic must independently concur before a finding is deducted.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Processor-level evidence makes a finding review-only</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                A finding backed only by processor-level evidence, not evidence tied to the specific
-                shipments it cites, is kept but not deducted.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Processor-level evidence makes a finding review-only</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">A finding backed only by processor-level evidence, not evidence tied to the specific shipments it cites, is kept but not deducted.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Findings citing most shipments become review flags</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                A finding touching more than half a processor&apos;s verified shipments is too broad to act
-                on automatically, so it&apos;s flagged for review instead of deducted.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Findings citing most shipments become review flags</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">A finding touching more than half a processor&apos;s verified shipments is too broad to act on automatically, so it&apos;s flagged for review instead of deducted.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">No extra deduction for restating a failed check</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                A finding that only restates what a deterministic check already caught earns no second
-                deduction and no second risk-band bump.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">No extra deduction for restating a failed check</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">A finding that only restates what a deterministic check already caught earns no second deduction and no second risk-band bump.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Hard checks are final</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                No agent finding can overrule a failed hard check.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Hard checks are final</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">No agent finding can overrule a failed hard check.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Drafted documents are guarded, with a template fallback</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Before a clarification memo or verification statement goes out, every number in it is
-                checked against figures the system already computed, every evidence ID against the
-                processor&apos;s own verified documents, and its wording against a short list of disallowed
-                words. A failure triggers one corrective rewrite. If that still fails, a plain pre-written
-                template is used instead, never a partially-edited model draft.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Drafted documents are guarded, with a template fallback</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Before a clarification memo or verification statement goes out, every number in it is checked against figures the system already computed, every evidence ID against the processor&apos;s own verified documents, and its wording against a short list of disallowed words. A failure triggers one corrective rewrite. If that still fails, a plain pre-written template is used instead, never a partially-edited model draft.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">The model never does arithmetic that matters</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Every tonnage figure and the risk band are computed deterministically from the agents&apos;
-                structured findings. The model only writes the plain-language narrative from numbers that
-                are already computed.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">The model never does arithmetic that matters</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Every tonnage figure and the risk band are computed deterministically from the agents&apos; structured findings. The model only writes the plain-language narrative from numbers that are already computed.</dd>
             </div>
-          </div>
+          </dl>
         </section>
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Rule-Based Checks</SectionTitle>
-          <p className="mt-2 text-pretty text-method-body text-ink-muted">
+          <p className="mx-auto mt-2 max-w-[64ch] text-pretty text-left text-method-body text-ink-muted">
             Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
             rule-derived (cited to a regulation or document convention) or an explicit assumption. A
             failed <strong>hard</strong> check can never be overruled by an agent. A <strong>soft</strong>{" "}
@@ -143,49 +126,33 @@ export default function MethodPage() {
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Verifiable tonnes and risk band</SectionTitle>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="font-semibold text-method-body text-ink">Verified inbound tonnes</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Weighbridge-net tonnes of shipments that pass C3, C4 and C5, minus shipments an agreed
-                agent finding deducts.
-              </p>
+          <dl className="mx-auto mt-4 max-w-4xl divide-y divide-border text-left">
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Verified inbound tonnes</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Weighbridge-net tonnes of shipments that pass C3, C4 and C5, minus shipments an agreed agent finding deducts.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Capacity limit</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Consented capacity × months elapsed ÷ 12, zero for any month outside the consent&apos;s
-                validity window (C6).
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Capacity limit</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Consented capacity × months elapsed ÷ 12, zero for any month outside the consent&apos;s validity window (C6).</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Verifiable tonnes</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                The minimum of eligible certified tonnes (certified tonnes excluding any out-of-consent
-                category), verified inbound tonnes, and the capacity limit.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Verifiable tonnes</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">The minimum of eligible certified tonnes (certified tonnes excluding any out-of-consent category), verified inbound tonnes, and the capacity limit.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Unverifiable tonnes</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Certified tonnes minus verifiable tonnes.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Unverifiable tonnes</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Certified tonnes minus verifiable tonnes.</dd>
             </div>
-            <div>
-              <p className="font-semibold text-method-body text-ink">Risk band</p>
-              <p className="text-pretty text-method-body text-ink-muted">
-                Low under 5% unverifiable, Medium 5–25%, High over 25%. Each failed soft check (C2b, C7,
-                C8), or any non-empty review-flag, systemic-finding or no-own-evidence finding list,
-                raises the band by one step. That&apos;s never more than one step in total, however many of
-                these signals fire together.
-              </p>
+            <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+              <dt className="text-balance font-semibold text-method-body text-ink">Risk band</dt>
+              <dd className="text-pretty text-method-body text-ink-muted">Low under 5% unverifiable, Medium 5–25%, High over 25%. Each failed soft check (C2b, C7, C8), or any non-empty review-flag, systemic-finding or no-own-evidence finding list, raises the band by one step. That&apos;s never more than one step in total, however many of these signals fire together.</dd>
             </div>
-          </div>
+          </dl>
         </section>
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Evaluation protocol</SectionTitle>
-          <div className="mt-2 space-y-2 text-pretty text-method-body text-ink-muted">
+          <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
               A held-out test set, generated the same way as the development set but with a different seed,
               is never used while building or tuning the system. Before it is generated, every check
@@ -224,7 +191,7 @@ export default function MethodPage() {
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Limitations</SectionTitle>
-          <div className="mt-2 space-y-2 text-pretty text-method-body text-ink-muted">
+          <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
               Every processor, document, brand and certificate shown here is synthetic and fictional. No
               real company, recycler or brand is represented or implicated.
@@ -246,9 +213,11 @@ export default function MethodPage() {
 
         <section className="card p-5 text-center">
           <SectionTitle className="text-method-heading">Data sources and attribution</SectionTitle>
-          <p className="mt-2 text-method-body text-ink-muted">Contains modified Copernicus Sentinel data (2023).</p>
-          <p className="text-method-body text-ink-muted">Open Buildings v3, Google Research (CC BY 4.0).</p>
-          <p className="text-method-body text-ink-muted">Hero imagery generated with Google Flow.</p>
+          <div className="mx-auto mt-2 max-w-[64ch] text-method-body text-ink-muted">
+            <p>Contains modified Copernicus Sentinel data (2023).</p>
+            <p>Open Buildings v3, Google Research (CC BY 4.0).</p>
+            <p>Hero imagery generated with Google Flow.</p>
+          </div>
         </section>
       </div>
   );
