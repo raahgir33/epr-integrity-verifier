@@ -65,6 +65,11 @@ def fake_bq(monkeypatch):
     monkeypatch.setattr(reset_demo.bq, "delete_by_ids", fake_delete_by_ids)
     monkeypatch.setattr(
         reset_demo.bq,
+        "delete_shipments_by_document_ids",
+        lambda client, seed, doc_ids: calls["deletes"].append(("shipments_by_doc", tuple(doc_ids))),
+    )
+    monkeypatch.setattr(
+        reset_demo.bq,
         "delete_check_results_by_processor",
         lambda client, seed, fs, pid: calls["deletes"].append(("check_results", pid)),
     )
@@ -106,16 +111,36 @@ def test_run_reset_deletes_demo_batch_certificates_by_id(fake_seed_dir, fake_bq)
     assert set(cert_deletes[0][2]) == {"CERT-DEMO-BATCH-PWP-01-001", "CERT-DEMO-BATCH-PWP-05-001"}
 
 
-def test_run_reset_deletes_demo_extra_documents_and_extracted_facts(fake_seed_dir, fake_bq):
+def test_run_reset_keeps_the_demo_extra_documents(fake_seed_dir, fake_bq):
+    """T17: the `documents` rows must survive a reset.
+
+    Only scripts/load_demo_extra_docs.py (developer-run, hits Cloud
+    Storage) can create them, and nothing else ever puts them back — so
+    deleting them here silently disarmed the demo after its first reset:
+    the live path's extraction stage found nothing to read and the new
+    certificate had no shipment to match."""
     reset_demo.run_reset(42)
 
     doc_deletes = [c for c in fake_bq["deletes"] if c[0] == "by_ids" and c[1] == "documents"]
+    assert doc_deletes == []
+
+
+def test_run_reset_deletes_demo_extracted_facts_and_shipments(fake_seed_dir, fake_bq):
+    """extracted_facts still goes, so extraction_status returns to
+    "not_extracted" and the next run really re-reads the documents; and
+    the shipment those documents produced goes with it, or it would
+    outlive its own deleted certificate — a month showing verified
+    inbound tonnes against zero certified."""
+    reset_demo.run_reset(42)
+
     facts_deletes = [
         c for c in fake_bq["deletes"] if c[0] == "by_ids" and c[1] == "extracted_facts"
     ]
-    assert len(doc_deletes) == 1
-    assert len(doc_deletes[0][2]) == 3
-    assert doc_deletes[0][2] == facts_deletes[0][2]
+    shipment_deletes = [c for c in fake_bq["deletes"] if c[0] == "shipments_by_doc"]
+    assert len(facts_deletes) == 1
+    assert len(facts_deletes[0][2]) == 3
+    assert len(shipment_deletes) == 1
+    assert shipment_deletes[0][1] == facts_deletes[0][2]
 
 
 def test_run_reset_restores_every_touched_processor_from_its_snapshot(fake_seed_dir, fake_bq):

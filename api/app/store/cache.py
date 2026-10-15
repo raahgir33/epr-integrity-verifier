@@ -347,7 +347,11 @@ def _demo_batches(seed: int) -> list[dict]:
 
 
 def get_demo_batches(seed: int) -> list[dict]:
-    return sorted(_demo_batches(seed), key=lambda b: b["batch_id"])
+    enabled = set(settings.demo_enabled_batch_ids_list)
+    return [
+        {**b, "enabled": b["batch_id"] in enabled}
+        for b in sorted(_demo_batches(seed), key=lambda b: b["batch_id"])
+    ]
 
 
 def get_demo_batch(seed: int, batch_id: str) -> dict | None:
@@ -367,7 +371,15 @@ def get_agent_trail(seed: int, facts_source: str, processor_id: str) -> list[dic
     would interleave two unrelated trails). NULL attempt (pre-retry rows,
     or an old table before the ALTER TABLE lands) is treated as 1."""
     all_rows = _agent_runs(seed, facts_source)
-    processor_rows = [r for r in all_rows if r["processor_id"] == processor_id]
+    return latest_attempt_trail(r for r in all_rows if r["processor_id"] == processor_id)
+
+
+def latest_attempt_trail(rows) -> list[dict]:
+    """The latest attempt's steps, ordered by step_index. Pure, so the
+    same rule applies to rows read from BigQuery (get_agent_trail above)
+    and to rows read from a bundled pre-demo snapshot file
+    (app/admin/reset_demo.py's snapshot_before_from_bundle)."""
+    processor_rows = list(rows)
     if not processor_rows:
         return []
     latest_attempt = max(r["attempt"] or 1 for r in processor_rows)
@@ -862,7 +874,22 @@ def get_findings(seed: int, facts_source: str, processor_id: str) -> list[dict]:
 
 
 def _compute_findings(seed: int, facts_source: str, processor_id: str) -> list[dict]:
-    trail = get_agent_trail(seed, facts_source, processor_id)
+    return findings_from_trail(
+        seed, facts_source, processor_id, get_agent_trail(seed, facts_source, processor_id)
+    )
+
+
+def findings_from_trail(
+    seed: int, facts_source: str, processor_id: str, trail: list[dict]
+) -> list[dict]:
+    """The reconstruction itself, with the trail passed in rather than
+    read — so the live trail (_compute_findings above) and a bundled
+    pre-demo snapshot's trail (app/admin/reset_demo.py) produce findings
+    through one implementation, not two. The reconstruction context is
+    always current BigQuery data either way: a pre-demo trail only cites
+    pre-demo shipments, and those ids are stable (see
+    app/ingest/normalize.py's deterministic numbering), so classifying an
+    older trail against the current shipment set is sound."""
     if not trail:
         return []
     context = build_reconstruction_context(seed, facts_source, processor_id)

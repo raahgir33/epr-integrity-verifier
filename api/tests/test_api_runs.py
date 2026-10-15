@@ -10,6 +10,8 @@ import datetime
 
 import app.checks.params as check_params
 from app import main as main_module
+from app.admin import reset_demo as admin_reset_demo
+from app.config import settings
 from app.events import pubsub
 from app.events import run_processor as live_run_processor
 from app.store import bq, cache
@@ -37,6 +39,14 @@ class _FrozenDatetime(datetime.datetime):
 
 def _patch_common(monkeypatch, runs=()):
     monkeypatch.setattr(main_module, "datetime", _FrozenDatetime)
+    # The test batch has to be on the allow-list, or every POST below is a
+    # 400 before it reaches the gate under test (T17).
+    monkeypatch.setattr(settings, "demo_enabled_batch_ids", _DEMO_BATCH["batch_id"])
+    # And snapshot_before comes from live state here: PWP-01 does have a
+    # bundled pre-demo snapshot, so without this the handler would try to
+    # reconstruct findings against real BigQuery. The bundle path has its
+    # own tests below.
+    monkeypatch.setattr(admin_reset_demo, "snapshot_before_from_bundle", lambda seed, fs, pid: None)
     monkeypatch.setattr(cache, "get_demo_batch", lambda seed, batch_id: dict(_DEMO_BATCH))
     monkeypatch.setattr(cache, "get_processor_assessments", lambda seed, fs, pid: None)
     monkeypatch.setattr(cache, "get_findings", lambda seed, fs, pid: [])

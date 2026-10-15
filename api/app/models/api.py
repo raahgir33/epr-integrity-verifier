@@ -361,6 +361,12 @@ class DemoBatchOut(BaseModel):
     period_month: str
     quantity_t: float
     pushes_over_verifiable: bool
+    # T17: whether POST /demo/certificate-batch will actually run this
+    # batch (settings.demo_enabled_batch_ids). Reported rather than
+    # filtered out, so the listing stays a faithful view of the
+    # demo_batches table and the web picker filters on this one field
+    # instead of repeating the allow-list client-side.
+    enabled: bool
 
 
 class DemoBatchesResponse(BaseModel):

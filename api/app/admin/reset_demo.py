@@ -49,8 +49,23 @@ def run_reset(
 
     extra_doc_ids = [doc_id for b in demo_batches for doc_id in b.get("extra_document_ids") or []]
     if extra_doc_ids:
-        bq.delete_by_ids(bq_client, "documents", "doc_id", extra_doc_ids)
+        # The `documents` rows are deliberately NOT deleted. They are
+        # static registry rows that only scripts/load_demo_extra_docs.py
+        # (developer-run) can create, and nothing ever puts them back —
+        # so deleting them here permanently removed the demo's own
+        # evidence after the first reset, and every run since added a
+        # certificate with no document trail to match it. Diagnosed
+        # 2026-10-15: GET /processors/PWP-03/documents listed zero
+        # PWP-03-DEMO-* rows, so the live path's extraction stage read
+        # nothing and the planted-remark finding could not be raised.
+        #
+        # `extracted_facts` IS deleted, which is the intended reset:
+        # DocumentListItem.extraction_status goes back to
+        # "not_extracted", so the next live run really does run Gemini
+        # over these documents rather than reusing a previous run's
+        # facts.
         bq.delete_by_ids(bq_client, "extracted_facts", "doc_id", extra_doc_ids)
+        bq.delete_shipments_by_document_ids(bq_client, seed, extra_doc_ids)
 
     restored = []
     for processor_id in DEMO_TOUCHED_PROCESSOR_IDS:
@@ -86,6 +101,50 @@ def load_bundled_snapshots() -> dict[str, dict]:
         if path.exists():
             snapshots[processor_id] = json.loads(path.read_text(encoding="utf-8"))
     return snapshots
+
+
+def read_bundled_snapshot(processor_id: str) -> dict | None:
+    path = _BUNDLED_SNAPSHOT_DIR / f"{processor_id}.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def snapshot_before_from_bundle(seed: int, facts_source: str, processor_id: str) -> dict | None:
+    """The alert decision's "before" state, taken from this processor's
+    bundled pre-demo snapshot instead of whatever the last run left in
+    BigQuery. None when no snapshot is bundled for it, so the caller
+    (app/main.py's POST /demo/certificate-batch) falls back to live
+    state.
+
+    Why: app/events/run_processor.py's _decide_alert fires only when the
+    band rose or a qualifying finding is new. Reading "before" from live
+    state makes the first run of the day fire Low -> High and every
+    later run fire nothing at all, because run 2 compares High against
+    the High run 1 just wrote and sees the same findings. Judges click
+    more than once. Anchoring "before" to the pre-demo snapshot makes
+    every run report the same real transition, without restoring any
+    table mid-run.
+
+    risk_band comes from the snapshot's stage="full" assessment — the
+    same stage the badge reads everywhere. findings are reconstructed
+    from the snapshot's own agent_runs trail through
+    cache.findings_from_trail, the same code path the live read uses, so
+    the signature set compared against is built exactly the way the
+    "after" set is."""
+    snapshot = read_bundled_snapshot(processor_id)
+    if snapshot is None:
+        return None
+    full = next((a for a in snapshot.get("assessments", []) if a.get("stage") == "full"), None)
+    trail = cache.latest_attempt_trail(snapshot.get("agent_runs", []))
+    findings = cache.findings_from_trail(seed, facts_source, processor_id, trail)
+    return {
+        "risk_band": full["risk_band"] if full else None,
+        "findings": [
+            {"cited_shipment_ids": f["cited_shipment_ids"], "classification": f["classification"]}
+            for f in findings
+        ],
+    }
 
 
 def run_reset_live(seed: int) -> list[str]:

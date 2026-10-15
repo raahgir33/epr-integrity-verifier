@@ -254,6 +254,10 @@
             "title": "Batch Id",
             "type": "string"
           },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
           "period_month": {
             "title": "Period Month",
             "type": "string"
@@ -276,7 +280,8 @@
           "processor_id",
           "period_month",
           "quantity_t",
-          "pushes_over_verifiable"
+          "pushes_over_verifiable",
+          "enabled"
         ],
         "title": "DemoBatchOut",
         "type": "object"

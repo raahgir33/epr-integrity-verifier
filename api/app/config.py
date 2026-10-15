@@ -26,6 +26,27 @@ class Settings(BaseSettings):
     def cors_allowed_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
 
+    # T17: the demo batches POST /demo/certificate-batch will actually
+    # run, comma-separated. Not a threshold, so not in
+    # app/checks/params.py — a deployment-time demo setting, which is
+    # what this file is for, and env-overridable so the enabled batch can
+    # change without a code change.
+    #
+    # Only BATCH-PWP-01-001 and BATCH-PWP-03-001 are safe to run at all:
+    # the other eight have period_month 2026-04, which starts a new
+    # financial year, so certified_t_fy_to_date counts the new
+    # certificate and nothing else and the processor's certified tonnes
+    # collapse to the batch quantity (PWP-02: 136.05 t -> 1.92 t, band
+    # Medium -> Low) while its chart still shows the full history. They
+    # also carry no extra_document_ids, so there is nothing to extract.
+    # BATCH-PWP-03-001 is the one with the planted handwritten Hindi
+    # remark, so it is the only one enabled by default.
+    demo_enabled_batch_ids: str = "BATCH-PWP-03-001"
+
+    @property
+    def demo_enabled_batch_ids_list(self) -> list[str]:
+        return [b.strip() for b in self.demo_enabled_batch_ids.split(",") if b.strip()]
+
     # Gemini pricing, USD per million tokens — developer-provided rate,
     # 2026-10-07, for scripts/cost_report.py. Not a regulatory threshold;
     # update if Vertex AI pricing changes. Thinking tokens are billed as

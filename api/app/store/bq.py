@@ -643,6 +643,38 @@ def delete_assessments_by_processor_and_stage(
     job.result()
 
 
+def delete_shipments_by_document_ids(
+    client: bigquery.Client, seed: int, doc_ids: list[str]
+) -> None:
+    """Deletes the shipments built from any of `doc_ids` — matched on all
+    three document columns, since a shipment can reference a demo
+    document in any of the three roles (and may have matched only some of
+    them). Used by app/admin/reset_demo.py to clear the shipment a demo
+    run created: that row survives the reset otherwise, because reset
+    restores assessments/check_results from a snapshot but never rewrites
+    the shipments table, leaving a shipment whose certificate has been
+    deleted — a month showing verified inbound tonnes against zero
+    certified. Scoped by seed and to these doc_ids only, so it can never
+    touch a dossier shipment. A no-op (no query) if doc_ids is empty."""
+    if not doc_ids:
+        return
+    table_ref = _table_ref("shipments")
+    query = (
+        f"DELETE FROM `{table_ref}` WHERE seed = @seed AND ("
+        "invoice_doc_id IN UNNEST(@doc_ids) "
+        "OR eway_doc_id IN UNNEST(@doc_ids) "
+        "OR weighbridge_doc_id IN UNNEST(@doc_ids))"
+    )
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("seed", "INTEGER", seed),
+            bigquery.ArrayQueryParameter("doc_ids", "STRING", doc_ids),
+        ]
+    )
+    job = client.query(query, job_config=job_config, location=settings.vertex_location)
+    job.result()
+
+
 def delete_by_ids(client: bigquery.Client, table_name: str, id_column: str, ids: list[str]) -> None:
     """Deletes rows matching any of the given ids, regardless of seed/
     facts_source — used by scripts/reset_demo.py to remove the handful of

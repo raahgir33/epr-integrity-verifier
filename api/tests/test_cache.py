@@ -11,6 +11,7 @@ import json
 
 import pytest
 
+from app.config import settings
 from app.store import cache
 
 SEED = 42
@@ -1066,3 +1067,16 @@ def test_get_demo_batch_found_and_not_found():
     batch = cache.get_demo_batch(SEED, "BATCH-PWP-01-001")
     assert batch["processor_id"] == "PWP-01"
     assert cache.get_demo_batch(SEED, "BATCH-UNKNOWN") is None
+
+
+def test_get_demo_batches_marks_which_ones_are_enabled(monkeypatch):
+    """T17: the listing reports every batch, flagging the ones POST
+    /demo/certificate-batch will actually run, so the web picker filters
+    on the API's own allow-list instead of repeating it."""
+    monkeypatch.setattr(settings, "demo_enabled_batch_ids", "BATCH-PWP-01-001")
+    assert [b["enabled"] for b in cache.get_demo_batches(SEED)] == [True]
+
+    monkeypatch.setattr(settings, "demo_enabled_batch_ids", "BATCH-PWP-03-001")
+    batches = cache.get_demo_batches(SEED)
+    assert [b["batch_id"] for b in batches] == ["BATCH-PWP-01-001"]
+    assert [b["enabled"] for b in batches] == [False]

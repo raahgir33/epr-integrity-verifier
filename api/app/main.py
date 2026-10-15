@@ -441,6 +441,25 @@ def post_demo_certificate_batch(body: DemoCertificateBatchRequest) -> dict:
     batch = cache.get_demo_batch(seed, body.batch_id)
     if batch is None:
         raise HTTPException(status_code=404, detail="unknown batch_id")
+    # Checked after the lookup, so an id that does not exist still reads
+    # 404 and only a real-but-disabled batch reads 400.
+    if body.batch_id not in settings.demo_enabled_batch_ids_list:
+        # Server-side half of the demo allow-list; the web picker only
+        # offers the same batch, but the endpoint is public, so the gate
+        # has to live here too. Every other batch in demo_batches is
+        # either period_month 2026-04 — which resets the financial year
+        # and collapses the processor's certified tonnes to the batch
+        # quantity alone (app/checks/capacity.py's certified_t_fy_to_date
+        # filters fy_start <= period_month <= as_of) — or has no
+        # extra_document_ids to extract. demo_batches itself is left
+        # untouched; GET /demo-batches still reports all of them.
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"batch {body.batch_id} is not enabled for live verification; "
+                f"enabled: {', '.join(settings.demo_enabled_batch_ids_list)}"
+            ),
+        )
     processor_id = batch["processor_id"]
 
     now = datetime.now(UTC)
@@ -467,16 +486,28 @@ def post_demo_certificate_batch(body: DemoCertificateBatchRequest) -> dict:
     if today_count >= check_params.DEMO_DAILY_RUN_CAP:
         raise HTTPException(status_code=429, detail="daily demo limit reached for today")
 
-    assessments = cache.get_processor_assessments(seed, facts_source, processor_id)
-    full_assessment = (assessments or {}).get("full")
-    findings = cache.get_findings(seed, facts_source, processor_id)
-    snapshot_before = {
-        "risk_band": full_assessment["risk_band"] if full_assessment else None,
-        "findings": [
-            {"cited_shipment_ids": f["cited_shipment_ids"], "classification": f["classification"]}
-            for f in findings
-        ],
-    }
+    # T17 (C7-lite): prefer this processor's bundled pre-demo snapshot as
+    # the alert decision's "before" state, so run 2 and run 3 report the
+    # same real transition run 1 did instead of comparing against what
+    # run 1 itself wrote (High vs High, same findings -> no alert at
+    # all). Falls back to live state for any processor with no bundled
+    # snapshot. Nothing is restored — this only changes what the
+    # comparison baseline is.
+    snapshot_before = admin_reset_demo.snapshot_before_from_bundle(seed, facts_source, processor_id)
+    if snapshot_before is None:
+        assessments = cache.get_processor_assessments(seed, facts_source, processor_id)
+        full_assessment = (assessments or {}).get("full")
+        findings = cache.get_findings(seed, facts_source, processor_id)
+        snapshot_before = {
+            "risk_band": full_assessment["risk_band"] if full_assessment else None,
+            "findings": [
+                {
+                    "cited_shipment_ids": f["cited_shipment_ids"],
+                    "classification": f["classification"],
+                }
+                for f in findings
+            ],
+        }
 
     run_id = str(uuid.uuid4())
     bq_client = bq.get_client()
