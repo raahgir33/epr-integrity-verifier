@@ -10,6 +10,13 @@ export const metadata: Metadata = {
 
 export default function MethodPage() {
   return (
+    // T16c follow-up: the cards are capped at max-w-4xl with px-8 rather
+    // than spanning the full container. Once the prose was capped at 64ch
+    // the card was far wider than anything inside it, leaving a broad
+    // empty gutter down both sides of every section; 56rem minus the
+    // padding lands at almost exactly the prose measure, so the card now
+    // frames the text instead of floating around it.
+    //
     // T16c (F6/F23/F25): the cards stay centred, but body copy no longer
     // does — it ran 129 characters a line at 1440 and 159 in the intro,
     // and centring at that measure is what made the page read garbled.
@@ -33,7 +40,7 @@ export default function MethodPage() {
         </p>
       </div>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Agent reasoning</SectionTitle>
           <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
@@ -70,7 +77,7 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Guardrails</SectionTitle>
           <p className="mx-auto mt-2 max-w-[64ch] text-pretty text-method-body text-ink-muted">
             Real limits placed on AI output, enforced in code, never left to the prompt alone.
@@ -111,7 +118,7 @@ export default function MethodPage() {
           </dl>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Rule-Based Checks</SectionTitle>
           <p className="mx-auto mt-2 max-w-[64ch] text-pretty text-left text-method-body text-ink-muted">
             Every threshold below lives in <code>app/checks/params.py</code>, each labelled as either
@@ -124,7 +131,7 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Verifiable tonnes and risk band</SectionTitle>
           <dl className="mx-auto mt-4 max-w-4xl divide-y divide-border text-left">
             <div className="grid gap-x-10 gap-y-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
@@ -150,7 +157,7 @@ export default function MethodPage() {
           </dl>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Evaluation protocol</SectionTitle>
           <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
@@ -189,7 +196,7 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Limitations</SectionTitle>
           <div className="mx-auto mt-2 max-w-[64ch] space-y-2 text-pretty text-left text-method-body text-ink-muted">
             <p>
@@ -211,7 +218,7 @@ export default function MethodPage() {
           </div>
         </section>
 
-        <section className="card p-5 text-center">
+        <section className="card mx-auto w-full max-w-4xl px-8 py-8 text-center">
           <SectionTitle className="text-method-heading">Data sources and attribution</SectionTitle>
           <div className="mx-auto mt-2 max-w-[64ch] text-method-body text-ink-muted">
             <p>Contains modified Copernicus Sentinel data (2023).</p>
