@@ -30,6 +30,7 @@ import { MonthlyFlowChart } from "@/components/MonthlyFlowChart";
 import { ReasoningTimeline } from "@/components/reasoning/ReasoningTimeline";
 import { SitePanel } from "@/components/SitePanel";
 import { StageComparison } from "@/components/StageComparison";
+import { formatTonnes } from "@/lib/format";
 
 // Moved from the retired KeyFactsRail (T13.5b plan, Part 4) — same
 // classification buckets, now shown as two small tiles in the Overview
@@ -118,6 +119,10 @@ export function ProcessorTabs({
   }
 
   const displayedFindings = findings.filter(isDisplayedFinding);
+  // The headline stage, same (full ?? checks_only) rule the page and the
+  // sticky header use — so the Findings tab cannot describe a different
+  // reality from the tonnage shown directly above it.
+  const headline = full ?? checksOnly;
   const openDocument = documents.find((d) => d.doc_id === openDocId) ?? null;
   const openFacts = openDocId ? factsByDocId[openDocId] : undefined;
 
@@ -158,9 +163,27 @@ export function ProcessorTabs({
                   ))}
                 </ul>
               ) : (
+                /* "No findings" and "fully accounted for" are not the same
+                   thing, and saying they were produced a real contradiction.
+                   unverifiable_t is pure mass balance — certified minus the
+                   lesser of eligible certified, verified inbound and consented
+                   capacity (app/agents/scorer.py) — so a certificate batch with
+                   no matching inbound leaves tonnes unverifiable whether or not
+                   the agent raised anything. A live run reaches exactly that
+                   state, and the old copy called the processor fully verified
+                   while the card directly above it read 8.45 t unverifiable and
+                   a High risk band. */
                 <EmptyState
-                  title="Fully verified, no outstanding findings"
-                  message="The agent loop raised no findings for this processor. Its certified tonnes are fully accounted for."
+                  title={
+                    headline.unverifiable_t > 0
+                      ? "No agent findings, but tonnes remain unverifiable"
+                      : "Fully verified, no outstanding findings"
+                  }
+                  message={
+                    headline.unverifiable_t > 0
+                      ? `The agent loop raised no finding of its own. ${formatTonnes(headline.unverifiable_t)} of certified tonnes are still unverifiable on the rule-based checks alone — see the Checks tab for which one falls short.`
+                      : "The agent loop raised no findings for this processor, and its certified tonnes are fully accounted for by the rule-based checks."
+                  }
                 />
               )}
             </div>
