@@ -67,7 +67,11 @@ export function RunLiveVerification({
 
   return (
     <div
-      className={`px-12 py-10 mx-auto max-w-6xl rounded-lg border border-border bg-surface p-4 text-center ${
+      // T16b: radius is --radius-lg + 5% and the card gains the shared
+      // resting elevation, both at the developer's request. The radius is
+      // expressed against the token rather than hard-coded, so it still
+      // tracks the palette.
+      className={`px-12 py-10 mx-auto max-w-6xl rounded-[calc(var(--radius-lg)*1.05)] border border-border bg-surface p-4 text-center shadow-resting ${
         fill ? "lg:w-full" : "lg:w-1/2"
       }`}
     >
