@@ -9,16 +9,26 @@ import { docTypeName } from "@/lib/labels";
 const EXTRACTION_LABEL: Record<string, string> = {
   ok: "Extracted",
   failed: "Extraction failed",
-  not_extracted: "Not extracted",
+  // "Not extracted" in red read as something having gone wrong with the
+  // document. Nothing has: these are the *-DEMO-* files staged for the
+  // live verification run, which serve their PDF normally and simply have
+  // not been through extraction yet. The wording says that plainly.
+  not_extracted: "Not yet read",
 };
 
 /** T13.5b plan, Part 5: a document is "flagged" when its own extraction
- * didn't succeed — the only flag state derivable from DocumentListItem
- * today without a new API field. If "flagged" was meant to mean
- * something broader (e.g. cited by an unresolved finding), this is the
- * one spot to change. */
+ * actually failed. If "flagged" was meant to mean something broader (e.g.
+ * cited by an unresolved finding), this is the one spot to change.
+ *
+ * Deliberately NOT `!== "ok"`: that also caught "not_extracted", which is
+ * the absence of an extraction attempt, not a failed one — the staged
+ * demo-batch documents sit in that state permanently until a live run
+ * reads them. Counting them as flagged painted a red "N flagged" badge on
+ * a clean processor and forced that group open. A real extraction failure
+ * still flags, still shows red: the project's rule is to fail visibly,
+ * and this change does not hide one. */
 function isFlagged(document: DocumentListItem): boolean {
-  return document.extraction_status !== "ok";
+  return document.extraction_status === "failed";
 }
 
 function DocumentRow({
