@@ -36,6 +36,7 @@ from app.agents.memo import decide_doc_type
 
 TOL = 1e-6
 PORTFOLIO_TOL = 0.02  # /portfolio's own totals are round(..., 2) server-side
+MONTHLY_FLOW_TOL = 0.02  # get_monthly_flow rounds each month to 2dp before summing
 
 _STAGE_FIELDS = (
     "certified_t",
@@ -132,6 +133,42 @@ def check_processor_detail_and_memo(
             f"(risk_band={effective['risk_band']!r})"
         )
 
+    check_monthly_flow(pid, detail, mismatches)
+
+
+def check_monthly_flow(pid: str, detail: dict, mismatches: list[str]) -> None:
+    """The monthly flow chart against the figures printed above it (T17).
+
+    Both sums are compared to **checks_only**, deliberately. The chart is
+    a checks-level view: app/store/cache.py's get_monthly_flow applies no
+    agent exclusions, so a processor with a confirmed finding has a lower
+    full.verified_inbound_t than its own chart sums to, correctly.
+
+    certified_t is also compared unfiltered, which is the point: the
+    chart lists every month a certificate exists in, while
+    checks_only.certified_t is financial-year-to-date
+    (app/checks/capacity.py's certified_t_fy_to_date). A certificate
+    outside the current FY therefore shows on the chart but not in the
+    header — exactly the divergence a demo batch dated in the next FY
+    produces, and exactly what a viewer would see and disbelieve."""
+    flow = detail["monthly_flow"]
+    checks_only = detail["checks_only"]
+    flow_certified = round(sum(row["certified_t"] for row in flow), 2)
+    flow_verified = round(sum(row["verified_inbound_t"] for row in flow), 2)
+
+    if not _close(flow_certified, checks_only["certified_t"], tol=MONTHLY_FLOW_TOL):
+        mismatches.append(
+            f"{pid}.monthly_flow: Σ certified_t {flow_certified} != "
+            f"checks_only.certified_t {checks_only['certified_t']} — the chart and the "
+            f"header disagree (a certificate outside the current financial year?)"
+        )
+    if not _close(flow_verified, checks_only["verified_inbound_t"], tol=MONTHLY_FLOW_TOL):
+        mismatches.append(
+            f"{pid}.monthly_flow: Σ verified_inbound_t {flow_verified} != "
+            f"checks_only.verified_inbound_t {checks_only['verified_inbound_t']} — the chart "
+            f"and the header disagree (a verified shipment with no month?)"
+        )
+
 
 def check_portfolio(
     session: requests.Session, base_url: str, processors: dict[str, dict], mismatches: list[str]
@@ -190,7 +227,7 @@ def main() -> None:
 
     print(
         f"OK — {len(processors)} processors checked across /stats, /processors, "
-        f"/processors/{{id}}, memo doc_type, and portfolio — no mismatches."
+        f"/processors/{{id}}, memo doc_type, monthly flow, and portfolio — no mismatches."
     )
     sys.exit(0)
 
