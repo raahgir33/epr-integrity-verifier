@@ -18,7 +18,7 @@ import type { NextConfig } from "next";
 // with `next build`, so this never reaches production traffic.
 const isDev = process.env.NODE_ENV !== "production";
 
-const cspHeader = [
+const cspDirectives = [
   "default-src 'self'",
   // 'unsafe-inline' here isn't optional without a nonce (which forces
   // every page to render dynamically — too big a change for this task):
@@ -37,7 +37,21 @@ const cspHeader = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-].join("; ");
+];
+
+const cspHeader = cspDirectives.join("; ");
+
+// The document side panel renders a document in a same-origin <iframe>
+// (components/processor/ProcessorTabs.tsx). `frame-ancestors 'none'`
+// forbids EVERY embedding, same-origin included, so the browser refused
+// the frame outright and the panel showed an empty white box ("refused to
+// connect" in Chrome) while "View file", a top-level navigation, kept
+// working. These two responses are the proxied document bytes, nothing
+// embeddable by a third party, so they allow this origin to frame them
+// and nobody else. Everything else keeps 'none'.
+const filesCspHeader = cspDirectives
+  .map((directive) => (directive === "frame-ancestors 'none'" ? "frame-ancestors 'self'" : directive))
+  .join("; ");
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -48,14 +62,26 @@ const nextConfig: NextConfig = {
   // Unset (default ".next") for every normal run.
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   async headers() {
+    const base = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    ];
+    // The file routes are excluded from the blanket rule rather than given
+    // a second one: Next sends every matching rule, so two rules both
+    // setting Content-Security-Policy would emit the header twice and the
+    // browser enforces the intersection — still the stricter 'none'.
     return [
       {
-        source: "/(.*)",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Content-Security-Policy", value: cspHeader },
-        ],
+        source: "/((?!files/|site-images/).*)",
+        headers: [...base, { key: "Content-Security-Policy", value: cspHeader }],
+      },
+      {
+        source: "/files/:path*",
+        headers: [...base, { key: "Content-Security-Policy", value: filesCspHeader }],
+      },
+      {
+        source: "/site-images/:path*",
+        headers: [...base, { key: "Content-Security-Policy", value: filesCspHeader }],
       },
     ];
   },
