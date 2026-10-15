@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MemoLangToggle } from "@/components/memo/MemoLangToggle";
 import { EvidenceList } from "@/components/EvidenceLink";
 import { Button } from "@/components/ui/Button";
 import type { MemoResponse } from "@/lib/api";
@@ -71,25 +72,12 @@ export function VerificationStatementLetter({
           {active.drafted_by}
         </span>
         <div className="flex items-center gap-2">
-          {memoEn.has_hindi ? (
-            <div className="flex overflow-hidden rounded border border-border">
-              <button
-                type="button"
-                onClick={() => handleSelectLang("en")}
-                className={`px-2 py-2.5 font-medium outline-none transition-colors duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${lang === "en" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectLang("hi")}
-                disabled={loadingHi}
-                className={`px-2 py-2.5 font-medium outline-none transition-colors duration-150 focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:opacity-60 ${lang === "hi" ? "bg-primary text-primary-foreground" : "bg-surface text-ink"}`}
-              >
-                {loadingHi ? "…" : "HI"}
-              </button>
-            </div>
-          ) : null}
+          <MemoLangToggle
+            lang={lang}
+            hasHindi={memoEn.has_hindi}
+            loadingHi={loadingHi}
+            onSelect={handleSelectLang}
+          />
           <Button variant="ghost" size="xs" onClick={handleCopy}>
             {copied ? "Copied!" : "Copy"}
           </Button>
