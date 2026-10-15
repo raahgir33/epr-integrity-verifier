@@ -40,7 +40,8 @@ const TAG_DOT: Record<StepTag, string> = {
   Critic: "bg-ink",
   Revision: "bg-glow",
   Tool: "bg-ink-muted",
-  Score: "bg-ink-muted",
+  // T16c F21: Score had the same dot as Tool; two step types, one signal.
+  Score: "bg-primary/60",
 };
 
 function LogRowContent({
@@ -94,8 +95,9 @@ function LogRowContent({
         <div className={`min-h-0 overflow-hidden transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}>
           <div className="mt-2 pb-1">
             <StepDetail step={step} knownDocIds={knownDocIds} />
+            {/* T16c F20: text-xs, not a hardcoded 11px below the scale floor. */}
             {hasTiming ? (
-              <p className="mt-1 text-[11px] text-ink-muted">
+              <p className="mt-1 text-xs text-ink-muted">
                 {step.latency_ms !== null ? `${Math.round(step.latency_ms)} ms` : null}
                 {step.tokens && Object.values(step.tokens).some((v) => v !== null)
                   ? ` · ${Object.entries(step.tokens)

@@ -91,12 +91,18 @@ export function stepTag(step: ReasoningStepOut): StepTag {
 /** One-line action description for the log's always-visible row (distinct
  * from ReasoningTimeline's existing per-type "gist", which this reuses
  * where it already reads as an action). */
+/** T16c F19: "1 verdict(s)" was reaching the screen. Count plus the right
+ * noun form; the irregular plural is passed in where "+s" is wrong. */
+function plural(count: number, singular: string, pluralForm?: string): string {
+  return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
+}
+
 export function stepActionLine(step: ReasoningStepOut): string {
   switch (step.step_type) {
     case "hypothesis": {
       const output = step.output as unknown as HypothesisOutput | undefined;
       return output
-        ? `Judged ${output.conclusions.length} certificate batch(es), proposed ${output.findings.length} finding(s)`
+        ? `Judged ${plural(output.conclusions.length, "certificate batch", "certificate batches")}, proposed ${plural(output.findings.length, "finding")}`
         : "Judged the certificate batches";
     }
     case "critic_tool":
@@ -106,7 +112,7 @@ export function stepActionLine(step: ReasoningStepOut): string {
     case "critic_final": {
       const output = step.output as unknown as CriticFinalOutput | undefined;
       return output
-        ? `Issued ${output.verdicts.length} verdict(s) and ${output.objections.length} objection(s)`
+        ? `Issued ${plural(output.verdicts.length, "verdict")} and ${plural(output.objections.length, "objection")}`
         : "Issued its final objections";
     }
     case "critic_model_turn":
@@ -115,7 +121,7 @@ export function stepActionLine(step: ReasoningStepOut): string {
       const output = step.output as unknown as RevisionOutput | undefined;
       if (output && "revisions" in output) {
         const accepted = output.revisions.filter((r) => r.accepted).length;
-        return `Accepted ${accepted} of ${output.revisions.length} Critic objection(s)`;
+        return `Accepted ${accepted} of ${plural(output.revisions.length, "Critic objection")}`;
       }
       return "Revised its findings";
     }
