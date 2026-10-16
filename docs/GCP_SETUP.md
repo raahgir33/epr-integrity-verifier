@@ -45,7 +45,7 @@ bq --location=asia-south1 mk --dataset PROJECT_ID:epr
 
 Tables are created by `api/scripts/deploy/create_tables.py` (run it yourself once the code exists).
 
-## 4. Pub/Sub topic
+## 4. PubSub topic
 
 ```bash
 gcloud pubsub topics create certificate-batches
@@ -200,7 +200,7 @@ Your own account needs Cloud Run Source Developer, Service Usage Consumer, and S
 | Dossier bucket | PROJECT_ID-epr-dossiers | | |
 | Artifact bucket | PROJECT_ID-epr-artifacts | | |
 | BigQuery dataset | epr | | asia-south1 |
-| Pub/Sub topic | certificate-batches | | |
+| PubSub topic | certificate-batches | | |
 | Push subscription | certificate-batches-push | | |
 | API service | epr-api | | URL: |
 | Web service | epr-web | | URL: |

@@ -1,7 +1,7 @@
-"""Pub/Sub publish + push-handler helpers for the live event path (T13,
+"""PubSub publish + push-handler helpers for the live event path (T13,
 docs/ARCHITECTURE.md §3.2). The actual verification work (extraction,
 checks, agents, memo) lives in app/events/run_processor.py — this module
-is only the Pub/Sub plumbing: publishing the "a new certificate batch
+is only the PubSub plumbing: publishing the "a new certificate batch
 arrived" message, and decoding/authenticating a push delivery of it.
 
 Same PublisherClient/topic_path construction as
@@ -20,7 +20,7 @@ from app.config import settings
 
 def publish_certificate_batch(run_id: str, batch_id: str) -> str:
     """Publishes {"run_id", "batch_id"} to settings.pubsub_topic. Returns
-    the Pub/Sub message_id (logged for audit — not used for idempotency;
+    the PubSub message_id (logged for audit — not used for idempotency;
     run_id, generated fresh per POST /demo/certificate-batch, is the
     idempotency key the push handler checks)."""
     publisher = pubsub_v1.PublisherClient()
@@ -42,7 +42,7 @@ def verify_push_token(token: str | None) -> bool:
 
 
 def decode_push_envelope(body: dict) -> dict:
-    """body is the standard Pub/Sub push JSON shape:
+    """body is the standard PubSub push JSON shape:
     {"message": {"data": "<base64>", "messageId": "...", "publishTime": "..."},
      "subscription": "..."}. Returns the decoded {"run_id", "batch_id"}
     payload published by publish_certificate_batch above. Raises (KeyError/

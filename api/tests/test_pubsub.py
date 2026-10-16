@@ -1,5 +1,5 @@
 """Tests for app/events/pubsub.py's pure logic (token check, push-
-envelope decoding) — no real Pub/Sub call (publish_certificate_batch
+envelope decoding) — no real PubSub call (publish_certificate_batch
 itself is a thin SDK wrapper, not unit-tested here, same convention as
 every other direct-SDK-call function in this codebase, e.g.
 app/store/gcs.py's upload_file)."""

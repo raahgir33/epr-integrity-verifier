@@ -1,4 +1,4 @@
-"""Smoke test: Pub/Sub — publish one trivial message.
+"""Smoke test: PubSub — publish one trivial message.
 
 Does not require a subscription (that is created in T13).
 Run: uv run python scripts/smoke/smoke_pubsub.py

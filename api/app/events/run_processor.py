@@ -22,7 +22,7 @@ starts (status flips, so a polling GET /runs/{run_id} shows it
 immediately) and one when it finishes (stage_timestamps gains that
 stage's own measured duration, e.g. "Agents reviewing - 74s" in the web
 UI). A failed run still reaches status="failed" and returns normally —
-the push handler always responds 2xx either way, so Pub/Sub never
+the push handler always responds 2xx either way, so PubSub never
 retry-storms a genuinely failed run.
 """
 

@@ -1,6 +1,6 @@
 """Tests for T13's live event path routes: POST /demo/certificate-batch,
 GET /runs/{run_id}, POST /events/certificate-batch. All against fakes —
-no real BigQuery/Pub/Sub/Gemini. Covers: unknown-batch 404, the abuse
+no real BigQuery/PubSub/Gemini. Covers: unknown-batch 404, the abuse
 gates (one-run-at-a-time, cooldown, daily cap), push-handler idempotency
 (a duplicate message for an already-terminal run never calls
 run_certificate_batch again), and the bad-token 401.
@@ -273,7 +273,7 @@ def test_push_handler_is_idempotent_on_an_already_terminal_run(api_client, monke
     )
 
     body = {"message": {"data": _b64({"run_id": "RUN-1", "batch_id": "B"})}}
-    # Simulate Pub/Sub re-delivering the same message twice.
+    # Simulate PubSub re-delivering the same message twice.
     response1 = api_client.post("/events/certificate-batch", params={"token": "x"}, json=body)
     response2 = api_client.post("/events/certificate-batch", params={"token": "x"}, json=body)
 

@@ -24,7 +24,7 @@ Output units are environmental: certified tonnes, verifiable tonnes, unverifiabl
                     │  │ checks/ C1–C7 (deterministic)                                 │               │
                     │  │ geo/site C8 ──────▶ Earth Engine (Open Buildings, Sentinel-2) │               │
                     │  │ agents/ Hypothesis ⇄ Critic(tools) ▶ Scorer ──▶ Gemini        │               │
-                    │  │ events/ push handler ◀── Pub/Sub topic: certificate-batches   │               │
+                    │  │ events/ push handler ◀── PubSub topic: certificate-batches   │               │
                     │  └───────────────────────────────▲───────────────────────────────┘               │
                     │                                  │ HTTPS (server-side fetch)                     │
                     │  ┌──────────────── epr-web (Cloud Run, Next.js) ────────────────┐               │
@@ -49,7 +49,7 @@ Output units are environmental: certified tonnes, verifiable tonnes, unverifiabl
 ### 3.2 Live event path (demo moment)
 
 1. User clicks **Simulate new certificate batch** for a processor in the web app.
-2. `POST /demo/certificate-batch` takes the scripted batch for that processor from `demo_batches`, creates a run record (`status = queued`), returns its `run_id`, and publishes a message to Pub/Sub topic `certificate-batches`.
+2. `POST /demo/certificate-batch` takes the scripted batch for that processor from `demo_batches`, creates a run record (`status = queued`), returns its `run_id`, and publishes a message to PubSub topic `certificate-batches`.
 3. The push subscription calls `POST /events/certificate-batch?token=…` on `epr-api`.
 4. The handler, synchronously within the request and idempotent on message ID, adds the batch to the certificate ledger, re-runs checks and the agent loop for that processor (no re-extraction is needed), writes a new assessment, and writes an alert if unverifiable tonnes increased. It updates the run status at each stage (`checking`, `reasoning`, `done` or `failed`) and only then returns 2xx.
 5. The web app polls `GET /runs/{run_id}` every 3 seconds to show progress, then `GET /alerts`, and shows the alert with a link to the evidence.
@@ -126,7 +126,7 @@ Verifiable tonnes and the risk band are computed deterministically from these re
 | BigQuery | All structured data, checks across processors, evaluation | Cross-processor analysis ("certified vs capacity across all PWPs") |
 | Cloud Storage | Dossier files, Earth Engine thumbnails | Document and imagery store |
 | Earth Engine | Open Buildings footprints and Sentinel-2 imagery at registered sites | Physical plausibility of claimed capacity |
-| Pub/Sub | New certificate batch events | Event-driven re-verification and alerts |
+| PubSub | New certificate batch events | Event-driven re-verification and alerts |
 | Cloud Run | `epr-api` and `epr-web` | Mandatory deployment target |
 | Cloud Build, Artifact Registry | Container builds for Cloud Run source deploys | Deployment |
 
@@ -154,7 +154,7 @@ The API serves exactly one configured `(seed, facts_source)` (`app/config.py`'s 
 | GET | `/alerts` | Explicit empty list — `alerts` doesn't exist until T13 |
 | POST | `/demo/certificate-batch` | Creates a run, publishes the scripted batch event, returns `run_id` (T13) |
 | GET | `/runs/{run_id}` | Run status: queued, checking, reasoning, done, failed (T13) |
-| POST | `/events/certificate-batch` | Pub/Sub push endpoint (token-protected) (T13) |
+| POST | `/events/certificate-batch` | PubSub push endpoint (token-protected) (T13) |
 
 All GET endpoints serve from the in-process read cache (`store/cache.py`). Every cache key `preload()` fills — the raw tables *and* every per-processor derived result (findings, reasoning steps, monthly flow, etc.) — uses `NO_EXPIRY` rather than a wall-clock TTL (A2: a short TTL was silently undermining "preload once, stay warm," since any request made more than the TTL after startup re-triggered a live BigQuery query regardless of preload having already run — the measured cause of a 10.9 s "cold" `/processors/{id}` request well after boot). Nothing in this dataset changes during the process's lifetime except through an explicit `invalidate()` call (T13's live event path, after writing a new assessment) — wall-clock staleness was never the right trigger. `app/main.py`'s `lifespan` blocks on `preload()` (and the consistency guard below) before the app reports ready, and logs the total elapsed time.
 
@@ -208,5 +208,5 @@ Documents open through a Next.js route handler (`/files/[docId]`) that proxies t
 - All data is synthetic and watermarked; entities are fictional.
 - No personal data is processed.
 - The push endpoint validates a shared token; write endpoints are limited to the demo batch trigger, rate-limited to one request per 10 seconds per processor.
-- The push token appears in Cloud Run request logs because it is a query parameter. Acceptable for a demo with synthetic data; Pub/Sub OIDC push authentication is the production upgrade.
+- The push token appears in Cloud Run request logs because it is a query parameter. Acceptable for a demo with synthetic data; PubSub OIDC push authentication is the production upgrade.
 - Coordinates are shown rounded to 2 decimal places and no addresses are displayed, so no real business at a map location is implied.

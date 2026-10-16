@@ -3,7 +3,7 @@ const SERVICES = [
   "Cloud Run",
   "BigQuery",
   "Cloud Storage",
-  "Pub/Sub",
+  "PubSub",
   "Earth Engine",
 ];
 

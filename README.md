@@ -27,33 +27,19 @@ this codebase, data or UI.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph gen["Offline, developer-run"]
-        SD["Seeded synthetic dossiers<br/>PDF / PNG, seed 42 + 7"]
-    end
-
-    SD -->|load_dossiers.py| GCS[("Cloud Storage<br/>epr-dossiers")]
-    GCS --> API
-
-    subgraph API["epr-api — Cloud Run, FastAPI"]
-        EX["ingest/extract<br/>Gemini structured extraction"] --> NM["ingest/normalize<br/>shipments, outputs, energy"]
-        NM --> CK["checks C1-C7<br/>deterministic, pure Python"]
-        NM --> GEO["geo/site C8<br/>Earth Engine"]
-        CK --> AG
-        GEO --> AG["agents: Hypothesis to Critic tools to Scorer<br/>Gemini + deterministic scoring"]
-        EVT["events: Pub/Sub push handler"] --> CK
-    end
-
-    API <-->|"BigQuery, dataset epr"| BQ[("BigQuery<br/>facts; checks; assessments;<br/>alerts; llm_calls; eval_metrics")]
-    EE[("Earth Engine<br/>Open Buildings, Sentinel-2")] --> GEO
-
-    API -->|"HTTPS, server-side fetch"| WEB["epr-web — Cloud Run, Next.js<br/>Overview / Processor / Portfolio / Evaluation / Method"]
-    PS[("Pub/Sub<br/>certificate-batches")] --> EVT
-    WEB -->|"simulate new batch"| PS
-```
+![Architecture of the EPR Integrity Verifier. PubSub certificate batches, scanned dossiers in Cloud Storage and Earth Engine evidence feed the epr-api Cloud Run service, where Gemini extraction, rule-based checks, the Hypothesis and Critic agents, guardrails, the scorer and the bilingual memo writer run. Results are written to BigQuery and served to the epr-web Next.js front end, which brands, processors and auditors read through the public API.](public/epr-integrity-arch.png)
 
 Full detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DATA_SPEC.md`](docs/DATA_SPEC.md).
+
+## API
+
+Every public endpoint is documented at
+[`/api-docs`](https://epr-web-igr6jyk3na-el.a.run.app/api-docs) on the live
+site: method and path, parameters, request and response schemas, and a
+runnable `curl` example for each. The page is generated from the service's own
+OpenAPI schema (`api/openapi.json`), so it cannot drift from what the API
+actually serves. Operator-only endpoints used for deployment are not part of
+the public surface and are not published. The page never calls the API itself.
 
 ## How Gemini is used
 
@@ -104,10 +90,29 @@ two labelled datasets stored in BigQuery's `eval_metrics` table:
 - **`dev-seed42`** — shown secondary, explicitly labelled "rules tuned on it".
   Not evidence of real-world accuracy; included for transparency only.
 
+### Headline results (held-out, seed 7)
+
+| Measure | Rule checks alone | + Agent validation |
+|---|---|---|
+| Risk-band accuracy, ground-truth facts | 80% (8/10) | **100%** (10/10) |
+| Risk-band accuracy, extracted facts | 80% (8/10) | **90%** (9/10) |
+| Tonnage error vs ground truth | 1.95% (2.247 t per processor) | **0%** |
+
+- **Key fields read correctly:** 99.98% (5,430/5,431) across the dossier set.
+- **Planted patterns found:** 8/8 issue types, 11/11 individual instances.
+- **False flags:** 0/3 clean processors on ground-truth facts (1/3 on extracted,
+  with no effect on tonnage), 0/2 hard negatives.
+- **Run-to-run stability** over three independent agent runs: unverifiable
+  tonnes identical 10/10, risk band identical 9/10.
+- **Cost and latency:** about $0.29 and 73 s of agent review per processor.
+
+Every figure above is read from the stored `eval_metrics` rows and is live at
+`/evaluation`; nothing in the UI is hardcoded.
+
 Metrics include key-field extraction accuracy, per-issue-type recall (rule
 checks and agent-only findings), finding precision, false-flag rate on clean
-and hard-negative processors, risk-band and unverifiable-tonnes accuracy
-against ground truth, run-to-run finding-set agreement and outcome stability
+and hard-negative processors, risk-band accuracy and tonnage error against
+ground truth, run-to-run finding-set agreement and outcome stability
 across independent agent runs, and whether a pattern a rule check missed at
 least surfaced as a review flag. See [`docs/DATA_SPEC.md`](docs/DATA_SPEC.md) §5
 for the planted-issue catalog and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
@@ -123,7 +128,8 @@ uv sync
 uv run uvicorn app.main:app --reload --port 8080
 ```
 
-`GET http://localhost:8080/health` returns status, model and region.
+`GET http://localhost:8080/health` returns `{"status":"ok"}`. It deliberately
+exposes no version, model, region or project identifier.
 
 ### Web
 
@@ -133,7 +139,9 @@ npm install
 API_BASE_URL=http://localhost:8080 npm run dev
 ```
 
-Open `http://localhost:3000` — the home page shows the API's health.
+Open `http://localhost:3000`. Every page is server-rendered and reads the API
+through `API_BASE_URL` at request time, so the same build runs against a local
+API, a preview deployment or production without rebuilding.
 
 ### Tests and lint
 
@@ -155,7 +163,7 @@ gcloud run services update-traffic epr-web --region=asia-south1 --to-latest
 ```
 
 First-time setup (BigQuery dataset/tables, Cloud Storage buckets, service
-accounts and IAM, Pub/Sub topic, Earth Engine registration) is documented in
+accounts and IAM, PubSub topic, Earth Engine registration) is documented in
 [`docs/GCP_SETUP.md`](docs/GCP_SETUP.md).
 
 ## Repository layout
@@ -169,7 +177,22 @@ web/            Next.js (App Router, TypeScript), Cloud Run service "epr-web"
 data/synthetic/ Generated dossiers and ground truth (reproducible from a seed)
 assets/fonts/   Fonts used to render Hindi documents (OFL, see THIRD_PARTY_NOTICES.md)
 docs/           Architecture, data spec, GCP setup notes
+public/         Images referenced by this README
 ```
+
+## Reproducibility
+
+Three tags mark what was frozen when:
+
+- **`eval-freeze`** — the system under test. Tagged before the held-out
+  dataset existed, so the published metrics cannot have been tuned against it.
+- **`eval-metrics`** — the scoring code that produced the published held-out
+  numbers, including the metric correction disclosed on `/method`.
+- **`submission-2026-10-18`** — the build deployed for judging.
+
+The dataset itself is deterministic: `generate_dossiers.py --seed 42`
+(development) and `--seed 7` (held-out) reproduce the same documents and the
+same `ground_truth.json` every time.
 
 ## Synthetic data
 

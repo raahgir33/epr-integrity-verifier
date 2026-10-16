@@ -1,6 +1,6 @@
 """Tests for the published OpenAPI schema.
 
-Two internal endpoints — the admin reset and the Pub/Sub push handler —
+Two internal endpoints — the admin reset and the PubSub push handler —
 are deliberately absent from the schema (`include_in_schema=False`) while
 remaining fully functional, so neither the API's own /docs nor the web
 app's /api-docs page advertises an operations-only surface. These tests

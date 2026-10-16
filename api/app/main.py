@@ -734,7 +734,7 @@ def get_run(run_id: str) -> dict:
 
 @app.post("/events/certificate-batch", include_in_schema=False)
 def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
-    """Pub/Sub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
+    """PubSub push endpoint (docs/ARCHITECTURE.md §3.2). Synchronous
     within the request (internal engineering notes §9's CPU-throttling trap) and
     idempotent on run_id — a re-delivered push for an already-terminal
     run is a no-op, never a duplicate alert."""
@@ -749,7 +749,7 @@ def post_events_certificate_batch(body: dict, token: str | None = None) -> dict:
     bq_client = bq.get_client()
     run_row = live_run_processor.get_run(bq_client, run_id)
     if run_row is None:
-        # Unknown run_id — ack anyway so Pub/Sub doesn't retry forever on
+        # Unknown run_id — ack anyway so PubSub doesn't retry forever on
         # a malformed/stale message; there is nothing to process.
         return {"status": "ignored"}
     if run_row["status"] in ("done", "failed"):
