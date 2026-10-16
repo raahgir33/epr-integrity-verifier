@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/portfolio", label: "Portfolio" },
   { href: "/evaluation", label: "Evaluation" },
   { href: "/method", label: "Method" },
+  { href: "/api-docs", label: "API Docs" },
 ];
 
 const SOLID_SCROLL_THRESHOLD_PX = 40;
