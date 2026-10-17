@@ -28,9 +28,12 @@ retry-storms a genuinely failed run.
 
 import json
 import logging
+import random
 import threading
 import time
 from datetime import UTC, datetime
+
+from google.api_core.exceptions import TooManyRequests
 
 from app.agents import memo
 from app.agents.orchestrator import run_agent_loop_with_retry
@@ -133,9 +136,66 @@ def get_run(bq_client, run_id: str) -> dict | None:
     }
 
 
+# Runs-row write retry (2026-10-17). Every stage transition rewrites the
+# one runs row, and several of those writes land within a few seconds of
+# each other, which is enough to trip BigQuery's per-table
+# update-operation rate limit: a live run died at
+# start_stage("drafting_memo") with 429 rateLimitExceeded ("too many
+# table update operations for this table"). Backoff is ~2, 4, 8, 16s plus
+# jitter. Deliberately local module privates rather than
+# app/checks/params.py entries, same as app/llm.py's own retry budget:
+# params.py holds thresholds that change a verification result, and these
+# change none.
+_RUN_WRITE_MAX_ATTEMPTS = 5
+_RUN_WRITE_BASE_BACKOFF_S = 2.0
+
+
+def _is_rate_limit_error(exc: BaseException) -> bool:
+    """TooManyRequests covers the 429 the live run actually raised; the
+    reason check also catches a rateLimitExceeded that arrives inside a
+    load job's error payload (bq.load_rows re-raises those as a plain
+    RuntimeError from job.errors, which carries no HTTP status)."""
+    if isinstance(exc, TooManyRequests):
+        return True
+    errors = getattr(exc, "errors", None) or []
+    if any(isinstance(e, dict) and e.get("reason") == "rateLimitExceeded" for e in errors):
+        return True
+    return "ratelimitexceeded" in str(exc).lower()
+
+
+def _call_with_rate_limit_retry(what: str, call, *args) -> None:
+    """Re-submits `call` from scratch on a BigQuery rate-limit error. A
+    load job that failed cannot be re-polled — job.result() has already
+    raised — so every attempt is a brand-new job, not a retry of the old
+    one. Any other exception propagates on the first attempt."""
+    for attempt in range(_RUN_WRITE_MAX_ATTEMPTS):
+        try:
+            call(*args)
+            return
+        except Exception as exc:
+            if not _is_rate_limit_error(exc) or attempt == _RUN_WRITE_MAX_ATTEMPTS - 1:
+                raise
+            backoff = _RUN_WRITE_BASE_BACKOFF_S * 2**attempt + random.uniform(0, 1)
+            logger.warning(
+                "runs-row %s rate-limited (%s) on attempt %d/%d, backing off %.1fs",
+                what,
+                exc,
+                attempt + 1,
+                _RUN_WRITE_MAX_ATTEMPTS,
+                backoff,
+            )
+            time.sleep(backoff)
+
+
 def _write_run(bq_client, run_row: dict) -> None:
-    bq.delete_by_run_id(bq_client, "runs", run_row["run_id"])
-    bq.load_rows(bq_client, "runs", [run_row])
+    """Delete-then-load rewrite of this run's single row, each half
+    retried independently: a rate-limited load must not re-submit the
+    delete that already succeeded, since that DML counts against the very
+    per-table limit being backed off from. Retrying the pair would still
+    be correct (both halves are keyed on run_id) — just more expensive in
+    the exact quota that is scarce."""
+    _call_with_rate_limit_retry("delete", bq.delete_by_run_id, bq_client, "runs", run_row["run_id"])
+    _call_with_rate_limit_retry("load", bq.load_rows, bq_client, "runs", [run_row])
 
 
 def _get_demo_batch(bq_client, seed: int, batch_id: str) -> dict | None:
@@ -277,11 +337,32 @@ class _RunContext:
         self.stage_timestamps: dict = json.loads(run_row.get("stage_timestamps_json") or "{}")
         self._stage_start: float = time.monotonic()
 
+    def _write(self, *, fatal: bool) -> None:
+        """Intermediate stage/progress writes are progress reporting, not
+        the verification itself: if one still fails after
+        _call_with_rate_limit_retry's attempts, the run keeps going and
+        the next transition rewrites the whole row anyway (it is a full
+        snapshot, so nothing is lost but a few seconds of polling
+        freshness). Only finish()'s terminal done/failed write is fatal —
+        a run that silently never reaches a terminal status would keep
+        the in-flight gate closed until it goes stale."""
+        try:
+            _write_run(self.bq_client, self.run_row)
+        except Exception:
+            if fatal:
+                raise
+            logger.warning(
+                "non-fatal runs-row write failed for run_id=%s status=%s — continuing",
+                self.run_row["run_id"],
+                self.run_row.get("status"),
+                exc_info=True,
+            )
+
     def start_stage(self, status: str) -> None:
         self._stage_start = time.monotonic()
         self.run_row["status"] = status
         self.run_row["updated_at"] = datetime.now(UTC).isoformat()
-        _write_run(self.bq_client, self.run_row)
+        self._write(fatal=False)
 
     def finish_stage(self, status: str) -> None:
         duration_s = round(time.monotonic() - self._stage_start, 1)
@@ -291,7 +372,7 @@ class _RunContext:
         }
         self.run_row["stage_timestamps_json"] = json.dumps(self.stage_timestamps)
         self.run_row["updated_at"] = datetime.now(UTC).isoformat()
-        _write_run(self.bq_client, self.run_row)
+        self._write(fatal=False)
 
     def publish_alert_id(self, alert_id: str | None) -> None:
         """Puts the alert on the run row as soon as the alerts row itself
@@ -307,10 +388,18 @@ class _RunContext:
         no new finding" about an alert that had already fired Low ->
         High. Writing it here closes the window at the source; the web
         side no longer trusts the reasoning timestamp either (see
-        web/lib/runRows.ts)."""
+        web/lib/runRows.ts).
+
+        Sets the field but does NOT write on its own (2026-10-17): the
+        caller runs finish_stage("reasoning") on the very next line, so
+        this write and that one landed within ~2s of each other and
+        together with the following start_stage("drafting_memo") were
+        what tripped BigQuery's per-table update rate limit. Coalescing
+        the two costs nothing — the row is a full snapshot and the window
+        this method exists to close goes from 39s to the ~2s until that
+        finish_stage, not back to the whole memo stage."""
         self.run_row["alert_id"] = alert_id
         self.run_row["updated_at"] = datetime.now(UTC).isoformat()
-        _write_run(self.bq_client, self.run_row)
 
     def finish(
         self, status: str, error_message: str | None = None, alert_id: str | None = None
@@ -320,7 +409,7 @@ class _RunContext:
         if alert_id is not None:
             self.run_row["alert_id"] = alert_id
         self.run_row["updated_at"] = datetime.now(UTC).isoformat()
-        _write_run(self.bq_client, self.run_row)
+        self._write(fatal=True)
 
 
 def run_certificate_batch(run_id: str) -> None:  # noqa: C901

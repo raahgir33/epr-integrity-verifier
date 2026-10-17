@@ -8,8 +8,10 @@ functions. No real BigQuery/Gemini/GCS call.
 
 import datetime
 import json
+from unittest.mock import patch
 
 import pytest
+from google.api_core.exceptions import TooManyRequests
 
 from app.events import run_processor
 
@@ -251,3 +253,82 @@ def test_run_certificate_batch_is_a_noop_for_an_already_terminal_run(fake_env):
     run_processor.run_certificate_batch("RUN-1")
 
     assert fake_env["loaded"] == []  # never even started
+
+
+# ---------- runs-row write rate limiting (2026-10-17) ----------
+
+
+@patch("app.events.run_processor.time.sleep", return_value=None)
+def test_run_certificate_batch_retries_a_rate_limited_runs_write(_sleep, fake_env, monkeypatch):
+    """A live run died at start_stage("drafting_memo") with BigQuery's 429
+    rateLimitExceeded ("too many table update operations for this
+    table"). Two failures then a success must leave the run completing
+    normally, not failed."""
+    inner = run_processor.bq.load_rows
+    remaining_failures = {"n": 2}
+
+    def flaky_load_rows(client, table, rows):
+        if table == "runs" and remaining_failures["n"]:
+            remaining_failures["n"] -= 1
+            raise TooManyRequests("too many table update operations for this table")
+        return inner(client, table, rows)
+
+    monkeypatch.setattr(run_processor.bq, "load_rows", flaky_load_rows)
+
+    run_processor.run_certificate_batch("RUN-1")
+
+    assert remaining_failures["n"] == 0  # both failures were actually hit
+    assert _run_statuses(fake_env["loaded"])[-1] == "done"
+    assert fake_env["runs_table"][0]["status"] == "done"
+
+
+@patch("app.events.run_processor.time.sleep", return_value=None)
+def test_an_exhausted_intermediate_runs_write_does_not_kill_the_run(_sleep, fake_env, monkeypatch):
+    """Progress reporting must never fail the verification: one stage's
+    write losing every attempt is logged and skipped, and the run still
+    reaches done."""
+    inner = run_processor.bq.load_rows
+
+    def flaky_load_rows(client, table, rows):
+        if table == "runs" and rows[0]["status"] == "checking":
+            raise TooManyRequests("too many table update operations for this table")
+        return inner(client, table, rows)
+
+    monkeypatch.setattr(run_processor.bq, "load_rows", flaky_load_rows)
+
+    run_processor.run_certificate_batch("RUN-1")
+
+    statuses = _run_statuses(fake_env["loaded"])
+    assert "checking" not in statuses  # never landed
+    assert statuses[-1] == "done"
+
+
+@patch("app.events.run_processor.time.sleep", return_value=None)
+def test_a_terminal_runs_write_that_never_succeeds_raises(_sleep, fake_env, monkeypatch):
+    """The opposite of the test above: the done/failed write is the one
+    that must not be swallowed — a run stuck non-terminal in BigQuery
+    holds app/main.py's in-flight gate closed until it goes stale, so the
+    push handler has to see this."""
+
+    def always_rate_limited(client, table, rows):
+        if table == "runs":
+            raise TooManyRequests("too many table update operations for this table")
+        return len(rows)
+
+    monkeypatch.setattr(run_processor.bq, "load_rows", always_rate_limited)
+
+    with pytest.raises(TooManyRequests):
+        run_processor.run_certificate_batch("RUN-1")
+
+
+def test_publish_alert_id_does_not_write_on_its_own(fake_env):
+    """It sets the field and lets the finish_stage("reasoning") call on
+    the next line carry it, so the hot three-writes-in-two-seconds
+    cluster is two writes, not three."""
+    ctx = run_processor._RunContext(object(), _run_row("RUN-2"))
+    before = len(fake_env["loaded"])
+
+    ctx.publish_alert_id("ALERT-RUN-2")
+
+    assert len(fake_env["loaded"]) == before
+    assert ctx.run_row["alert_id"] == "ALERT-RUN-2"
