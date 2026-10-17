@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.agents.tools import _cap, _parse_gcs_uri, _resolve_gcs_path, build_tools
-from app.config import settings
 
 _CONTEXT = {
     "check_results": [
@@ -139,12 +138,15 @@ def test_read_document_not_found():
     assert attachment is None
 
 
+@patch("app.agents.tools.settings.dossier_bucket", "test-bucket")
 @patch("app.agents.tools.gcs.download_bytes")
 def test_read_document_resolves_a_bucket_relative_path(mock_download):
     """Every real documents row stores gcs_path bucket-relative
     (scripts/load_dossiers.py's document_gcs_path), which read_document
     used to reject outright — the live 2026-10-17 failure. The fixture
-    above happens to use gs:// URIs, which is why no unit test caught it."""
+    above happens to use gs:// URIs, which is why no unit test caught it.
+    dossier_bucket is patched because it is unset wherever there is no
+    .env (CI), and read_document then takes its no-bucket branch."""
     mock_download.return_value = b"%PDF-1.4 fake"
     gcs_client = MagicMock()
     context = {
@@ -166,12 +168,13 @@ def test_read_document_resolves_a_bucket_relative_path(mock_download):
     assert attachment == (b"%PDF-1.4 fake", "application/pdf")
     mock_download.assert_called_once_with(
         gcs_client,
-        settings.dossier_bucket,
+        "test-bucket",
         "seed-42/documents/PWP-03/PWP-03-ELECTRICITY_BILL-060.pdf",
     )
     assert "document attached" in summary
 
 
+@patch("app.agents.tools.settings.dossier_bucket", "test-bucket")
 def test_resolve_gcs_path_prefers_an_explicit_gs_uri():
     assert _resolve_gcs_path("gs://other-bucket/a/b.pdf") == ("other-bucket", "a/b.pdf")
-    assert _resolve_gcs_path("a/b.pdf") == (settings.dossier_bucket, "a/b.pdf")
+    assert _resolve_gcs_path("a/b.pdf") == ("test-bucket", "a/b.pdf")
