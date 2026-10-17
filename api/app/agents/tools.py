@@ -19,6 +19,7 @@ table.
 import json
 from collections.abc import Callable
 
+from app.config import settings
 from app.store import gcs
 
 _SUMMARY_CAP_BYTES = 2048
@@ -36,6 +37,22 @@ def _parse_gcs_uri(uri: str) -> tuple[str, str]:
         raise ValueError(f"not a gs:// URI: {uri!r}")
     bucket, _, blob_path = uri.removeprefix("gs://").partition("/")
     return bucket, blob_path
+
+
+def _resolve_gcs_path(path: str) -> tuple[str | None, str]:
+    """documents.gcs_path is bucket-RELATIVE by convention — every other
+    reader supplies the bucket alongside it (app/store/cache.py's
+    get_document_file passes settings.dossier_bucket; app/ingest/
+    extract.py takes a bucket argument), and both writers store it
+    relative (scripts/load_dossiers.py's document_gcs_path, "seed-42/
+    documents/...", and scripts/generate_demo_extra_docs.py's "seed-42/
+    demo_extra/..."). read_document was the only reader expecting a
+    gs:// URI, so it raised ValueError on every real row it was ever
+    asked to fetch (live, 2026-10-17). A gs:// URI is still accepted, in
+    case a future row carries one."""
+    if path.startswith("gs://"):
+        return _parse_gcs_uri(path)
+    return settings.dossier_bucket, path
 
 
 def build_tools(processor_context: dict, gcs_client=None) -> list[Callable]:
@@ -100,7 +117,9 @@ def build_tools(processor_context: dict, gcs_client=None) -> list[Callable]:
         doc = documents_by_id.get(doc_id)
         if doc is None or not doc.get("gcs_path"):
             return _cap({"error": f"no document {doc_id}"}), None
-        bucket, blob_path = _parse_gcs_uri(doc["gcs_path"])
+        bucket, blob_path = _resolve_gcs_path(doc["gcs_path"])
+        if not bucket:
+            return _cap({"error": "no documents bucket configured"}), None
         data = gcs.download_bytes(gcs_client, bucket, blob_path)
         mime_type = doc.get("mime_type") or (
             "image/png" if doc.get("doc_type") == "weighbridge_slip" else "application/pdf"

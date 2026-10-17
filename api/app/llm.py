@@ -350,58 +350,101 @@ class GeminiClient:
             )
             model_turn = response.candidates[0].content
             conversation = [*conversation, model_turn]
-            function_call = next(
-                (p.function_call for p in model_turn.parts if p.function_call), None
-            )
-            if function_call is None:
+            function_calls = [p.function_call for p in model_turn.parts if p.function_call]
+            if not function_calls:
                 return conversation, False
 
-            cache_key = (
-                function_call.name,
-                json.dumps(function_call.args, sort_keys=True, default=str),
-            )
-            if cache_key in seen_calls:
-                summary = (
-                    f"Already returned in call {seen_calls[cache_key]} — "
-                    "see that result, do not call this again."
+            # EVERY function_call part gets exactly one function_response
+            # part back, in the same order, with the same name, in a
+            # single user turn. The model can emit several calls in one
+            # turn and this loop used to answer only the first, which
+            # Gemini rejects outright: 400 INVALID_ARGUMENT, "Please
+            # ensure that the number of function response parts is equal
+            # to the number of function call parts of the function call
+            # turn" (live, 2026-10-17). So no branch below may skip a
+            # response — not a duplicate, not a call past the budget, not
+            # a tool that raised. The orchestrator's final structured
+            # call continues from this same conversation, so an
+            # unbalanced turn would fail there too, after the loop had
+            # apparently succeeded.
+            response_parts = []
+            attachments = []
+            budget_exhausted = False
+            for function_call in function_calls:
+                args = dict(function_call.args or {})
+                cache_key = (
+                    function_call.name,
+                    json.dumps(args, sort_keys=True, default=str),
                 )
-                attachment = None
-            else:
-                call_number += 1
-                seen_calls[cache_key] = call_number
-                fn = tools_by_name[function_call.name]
-                summary, attachment = fn(**function_call.args)
+                if cache_key in seen_calls:
+                    summary = (
+                        f"Already returned in call {seen_calls[cache_key]} — "
+                        "see that result, do not call this again."
+                    )
+                    attachment = None
+                elif call_number >= max_tool_calls:
+                    # Only reachable within a parallel-call turn that
+                    # straddles the cap; the loop returns below as soon as
+                    # the budget is gone.
+                    budget_exhausted = True
+                    summary = json.dumps(
+                        {"error": "tool budget exhausted — no further tool calls will run"}
+                    )
+                    attachment = None
+                else:
+                    call_number += 1
+                    seen_calls[cache_key] = call_number
+                    summary, attachment = self._execute_tool(
+                        tools_by_name, function_call.name, args
+                    )
+                response_parts.append(
+                    types.Part.from_function_response(
+                        name=function_call.name, response={"result": summary}
+                    )
+                )
+                if attachment is not None:
+                    attachments.append(attachment)
 
-            conversation = [
-                *conversation,
-                types.Content(
-                    role="user",
-                    parts=[
-                        types.Part.from_function_response(
-                            name=function_call.name, response={"result": summary}
-                        )
-                    ],
-                ),
-            ]
+            conversation = [*conversation, types.Content(role="user", parts=response_parts)]
             # A tool (read_document) can hand back raw document bytes
             # alongside its text summary — attached as a separate user
-            # Part right after the function response, the fallback path
-            # from the read_document smoke test (docs/PROGRESS.md):
+            # Part right after the function response turn, the fallback
+            # path from the read_document smoke test (docs/PROGRESS.md):
             # embedding binary data inside the function_response itself
-            # is the untested alternative, not assumed to work.
-            if attachment is not None:
-                data, mime_type = attachment
+            # is the untested alternative, not assumed to work. Kept
+            # outside the function-response Content for the same reason
+            # the responses are all inside one: that turn must contain
+            # exactly as many parts as the call turn did.
+            for data, mime_type in attachments:
                 conversation = [
                     *conversation,
                     types.Content(
                         role="user", parts=[types.Part.from_bytes(data=data, mime_type=mime_type)]
                     ),
                 ]
-
-            if call_number >= max_tool_calls:
+            if budget_exhausted or call_number >= max_tool_calls:
                 return conversation, True
 
         return conversation, True
+
+    @staticmethod
+    def _execute_tool(tools_by_name: dict, name: str, args: dict) -> tuple[str, tuple | None]:
+        """Runs one tool, converting any failure into an error response
+        for the model instead of letting it escape. A ValueError out of
+        read_document propagated through run_tool_loop and killed a whole
+        live agent run (2026-10-17), which cost that run its findings and
+        silently dropped the processor to rule-checks-only scoring — a
+        wrong answer, not a visible failure. A tool that fails is
+        information the Critic can work around; it is never a reason to
+        lose the run."""
+        fn = tools_by_name.get(name)
+        if fn is None:
+            return json.dumps({"error": f"unknown tool {name!r}"}), None
+        try:
+            return fn(**args)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("tool %s failed: %s", name, exc, exc_info=True)
+            return json.dumps({"error": f"tool {name} failed: {exc}"}), None
 
     def _record_call(self, purpose: str, latency_ms: float, success: bool, usage=None) -> None:
         record = {

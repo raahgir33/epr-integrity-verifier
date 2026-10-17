@@ -619,3 +619,102 @@ def test_thinking_budget_parameter_no_longer_exists(mock_client_cls):
         client.extract(
             b"data", "application/pdf", "prompt", _DummySchema, purpose="test", thinking_budget=0
         )
+
+
+# ---------- parallel function calls (2026-10-17) ----------
+
+
+def _multi_tool_call_response(*calls) -> MagicMock:
+    """One model turn carrying several function_call parts, which is what
+    the live 400 INVALID_ARGUMENT turn looked like."""
+    response = MagicMock()
+    parts = [_function_call_part(name, args) for name, args in calls]
+    response.candidates = [MagicMock(content=MagicMock(parts=parts))]
+    response.usage_metadata = None
+    return response
+
+
+def _function_responses(content) -> list:
+    return [p.function_response for p in content.parts if p.function_response]
+
+
+@patch("app.llm.genai.Client")
+def test_parallel_calls_get_one_response_each_including_a_duplicate(mock_client_cls):
+    """Gemini rejects the turn unless the number of function_response
+    parts equals the number of function_call parts — a duplicate being
+    skipped is no excuse to send one response for two calls."""
+    executed = []
+
+    def _counting_tool(x: int):
+        """A trivial tool for testing."""
+        executed.append(x)
+        return f"got {x}", None
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_counting_tool", {"x": 1}),
+        _multi_tool_call_response(("_counting_tool", {"x": 1}), ("_counting_tool", {"x": 2})),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    conversation, _ = GeminiClient().run_tool_loop(
+        contents=["question"], tools=[_counting_tool], max_tool_calls=8, purpose="test"
+    )
+
+    # The parallel turn is conversation[3]; its responses are [4].
+    assert len(conversation[3].parts) == 2
+    responses = _function_responses(conversation[4])
+    assert len(responses) == 2
+    assert [r.name for r in responses] == ["_counting_tool", "_counting_tool"]
+    assert "already returned in call 1" in responses[0].response["result"].lower()
+    assert "got 2" in responses[1].response["result"]
+    assert executed == [1, 2]  # the duplicate was not re-executed
+
+
+@patch("app.llm.genai.Client")
+def test_parallel_calls_past_the_cap_still_get_a_response_each(mock_client_cls):
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_dummy_tool", {"x": 1}),
+        _multi_tool_call_response(("_dummy_tool", {"x": 2}), ("_dummy_tool", {"x": 3})),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    conversation, tool_cap_reached = GeminiClient().run_tool_loop(
+        contents=["question"], tools=[_dummy_tool], max_tool_calls=2, purpose="test"
+    )
+
+    assert tool_cap_reached is True
+    responses = _function_responses(conversation[-1])
+    assert len(responses) == 2
+    assert "got 2" in responses[0].response["result"]
+    assert "budget exhausted" in responses[1].response["result"]
+
+
+@patch("app.llm.genai.Client")
+def test_a_tool_that_raises_returns_an_error_response_and_the_loop_completes(mock_client_cls):
+    """A ValueError out of read_document used to propagate and kill the
+    whole agent run, which silently cost the processor its findings."""
+
+    def _exploding_tool(doc_id: str):
+        """A tool that fails the way read_document did."""
+        raise ValueError(f"not a gs:// URI: {doc_id!r}")
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [
+        _tool_call_response("_exploding_tool", {"doc_id": "seed-42/documents/x.pdf"}),
+        _text_response(),
+    ]
+    mock_client_cls.return_value = mock_client
+
+    conversation, tool_cap_reached = GeminiClient().run_tool_loop(
+        contents=["question"], tools=[_exploding_tool], max_tool_calls=8, purpose="test"
+    )
+
+    assert tool_cap_reached is False
+    responses = _function_responses(conversation[2])
+    assert len(responses) == 1
+    result = responses[0].response["result"]
+    assert "_exploding_tool failed" in result
+    assert "not a gs://" in result
